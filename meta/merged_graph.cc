@@ -1,15 +1,15 @@
-#include "combined_graph.h"
+#include "merged_graph.h"
 #include "graph_revise.h"
 #include "config.h"
 #include <sstream>
 #include <algorithm>
 
-combined_graph::combined_graph()
+merged_graph::merged_graph()
 {
 	num_combined = 0;
 }
 
-int combined_graph::solve()
+int merged_graph::solve()
 {
 	build_region_index();
 	group_junctions();
@@ -24,7 +24,7 @@ int combined_graph::solve()
 	return 0;
 }
 
-int combined_graph::clear()
+int merged_graph::clear()
 {
 	num_combined = 0;
 	gid = "";
@@ -45,7 +45,7 @@ int combined_graph::clear()
 	return 0;
 }
 
-int combined_graph::build_region_index()
+int merged_graph::build_region_index()
 {
 	for(int i = 0; i < regions.size(); i++)
 	{
@@ -56,7 +56,7 @@ int combined_graph::build_region_index()
 	return 0;
 }
 
-int combined_graph::group_start_boundaries(splice_graph &xr)
+int merged_graph::group_start_boundaries(splice_graph &xr)
 {
 	smap.clear();
 	vector<int> v;
@@ -137,7 +137,7 @@ int combined_graph::group_start_boundaries(splice_graph &xr)
 	return 0;
 }
 
-int combined_graph::group_end_boundaries(splice_graph &xr)
+int merged_graph::group_end_boundaries(splice_graph &xr)
 {
 	tmap.clear();
 	vector<int> v;
@@ -208,7 +208,7 @@ int combined_graph::group_end_boundaries(splice_graph &xr)
 	return 0;
 }
 
-int combined_graph::group_junctions()
+int merged_graph::group_junctions()
 {
 	set<int> fb;
 	for(int i = 0; i < junctions.size(); i++)
@@ -250,7 +250,7 @@ int combined_graph::group_junctions()
 	return 0;
 }
 
-set<int32_t> combined_graph::get_reliable_adjacencies(int samples, double weight)
+set<int32_t> merged_graph::get_reliable_adjacencies(int samples, double weight)
 {
 	set<int32_t> s;
 	if(regions.size() <= 1) return s;
@@ -275,7 +275,7 @@ set<int32_t> combined_graph::get_reliable_adjacencies(int samples, double weight
 	return s;
 }
 
-set<int32_t> combined_graph::get_reliable_splices(int samples, double weight)
+set<int32_t> merged_graph::get_reliable_splices(int samples, double weight)
 {
 	map<int32_t, DI> m;
 	for(int i = 0; i < junctions.size(); i++)
@@ -321,7 +321,7 @@ set<int32_t> combined_graph::get_reliable_splices(int samples, double weight)
 	return s;
 }
 
-set<PI32> combined_graph::get_reliable_junctions(int samples, double weight)
+set<PI32> merged_graph::get_reliable_junctions(int samples, double weight)
 {
 	set<PI32> s;
 	for(int i = 0; i < junctions.size(); i++)
@@ -336,7 +336,7 @@ set<PI32> combined_graph::get_reliable_junctions(int samples, double weight)
 	return s;
 }
 
-set<int32_t> combined_graph::get_reliable_start_boundaries(int samples, double weight)
+set<int32_t> merged_graph::get_reliable_start_boundaries(int samples, double weight)
 {
 	map<int32_t, DI> m;
 	for(int i = 0; i < sbounds.size(); i++)
@@ -382,7 +382,7 @@ set<int32_t> combined_graph::get_reliable_start_boundaries(int samples, double w
 	return ss;
 }
 
-set<int32_t> combined_graph::get_reliable_end_boundaries(int samples, double weight)
+set<int32_t> merged_graph::get_reliable_end_boundaries(int samples, double weight)
 {
 	map<int32_t, DI> m;
 	for(int i = 0; i < tbounds.size(); i++)
@@ -428,7 +428,7 @@ set<int32_t> combined_graph::get_reliable_end_boundaries(int samples, double wei
 	return ss;
 }
 
-int combined_graph::build_splice_graph(splice_graph &xr)
+int merged_graph::build_splice_graph(splice_graph &xr)
 {
 	xr.clear();
 
@@ -560,7 +560,7 @@ int combined_graph::build_splice_graph(splice_graph &xr)
 	return 0;
 }
 
-int combined_graph::group_phasing_paths()
+int merged_graph::group_phasing_paths()
 {
 	for(int i = 0; i < paths.size(); i++)
 	{
@@ -621,7 +621,7 @@ int combined_graph::group_phasing_paths()
 	return 0;
 }
 
-int combined_graph::build_phasing_paths()
+int merged_graph::build_phasing_paths()
 {
 	hs.clear();
 	for(int i = 0; i < paths.size(); i++)
@@ -688,7 +688,7 @@ int combined_graph::build_phasing_paths()
 }
 
 
-int combined_graph::build_phasing_paths(const vector<PVDI> &px)
+int merged_graph::build_phasing_paths(const vector<PVDI> &px)
 {
 	hx.clear();
 
@@ -817,7 +817,7 @@ int combined_graph::build_phasing_paths(const vector<PVDI> &px)
 	return 0;
 }
 
-int combined_graph::build(istream &is, const string &id, const string &ch, char st, int num)
+int merged_graph::build(istream &is, const string &id, const string &ch, char st, int num)
 {
 	gid = id;
 	chrm = ch;
@@ -896,7 +896,7 @@ int combined_graph::build(istream &is, const string &id, const string &ch, char 
 	return 0;
 }
 
-int combined_graph::print(int index)
+int merged_graph::print(int index)
 {
 	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phasing-paths = %lu\n", 
 			index, num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), paths.size());
@@ -937,7 +937,7 @@ int combined_graph::print(int index)
 }
 
 
-bool combined_graph::continue_vertices(int x, int y, splice_graph &xr)
+bool merged_graph::continue_vertices(int x, int y, splice_graph &xr)
 {
 	if(x >= y) return true;
 	for(int i = x; i < y; i++)
@@ -949,7 +949,7 @@ bool combined_graph::continue_vertices(int x, int y, splice_graph &xr)
 	return true;
 }
 
-PIDI combined_graph::get_leftmost_bound()
+PIDI merged_graph::get_leftmost_bound()
 {
 	PIDI x;
 	x.first = -1;
@@ -964,7 +964,7 @@ PIDI combined_graph::get_leftmost_bound()
 	return x;
 }
 
-PIDI combined_graph::get_rightmost_bound()
+PIDI merged_graph::get_rightmost_bound()
 {
 	PIDI x;
 	x.first = -1;
@@ -979,7 +979,7 @@ PIDI combined_graph::get_rightmost_bound()
 	return x;
 }
 
-int combined_graph::locate_left_region(int32_t p, int kl, int kr)
+int merged_graph::locate_left_region(int32_t p, int kl, int kr)
 {
 	if(kl >= kr) return -1;
 
@@ -997,7 +997,7 @@ int combined_graph::locate_left_region(int32_t p, int kl, int kr)
 	else return locate_left_region(p, m, kr);
 }
 
-int combined_graph::locate_right_region(int32_t p, int kl, int kr)
+int merged_graph::locate_right_region(int32_t p, int kl, int kr)
 {
 	if(kl >= kr) return -1;
 

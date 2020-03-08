@@ -1,17 +1,18 @@
 #include "filter.h"
 #include "cluster.h"
-#include "incubator.h"
 #include "config.h"
 #include "scallop.h"
-#include "combined_graph.h"
+#include "merged_graph.h"
 #include "hyper_graph.h"
 #include "graph_revise.h"
+#include "decomposer.h"
 
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <algorithm>
 #include <string>
+#include <mutex>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/asio/post.hpp>
 
@@ -38,8 +39,8 @@ int assemble()
 	boost::asio::thread_pool pool(max_threads); // thread pool
 	mutex mylock;								// lock for trsts
 
-	combined_graph mgraph;
-	vector<combined_graph> children;
+	merged_graph mgraph;
+	vector<merged_graph> children;
 
 	int index = -1;
 	while(fin.getline(line, 10240, '\n'))
@@ -75,7 +76,7 @@ int assemble()
 		}
 		else
 		{
-			combined_graph cb;
+			merged_graph cb;
 			cb.parent = false;
 			cb.build(fin, gid, chrm, strand[0], num_combined);
 			children.push_back(cb);
@@ -143,7 +144,7 @@ int assemble()
 	return 0;
 }
 
-int assemble(combined_graph cm, vector<combined_graph> children, map< size_t, vector<transcript> > &trsts, mutex &mylock)
+int assemble(merged_graph cm, vector<merged_graph> children, map< size_t, vector<transcript> > &trsts, mutex &mylock)
 {
 	//if(cm.num_combined <= 0) return 0;
 
@@ -207,7 +208,7 @@ int assemble(combined_graph cm, vector<combined_graph> children, map< size_t, ve
 
 	for(int i = 0; i < children.size(); i++)
 	{
-		combined_graph &cb = children[i];
+		merged_graph &cb = children[i];
 		cb.solve();
 
 		keep_surviving_edges(cb.gr, ps, min_splicing_count);

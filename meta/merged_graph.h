@@ -8,6 +8,7 @@
 
 #include "splice_graph.h"
 #include "hyper_set.h"
+#include "config.h"
 
 using namespace std;
 
@@ -18,10 +19,10 @@ typedef pair<int32_t, DI> PIDI;
 typedef pair<PI32, DI> PPDI;
 typedef pair<vector<int32_t>, DI> PVDI;
 
-class combined_graph
+class merged_graph
 {
 public:
-	combined_graph();
+	merged_graph();
 
 public:
 	int num_combined;
