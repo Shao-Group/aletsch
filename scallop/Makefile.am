@@ -30,4 +30,5 @@ libscallop_a_SOURCES = splice_graph.h splice_graph.cc \
 					   filter.h filter.cc \
 					   cluster.h cluster.cc \
 					   graph_revise.h graph_revise.cc \
+					   combined_graph.h combined_graph.cc \
 					   hyper_graph.h hyper_graph.cc
