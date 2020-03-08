@@ -1,4 +1,4 @@
-#include "merger.h"
+#include "combine.h"
 #include "undirected_graph.h"
 #include "boost/pending/disjoint_sets.hpp"
 #include <fstream>

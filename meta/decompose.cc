@@ -5,7 +5,7 @@
 #include "merged_graph.h"
 #include "hyper_graph.h"
 #include "graph_revise.h"
-#include "decomposer.h"
+#include "decompose.h"
 
 #include <fstream>
 #include <sstream>

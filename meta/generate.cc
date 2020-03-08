@@ -11,7 +11,7 @@ See LICENSE for licensing.
 #include "config.h"
 #include "gtf.h"
 #include "genome.h"
-#include "generator.h"
+#include "generate.h"
 #include "scallop.h"
 #include "super_graph.h"
 
