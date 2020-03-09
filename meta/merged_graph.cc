@@ -1,5 +1,6 @@
 #include "merged_graph.h"
 #include "graph_revise.h"
+#include "meta_config.h"
 #include "config.h"
 #include <sstream>
 #include <algorithm>
@@ -131,7 +132,7 @@ int merged_graph::group_start_boundaries(splice_graph &xr)
 			k2 = v[i];
 			p2 = p;
 
-			if(verbose >= 2) printf("map start boundary %d:%d (weight = %.2lf) to %d:%d (weight = %.2lf)\n", v[i], p, wb, k1, p1, wa);
+			if(meta_verbose >= 2) printf("map start boundary %d:%d (weight = %.2lf) to %d:%d (weight = %.2lf)\n", v[i], p, wb, k1, p1, wa);
 		}
 	}
 	return 0;
@@ -202,7 +203,7 @@ int merged_graph::group_end_boundaries(splice_graph &xr)
 			k2 = v[i];
 			p2 = p;
 
-			if(verbose >= 2) printf("map end boundary %d:%d (weight = %.2lf) to %d:%d (weight = %.2lf)\n", v[i], p, wb, k1, p1, wa);
+			if(meta_verbose >= 2) printf("map end boundary %d:%d (weight = %.2lf) to %d:%d (weight = %.2lf)\n", v[i], p, wb, k1, p1, wa);
 		}
 	}
 	return 0;
@@ -225,13 +226,13 @@ int merged_graph::group_junctions()
 			if(10 * x.second.first < y.second.first && x.second.second < y.second.second && x.second.second <= 2 && y.second.first <= 100)
 			{
 				fb.insert(i);
-				if(verbose >= 2) printf("filter junction: (%d, %d), w = %.1lf, c = %d -> (%d, %d), w = %.1lf, c = %d\n", 
+				if(meta_verbose >= 2) printf("filter junction: (%d, %d), w = %.1lf, c = %d -> (%d, %d), w = %.1lf, c = %d\n", 
 						x.first.first, x.first.second, x.second.first, x.second.second,
 						y.first.first, y.first.second, y.second.first, y.second.second);
 			}
 			if(x.second.first > 10 * y.second.first && x.second.second > y.second.second && y.second.second <= 2 && y.second.first <= 100)
 			{
-				if(verbose >= 2) printf("filter junction: (%d, %d), w = %.1lf, c = %d -> (%d, %d), w = %.1lf, c = %d\n",
+				if(meta_verbose >= 2) printf("filter junction: (%d, %d), w = %.1lf, c = %d -> (%d, %d), w = %.1lf, c = %d\n",
 						y.first.first, y.first.second, y.second.first, y.second.second,
 						x.first.first, x.first.second, x.second.first, x.second.second);
 				fb.insert(j);
@@ -676,7 +677,7 @@ int merged_graph::build_phasing_paths()
 		
 		for(int k = 0; k < vv.size(); k++) vv[k]--;
 
-		if(verbose >= 2)
+		if(meta_verbose >= 2)
 		{
 			printf("phasing path %d: count = %d, weight = %.2lf, vertices = ", i, c, w);
 			printv(vv);
@@ -805,7 +806,7 @@ int merged_graph::build_phasing_paths(const vector<PVDI> &px)
 		
 		for(int k = 0; k < vv.size(); k++) vv[k]--;
 
-		if(verbose >= 2)
+		if(meta_verbose >= 2)
 		{
 			printf("phasing path %d: count = %d, weight = %.2lf, vertices = ", i, c, w);
 			printv(vv);

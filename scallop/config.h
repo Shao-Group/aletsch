@@ -64,6 +64,7 @@ extern uint32_t min_mapping_quality;
 extern int32_t min_splice_boundary_hits;
 extern bool uniquely_mapped_only;
 extern bool use_second_alignment;
+extern int min_splice_boundary_hits;
 
 // for preview
 extern bool preview_only;

@@ -1,6 +1,6 @@
 #include "filter.h"
 #include "cluster.h"
-#include "config.h"
+#include "meta_config.h"
 #include "scallop.h"
 #include "merged_graph.h"
 #include "hyper_graph.h"

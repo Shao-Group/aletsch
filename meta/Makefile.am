@@ -20,5 +20,5 @@ meta_scallop_SOURCES = decompose.h decompose.cc \
 					   combine.h combine.cc \
 					   combined_graph.h combined_graph.cc \
 					   combined_group.h combined_group.cc \
-					   config.h config.cc \
+					   meta_config.h meta_config.cc \
 					   main.cc

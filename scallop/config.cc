@@ -25,6 +25,7 @@ uint32_t min_mapping_quality = 1;
 bool use_second_alignment = false;
 bool uniquely_mapped_only = false;
 int library_type = EMPTY;
+int min_splice_boundary_hits = 1;
 
 // for clustering
 int32_t max_cluster_boundary_distance = 10000;
