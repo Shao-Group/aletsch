@@ -22,7 +22,7 @@ public:
 	vector< map<string, int> > g2g;
 
 	vector<combined_graph> fixed;			// fixed set of graphs
-	int max_combined;					// parameter
+	int max_combined;						// parameter
 	string mdir;							// output dir
 	int max_threads;
 
