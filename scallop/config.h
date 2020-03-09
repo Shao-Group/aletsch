@@ -65,15 +65,6 @@ extern int32_t min_splice_boundary_hits;
 extern bool uniquely_mapped_only;
 extern bool use_second_alignment;
 
-// for meta-assembly
-extern int min_supporting_samples;
-extern int min_splicing_count;
-extern int min_phasing_count;
-extern int32_t max_group_boundary_distance;
-extern double max_group_junction_distance;
-extern bool use_predecompose;
-extern int max_threads;
-
 // for preview
 extern bool preview_only;
 extern int max_preview_reads;

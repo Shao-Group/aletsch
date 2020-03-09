@@ -26,19 +26,10 @@ bool use_second_alignment = false;
 bool uniquely_mapped_only = false;
 int library_type = EMPTY;
 
-// for meta-assembly
-int32_t min_splice_boundary_hits = 1;	// 5
-int min_supporting_samples = 1;			// 2
-int min_splicing_count = 1;
-int min_phasing_count = 1;
-bool use_predecompose = true;
+// for clustering
 int32_t max_cluster_boundary_distance = 10000;
 int32_t max_cluster_intron_distance = 5;
 double min_cluster_single_exon_ratio = 0.8;
-int32_t max_group_boundary_distance = 10000;
-double max_group_junction_distance = 100;
-bool merge_intersection = false;
-int max_threads = 10;
 
 // for preview
 int max_preview_reads = 2000000;
@@ -167,11 +158,6 @@ int parse_arguments(int argc, const char ** argv)
 			min_flank_length = atoi(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "--max_threads")
-		{
-			max_threads = atoi(argv[i + 1]);
-			i++;
-		}
 		else if(string(argv[i]) == "--max_num_cigar")
 		{
 			max_num_cigar = atoi(argv[i + 1]);
@@ -200,28 +186,6 @@ int parse_arguments(int argc, const char ** argv)
 		else if(string(argv[i]) == "--min_splice_boundary_hits")
 		{
 			min_splice_boundary_hits = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_supporting_samples")
-		{
-			min_supporting_samples = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_splicing_count")
-		{
-			min_splicing_count = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_phasing_count")
-		{
-			min_phasing_count = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--use_predecompose")
-		{
-			string s(argv[i + 1]);
-			if(s == "true") use_predecompose = true;
-			else use_predecompose = false;
 			i++;
 		}
 		else if(string(argv[i]) == "--max_preview_spliced_reads")
