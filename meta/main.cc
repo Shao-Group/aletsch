@@ -13,6 +13,10 @@ See LICENSE for licensing.
 #include <cassert>
 #include <sstream>
 
+#include "generate.h"
+#include "combine.h"
+#include "decompose.h"
+
 using namespace std;
 
 int main(int argc, const char **argv)
