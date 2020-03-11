@@ -130,7 +130,7 @@ int combined_group::build_similarity(double ratio)
 				if(b == true)
 				{
 					gmap[i].insert(j);
-					vpid.push_back(PID(PI(i, j), r));
+					vpid.push_back(PPID(PI(i, j), r));
 				}
 				else
 				{
@@ -217,7 +217,7 @@ int combined_group::combine_graphs(int max_combined)
 	return 0;
 }
 
-bool compare_graph_similarity(const PID &x, const PID &y)
+bool compare_graph_similarity(const PPID &x, const PPID &y)
 {
 	return x.second > y.second;
 }

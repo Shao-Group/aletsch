@@ -7,7 +7,7 @@
 typedef map< int32_t, set<int> > MISI;
 typedef pair< int32_t, set<int> > PISI;
 typedef pair<int, int> PI;
-typedef pair<PI, double> PID;
+typedef pair<PI, double> PPID;
 typedef map<int, double> MID;
 
 class combined_group
@@ -23,7 +23,7 @@ public:
 
 private:
 	MISI mis;
-	vector<PID> vpid;
+	vector<PPID> vpid;
 
 public:
 	int add_graph(const combined_graph &gr);
@@ -37,6 +37,6 @@ private:
 	int combine_graphs(int max_combined);
 };
 
-bool compare_graph_similarity(const PID &x, const PID &y);
+bool compare_graph_similarity(const PPID &x, const PPID &y);
 
 #endif

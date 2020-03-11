@@ -1,3 +1,9 @@
+#include "filter.h"
+#include "cluster.h"
+#include "meta_config.h"
+#include "scallop.h"
+#include "hyper_graph.h"
+#include "graph_revise.h"
 #include "combine.h"
 #include "generate.h"
 #include "undirected_graph.h"
@@ -71,201 +77,6 @@ int incubator::merge(double ratio)
 	return 0;	
 }
 
-int incubator::binary_merge(const string &file)
-{
-	ifstream fin(file.c_str());
-	if(fin.fail())
-	{
-		printf("cannot open file %s\n", file.c_str());
-		exit(0);
-	}
-
-	vector<string> files;
-
-	char line[102400];
-	while(fin.getline(line, 10240, '\n'))
-	{
-		string s(line);
-		if(s.size() == 0) continue;
-		files.push_back(s);
-	}
-
-	vector<combined_graph> vc;
-	binary_merge(files, 0, files.size(), vc, true);
-
-	fixed.insert(fixed.end(), vc.begin(), vc.end());
-	return 0;
-}
-
-int incubator::binary_merge(const vector<string> &files, int low, int high, vector<combined_graph> &vc, bool last)
-{
-	//printf("binary merge from %d to %d (total = %lu)\n", low, high, files.size());
-	vc.clear();
-
-	if(low >= high) return 0;
-
-	if(low + 1 == high)
-	{
-		string file = files[low];
-		load_single(file, vc);
-		printf("create %lu combined-graphs for file %d (%s)\n", vc.size(), low, files[low].c_str());
-		return 0;
-	}
-
-	int mid = (low + high) / 2;
-
-	vector<combined_graph> vc1;
-	vector<combined_graph> vc2;
-	binary_merge(files, low, mid, vc1, false);
-	binary_merge(files, mid, high, vc2, false);
-
-	int n1 = vc1.size();
-	int n2 = vc2.size();
-
-	vc1.insert(vc1.end(), vc2.begin(), vc2.end());
-
-	merge(vc1, vc, last);
-
-	printf("merge final with %lu <- %d + %d (fixed = %lu) combined-graphs for files [%d, %d]\n", vc.size(), n1, n2, fixed.size(), low, high - 1);
-
-	if(mdir != "" && high - low >= 10)
-	{
-		char file[10240];
-		sprintf(file, "%s/graph-%d-%d.gr", mdir.c_str(), low, high - 1);
-		write(file, true);
-	}
-
-	return 0;
-}
-
-int incubator::merge(const vector<combined_graph> &grset, vector<combined_graph> &vc, bool last)
-{
-	// maintain num_combined
-	vector<int> csize(grset.size(), 0);
-	for(int i = 0; i < grset.size(); i++)
-	{
-		csize[i] = grset[i].num_combined;
-	}
-
-	// disjoint map, maintain clusters
-	vector<int> rank(grset.size(), -1);
-	vector<int> parent(grset.size(), -1);
-
-	disjoint_sets<int*, int*> ds(&rank[0], &parent[0]);
-	for(int k = 0; k < grset.size(); k++)
-	{
-		ds.make_set(k);
-	}
-
-	// maintain the similarity between any two graphs
-	vector< map<int, double> > gmap(grset.size());
-
-	vector<PID> vpid;
-
-	MISI mis;
-	build_splice_map(grset, mis);
-	for(MISI::iterator mi = mis.begin(); mi != mis.end(); mi++)
-	{
-		set<int> &ss = mi->second;
-		vector<int> v(ss.begin(), ss.end());
-		for(int xi = 0; xi < v.size(); xi++)
-		{
-			int i = v[xi];
-			assert(grset[i].num_combined < max_combined);
-			for(int xj = 0; xj < v.size(); xj++)
-			{
-				int j = v[xj];
-				if(i >= j) continue;
-
-				assert(grset[j].num_combined < max_combined);
-
-				if(grset[i].chrm != grset[j].chrm) continue;
-				if(grset[i].strand != grset[j].strand) continue;
-
-				if(gmap[i].find(j) != gmap[i].end()) continue;
-
-				int c = grset[j].get_overlapped_splice_positions(grset[i].splices);
-				if(c <= 1.5) continue;
-
-				/*
-				double r1 = c * 1.0 / grset[i].splices.size();
-				double r2 = c * 1.0 / grset[j].splices.size();
-				double rx = r1 < r2 ? r1 : r2;
-				double ry = r1 > r2 ? r1 : r2;
-				double r = 2 * rx + 0.5 * ry;
-				*/
-
-				// TODO parameter
-				double r = 2.0 * c / (grset[i].splices.size() + grset[j].splices.size());
-				if(last == false && r < 0.8) continue;
-
-				//printf("r1 = %.3lf, r2 = %.3lf, r = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, r, grset[i].splices.size(), grset[j].splices.size());
-
-				gmap[i].insert(pair<int, double>(j, r));
-				vpid.push_back(PID(PI(i, j), r));
-			}
-		}
-	}
-
-	sort(vpid.begin(), vpid.end(), compare_graph_overlap);
-
-	for(int i = 0; i < vpid.size(); i++)
-	{
-		int x = vpid[i].first.first;
-		int y = vpid[i].first.second;
-		double r = vpid[i].second;
-		assert(x < y);
-
-		int px = ds.find_set(x);
-		int py = ds.find_set(y);
-
-		if(px == py) continue;
-		if(csize[px] >= max_combined) continue;
-		if(csize[py] >= max_combined) continue;
-
-		int sum = csize[px] + csize[py]; 
-
-		printf("combine graph %d (#splices = %lu) and %d (#splices = %lu) with score = %.3lf: %d + %d -> %d\n", 
-				x, grset[x].splices.size(), y, grset[y].splices.size(), r, csize[px], csize[py], sum);
-
-		ds.link(px, py);
-		int q = ds.find_set(px);
-		assert(q == ds.find_set(py));
-		assert(q == px || q == py);
-		csize[q] = sum;
-	}
-
-	vector<combined_graph> cc(grset.size());
-	vector<int> pp(grset.size(), -1);
-	for(int i = 0; i < grset.size(); i++)
-	{
-		int p = ds.find_set(i);
-		pp[i] = p;
-		if(p == i) cc[i] = grset[i];
-	}
-
-	for(int i = 0; i < grset.size(); i++)
-	{
-		if(pp[i] == i) continue;
-		int p = pp[i];
-		cc[p].combine(grset[i]);
-	}
-
-	for(int i = 0; i < grset.size(); i++)
-	{
-		if(cc[i].num_combined >= max_combined)
-		{
-			assert(pp[i] == i);
-			fixed.push_back(cc[i]);
-		}
-		else if(i == pp[i])
-		{
-			vc.push_back(cc[i]);
-		}
-	}
-	return 0;
-}
-
 int incubator::write(const string &file, bool headers)
 {
 	ofstream fout(file.c_str());
@@ -307,52 +118,11 @@ int incubator::write(const string &file, bool headers)
 	return 0;
 }
 
-int incubator::build_splice_map(const vector<combined_graph> &grset, MISI &mis)
-{
-	mis.clear();
-	for(int k = 0; k < grset.size(); k++)
-	{
-		for(int i = 0; i < grset[k].splices.size(); i++)
-		{
-			int32_t p = grset[k].splices[i];
-			MISI::iterator it = mis.find(p);
-			if(it == mis.end())
-			{
-				set<int> s;
-				s.insert(k);
-				mis.insert(PISI(p, s));
-			}
-			else
-			{
-				it->second.insert(k);
-			}
-		}
-	}
-	return 0;
-}
-
-int incubator::print()
-{
-	for(int k = 0; k < fixed.size(); k++) fixed[k].print(k);
-	return 0;
-}
-
 int incubator::print_groups()
 {
 	for(int k = 0; k < groups.size(); k++)
 	{
 		printf("group %d (chrm = %s, strand = %c) contains %lu graphs (%lu merged graphs)\n", k, groups[k].chrm.c_str(), groups[k].strand, groups[k].gset.size(), groups[k].mset.size());
-	}
-	return 0;
-}
-
-int incubator::analyze(const string &file)
-{
-	vector<combined_graph> vc;
-	load_single(file, vc);
-	for(int k = 0; k < vc.size(); k++)
-	{
-		vc[k].analyze(k);
 	}
 	return 0;
 }
@@ -425,7 +195,315 @@ int load_single(const string &file, vector<combined_graph> &vc)
 	return 0;
 }
 
-bool compare_graph_overlap(const PID &x, const PID &y)
+int assemble()
 {
-	return x.second > y.second;
+	ifstream fin(graph_file.c_str());
+	if(fin.fail())
+	{
+		printf("could not open file %s\n", graph_file.c_str());
+		exit(0);
+	}
+
+	char line[10240];
+	char gid[10240];
+	char chrm[10240];
+	char mark[1024];
+	char strand[1024];
+	int num_combined;
+
+	ofstream fout(output_file.c_str());
+	if(fout.fail()) return 0;
+
+	map< size_t, vector<transcript> > trsts;
+	boost::asio::thread_pool pool(max_threads); // thread pool
+	mutex mylock;								// lock for trsts
+
+	merged_graph mgraph;
+	vector<merged_graph> children;
+
+	int index = -1;
+	while(fin.getline(line, 10240, '\n'))
+	{
+		if(line[0] != '#') continue;
+		stringstream sstr(line);
+		num_combined = 0;
+		sstr >> mark >> gid >> chrm >> strand >> num_combined;
+
+		//printf("num_combined = %d, index = %d\n", num_combined, index);
+
+		if(index <= 0) 
+		{
+			if(index == 0) 
+			{
+				//assemble(mgraph, children, trsts, mylock);
+				//boost::asio::post(pool, [index]{ test(index); });
+				boost::asio::post(pool, [mgraph, children, &trsts, &mylock]{ assemble(mgraph, children, trsts, mylock); });
+			}
+
+			mgraph.clear();
+			children.clear();
+
+			mgraph.gid = gid;
+
+			if(merge_intersection == true) mgraph.parent = false;
+			else mgraph.parent = true;
+			//mgraph.parent = true;
+
+			mgraph.build(fin, gid, chrm, strand[0], num_combined);
+			index = num_combined;
+			if(index <= 1) index = 0;
+		}
+		else
+		{
+			merged_graph cb;
+			cb.parent = false;
+			cb.build(fin, gid, chrm, strand[0], num_combined);
+			children.push_back(cb);
+			index--;
+		}
+	}
+
+	pool.join();
+
+	boost::asio::thread_pool pool2(max_threads); // thread pool
+
+	typedef map<size_t, vector<transcript> >::iterator MIT;
+	index = 0;
+	for(;;)
+	{
+		if(index >= trsts.size()) break;
+
+		MIT m1 = trsts.begin();
+		std::advance(m1, index);
+		MIT m2 = m1;
+		if(trsts.size() - index <= 1000) 
+		{
+			m2 = trsts.end();
+			index = trsts.size();
+		}
+		else 
+		{
+			std::advance(m2, 1000);
+			index += 1000;
+		}
+
+		boost::asio::post(pool2, [m1, m2, &fout, &mylock]
+				{ 
+					stringstream ss;
+					for(MIT x = m1; x != m2; x++)
+					{
+						vector<transcript> &v = x->second;
+						cluster cs(v);
+						cs.solve();
+
+						filter ft(cs.cct);
+						ft.join_single_exon_transcripts();
+						ft.filter_length_coverage();
+
+						for(int i = 0; i < ft.trs.size(); i++)
+						{
+							transcript &t = ft.trs[i];
+							t.RPKM = 0;
+							t.write(ss);
+						}
+					}
+					mylock.lock();
+					const string &s = ss.str();
+					fout.write(s.c_str(), s.size());
+					ss.str("");
+					mylock.unlock();
+				}
+		);
+	}
+
+	pool2.join();
+
+	fin.close();
+	fout.close();
+	return 0;
+}
+
+int assemble(merged_graph cm, vector<merged_graph> children, map< size_t, vector<transcript> > &trsts, mutex &mylock)
+{
+	//if(cm.num_combined <= 0) return 0;
+
+	int z = 0;
+	map< size_t, vector<transcript> > mt;
+	vector<transcript> vt;
+
+	set<int32_t> ps = cm.get_reliable_splices(min_supporting_samples, 99999);
+	set<int32_t> sb = cm.get_reliable_start_boundaries(min_supporting_samples, 99999);
+	set<int32_t> tb = cm.get_reliable_end_boundaries(min_supporting_samples, 99999);
+	set<int32_t> aj = cm.get_reliable_adjacencies(min_supporting_samples, min_splicing_count);
+	set<PI32> rs = cm.get_reliable_junctions(min_supporting_samples, min_splicing_count);
+
+	cm.solve();
+
+	keep_surviving_edges(cm.gr, min_splicing_count);
+	//keep_surviving_edges(cm.gr, ps, min_splicing_count);
+
+	cm.hs.filter_nodes(cm.gr);
+
+	//cm.hs.print_nodes();
+	//cm.hs.filter();
+
+	//cm.gr.print();
+	//cm.hs.print_nodes();
+
+	string gid = cm.gr.gid;
+	cm.gr.gid = gid + ".0";
+
+	algo = "single";
+	scallop sm(cm.gr, cm.hs);
+
+	//sm.gr.print();
+	//sm.hs.print_nodes();
+
+	sm.assemble();
+
+	//for(int k = 0; k < sm.paths.size(); k++) sm.paths[k].print(k);
+
+
+	for(int k = 0; k < sm.trsts.size(); k++)
+	{
+		transcript &t = sm.trsts[k];
+		t.RPKM = 0;
+		if(t.exons.size() <= 1) continue;
+		z++;
+		index_transcript(mt, t);
+		//t.write(cout);
+		//if(merge_intersection == false || children.size() == 0) index_transcript(trsts, t);
+		if(merge_intersection == false || children.size() == 0)
+		{
+			vt.push_back(t);
+			//mylock.lock();
+			//index_transcript(trsts, t);
+			//mylock.unlock();
+		}
+	}
+
+
+	//printf("--------\n");
+
+	for(int i = 0; i < children.size(); i++)
+	{
+		merged_graph &cb = children[i];
+		cb.solve();
+
+		keep_surviving_edges(cb.gr, ps, min_splicing_count);
+		//filter_graph(cb.gr, ps, aj, sb, tb, min_splicing_count);
+		//keep_surviving(cb.gr, ps, aj, sb, tb, min_splicing_count);
+		//filter_junctions(cb.gr, ps, min_splicing_count);
+		//filter_start_boundaries(cb.gr, sb, min_splicing_count);
+		//filter_end_boundaries(cb.gr, tb, min_splicing_count);
+
+		cb.hs.filter_nodes(cb.gr);
+
+		//cb.hs.print_nodes();
+
+		//cb.build_phasing_paths(cm.paths);
+		//cb.hx.filter_nodes(cb.gr);
+		//cb.hx.filter();
+
+		/*
+		printf("--------------\n");
+		hyper_graph hg(cb.hs.nodes);
+		hg.keep_maximal_nodes();
+		hg.build_overlap_index();
+		hg.print_nodes();
+		hg.print_index();
+		hg.align_paths(cb.hx.nodes);
+		printf("--------------\n\n");
+		*/
+
+		//cb.hs.extend(cb.hx);
+		//cb.hs.filter();
+
+		cb.gr.gid = gid + "." + tostring(i + 1);
+
+		algo = "single";
+		//scallop sc(cb.gr, cb.hs, cb.hx);
+		scallop sc(cb.gr, cb.hs);
+		sc.assemble();
+
+		//for(int k = 0; k < sc.paths.size(); k++) sc.paths[k].print(k);
+
+
+		int z1 = 0;
+		int z2 = 0;
+		for(int k = 0; k < sc.trsts.size(); k++)
+		{
+			transcript &t = sc.trsts[k];
+			t.RPKM = 0;
+			//if(t.exons.size() <= 1) t.write(fout);
+			if(t.exons.size() <= 1) continue;
+
+			//t.write(cout);
+
+			z1++;
+			bool b = query_transcript(mt, t);
+			if(b == false) index_transcript(mt, t);
+			if(b == true) z2++;
+			//if(b == false) 
+			if(b || merge_intersection == false)
+			{
+				vt.push_back(t);
+				//mylock.lock();
+				//index_transcript(trsts, t);
+				//mylock.unlock();
+			}
+		}
+
+		printf("combined-graph %s, %d transcripts, %d child %s, %d -> %d transcripts\n", cm.gid.c_str(), z, i, cb.gr.gid.c_str(), z1, z2);
+	}
+
+	if(vt.size() >= 1)
+	{
+		mylock.lock();
+		for(int k = 0; k < vt.size(); k++)
+		{
+			index_transcript(trsts, vt[k]);
+		}
+		mylock.unlock();
+	}
+
+	//printf("=====\n");
+	return 0;
+}
+
+int index_transcript(map< size_t, vector<transcript> > &mt, const transcript &t)
+{
+	//if(t.exons.size() <= 1) t.write(fout);
+	if(t.exons.size() <= 1) return 0;
+
+	size_t h = t.get_intron_chain_hashing();
+	if(mt.find(h) == mt.end())
+	{
+		vector<transcript> v;
+		v.push_back(t);
+		mt.insert(pair<size_t, vector<transcript> >(h, v));
+	}
+	else
+	{
+		mt[h].push_back(t);
+	}
+	return 0;
+}
+
+bool query_transcript(const map< size_t, vector<transcript> > &mt, const transcript &t)
+{
+	size_t h = t.get_intron_chain_hashing();
+	map< size_t, vector<transcript> >::const_iterator it = mt.find(h);
+	if(it == mt.end()) return false;
+
+	const vector<transcript> &v = it->second;
+	for(int k = 0; k < v.size(); k++)
+	{
+		if(v[k].strand != t.strand) continue;
+		bool b = v[k].intron_chain_match(t);
+		if(b == true) return true;
+	}
+
+	printf("hash fail");
+	return false;
 }

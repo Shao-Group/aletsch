@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 
+#include "combined_graph.h"
 #include "splice_graph.h"
 #include "hyper_set.h"
 #include "config.h"
@@ -50,6 +51,7 @@ public:
 public:
 	int solve();
 	int print(int index);
+	int build(combined_graph &gr);
 	int build(istream &is, const string &gid, const string &chrm, char c, int n);
 	int build_phasing_paths(const vector<PVDI> &px);
 	set<PI32> get_reliable_junctions(int samples, double weight);

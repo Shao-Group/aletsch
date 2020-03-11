@@ -818,6 +818,66 @@ int merged_graph::build_phasing_paths(const vector<PVDI> &px)
 	return 0;
 }
 
+int merged_graph::build(combined_graph &cb)
+{
+	gid = "TODO";
+	chrm = cb.chrm;
+	strand = cb.strand;
+	num_combined = cb.num_combined;
+
+	for(SIMI it = cb.imap.begin(); it != cb.imap.end(); it++)
+	{
+		int32_t l = lower(it->first);
+		int32_t r = upper(it->first);
+		regions.push_back(PPDI(PI32(l, r), DI(it->second, 1)));
+	}
+
+	for(map<int32_t, DI>::iterator it = cb.sbounds.begin(); it != cb.sbounds.end(); it++)
+	{
+		int32_t p = it->first;
+		double w = it->second.first;
+		int c = it->second.second;
+		sbounds.push_back(PIDI(p, DI(w, c)));
+	}
+
+	for(map<int32_t, DI>::iterator it = cb.tbounds.begin(); it != cb.tbounds.end(); it++)
+	{
+		int32_t p = it->first;
+		double w = it->second.first;
+		int c = it->second.second;
+		tbounds.push_back(PIDI(p, DI(w, c)));
+	}
+
+	for(map<PI32, DI>::iterator it = cb.junctions.begin(); it != cb.junctions.end(); it++)
+	{
+		int32_t s = it->first.first;
+		int32_t t = it->first.second;
+		double w = it->second.first;
+		int c = it->second.second;
+
+		if(s >= t) continue;
+		junctions.push_back(PPDI(PI32(s, t), DI(w, c)));
+	}
+
+	for(map<vector<int32_t>, DI>::iterator it = cb.phase.begin(); it != cb.phase.end(); it++)
+	{
+		const vector<int32_t> &vv = it->first;
+		double w = it->second.first;
+		int c = it->second.second;
+		paths.push_back(PVDI(vv, DI(w, c)));
+	}
+
+	for(map<vector<int32_t>, DI>::iterator it = cb.paths.begin(); it != cb.paths.end(); it++)
+	{
+		const vector<int32_t> &vv = it->first;
+		double w = it->second.first;
+		int c = it->second.second;
+		paths.push_back(PVDI(vv, DI(w, c)));
+	}
+
+	return 0;
+}
+
 int merged_graph::build(istream &is, const string &id, const string &ch, char st, int num)
 {
 	gid = id;
