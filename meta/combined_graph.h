@@ -2,6 +2,8 @@
 #define __COMBINER_H__
 
 #include "interval_map.h"
+#include "splice_graph.h"
+#include "hyper_set.h"
 
 typedef pair<int32_t, int32_t> PI32;
 typedef pair<double, int> DI;
@@ -40,6 +42,7 @@ public:
 	PI32 get_bounds();
 	int get_overlapped_splice_positions(const vector<int32_t> &v) const;
 
+	int build(splice_graph &gr, hyper_set &hs);
 	int build(istream &is, const string &chrm, char c);
 	int write(ostream &os, int index, bool headers = false);
 	int write(ostream &os);

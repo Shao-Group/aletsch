@@ -15,15 +15,16 @@ See LICENSE for licensing.
 #include "scallop.h"
 #include "super_graph.h"
 
-generator::generator()
+generator::generator(const string &bamfile, const string &gfile, vector<combined_graph> &v)
+	: vcb(v)
 {
-    sfn = sam_open(input_file.c_str(), "r");
+    sfn = sam_open(bamfile.c_str(), "r");
     hdr = sam_hdr_read(sfn);
     b1t = bam_init1();
 	index = 0;
 	qlen = 0;
 	qcnt = 0;
-	if(graph_file != "") grout.open(graph_file.c_str());
+	//grout.open(gfile.c_str());
 }
 
 generator::~generator()
@@ -31,7 +32,7 @@ generator::~generator()
     bam_destroy1(b1t);
     bam_hdr_destroy(hdr);
     sam_close(sfn);
-	if(graph_file != "") grout.close();
+	//grout.close();
 }
 
 int generator::resolve()
@@ -134,20 +135,21 @@ int generator::generate(const splice_graph &gr0, const hyper_set &hs0)
 	for(int k = 0; k < sg.subs.size(); k++)
 	{
 		string gid = "gene." + tostring(index) + "." + tostring(k);
-		if(fixed_gene_name != "" && gid != fixed_gene_name) continue;
 
-		if(verbose >= 2 && (k == 0 || fixed_gene_name != "")) sg.print();
+		if(verbose >= 2 && k == 0) sg.print();
 
 		splice_graph &gr = sg.subs[k];
-		gr.gid = gid;
 		hyper_set &hs = sg.hss[k];
+		gr.gid = gid;
 
-		if(graph_file != "" && input_file != "" && gr.count_junctions() >= 1)
+		if(gr.count_junctions() >= 1)
 		{
-			write_graph(gr, hs);
+			//write_graph(gr, hs);
+			combined_graph cb;
+			cb.build(gr, hs);
+			vcb.push_back(cb);
 		}
 	}
-
 	return 0;
 }
 

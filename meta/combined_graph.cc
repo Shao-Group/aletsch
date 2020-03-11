@@ -169,6 +169,153 @@ int combined_graph::get_overlapped_splice_positions(const vector<int32_t> &v) co
 	return it - vv.begin();
 }
 
+int combined_graph::build(splice_graph &gr, hyper_set &hs)
+{
+	chrm = gr.chrm;
+	strand = gr.strand;
+	int n = gr.num_vertices() - 1;
+
+	// vertices
+	for(int i = 1; i < n; i++)
+	{
+		double weight = gr.get_vertex_weight(i);
+		vertex_info vi = gr.get_vertex_info(i);
+		imap += make_pair(ROI(vi.lpos, vi.rpos), (int)(weight));
+	}
+
+	// sbound
+	PEEI pei = gr.out_edges(0);
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		int s = (*it)->source(); 
+		int t = (*it)->target();
+		assert(s == 0 && t > s);
+		if(t == n) continue;
+		double w = gr.get_edge_weight(*it);
+		int32_t p = gr.get_vertex_info(t).lpos;
+		int c = 1;
+
+		map<int32_t, DI>::iterator tp = sbounds.find(p);
+		if(tp == sbounds.end()) 
+		{
+			sbounds.insert(pair<int32_t, DI>(p, DI(w, c)));
+		}
+		else 
+		{
+			tp->second.first += w;
+			tp->second.second += c;
+		}
+	}
+
+	// tbound
+	pei = gr.in_edges(n);
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		int s = (*it)->source(); 
+		int t = (*it)->target();
+		assert(t == n);
+		assert(s < t);
+		if(s == 0) continue;
+		double w = gr.get_edge_weight(*it);
+		int32_t p = gr.get_vertex_info(s).rpos;
+		int c = 1;
+
+		map<int32_t, DI>::iterator tp = tbounds.find(p);
+		if(tp == tbounds.end()) 
+		{
+			tbounds.insert(pair<int32_t, DI>(p, DI(w, c)));
+		}
+		else 
+		{
+			tp->second.first += w;
+			tp->second.second += c;
+		}
+	}
+
+	// junctions
+	pei = gr.edges();
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		int s = (*it)->source(); 
+		int t = (*it)->target();
+		assert(s < t);
+		if(s == 0) continue;
+		if(t == n) continue;
+		double w = gr.get_edge_weight(*it);
+		int32_t p1 = gr.get_vertex_info(s).rpos;
+		int32_t p2 = gr.get_vertex_info(t).lpos;
+		int c = 1;
+		if(p1 >= p2) continue;
+
+		PI32 p(p1, p2);
+		map<PI32, DI>::iterator tp = junctions.find(p);
+		if(tp == junctions.end()) 
+		{
+			junctions.insert(pair<PI32, DI>(p, DI(w, c)));
+		}
+		else 
+		{
+			tp->second.first += w;
+			tp->second.second += c;
+		}
+	}
+
+	// phasing paths
+	for(MVII::const_iterator it = hs.nodes.begin(); it != hs.nodes.end(); it++)
+	{
+		const vector<int> &v = it->first;
+		int w = it->second;
+		int c = 1;
+
+		if(v.size() <= 0) continue;
+		vector<int32_t> vv;
+		int32_t pre = -9999;
+
+		if(v.front() == 0) vv.push_back(-1);
+		if(v.front() == 0) vv.push_back(-1);
+
+		for(int i = 0; i < v.size(); i++)
+		{
+			int p = v[i];
+
+			if(p == 0) continue;
+			if(p == n) continue;
+
+			int32_t pp = gr.get_vertex_info(p).lpos;
+			int32_t qq = gr.get_vertex_info(p).rpos;
+
+			if(pp == pre) 
+			{
+				pre = qq;
+				continue;
+			}
+
+			if(pre >= 0) vv.push_back(pre);
+			vv.push_back(pp);
+
+			pre = qq;
+		}
+
+		if(pre >= 0) vv.push_back(pre);
+		if(v.back() == n) vv.push_back(-2);
+		if(v.back() == n) vv.push_back(-2);
+
+		map<vector<int32_t>, DI>::iterator tp = phase.find(vv);
+
+		if(tp == phase.end()) 
+		{
+			phase.insert(pair<vector<int32_t>, DI>(vv, DI(w, c)));
+		}
+		else 
+		{
+			tp->second.first += w;
+			tp->second.second += c;
+		}
+	}
+
+	return 0;
+}
+
 int combined_graph::build(istream &is, const string &ch, char st)
 {
 	chrm = ch;

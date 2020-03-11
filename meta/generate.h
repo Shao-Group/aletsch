@@ -13,13 +13,14 @@ See LICENSE for licensing.
 #include "bundle.h"
 #include "splice_graph.h"
 #include "hyper_set.h"
+#include "combined_graph.h"
 
 using namespace std;
 
 class generator
 {
 public:
-	generator();
+	generator(const string &bamfile, const string &gfile, vector<combined_graph> &cbv);
 	~generator();
 
 private:
@@ -31,6 +32,8 @@ private:
 	vector<bundle_base> pool;
 
 	ofstream grout;
+	vector<combined_graph> &vcb;
+
 	int index;
 	int qcnt;
 	double qlen;

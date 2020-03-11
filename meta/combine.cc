@@ -1,4 +1,5 @@
 #include "combine.h"
+#include "generate.h"
 #include "undirected_graph.h"
 #include "boost/pending/disjoint_sets.hpp"
 #include <fstream>
@@ -362,7 +363,9 @@ int load_multiple(const vector<string> &files, vector<combined_group> &gv, mutex
 	for(int k = 0; k < files.size(); k++) 
 	{
 		//printf("load file %s\n", files[k].c_str());
-		load_single(files[k], v);
+		//load_single(files[k], v);
+		generator gt(files[k], "", v);
+		gt.resolve();
 	}
 
 	mylock.lock();
