@@ -37,7 +37,7 @@ public:
 int load_multiple(const vector<string> &files, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &g2g);
 int load_single(const string &file, vector<combined_graph> &vc);
 
-int assemble_single(combined_graph &cb, map< size_t, vector<transcript> > &trsts, mutex &mylock);
+int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock);
 int index_transcript(map< size_t, vector<transcript> > &mt, const transcript &t);
 bool query_transcript(const map< size_t, vector<transcript> > &mt, const transcript &t);
 

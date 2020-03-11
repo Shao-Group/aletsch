@@ -6,7 +6,6 @@
 #include "scallop.h"
 #include "hyper_graph.h"
 #include "graph_revise.h"
-#include "undirected_graph.h"
 #include "boost/pending/disjoint_sets.hpp"
 #include <fstream>
 #include <sstream>
@@ -80,12 +79,14 @@ int incubator::assemble()
 	boost::asio::thread_pool pool(max_threads); // thread pool
 	mutex mylock;								// lock for trsts
 
+	int instance = 0;
 	for(int i = 0; i < groups.size(); i++)
 	{
 		for(int k = 0; k < groups[i].mset.size(); k++)
 		{
 			combined_graph &cb = groups[i].mset[k];
-			boost::asio::post(pool, [&cb, this, &mylock]{ assemble_single(cb, this->trsts, mylock); });
+			boost::asio::post(pool, [&cb, this, instance, &mylock]{ assemble_single(cb, instance, this->trsts, mylock); });
+			instance++;
 		}
 	}
 	pool.join();
@@ -168,28 +169,15 @@ int incubator::write(const string &file, bool headers)
 		os += groups[k].mset.size();
 	}
 
-	mutex mylock;								// lock for trsts
 	boost::asio::thread_pool pool(max_threads); // thread pool
+	mutex mylock;								// lock for trsts
 	for(int k = 0; k < groups.size(); k++)
 	{
 		combined_group &gp = groups[k];
 		int os = offset[k];
 		boost::asio::post(pool, [&gp, &fout, &mylock, os]{ gp.write(mylock, fout, os); });
 	}
-
 	pool.join();
-
-
-	/*
-	int index = 0;
-	for(int k = 0; k < groups.size(); k++)
-	{
-		for(int j = 0; j < groups[k].mset.size(); j++)
-		{
-			groups[k].mset[j].write(fout, index++, headers);
-		}
-	}
-	*/
 
 	fout.flush();
 	fout.close();
@@ -273,17 +261,20 @@ int load_single(const string &file, vector<combined_graph> &vc)
 	return 0;
 }
 
-int assemble_single(combined_graph &cb, map< size_t, vector<transcript> > &trsts, mutex &mylock)
+int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock)
 {
+	char name[10240];
+	sprintf(name, "instance.%d.0", instance);
 	merged_graph cm;
-	cm.build(cb);
+	cm.build(cb, name);
 	if(merge_intersection == true) cm.parent = false;
 	else cm.parent = true;
 
 	vector<merged_graph> children(cb.children.size());
 	for(int j = 0; j < cb.children.size(); j++)
 	{
-		children[j].build(cb.children[j]);
+		sprintf(name, "instance.%d.%d", instance, j + 1);
+		children[j].build(cb.children[j], name);
 		children[j].parent = false;
 	}
 
@@ -343,7 +334,6 @@ int assemble_single(combined_graph &cb, map< size_t, vector<transcript> > &trsts
 			//mylock.unlock();
 		}
 	}
-
 
 	//printf("--------\n");
 

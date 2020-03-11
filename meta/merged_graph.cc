@@ -818,9 +818,9 @@ int merged_graph::build_phasing_paths(const vector<PVDI> &px)
 	return 0;
 }
 
-int merged_graph::build(combined_graph &cb)
+int merged_graph::build(combined_graph &cb, string s)
 {
-	gid = "TODO";
+	gid = s;
 	chrm = cb.chrm;
 	strand = cb.strand;
 	num_combined = cb.num_combined;
