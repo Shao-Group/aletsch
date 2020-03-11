@@ -73,6 +73,5 @@ AC_CONFIG_FILES([Makefile
 				 lib/gtf/Makefile
 				 lib/graph/Makefile
 				 scallop/Makefile
-				 merge/Makefile
 				 meta/Makefile])
 AC_OUTPUT
