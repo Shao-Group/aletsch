@@ -1,95 +1,107 @@
+#include "incubator.h"
+#include "generator.h"
 #include "filter.h"
 #include "cluster.h"
 #include "meta_config.h"
 #include "scallop.h"
-#include "merged_graph.h"
 #include "hyper_graph.h"
 #include "graph_revise.h"
-#include "decompose.h"
-
+#include "undirected_graph.h"
+#include "boost/pending/disjoint_sets.hpp"
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <algorithm>
-#include <string>
-#include <mutex>
+#include <thread>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/asio/post.hpp>
 
-int assemble()
+incubator::incubator()
 {
-	ifstream fin(graph_file.c_str());
+	g2g.resize(3);
+}
+
+int incubator::load(const string &file)
+{
+	ifstream fin(file.c_str());
 	if(fin.fail())
 	{
-		printf("could not open file %s\n", graph_file.c_str());
+		printf("cannot open file %s\n", file.c_str());
 		exit(0);
 	}
 
-	char line[10240];
-	char gid[10240];
-	char chrm[10240];
-	char mark[1024];
-	char strand[1024];
-	int num_combined;
+	vector< vector<string> > files(max_threads);
 
-	ofstream fout(output_file.c_str());
-	if(fout.fail()) return 0;
-
-	map< size_t, vector<transcript> > trsts;
-	boost::asio::thread_pool pool(max_threads); // thread pool
-	mutex mylock;								// lock for trsts
-
-	merged_graph mgraph;
-	vector<merged_graph> children;
-
-	int index = -1;
+	char line[102400];
+	int index = 0;
 	while(fin.getline(line, 10240, '\n'))
 	{
-		if(line[0] != '#') continue;
-		stringstream sstr(line);
-		num_combined = 0;
-		sstr >> mark >> gid >> chrm >> strand >> num_combined;
+		string s(line);
+		if(s.size() == 0) continue;
+		int k = index % max_threads;
+		files[k].push_back(s);
+		index++;
+	}
 
-		//printf("num_combined = %d, index = %d\n", num_combined, index);
+	mutex mylock;								// lock for trsts
+	vector<thread> threads;
+	for(int k = 0; k < files.size(); k++)
+	{
+		printf("thread %d processes %lu files\n", k, files[k].size());
+		threads.emplace_back(load_multiple, files[k], std::ref(groups), std::ref(mylock), std::ref(g2g));
+	}
+	for(int k = 0; k < threads.size(); k++)
+	{
+		threads[k].join();
+	}
 
-		if(index <= 0) 
-		{
-			if(index == 0) 
-			{
-				//assemble(mgraph, children, trsts, mylock);
-				//boost::asio::post(pool, [index]{ test(index); });
-				boost::asio::post(pool, [mgraph, children, &trsts, &mylock]{ assemble(mgraph, children, trsts, mylock); });
-			}
+	print_groups();
+	return 0;
+}
 
-			mgraph.clear();
-			children.clear();
+int incubator::merge(double ratio)
+{
+	boost::asio::thread_pool pool(max_threads); // thread pool
 
-			mgraph.gid = gid;
-
-			if(merge_intersection == true) mgraph.parent = false;
-			else mgraph.parent = true;
-			//mgraph.parent = true;
-
-			mgraph.build(fin, gid, chrm, strand[0], num_combined);
-			index = num_combined;
-			if(index <= 1) index = 0;
-		}
-		else
-		{
-			merged_graph cb;
-			cb.parent = false;
-			cb.build(fin, gid, chrm, strand[0], num_combined);
-			children.push_back(cb);
-			index--;
-		}
+	for(int k = 0; k < groups.size(); k++)
+	{
+		combined_group &gp = groups[k];
+		boost::asio::post(pool, [&gp, ratio]{ gp.resolve(ratio); });
 	}
 
 	pool.join();
+	print_groups();
 
-	boost::asio::thread_pool pool2(max_threads); // thread pool
+	return 0;	
+}
+
+int incubator::assemble()
+{
+	boost::asio::thread_pool pool(max_threads); // thread pool
+	mutex mylock;								// lock for trsts
+
+	for(int i = 0; i < groups.size(); i++)
+	{
+		for(int k = 0; k < groups[i].mset.size(); k++)
+		{
+			combined_graph &cb = groups[i].mset[k];
+			boost::asio::post(pool, [&cb, this, &mylock]{ assemble_single(cb, this->trsts, mylock); });
+		}
+	}
+	pool.join();
+	return 0;
+}
+
+int incubator::postprocess()
+{
+	ofstream fout(output_file.c_str());
+	if(fout.fail()) return 0;
+
+	boost::asio::thread_pool pool(max_threads); // thread pool
+	mutex mylock;								// lock for trsts
 
 	typedef map<size_t, vector<transcript> >::iterator MIT;
-	index = 0;
+	int index = 0;
 	for(;;)
 	{
 		if(index >= trsts.size()) break;
@@ -108,7 +120,7 @@ int assemble()
 			index += 1000;
 		}
 
-		boost::asio::post(pool2, [m1, m2, &fout, &mylock]
+		boost::asio::post(pool, [m1, m2, &fout, &mylock]
 				{ 
 					stringstream ss;
 					for(MIT x = m1; x != m2; x++)
@@ -137,15 +149,144 @@ int assemble()
 		);
 	}
 
-	pool2.join();
-
-	fin.close();
+	pool.join();
 	fout.close();
 	return 0;
 }
 
-int assemble(merged_graph cm, vector<merged_graph> children, map< size_t, vector<transcript> > &trsts, mutex &mylock)
+
+int incubator::write(const string &file, bool headers)
 {
+	ofstream fout(file.c_str());
+	if(fout.fail()) exit(1);
+
+	int os = 0;
+	vector<int> offset;
+	for(int k = 0; k < groups.size(); k++)
+	{
+		offset.push_back(os);
+		os += groups[k].mset.size();
+	}
+
+	mutex mylock;								// lock for trsts
+	boost::asio::thread_pool pool(max_threads); // thread pool
+	for(int k = 0; k < groups.size(); k++)
+	{
+		combined_group &gp = groups[k];
+		int os = offset[k];
+		boost::asio::post(pool, [&gp, &fout, &mylock, os]{ gp.write(mylock, fout, os); });
+	}
+
+	pool.join();
+
+
+	/*
+	int index = 0;
+	for(int k = 0; k < groups.size(); k++)
+	{
+		for(int j = 0; j < groups[k].mset.size(); j++)
+		{
+			groups[k].mset[j].write(fout, index++, headers);
+		}
+	}
+	*/
+
+	fout.flush();
+	fout.close();
+	return 0;
+}
+
+int incubator::print_groups()
+{
+	for(int k = 0; k < groups.size(); k++)
+	{
+		printf("group %d (chrm = %s, strand = %c) contains %lu graphs (%lu merged graphs)\n", k, groups[k].chrm.c_str(), groups[k].strand, groups[k].gset.size(), groups[k].mset.size());
+	}
+	return 0;
+}
+
+int load_multiple(const vector<string> &files, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &m)
+{	
+	vector<combined_graph> v;
+	for(int k = 0; k < files.size(); k++) 
+	{
+		//printf("load file %s\n", files[k].c_str());
+		//load_single(files[k], v);
+		generator gt(files[k], "", v);
+		gt.resolve();
+	}
+
+	mylock.lock();
+	for(int k = 0; k < v.size(); k++)
+	{
+		string chrm = v[k].chrm;
+		char c = v[k].strand;
+		int s = 0;
+		if(c == '+') s = 1;
+		if(c == '-') s = 2;
+		if(m[s].find(chrm) == m[s].end())
+		{
+			combined_group gp(chrm, c);
+			gp.add_graph(v[k]);
+			m[s].insert(pair<string, int>(chrm, gv.size()));
+			gv.push_back(gp);
+		}
+		else
+		{
+			gv[m[s][chrm]].add_graph(v[k]);
+		}
+	}
+	mylock.unlock();
+	return 0;
+}
+
+int load_single(const string &file, vector<combined_graph> &vc)
+{
+	ifstream fin(file.c_str());
+	if(fin.fail())
+	{
+		printf("could not load file %s\n", file.c_str());
+		exit(0);
+	}
+
+	char line[10240];
+	char gid[10240];
+	char chrm[10240];
+	char tmp[1024];
+	char strand[1024];
+	int nodes;
+
+	while(fin.getline(line, 10240, '\n'))
+	{
+		if(line[0] != '#') continue;
+		stringstream sstr(line);
+		sstr >> tmp >> gid >> chrm >> strand;
+
+		combined_graph gr(line);
+		gr.build(fin, chrm, strand[0]);
+		vc.push_back(gr);
+	}
+
+	printf("loaded graphs in file %s\n", file.c_str());
+
+	fin.close();
+	return 0;
+}
+
+int assemble_single(combined_graph &cb, map< size_t, vector<transcript> > &trsts, mutex &mylock)
+{
+	merged_graph cm;
+	cm.build(cb);
+	if(merge_intersection == true) cm.parent = false;
+	else cm.parent = true;
+
+	vector<merged_graph> children(cb.children.size());
+	for(int j = 0; j < cb.children.size(); j++)
+	{
+		children[j].build(cb.children[j]);
+		children[j].parent = false;
+	}
+
 	//if(cm.num_combined <= 0) return 0;
 
 	int z = 0;

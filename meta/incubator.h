@@ -1,5 +1,5 @@
-#ifndef __MERGER_H__
-#define __MERGER_H__
+#ifndef __INCUBATOR_H__
+#define __INCUBATOR_H__
 
 #include "splice_graph.h"
 #include "interval_map.h"
@@ -42,4 +42,3 @@ int index_transcript(map< size_t, vector<transcript> > &mt, const transcript &t)
 bool query_transcript(const map< size_t, vector<transcript> > &mt, const transcript &t);
 
 #endif
-

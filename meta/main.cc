@@ -13,9 +13,8 @@ See LICENSE for licensing.
 #include <cassert>
 #include <sstream>
 
-#include "generate.h"
-#include "combine.h"
-#include "decompose.h"
+#include "generator.h"
+#include "incubator.h"
 
 using namespace std;
 
