@@ -19,18 +19,18 @@ public:
 	incubator(int m, int t);
 
 public:
-	vector<combined_group> groups;			// graph groups
-	vector< map<string, int> > g2g;
+	vector<combined_group> groups;				// graph groups
+	vector< map<string, int> > g2g;				// gene map
+	map< size_t, vector<transcript> > trsts;	// assembled transcripts
 
-	vector<combined_graph> fixed;			// fixed set of graphs
-	int max_combined;						// parameter
-	string mdir;							// output dir
-	int max_threads;
+	int max_combined;							// parameter
+	int max_threads;							// parameter
 
 public:
-	// multiple-thread load
 	int load(const string &file);
 	int merge(double merge_ratio);
+	int assemble();
+	int postprocess();
 
 	// write and print
 	int write(const string &file, bool headers = false);
@@ -40,8 +40,7 @@ public:
 int load_multiple(const vector<string> &files, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &g2g);
 int load_single(const string &file, vector<combined_graph> &vc);
 
-int assemble();
-int assemble(merged_graph cm, vector<merged_graph> children, map< size_t, vector<transcript> > &trsts, mutex &mylock);
+int assemble_single(combined_graph &cb, map< size_t, vector<transcript> > &trsts, mutex &mylock);
 int index_transcript(map< size_t, vector<transcript> > &mt, const transcript &t);
 bool query_transcript(const map< size_t, vector<transcript> > &mt, const transcript &t);
 

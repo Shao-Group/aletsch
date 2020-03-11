@@ -77,6 +77,86 @@ int incubator::merge(double ratio)
 	return 0;	
 }
 
+int incubator::assemble()
+{
+	boost::asio::thread_pool pool(max_threads); // thread pool
+	mutex mylock;								// lock for trsts
+
+	for(int i = 0; i < groups.size(); i++)
+	{
+		for(int k = 0; k < groups[i].mset.size(); k++)
+		{
+			combined_graph &cb = groups[i].mset[k];
+			boost::asio::post(pool, [&cb, this, &mylock]{ assemble_single(cb, this->trsts, mylock); });
+		}
+	}
+	pool.join();
+	return 0;
+}
+
+int incubator::postprocess()
+{
+	ofstream fout(output_file.c_str());
+	if(fout.fail()) return 0;
+
+	boost::asio::thread_pool pool(max_threads); // thread pool
+	mutex mylock;								// lock for trsts
+
+	typedef map<size_t, vector<transcript> >::iterator MIT;
+	int index = 0;
+	for(;;)
+	{
+		if(index >= trsts.size()) break;
+
+		MIT m1 = trsts.begin();
+		std::advance(m1, index);
+		MIT m2 = m1;
+		if(trsts.size() - index <= 1000) 
+		{
+			m2 = trsts.end();
+			index = trsts.size();
+		}
+		else 
+		{
+			std::advance(m2, 1000);
+			index += 1000;
+		}
+
+		boost::asio::post(pool, [m1, m2, &fout, &mylock]
+				{ 
+					stringstream ss;
+					for(MIT x = m1; x != m2; x++)
+					{
+						vector<transcript> &v = x->second;
+						cluster cs(v);
+						cs.solve();
+
+						filter ft(cs.cct);
+						ft.join_single_exon_transcripts();
+						ft.filter_length_coverage();
+
+						for(int i = 0; i < ft.trs.size(); i++)
+						{
+							transcript &t = ft.trs[i];
+							t.RPKM = 0;
+							t.write(ss);
+						}
+					}
+					mylock.lock();
+					const string &s = ss.str();
+					fout.write(s.c_str(), s.size());
+					ss.str("");
+					mylock.unlock();
+				}
+		);
+	}
+
+	pool.join();
+	fout.close();
+	return 0;
+}
+
+
 int incubator::write(const string &file, bool headers)
 {
 	ofstream fout(file.c_str());
@@ -195,136 +275,20 @@ int load_single(const string &file, vector<combined_graph> &vc)
 	return 0;
 }
 
-int assemble()
+int assemble_single(combined_graph &cb, map< size_t, vector<transcript> > &trsts, mutex &mylock)
 {
-	ifstream fin(graph_file.c_str());
-	if(fin.fail())
+	merged_graph cm;
+	cm.build(cb);
+	if(merge_intersection == true) cm.parent = false;
+	else cm.parent = true;
+
+	vector<merged_graph> children(cb.children.size());
+	for(int j = 0; j < cb.children.size(); j++)
 	{
-		printf("could not open file %s\n", graph_file.c_str());
-		exit(0);
+		children[j].build(cb.children[j]);
+		children[j].parent = false;
 	}
 
-	char line[10240];
-	char gid[10240];
-	char chrm[10240];
-	char mark[1024];
-	char strand[1024];
-	int num_combined;
-
-	ofstream fout(output_file.c_str());
-	if(fout.fail()) return 0;
-
-	map< size_t, vector<transcript> > trsts;
-	boost::asio::thread_pool pool(max_threads); // thread pool
-	mutex mylock;								// lock for trsts
-
-	merged_graph mgraph;
-	vector<merged_graph> children;
-
-	int index = -1;
-	while(fin.getline(line, 10240, '\n'))
-	{
-		if(line[0] != '#') continue;
-		stringstream sstr(line);
-		num_combined = 0;
-		sstr >> mark >> gid >> chrm >> strand >> num_combined;
-
-		//printf("num_combined = %d, index = %d\n", num_combined, index);
-
-		if(index <= 0) 
-		{
-			if(index == 0) 
-			{
-				//assemble(mgraph, children, trsts, mylock);
-				//boost::asio::post(pool, [index]{ test(index); });
-				boost::asio::post(pool, [mgraph, children, &trsts, &mylock]{ assemble(mgraph, children, trsts, mylock); });
-			}
-
-			mgraph.clear();
-			children.clear();
-
-			mgraph.gid = gid;
-
-			if(merge_intersection == true) mgraph.parent = false;
-			else mgraph.parent = true;
-			//mgraph.parent = true;
-
-			mgraph.build(fin, gid, chrm, strand[0], num_combined);
-			index = num_combined;
-			if(index <= 1) index = 0;
-		}
-		else
-		{
-			merged_graph cb;
-			cb.parent = false;
-			cb.build(fin, gid, chrm, strand[0], num_combined);
-			children.push_back(cb);
-			index--;
-		}
-	}
-
-	pool.join();
-
-	boost::asio::thread_pool pool2(max_threads); // thread pool
-
-	typedef map<size_t, vector<transcript> >::iterator MIT;
-	index = 0;
-	for(;;)
-	{
-		if(index >= trsts.size()) break;
-
-		MIT m1 = trsts.begin();
-		std::advance(m1, index);
-		MIT m2 = m1;
-		if(trsts.size() - index <= 1000) 
-		{
-			m2 = trsts.end();
-			index = trsts.size();
-		}
-		else 
-		{
-			std::advance(m2, 1000);
-			index += 1000;
-		}
-
-		boost::asio::post(pool2, [m1, m2, &fout, &mylock]
-				{ 
-					stringstream ss;
-					for(MIT x = m1; x != m2; x++)
-					{
-						vector<transcript> &v = x->second;
-						cluster cs(v);
-						cs.solve();
-
-						filter ft(cs.cct);
-						ft.join_single_exon_transcripts();
-						ft.filter_length_coverage();
-
-						for(int i = 0; i < ft.trs.size(); i++)
-						{
-							transcript &t = ft.trs[i];
-							t.RPKM = 0;
-							t.write(ss);
-						}
-					}
-					mylock.lock();
-					const string &s = ss.str();
-					fout.write(s.c_str(), s.size());
-					ss.str("");
-					mylock.unlock();
-				}
-		);
-	}
-
-	pool2.join();
-
-	fin.close();
-	fout.close();
-	return 0;
-}
-
-int assemble(merged_graph cm, vector<merged_graph> children, map< size_t, vector<transcript> > &trsts, mutex &mylock)
-{
 	//if(cm.num_combined <= 0) return 0;
 
 	int z = 0;
