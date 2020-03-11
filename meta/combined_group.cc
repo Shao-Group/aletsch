@@ -2,6 +2,7 @@
 #include <sstream>
 #include <fstream>
 #include "combined_group.h"
+#include "meta_config.h"
 #include "boost/pending/disjoint_sets.hpp"
 
 combined_group::combined_group(string c, char s)
@@ -17,11 +18,11 @@ int combined_group::add_graph(const combined_graph &gr)
 	return 0;
 }
 
-int combined_group::resolve(int max_combined, double ratio)
+int combined_group::resolve(double ratio)
 {
 	build_splice_map();
 	build_similarity(ratio);
-	combine_graphs(max_combined);
+	combine_graphs();
 	stats();
 	return 0;
 }
@@ -143,7 +144,7 @@ int combined_group::build_similarity(double ratio)
 	return 0;
 }
 
-int combined_group::combine_graphs(int max_combined)
+int combined_group::combine_graphs()
 {
 	// maintain num_combined
 	vector<int> csize(gset.size(), 0);

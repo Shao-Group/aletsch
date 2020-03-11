@@ -16,10 +16,8 @@
 #include <boost/asio/thread_pool.hpp>
 #include <boost/asio/post.hpp>
 
-incubator::incubator(int m, int t)
+incubator::incubator()
 {
-	max_threads = t;
-	max_combined = m;
 	g2g.resize(3);
 }
 
@@ -68,7 +66,7 @@ int incubator::merge(double ratio)
 	for(int k = 0; k < groups.size(); k++)
 	{
 		combined_group &gp = groups[k];
-		boost::asio::post(pool, [&gp, this, ratio]{ gp.resolve(this->max_combined, ratio); });
+		boost::asio::post(pool, [&gp, ratio]{ gp.resolve(ratio); });
 	}
 
 	pool.join();

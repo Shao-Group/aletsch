@@ -16,15 +16,12 @@ typedef pair<int, int> PI;
 class incubator
 {
 public:
-	incubator(int m, int t);
+	incubator();
 
 public:
 	vector<combined_group> groups;				// graph groups
-	vector< map<string, int> > g2g;				// gene map
+	vector< map<string, int> > g2g;				// group map
 	map< size_t, vector<transcript> > trsts;	// assembled transcripts
-
-	int max_combined;							// parameter
-	int max_threads;							// parameter
 
 public:
 	int load(const string &file);

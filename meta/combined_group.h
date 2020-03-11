@@ -27,14 +27,14 @@ private:
 
 public:
 	int add_graph(const combined_graph &gr);
-	int resolve(int max_combined, double ratio);
+	int resolve(double ratio);
 	int write(mutex &mylock, ofstream &fout, int offset);
 	int stats();
 
 private:
 	int build_splice_map();
 	int build_similarity(double ratio);
-	int combine_graphs(int max_combined);
+	int combine_graphs();
 };
 
 bool compare_graph_similarity(const PPID &x, const PPID &y);

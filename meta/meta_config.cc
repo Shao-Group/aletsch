@@ -22,6 +22,7 @@ int32_t max_group_boundary_distance = 10000;
 double max_group_junction_distance = 100;
 bool merge_intersection = false;
 int max_threads = 10;
+int max_combined = 100;
 
 int meta_verbose = 0;
 string meta_version = "0.1.0";
