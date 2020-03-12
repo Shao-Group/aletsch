@@ -5,6 +5,7 @@ See LICENSE for licensing.
 */
 
 #include "config.h"
+#include "constants.h"
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -14,77 +15,82 @@ See LICENSE for licensing.
 
 using namespace std;
 
-//// parameters
-// for bam file and reads
-int min_flank_length = 3;
-int max_num_cigar = 100;
-int max_edit_distance = 10;
-int32_t min_bundle_gap = 50;
-int min_num_hits_in_bundle = 20;
-uint32_t min_mapping_quality = 1;
-bool use_second_alignment = false;
-bool uniquely_mapped_only = false;
-int library_type = EMPTY;
-int min_splice_boundary_hits = 1;
+config::config()
+{
+	// for bam file and reads
+	min_flank_length = 3;
+	max_num_cigar = 100;
+	max_edit_distance = 10;
+	min_bundle_gap = 50;
+	min_num_hits_in_bundle = 20;
+	min_mapping_quality = 1;
+	use_second_alignment = false;
+	uniquely_mapped_only = false;
+	library_type = EMPTY;
+	min_splice_boundary_hits = 1;
+	
+	// for clustering
+	max_cluster_boundary_distance = 10000;
+	max_cluster_intron_distance = 5;
+	min_cluster_single_exon_ratio = 0.8;
+	
+	// for preview
+	max_preview_reads = 2000000;
+	max_preview_spliced_reads = 50000;
+	min_preview_spliced_reads = 10000;
+	preview_infer_ratio = 0.95;
+	preview_only = false;
+	
+	// for identifying subgraphs
+	min_subregion_gap = 3;
+	min_subregion_overlap = 1.5;
+	min_subregion_length = 15;
+	
+	// for revising/decomposing splice graph
+	max_intron_contamination_coverage = 2.0;
+	min_surviving_edge_weight = 1.5;
+	max_decompose_error_ratio[0] = 0.33;
+	max_decompose_error_ratio[1] = 0.05;
+	max_decompose_error_ratio[2] = 0.00;
+	max_decompose_error_ratio[3] = 0.25;
+	max_decompose_error_ratio[4] = 0.30;
+	max_decompose_error_ratio[5] = 0.00;
+	max_decompose_error_ratio[6] = 1.10;
+	
+	// for selecting paths
+	min_transcript_coverage = 1.01;
+	min_transcript_coverage_ratio = 0.005;
+	min_single_exon_coverage = 20;
+	min_transcript_numreads = 20;
+	min_transcript_length_base = 150;
+	min_transcript_length_increase = 50;
+	min_exon_length = 20;
+	max_num_exons = 10000;
+	
+	// for subsetsum and router
+	max_dp_table_size = 10000;
+	min_router_count = 1;
+	
+	// for simulation
+	simulation_num_vertices = 0;
+	simulation_num_edges = 0;
+	simulation_max_edge_weight = 0;
+	
+	// input and output
+	algo = "scallop";
+	input_file = "";
+	graph_file = "";
+	output_file = "";
+	
+	// for controling
+	output_tex_files = false;
+	fixed_gene_name = "";
+	batch_bundle_size = 100;
+	version = "v0.10.4";
+	verbose = 1;
+}
 
-// for clustering
-int32_t max_cluster_boundary_distance = 10000;
-int32_t max_cluster_intron_distance = 5;
-double min_cluster_single_exon_ratio = 0.8;
-
-// for preview
-int max_preview_reads = 2000000;
-int max_preview_spliced_reads = 50000;
-int min_preview_spliced_reads = 10000;
-double preview_infer_ratio = 0.95;
-bool preview_only = false;
-
-// for identifying subgraphs
-int32_t min_subregion_gap = 3;
-double min_subregion_overlap = 1.5;
-int32_t min_subregion_length = 15;
-
-// for revising/decomposing splice graph
-double max_intron_contamination_coverage = 2.0;
-double min_surviving_edge_weight = 1.5;
-double max_decompose_error_ratio[7] = {0.33, 0.05, 0.0, 0.25, 0.30, 0.0, 1.1};
-
-// for selecting paths
-double min_transcript_coverage = 1.01;
-double min_transcript_coverage_ratio = 0.005;
-double min_single_exon_coverage = 20;
-double min_transcript_numreads = 20;
-int min_transcript_length_base = 150;
-int min_transcript_length_increase = 50;
-int min_exon_length = 20;
-int max_num_exons = 10000;
-
-// for subsetsum and router
-int max_dp_table_size = 10000;
-int min_router_count = 1;
-
-// for simulation
-int simulation_num_vertices = 0;
-int simulation_num_edges = 0;
-int simulation_max_edge_weight = 0;
-
-// input and output
-string algo = "scallop";
-string input_file;
-string graph_file;
-string ref_file;
-string ref_file1;
-string ref_file2;
-string output_file;
-
-// for controling
-bool output_tex_files = false;
-string fixed_gene_name = "";
-int batch_bundle_size = 100;
-int verbose = 1;
-string version = "v0.10.4";
-
-int parse_arguments(int argc, const char ** argv)
+int config::parse_arguments(int argc, const char ** argv)
 {
 	for(int i = 1; i < argc; i++)
 	{
@@ -111,21 +117,6 @@ int parse_arguments(int argc, const char ** argv)
 			algo = string(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "-r")
-		{
-			ref_file = string(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "-r1")
-		{
-			ref_file1 = string(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "-r2")
-		{
-			ref_file2 = string(argv[i + 1]);
-			i++;
-		}
 		else if(string(argv[i]) == "-g")
 		{
 			fixed_gene_name = string(argv[i + 1]);
@@ -149,10 +140,6 @@ int parse_arguments(int argc, const char ** argv)
 			printf("\n");
 			print_logo();
 			exit(0);
-		}
-		else if(string(argv[i]) == "--merge_intersection")
-		{
-			merge_intersection = true;
 		}
 		else if(string(argv[i]) == "--min_flank_length")
 		{
@@ -364,92 +351,10 @@ int parse_arguments(int argc, const char ** argv)
 		min_surviving_edge_weight = 0.1 + min_transcript_coverage;
 	}
 
-	// verify arguments
-	/*
-	if(input_file == "")
-	{
-		printf("error: input-file is missing.\n");
-		exit(0);
-	}
-
-	if(output_file == "" && preview_only == false && graph_file == "")
-	{
-		printf("error: output-file is missing.\n");
-		exit(0);
-	}
-	*/
-
 	return 0;
 }
 
-int print_parameters()
-{
-	printf("parameters:\n");
-
-	// for bam file and reads
-	printf("min_flank_length = %d\n", min_flank_length);
-	printf("max_num_cigar = %d\n", max_num_cigar);
-	printf("max_edit_distance = %d\n", max_edit_distance);
-	printf("min_bundle_gap = %d\n", min_bundle_gap);
-	printf("min_num_hits_in_bundle = %d\n", min_num_hits_in_bundle);
-	printf("min_mapping_quality = %d\n", min_mapping_quality);
-	printf("min_splice_boundary_hits = %d\n", min_splice_boundary_hits);
-
-	// for preview
-	printf("preview_only = %c\n", preview_only ? 'T' : 'F');
-	printf("max_preview_reads = %d\n", max_preview_reads);
-	printf("max_preview_spliced_reads = %d\n", max_preview_spliced_reads);
-	printf("min_preview_spliced_reads = %d\n", min_preview_spliced_reads);
-	printf("preview_infer_ratio = %.3lf\n", preview_infer_ratio);
-
-	// for identifying subgraphs
-	printf("min_subregion_gap = %d\n", min_subregion_gap);
-	printf("min_subregion_length = %d\n", min_subregion_length);
-	printf("min_subregion_overlap = %.2lf\n", min_subregion_overlap);
-
-	// for splice graph
-	printf("max_intron_contamination_coverage = %.2lf\n", max_intron_contamination_coverage);
-	printf("min_surviving_edge_weight = %.2lf\n", min_surviving_edge_weight);
-	printf("min_transcript_coverage = %.2lf\n", min_transcript_coverage);
-	printf("min_transcript_coverage_ratio = %.2lf\n", min_transcript_coverage_ratio);
-	printf("min_single_exon_coverage = %.2lf\n", min_single_exon_coverage);
-	printf("min_transcript_numreads = %.2lf\n", min_transcript_numreads);
-	printf("min_transcript_length_base = %d\n", min_transcript_length_base);
-	printf("min_transcript_length_increase = %d\n", min_transcript_length_increase);
-	printf("max_num_exons = %d\n", max_num_exons);
-
-	// for subsetsum and router
-	printf("max_dp_table_size = %d\n", max_dp_table_size);
-	printf("min_router_count = %d\n", min_router_count);
-
-	// for simulation
-	printf("simulation_num_vertices = %d\n", simulation_num_vertices);
-	printf("simulation_num_edges = %d\n", simulation_num_edges);
-	printf("simulation_max_edge_weight = %d\n", simulation_max_edge_weight);
-
-	// for input and output
-	printf("algo = %s\n", algo.c_str());
-	printf("input_file = %s\n", input_file.c_str());
-	printf("ref_file = %s\n", ref_file.c_str());
-	printf("ref_file1 = %s\n", ref_file1.c_str());
-	printf("ref_file2 = %s\n", ref_file2.c_str());
-	printf("output_file = %s\n", output_file.c_str());
-
-	// for controling
-	printf("library_type = %d\n", library_type);
-	printf("output_tex_files = %c\n", output_tex_files ? 'T' : 'F');
-	printf("fixed_gene_name = %s\n", fixed_gene_name.c_str());
-	printf("use_second_alignment = %c\n", use_second_alignment ? 'T' : 'F');
-	printf("uniquely_mapped_only = %c\n", uniquely_mapped_only ? 'T' : 'F');
-	printf("verbose = %d\n", verbose);
-	printf("batch_bundle_size = %d\n", batch_bundle_size);
-
-	printf("\n");
-
-	return 0;
-}
-
-int print_command_line(int argc, const char ** argv)
+int config::print_command_line(int argc, const char ** argv)
 {
 	printf("command line: ");
 	for(int i = 0; i < argc; i++)
@@ -460,8 +365,7 @@ int print_command_line(int argc, const char ** argv)
 	return 0;
 }
 
-
-int print_logo()
+int config::print_logo()
 {
 	printf("      ___           ___           ___                                       ___           ___    \n");
 	printf("     /  /\\         /  /\\         /  /\\                                     /  /\\         /  /\\   \n");
@@ -479,7 +383,7 @@ int print_logo()
 	return 0;
 }
 
-int print_help()
+int config::print_help()
 {
 	printf("\n");
 	printf("Usage: scallop -i <bam-file> -o <gtf-file> [options]\n");
@@ -503,7 +407,7 @@ int print_help()
 	return 0;
 }
 
-int print_copyright()
+int config::print_copyright()
 {
 	printf("Scallop %s (c) 2017 Mingfu Shao, Carl Kingsford, and Carnegie Mellon University\n", version.c_str());
 	return 0;

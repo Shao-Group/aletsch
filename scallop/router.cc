@@ -4,6 +4,7 @@ Part of Scallop Transcript Assembler
 See LICENSE for licensing.
 */
 
+#include "constants.h"
 #include "router.h"
 #include "config.h"
 #include "util.h"

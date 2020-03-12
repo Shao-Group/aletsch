@@ -17,16 +17,18 @@ See LICENSE for licensing.
 #include "path.h"
 #include "gene.h"
 #include "transcript.h"
+#include "config.h"
 
 using namespace std;
 
 class bundle : public bundle_base
 {
 public:
-	bundle(const bundle_base &bb);
+	bundle(const bundle_base &bb, config *c);
 	virtual ~bundle();
 
 public:
+	config *cfg;					// config
 	vector<junction> junctions;		// splice junctions
 	vector<region> regions;			// regions
 	vector<partial_exon> pexons;	// partial exons

@@ -45,7 +45,7 @@ class hit: public bam1_core_t
 {
 public:
 	//hit(int32_t p);
-	hit(bam1_t *b);
+	hit(bam1_t *b, config *cfg);
 	hit(const hit &h);
 	~hit();
 	bool operator<(const hit &h) const;
@@ -69,7 +69,7 @@ public:
 
 public:
 	int set_tags(bam1_t *b);
-	int set_strand();
+	int set_strand(config *cfg);
 	int set_concordance();
 	int print() const;
 };

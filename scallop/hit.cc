@@ -11,7 +11,8 @@ See LICENSE for licensing.
 #include <cmath>
 
 #include "hit.h"
-#include "config.h"
+#include "util.h"
+#include "constants.h"
 
 /*
 hit::hit(int32_t p)
@@ -67,7 +68,7 @@ hit::~hit()
 {
 }
 
-hit::hit(bam1_t *b)
+hit::hit(bam1_t *b, config* cfg)
 	:bam1_core_t(b->core)
 {
 	// fetch query name
@@ -83,7 +84,7 @@ hit::hit(bam1_t *b)
 	qlen = (int32_t)bam_cigar2qlen(n_cigar, bam_get_cigar(b));
 
 	// get cigar
-	assert(n_cigar <= max_num_cigar);
+	assert(n_cigar <= cfg->max_num_cigar);
 	assert(n_cigar >= 1);
 	uint32_t * cigar = bam_get_cigar(b);
 
@@ -103,8 +104,8 @@ hit::hit(bam1_t *b)
 		if(bam_cigar_op(cigar[k]) != BAM_CREF_SKIP) continue;
 		if(bam_cigar_op(cigar[k-1]) != BAM_CMATCH) continue;
 		if(bam_cigar_op(cigar[k+1]) != BAM_CMATCH) continue;
-		if(bam_cigar_oplen(cigar[k-1]) < min_flank_length) continue;
-		if(bam_cigar_oplen(cigar[k+1]) < min_flank_length) continue;
+		if(bam_cigar_oplen(cigar[k-1]) < cfg->min_flank_length) continue;
+		if(bam_cigar_oplen(cigar[k+1]) < cfg->min_flank_length) continue;
 
 		int32_t s = p - bam_cigar_oplen(cigar[k]);
 		spos.push_back(pack(s, p));
@@ -189,11 +190,11 @@ int hit::set_concordance()
 	return 0;
 }
 
-int hit::set_strand()
+int hit::set_strand(config *cfg)
 {
 	strand = '.';
 	
-	if(library_type == FR_FIRST && ((flag & 0x1) >= 1))
+	if(cfg->library_type == FR_FIRST && ((flag & 0x1) >= 1))
 	{
 		if((flag & 0x10) <= 0 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) strand = '-';
 		if((flag & 0x10) >= 1 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) strand = '+';
@@ -201,7 +202,7 @@ int hit::set_strand()
 		if((flag & 0x10) >= 1 && (flag & 0x40) <= 0 && (flag & 0x80) >= 1) strand = '-';
 	}
 
-	if(library_type == FR_SECOND && ((flag & 0x1) >= 1))
+	if(cfg->library_type == FR_SECOND && ((flag & 0x1) >= 1))
 	{
 		if((flag & 0x10) <= 0 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) strand = '+';
 		if((flag & 0x10) >= 1 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) strand = '-';
@@ -209,13 +210,13 @@ int hit::set_strand()
 		if((flag & 0x10) >= 1 && (flag & 0x40) <= 0 && (flag & 0x80) >= 1) strand = '+';
 	}
 
-	if(library_type == FR_FIRST && ((flag & 0x1) <= 0))
+	if(cfg->library_type == FR_FIRST && ((flag & 0x1) <= 0))
 	{
 		if((flag & 0x10) <= 0) strand = '-';
 		if((flag & 0x10) >= 1) strand = '+';
 	}
 
-	if(library_type == FR_SECOND && ((flag & 0x1) <= 0))
+	if(cfg->library_type == FR_SECOND && ((flag & 0x1) <= 0))
 	{
 		if((flag & 0x10) <= 0) strand = '+';
 		if((flag & 0x10) >= 1) strand = '-';

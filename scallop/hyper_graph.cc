@@ -4,6 +4,7 @@ Part of Coral
 See LICENSE for licensing.
 */
 
+#include "constants.h"
 #include "hyper_graph.h"
 #include "config.h"
 #include <algorithm>

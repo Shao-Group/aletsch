@@ -4,11 +4,17 @@ Part of Scallop Transcript Assembler
 See LICENSE for licensing.
 */
 
+#include "constants.h"
 #include "hyper_set.h"
 #include "hyper_graph.h"
 #include "config.h"
 #include <algorithm>
 #include <cstdio>
+
+hyper_set::hyper_set(config *c)
+{
+	cfg = c;
+}
 
 int hyper_set::clear()
 {
@@ -294,7 +300,7 @@ int hyper_set::build_edges(directed_graph &gr, MEI& e2i)
 	for(MVII::iterator it = nodes.begin(); it != nodes.end(); it++)
 	{
 		int c = it->second;
-		if(c < min_router_count) continue;
+		if(c < cfg->min_router_count) continue;
 
 		const vector<int> &vv = it->first;
 		if(vv.size() <= 1) continue;

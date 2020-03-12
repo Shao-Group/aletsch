@@ -10,15 +10,15 @@ See LICENSE for licensing.
 #include <iomanip>
 #include <fstream>
 
+#include "constants.h"
 #include "bundle.h"
 #include "region.h"
-#include "config.h"
 #include "util.h"
 #include "undirected_graph.h"
 #include "graph_revise.h"
 
-bundle::bundle(const bundle_base &bb)
-	: bundle_base(bb)
+bundle::bundle(const bundle_base &bb, config *c)
+	: bundle_base(bb), cfg(c), hs(c)
 {
 }
 
@@ -41,7 +41,7 @@ int bundle::build()
 	link_partial_exons();
 	build_splice_graph();
 
-	revise_splice_graph_full(gr);
+	revise_splice_graph_full(gr, cfg);
 
 	build_hyper_edges2();
 
@@ -50,8 +50,8 @@ int bundle::build()
 
 int bundle::compute_strand()
 {
-	if(library_type != UNSTRANDED) assert(strand != '.');
-	if(library_type != UNSTRANDED) return 0;
+	if(cfg->library_type != UNSTRANDED) assert(strand != '.');
+	if(cfg->library_type != UNSTRANDED) return 0;
 
 	int n0 = 0, np = 0, nq = 0;
 	for(int i = 0; i < hits.size(); i++)
@@ -92,7 +92,7 @@ int bundle::check_right_ascending()
 
 int bundle::build_junctions()
 {
-	int min_max_boundary_quality = min_mapping_quality;
+	int min_max_boundary_quality = cfg->min_mapping_quality;
 	map< int64_t, vector<int> > m;
 	for(int i = 0; i < hits.size(); i++)
 	{
@@ -131,7 +131,7 @@ int bundle::build_junctions()
 	for(it = m.begin(); it != m.end(); it++)
 	{
 		vector<int> &v = it->second;
-		if(v.size() < min_splice_boundary_hits) continue;
+		if(v.size() < cfg->min_splice_boundary_hits) continue;
 
 		int32_t p1 = high32(it->first);
 		int32_t p2 = low32(it->first);
@@ -202,7 +202,7 @@ int bundle::correct_junctions()
 			if(j1.rpos < j2.rpos) mmap += make_pair(ROI(j1.rpos, j2.rpos), 1);
 			else if(j1.rpos > j2.rpos) mmap += make_pair(ROI(j2.rpos, j1.rpos), -1);
 
-			if(verbose >= 2)
+			if(cfg->verbose >= 2)
 			{
 				j1.print(chrm, k - 1);
 				j2.print(chrm, k - 0);
@@ -218,7 +218,7 @@ int bundle::correct_junctions()
 			if(j2.rpos < j1.rpos) mmap += make_pair(ROI(j2.rpos, j1.rpos), 1);
 			else if(j2.rpos > j1.rpos) mmap += make_pair(ROI(j1.rpos, j2.rpos), -1);
 
-			if(verbose >= 2)
+			if(cfg->verbose >= 2)
 			{
 				j1.print(chrm, k - 1);
 				j2.print(chrm, k - 0);
@@ -279,7 +279,7 @@ int bundle::build_regions()
 		if(ltype == LEFT_RIGHT_SPLICE) ltype = RIGHT_SPLICE;
 		if(rtype == LEFT_RIGHT_SPLICE) rtype = LEFT_SPLICE;
 
-		regions.push_back(region(l, r, ltype, rtype, &mmap, &imap));
+		regions.push_back(region(l, r, ltype, rtype, &mmap, &imap, cfg));
 	}
 
 	return 0;
@@ -320,7 +320,7 @@ int bundle::locate_left_partial_exon(int32_t x)
 	assert(p2 >= x);
 	assert(p1 <= x);
 
-	if(x - p1 > min_flank_length && p2 - x < min_flank_length) k++;
+	if(x - p1 > cfg->min_flank_length && p2 - x < cfg->min_flank_length) k++;
 
 	if(k >= pexons.size()) return -1;
 	return k;
@@ -339,7 +339,7 @@ int bundle::locate_right_partial_exon(int32_t x)
 	assert(p1 < x);
 	assert(p2 >= x);
 
-	if(p2 - x > min_flank_length && x - p1 <= min_flank_length) k--;
+	if(p2 - x > cfg->min_flank_length && x - p1 <= cfg->min_flank_length) k--;
 	return k;
 }
 
@@ -675,7 +675,7 @@ int bundle::print(int index)
 	printf("tid = %d, #hits = %lu, #partial-exons = %lu, range = %s:%d-%d, orient = %c (%d, %d, %d)\n",
 			tid, hits.size(), pexons.size(), chrm.c_str(), lpos, rpos, strand, n0, np, nq);
 
-	if(verbose <= 1) return 0;
+	if(cfg->verbose <= 1) return 0;
 
 	// print hits
 	for(int i = 0; i < hits.size(); i++) hits[i].print();
@@ -734,7 +734,7 @@ int bundle::output_transcript(ofstream &fout, const path &p, const string &gid, 
 	int32_t rr = pexons[tt - 1].rpos;
 
 	fout<<chrm.c_str()<<"\t";		// chromosome name
-	fout<<algo.c_str()<<"\t";		// source
+	fout<<cfg->algo.c_str()<<"\t";		// source
 	fout<<"transcript\t";			// feature
 	fout<<ll + 1<<"\t";				// left position
 	fout<<rr<<"\t";					// right position
@@ -756,7 +756,7 @@ int bundle::output_transcript(ofstream &fout, const path &p, const string &gid, 
 	for(JIMI it = jmap.begin(); it != jmap.end(); it++)
 	{
 		fout<<chrm.c_str()<<"\t";			// chromosome name
-		fout<<algo.c_str()<<"\t";			// source
+		fout<<cfg->algo.c_str()<<"\t";			// source
 		fout<<"exon\t";						// feature
 		fout<<lower(it->first) + 1<<"\t";	// left position
 		fout<<upper(it->first)<<"\t";		// right position
@@ -799,7 +799,7 @@ int bundle::output_transcripts(gene &gn, const vector<path> &p, const string &gi
 int bundle::output_transcript(transcript &trst, const path &p, const string &gid, const string &tid) const
 {
 	trst.seqname = chrm;
-	trst.source = algo;
+	trst.source = cfg->algo;
 	trst.gene_id = gid;
 	trst.transcript_id = tid;
 	trst.coverage = p.abd;

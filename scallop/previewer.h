@@ -8,6 +8,7 @@ See LICENSE for licensing.
 #define __PREVIEWER_H__
 
 #include "hit.h"
+#include "config.h"
 
 #include <fstream>
 #include <string>
@@ -17,10 +18,11 @@ using namespace std;
 class previewer
 {
 public:
-	previewer();
+	previewer(config *c);
 	~previewer();
 
 private:
+	config *cfg;
 	samFile *sfn;
 	bam_hdr_t *hdr;
 	bam1_t *b1t;

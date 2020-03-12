@@ -5,12 +5,11 @@ See LICENSE for licensing.
 */
 
 #include "cluster.h"
-#include "config.h"
 #include <cassert>
 #include <algorithm>
 
-cluster::cluster(const vector<transcript> &v)
-	:trs(v)
+cluster::cluster(const vector<transcript> &v, config *c)
+	:trs(v), cfg(c)
 {
 }
 
@@ -96,7 +95,7 @@ int cluster::clustering()
 
 		cct.push_back(cc);
 
-		if(verbose >= 2) printf("cct: %lu transcripts, exons = %lu, max-coverage = %.2lf, sum-coverage = %.2lf\n", 
+		if(cfg->verbose >= 2) printf("cct: %lu transcripts, exons = %lu, max-coverage = %.2lf, sum-coverage = %.2lf\n", 
 				s.size(), trs[k].exons.size(), trs[k].coverage, cov);
 	}
 
@@ -117,7 +116,7 @@ bool cluster::verify_equal(int x, int y)
 	{
 		double f1 = fabs(ix[i].first - iy[i].first);
 		double f2 = fabs(ix[i].second - iy[i].second);
-		if(f1 + f2 > max_cluster_intron_distance) return false;
+		if(f1 + f2 > cfg->max_cluster_intron_distance) return false;
 	}
 	return true;
 
@@ -132,7 +131,7 @@ bool cluster::verify_equal(int x, int y)
 			double r1 = (px.second - py.first) * 1.0 / (px.second - px.first);
 			double r2 = (px.second - py.first) * 1.0 / (py.second - py.first);
 			double r = r1 > r2 ? r1 : r2;
-			if(r >= min_cluster_single_exon_ratio) return true;
+			if(r >= cfg->min_cluster_single_exon_ratio) return true;
 			else return false;
 		}
 		else
@@ -142,13 +141,13 @@ bool cluster::verify_equal(int x, int y)
 			double r1 = (py.second - px.first) * 1.0 / (py.second - py.first);
 			double r2 = (py.second - px.first) * 1.0 / (px.second - px.first);
 			double r = r1 > r2 ? r1 : r2;
-			if(r >= min_cluster_single_exon_ratio) return true;
+			if(r >= cfg->min_cluster_single_exon_ratio) return true;
 			else return false;
 		}
 	}
 
-	if(fabs(px.first - py.first) > max_cluster_boundary_distance) return false;
-	if(fabs(px.second - py.second) > max_cluster_boundary_distance) return false;
+	if(fabs(px.first - py.first) > cfg->max_cluster_boundary_distance) return false;
+	if(fabs(px.second - py.second) > cfg->max_cluster_boundary_distance) return false;
 
 	/*
 	vector<PI32> ix = xx.get_intron_chain();
@@ -192,7 +191,7 @@ bool cluster::verify_subset(int x, int y)
 		{
 			double f1 = fabs(ix[i].first - iy[i + k].first);
 			double f2 = fabs(ix[i].second - iy[i + k].second);
-			if(f1 + f2 > max_cluster_intron_distance) b = false;
+			if(f1 + f2 > cfg->max_cluster_intron_distance) b = false;
 			if(b == false) break;
 		}
 		if(b == false) continue;

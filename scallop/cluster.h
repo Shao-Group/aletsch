@@ -10,6 +10,7 @@ See LICENSE for licensing.
 #include "undirected_graph.h"
 #include "bundle_base.h"
 #include "transcript.h"
+#include "config.h"
 
 typedef map< int, vector<int> > MIV;
 typedef pair< int, vector<int> > PIV;
@@ -17,7 +18,10 @@ typedef pair< int, vector<int> > PIV;
 class cluster
 {
 public:
-	cluster(const vector<transcript> &v);
+	cluster(const vector<transcript> &v, config *c);
+
+public:
+	config *cfg;
 	MIV miv;
 	undirected_graph gr;
 

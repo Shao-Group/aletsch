@@ -9,7 +9,7 @@
 #include "config.h"
 #include "undirected_graph.h"
 
-int revise_splice_graph_full(splice_graph &gr)
+int revise_splice_graph_full(splice_graph &gr, config *cfg)
 {
 	refine_splice_graph(gr);
 
@@ -23,7 +23,7 @@ int revise_splice_graph_full(splice_graph &gr)
 		b = remove_inner_boundaries(gr);
 		if(b == true) continue;
 
-		b = remove_small_exons(gr);
+		b = remove_small_exons(gr, cfg->min_exon_length);
 		if(b == true) refine_splice_graph(gr);
 		if(b == true) continue;
 
@@ -31,11 +31,11 @@ int revise_splice_graph_full(splice_graph &gr)
 		if(b == true) refine_splice_graph(gr);
 		if(b == true) continue;
 
-		b = keep_surviving_edges(gr, min_surviving_edge_weight);
+		b = keep_surviving_edges(gr, cfg->min_surviving_edge_weight);
 		if(b == true) refine_splice_graph(gr);
 		if(b == true) continue;
 
-		b = remove_intron_contamination(gr);
+		b = remove_intron_contamination(gr, cfg->max_intron_contamination_coverage);
 		if(b == true) continue;
 
 		break;
@@ -46,7 +46,7 @@ int revise_splice_graph_full(splice_graph &gr)
 	return 0;
 }
 
-int revise_splice_graph(splice_graph &gr)
+int revise_splice_graph(splice_graph &gr, config *cfg)
 {
 	refine_splice_graph(gr);
 
@@ -54,7 +54,7 @@ int revise_splice_graph(splice_graph &gr)
 	{
 		bool b = false;
 
-		b = keep_surviving_edges(gr, min_surviving_edge_weight);
+		b = keep_surviving_edges(gr, cfg->min_surviving_edge_weight);
 		if(b == true) refine_splice_graph(gr);
 		if(b == true) continue;
 
@@ -159,7 +159,7 @@ VE compute_maximal_edges(splice_graph &gr)
 	return x;
 }
 
-bool remove_small_exons(splice_graph &gr)
+bool remove_small_exons(splice_graph &gr, int min_exon)
 {
 	bool flag = false;
 	for(int i = 1; i < gr.num_vertices() - 1; i++)
@@ -170,7 +170,7 @@ bool remove_small_exons(splice_graph &gr)
 		int32_t p1 = gr.get_vertex_info(i).lpos;
 		int32_t p2 = gr.get_vertex_info(i).rpos;
 
-		if(p2 - p1 >= min_exon_length) continue;
+		if(p2 - p1 >= min_exon) continue;
 		if(gr.degree(i) <= 0) continue;
 
 		for(pei = gr.in_edges(i), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
@@ -309,8 +309,7 @@ bool remove_inner_boundaries(splice_graph &gr)
 
 		if(vi.stddev >= 0.01) continue;
 
-		if(verbose >= 2) printf("remove inner boundary: vertex = %d, weight = %.2lf, length = %d, pos = %d-%d\n",
-				i, gr.get_vertex_weight(i), vi.length, vi.lpos, vi.rpos);
+		//if(verbose >= 2) printf("remove inner boundary: vertex = %d, weight = %.2lf, length = %d, pos = %d-%d\n", i, gr.get_vertex_weight(i), vi.length, vi.lpos, vi.rpos);
 
 		gr.clear_vertex(i);
 		flag = true;
@@ -318,7 +317,7 @@ bool remove_inner_boundaries(splice_graph &gr)
 	return flag;
 }
 
-bool remove_intron_contamination(splice_graph &gr)
+bool remove_intron_contamination(splice_graph &gr, double ratio)
 {
 	bool flag = false;
 	for(int i = 1; i < gr.num_vertices(); i++)
@@ -350,9 +349,9 @@ bool remove_intron_contamination(splice_graph &gr)
 		double we = gr.get_edge_weight(ee);
 
 		if(wv > we) continue;
-		if(wv > max_intron_contamination_coverage) continue;
+		if(wv > ratio) continue;
 
-		if(verbose >= 2) printf("clear intron contamination %d, weight = %.2lf, length = %d, edge weight = %.2lf\n", i, wv, vi.length, we);
+		//if(verbose >= 2) printf("clear intron contamination %d, weight = %.2lf, length = %d, edge weight = %.2lf\n", i, wv, vi.length, we); 
 
 		gr.clear_vertex(i);
 		flag = true;
@@ -432,7 +431,7 @@ bool keep_surviving_edges(splice_graph &gr, double surviving)
 
 	for(int i = 0; i < ve.size(); i++)
 	{
-		if(verbose >= 2) printf("remove edge (%d, %d), weight = %.2lf\n", ve[i]->source(), ve[i]->target(), gr.get_edge_weight(ve[i]));
+		//if(verbose >= 2) printf("remove edge (%d, %d), weight = %.2lf\n", ve[i]->source(), ve[i]->target(), gr.get_edge_weight(ve[i]));
 		gr.remove_edge(ve[i]);
 	}
 
@@ -504,7 +503,7 @@ int keep_surviving_edges(splice_graph &gr, const set<PI32> &js, double surviving
 
 	for(int i = 0; i < ve.size(); i++)
 	{
-		if(verbose >= 2) printf("non-surviving edge (%d, %d), weight = %.2lf\n", ve[i]->source(), ve[i]->target(), gr.get_edge_weight(ve[i]));
+		//if(verbose >= 2) printf("non-surviving edge (%d, %d), weight = %.2lf\n", ve[i]->source(), ve[i]->target(), gr.get_edge_weight(ve[i]));
 		gr.remove_edge(ve[i]);
 	}
 
@@ -578,7 +577,7 @@ int keep_surviving_edges(splice_graph &gr, const set<int32_t> &js, double surviv
 
 	for(int i = 0; i < ve.size(); i++)
 	{
-		if(verbose >= 2) printf("non-surviving edge (%d, %d), weight = %.2lf\n", ve[i]->source(), ve[i]->target(), gr.get_edge_weight(ve[i]));
+		//if(verbose >= 2) printf("non-surviving edge (%d, %d), weight = %.2lf\n", ve[i]->source(), ve[i]->target(), gr.get_edge_weight(ve[i]));
 		gr.remove_edge(ve[i]);
 	}
 
@@ -650,7 +649,7 @@ int keep_surviving_edges(splice_graph &gr, const set<int32_t> &js, const set<int
 
 	for(int i = 0; i < ve.size(); i++)
 	{
-		if(verbose >= 2) printf("non-surviving edge (%d, %d), weight = %.2lf\n", ve[i]->source(), ve[i]->target(), gr.get_edge_weight(ve[i]));
+		//if(verbose >= 2) printf("non-surviving edge (%d, %d), weight = %.2lf\n", ve[i]->source(), ve[i]->target(), gr.get_edge_weight(ve[i]));
 		gr.remove_edge(ve[i]);
 	}
 
@@ -763,7 +762,7 @@ int filter_start_boundaries(splice_graph &gr, const set<int32_t> &js, double sur
 
 	for(int i = 0; i < ve.size(); i++)
 	{
-		if(verbose >= 2) printf("non-surviving start boundary (%d, %d), weight = %.2lf\n", ve[i]->source(), ve[i]->target(), gr.get_edge_weight(ve[i]));
+		//if(verbose >= 2) printf("non-surviving start boundary (%d, %d), weight = %.2lf\n", ve[i]->source(), ve[i]->target(), gr.get_edge_weight(ve[i]));
 		gr.remove_edge(ve[i]);
 	}
 
@@ -797,7 +796,7 @@ int filter_end_boundaries(splice_graph &gr, const set<int32_t> &js, double survi
 
 	for(int i = 0; i < ve.size(); i++)
 	{
-		if(verbose >= 2) printf("non-surviving end boundary (%d, %d), weight = %.2lf\n", ve[i]->source(), ve[i]->target(), gr.get_edge_weight(ve[i]));
+		//if(verbose >= 2) printf("non-surviving end boundary (%d, %d), weight = %.2lf\n", ve[i]->source(), ve[i]->target(), gr.get_edge_weight(ve[i]));
 		gr.remove_edge(ve[i]);
 	}
 
@@ -825,7 +824,7 @@ int filter_junctions(splice_graph &gr, const set<int32_t> &js, double surviving)
 
 	for(int i = 0; i < ve.size(); i++)
 	{
-		if(verbose >= 2) printf("non-surviving junction (%d, %d), weight = %.2lf\n", ve[i]->source(), ve[i]->target(), gr.get_edge_weight(ve[i]));
+		//if(verbose >= 2) printf("non-surviving junction (%d, %d), weight = %.2lf\n", ve[i]->source(), ve[i]->target(), gr.get_edge_weight(ve[i]));
 		gr.remove_edge(ve[i]);
 	}
 

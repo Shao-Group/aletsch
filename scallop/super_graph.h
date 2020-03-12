@@ -11,6 +11,7 @@ See LICENSE for licensing.
 #include "undirected_graph.h"
 #include "splice_graph.h"
 #include "util.h"
+#include "config.h"
 
 #include <map>
 #include <cassert>
@@ -20,10 +21,11 @@ using namespace std;
 class super_graph
 {
 public:
-	super_graph(const splice_graph &gr, const hyper_set &hs);
+	super_graph(const splice_graph &gr, const hyper_set &hs, config *c);
 	virtual ~super_graph();
 
 public:
+	config *cfg;				// config
 	splice_graph root;			// splice graph
 	hyper_set hyper;			// hyper set
 	vector<splice_graph> subs;	// sub-graphs
