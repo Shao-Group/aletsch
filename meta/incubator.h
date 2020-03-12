@@ -26,10 +26,13 @@ public:
 	map< size_t, vector<transcript> > trsts;	// assembled transcripts
 
 public:
-	int load(const string &file);
-	int merge(double merge_ratio);
+	int resolve();
+
+public:
+	int load();
+	int merge();
 	int assemble();
-	int postprocess(const string &outfile);
+	int postprocess();
 
 	// write and print
 	int write(const string &file, bool headers = false);

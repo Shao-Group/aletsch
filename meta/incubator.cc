@@ -21,12 +21,29 @@ incubator::incubator(const config &c)
 	g2g.resize(3);
 }
 
-int incubator::load(const string &file)
+int incubator::resolve()
 {
-	ifstream fin(file.c_str());
+	printf("loading bam/sam files ...\n");
+	load();
+
+	printf("merge splice graphs ...\n");
+	merge();
+
+	printf("assemble merged splice graphs ...\n");
+	assemble();
+
+	printf("filtering and output gtf files ...\n");
+	postprocess();
+
+	return 0;
+}
+
+int incubator::load()
+{
+	ifstream fin(input_bam_list.c_str());
 	if(fin.fail())
 	{
-		printf("cannot open file %s\n", file.c_str());
+		printf("cannot open input-bam-list-file %s\n", input_bam_list.c_str());
 		exit(0);
 	}
 
@@ -59,14 +76,14 @@ int incubator::load(const string &file)
 	return 0;
 }
 
-int incubator::merge(double ratio)
+int incubator::merge()
 {
 	boost::asio::thread_pool pool(max_threads); // thread pool
 
 	for(int k = 0; k < groups.size(); k++)
 	{
 		combined_group &gp = groups[k];
-		boost::asio::post(pool, [&gp, ratio]{ gp.resolve(ratio); });
+		boost::asio::post(pool, [&gp]{ gp.resolve(); });
 	}
 
 	pool.join();
@@ -94,10 +111,14 @@ int incubator::assemble()
 	return 0;
 }
 
-int incubator::postprocess(const string &outfile)
+int incubator::postprocess()
 {
-	ofstream fout(outfile.c_str());
-	if(fout.fail()) return 0;
+	ofstream fout(output_gtf_file.c_str());
+	if(fout.fail())
+	{
+		printf("cannot open output-get-file %s\n", output_gtf_file.c_str());
+		exit(0);
+	}
 
 	boost::asio::thread_pool pool(max_threads); // thread pool
 	mutex mylock;								// lock for trsts
@@ -155,7 +176,6 @@ int incubator::postprocess(const string &outfile)
 	fout.close();
 	return 0;
 }
-
 
 int incubator::write(const string &file, bool headers)
 {

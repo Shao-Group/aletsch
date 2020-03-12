@@ -23,6 +23,7 @@ double max_group_junction_distance = 100;
 bool merge_intersection = false;
 int max_threads = 10;
 int max_combined = 100;
+double merge_threshold = 0.5;
 
 int meta_verbose = 0;
 string meta_version = "0.1.0";
@@ -59,6 +60,12 @@ int parse_meta_arguments(int argc, const char ** argv)
 			print_meta_logo();
 			exit(0);
 		}
+		else if(string(argv[i]) == "--merge_threshold")
+		{
+			merge_threshold = atof(argv[i + 1]);
+			i++;
+		}
+
 		else if(string(argv[i]) == "--merge_intersection")
 		{
 			merge_intersection = true;

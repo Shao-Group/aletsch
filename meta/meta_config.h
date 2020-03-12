@@ -22,6 +22,7 @@ extern double max_group_junction_distance;
 extern bool merge_intersection;
 extern int max_threads;
 extern int max_combined;
+extern double merge_threshold;
 
 extern int meta_verbose;
 extern string meta_version;

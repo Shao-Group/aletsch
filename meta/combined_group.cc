@@ -18,10 +18,10 @@ int combined_group::add_graph(const combined_graph &gr)
 	return 0;
 }
 
-int combined_group::resolve(double ratio)
+int combined_group::resolve()
 {
 	build_splice_map();
-	build_similarity(ratio);
+	build_similarity();
 	combine_graphs();
 	stats();
 	return 0;
@@ -94,7 +94,7 @@ int combined_group::build_splice_map()
 	return 0;
 }
 
-int combined_group::build_similarity(double ratio)
+int combined_group::build_similarity()
 {
 	// maintain the similarity between any two graphs
 	vector< set<int> > gmap(gset.size());		// success; into vpid
@@ -124,7 +124,7 @@ int combined_group::build_similarity(double ratio)
 				// TODO parameters
 				bool b = true;
 				if(c <= 1.50) b = false;
-				if(r < ratio) b = false;
+				if(r < merge_threshold) b = false;
 
 				//printf("r1 = %.3lf, r2 = %.3lf, r = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, r, gset[i].splices.size(), gset[j].splices.size());
 

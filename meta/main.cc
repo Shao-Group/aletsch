@@ -36,5 +36,8 @@ int main(int argc, const char **argv)
 	cfg.parse_arguments(argc, argv);
 	parse_meta_arguments(argc, argv);
 
+	incubator icbt(cfg);
+	icbt.resolve();
+
 	return 0;
 }
