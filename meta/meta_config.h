@@ -26,6 +26,9 @@ extern int max_combined;
 extern int meta_verbose;
 extern string meta_version;
 
+extern string input_bam_list;
+extern string output_gtf_file;
+
 // parse arguments
 int parse_meta_arguments(int argc, const char ** argv);
 int print_meta_copyright();

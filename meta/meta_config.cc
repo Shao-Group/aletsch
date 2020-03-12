@@ -27,12 +27,26 @@ int max_combined = 100;
 int meta_verbose = 0;
 string meta_version = "0.1.0";
 
+string input_bam_list = "";
+string output_gtf_file = "";
+
 int parse_meta_arguments(int argc, const char ** argv)
 {
 	for(int i = 1; i < argc; i++)
 	{
 		// user specified
-		if(string(argv[i]) == "--version")
+
+		if(string(argv[i]) == "-i")
+		{
+			input_bam_list = string(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "-o")
+		{
+			output_gtf_file = string(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "--version")
 		{
 			printf("%s\n", meta_version.c_str());
 			exit(0);

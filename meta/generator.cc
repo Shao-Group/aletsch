@@ -15,10 +15,14 @@ See LICENSE for licensing.
 #include "generator.h"
 #include "scallop.h"
 #include "super_graph.h"
+#include "previewer.h"
 
 generator::generator(vector<combined_graph> &v, const config &c)
 	: vcb(v), cfg(c)
 {
+	previewer pre(&cfg);
+	pre.preview();
+
     sfn = sam_open(cfg.input_file.c_str(), "r");
     hdr = sam_hdr_read(sfn);
     b1t = bam_init1();

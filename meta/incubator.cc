@@ -15,8 +15,9 @@
 #include <boost/asio/thread_pool.hpp>
 #include <boost/asio/post.hpp>
 
-incubator::incubator()
+incubator::incubator(const config &c)
 {
+	cfg = c;
 	g2g.resize(3);
 }
 
@@ -47,7 +48,7 @@ int incubator::load(const string &file)
 	for(int k = 0; k < files.size(); k++)
 	{
 		printf("thread %d processes %lu files\n", k, files[k].size());
-		threads.emplace_back(load_multiple, files[k], std::ref(groups), std::ref(mylock), std::ref(g2g));
+		threads.emplace_back(load_multiple, files[k], std::ref(groups), std::ref(mylock), std::ref(g2g), std::ref(cfg));
 	}
 	for(int k = 0; k < threads.size(); k++)
 	{
@@ -85,7 +86,7 @@ int incubator::assemble()
 		for(int k = 0; k < groups[i].mset.size(); k++)
 		{
 			combined_graph &cb = groups[i].mset[k];
-			boost::asio::post(pool, [&cb, this, instance, &mylock]{ assemble_single(cb, instance, this->trsts, mylock); });
+			boost::asio::post(pool, [&cb, this, instance, &mylock]{ assemble_single(cb, instance, this->trsts, mylock, this->cfg); });
 			instance++;
 		}
 	}
@@ -93,9 +94,9 @@ int incubator::assemble()
 	return 0;
 }
 
-int incubator::postprocess()
+int incubator::postprocess(const string &outfile)
 {
-	ofstream fout(output_file.c_str());
+	ofstream fout(outfile.c_str());
 	if(fout.fail()) return 0;
 
 	boost::asio::thread_pool pool(max_threads); // thread pool
@@ -121,16 +122,16 @@ int incubator::postprocess()
 			index += 1000;
 		}
 
-		boost::asio::post(pool, [m1, m2, &fout, &mylock]
+		boost::asio::post(pool, [m1, m2, &fout, &mylock, this]
 				{ 
 					stringstream ss;
 					for(MIT x = m1; x != m2; x++)
 					{
 						vector<transcript> &v = x->second;
-						cluster cs(v);
+						cluster cs(v, &(this->cfg));
 						cs.solve();
 
-						filter ft(cs.cct);
+						filter ft(cs.cct, &(this->cfg));
 						ft.join_single_exon_transcripts();
 						ft.filter_length_coverage();
 
@@ -193,14 +194,16 @@ int incubator::print_groups()
 	return 0;
 }
 
-int load_multiple(const vector<string> &files, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &m)
+int load_multiple(const vector<string> &files, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &m, const config &cfg)
 {	
 	vector<combined_graph> v;
 	for(int k = 0; k < files.size(); k++) 
 	{
 		//printf("load file %s\n", files[k].c_str());
 		//load_single(files[k], v);
-		generator gt(files[k], "", v);
+		config c = cfg;
+		c.input_file = files[k];
+		generator gt(v, c);
 		gt.resolve();
 	}
 
@@ -261,8 +264,10 @@ int load_single(const string &file, vector<combined_graph> &vc)
 	return 0;
 }
 
-int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock)
+int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg1)
 {
+	config cfg = cfg1;
+
 	char name[10240];
 	sprintf(name, "instance.%d.0", instance);
 	merged_graph cm;
@@ -306,8 +311,8 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	string gid = cm.gr.gid;
 	cm.gr.gid = gid + ".0";
 
-	algo = "single";
-	scallop sm(cm.gr, cm.hs);
+	cfg.algo = "single";
+	scallop sm(cm.gr, cm.hs, &cfg);
 
 	//sm.gr.print();
 	//sm.hs.print_nodes();
@@ -373,9 +378,9 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 
 		cb.gr.gid = gid + "." + tostring(i + 1);
 
-		algo = "single";
+		cfg.algo = "single";
 		//scallop sc(cb.gr, cb.hs, cb.hx);
-		scallop sc(cb.gr, cb.hs);
+		scallop sc(cb.gr, cb.hs, &cfg);
 		sc.assemble();
 
 		//for(int k = 0; k < sc.paths.size(); k++) sc.paths[k].print(k);

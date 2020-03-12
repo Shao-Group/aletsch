@@ -7,6 +7,7 @@
 #include "combined_group.h"
 #include "merged_graph.h"
 #include "transcript.h"
+#include "scallop/config.h"
 #include <mutex>
 
 typedef map< int32_t, set<int> > MISI;
@@ -16,9 +17,10 @@ typedef pair<int, int> PI;
 class incubator
 {
 public:
-	incubator();
+	incubator(const config &c);
 
 public:
+	config cfg;									// config for scallop
 	vector<combined_group> groups;				// graph groups
 	vector< map<string, int> > g2g;				// group map
 	map< size_t, vector<transcript> > trsts;	// assembled transcripts
@@ -27,17 +29,17 @@ public:
 	int load(const string &file);
 	int merge(double merge_ratio);
 	int assemble();
-	int postprocess();
+	int postprocess(const string &outfile);
 
 	// write and print
 	int write(const string &file, bool headers = false);
 	int print_groups();
 };
 
-int load_multiple(const vector<string> &files, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &g2g);
+int load_multiple(const vector<string> &files, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &g2g, const config &cfg);
 int load_single(const string &file, vector<combined_graph> &vc);
 
-int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock);
+int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg);
 int index_transcript(map< size_t, vector<transcript> > &mt, const transcript &t);
 bool query_transcript(const map< size_t, vector<transcript> > &mt, const transcript &t);
 
