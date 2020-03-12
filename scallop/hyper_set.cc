@@ -11,11 +11,6 @@ See LICENSE for licensing.
 #include <algorithm>
 #include <cstdio>
 
-hyper_set::hyper_set(config *c)
-{
-	cfg = c;
-}
-
 int hyper_set::clear()
 {
 	nodes.clear();
@@ -300,7 +295,7 @@ int hyper_set::build_edges(directed_graph &gr, MEI& e2i)
 	for(MVII::iterator it = nodes.begin(); it != nodes.end(); it++)
 	{
 		int c = it->second;
-		if(c < cfg->min_router_count) continue;
+		//if(c < min_hyper_count) continue;
 
 		const vector<int> &vv = it->first;
 		if(vv.size() <= 1) continue;

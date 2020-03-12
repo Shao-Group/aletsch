@@ -13,7 +13,7 @@ See LICENSE for licensing.
 #include <cassert>
 #include <sstream>
 
-#include "config.h"
+#include "scallop/config.h"
 #include "meta_config.h"
 #include "incubator.h"
 
@@ -32,9 +32,9 @@ int main(int argc, const char **argv)
 		return 0;
 	}
 
-	parse_arguments(argc, argv);
+	config cfg;
+	cfg.parse_arguments(argc, argv);
 	parse_meta_arguments(argc, argv);
-
 
 	return 0;
 }

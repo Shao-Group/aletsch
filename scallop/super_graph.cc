@@ -63,7 +63,7 @@ int super_graph::split_splice_graph()
 		if(s.size() == 1 && *(s.begin()) == 0) continue;
 		if(s.size() == 1 && *(s.begin()) == root.num_vertices() - 1) continue;
 		splice_graph gr;
-		hyper_set hs(cfg);
+		hyper_set hs;
 		split_single_splice_graph(gr, hs, s, index);
 		gr.chrm = root.chrm;
 		gr.strand = root.strand;

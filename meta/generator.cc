@@ -8,17 +8,18 @@ See LICENSE for licensing.
 #include <cassert>
 #include <sstream>
 
-#include "config.h"
+#include "constants.h"
+#include "scallop/config.h"
 #include "gtf.h"
 #include "genome.h"
 #include "generator.h"
 #include "scallop.h"
 #include "super_graph.h"
 
-generator::generator(const string &bamfile, const string &gfile, vector<combined_graph> &v)
-	: vcb(v)
+generator::generator(vector<combined_graph> &v, const config &c)
+	: vcb(v), cfg(c)
 {
-    sfn = sam_open(bamfile.c_str(), "r");
+    sfn = sam_open(cfg.input_file.c_str(), "r");
     hdr = sam_hdr_read(sfn);
     b1t = bam_init1();
 	index = 0;
@@ -42,14 +43,14 @@ int generator::resolve()
 		bam1_core_t &p = b1t->core;
 
 		if((p.flag & 0x4) >= 1) continue;										// read is not mapped
-		if((p.flag & 0x100) >= 1 && use_second_alignment == false) continue;	// secondary alignment
-		if(p.n_cigar > max_num_cigar) continue;									// ignore hits with more than max-num-cigar types
-		if(p.qual < min_mapping_quality) continue;								// ignore hits with small quality
+		if((p.flag & 0x100) >= 1 && cfg.use_second_alignment == false) continue;	// secondary alignment
+		if(p.n_cigar > cfg.max_num_cigar) continue;									// ignore hits with more than max-num-cigar types
+		if(p.qual < cfg.min_mapping_quality) continue;								// ignore hits with small quality
 		if(p.n_cigar < 1) continue;												// should never happen
 
-		hit ht(b1t);
+		hit ht(b1t, &cfg);
 		ht.set_tags(b1t);
-		ht.set_strand();
+		ht.set_strand(&cfg);
 		//ht.print();
 
 		//if(ht.nh >= 2 && p.qual < min_mapping_quality) continue;
@@ -59,33 +60,33 @@ int generator::resolve()
 		qcnt += 1;
 
 		// truncate
-		if(ht.tid != bb1.tid || ht.pos > bb1.rpos + min_bundle_gap)
+		if(ht.tid != bb1.tid || ht.pos > bb1.rpos + cfg.min_bundle_gap)
 		{
 			pool.push_back(bb1);
 			bb1.clear();
 		}
-		if(ht.tid != bb2.tid || ht.pos > bb2.rpos + min_bundle_gap)
+		if(ht.tid != bb2.tid || ht.pos > bb2.rpos + cfg.min_bundle_gap)
 		{
 			pool.push_back(bb2);
 			bb2.clear();
 		}
 
 		// process
-		process(batch_bundle_size);
+		process(cfg.batch_bundle_size);
 
 		//printf("read strand = %c, xs = %c, ts = %c\n", ht.strand, ht.xs, ht.ts);
 
 		// add hit
-		if(uniquely_mapped_only == true && ht.nh != 1) continue;
-		if(library_type != UNSTRANDED && ht.strand == '+' && ht.xs == '-') continue;
-		if(library_type != UNSTRANDED && ht.strand == '-' && ht.xs == '+') continue;
-		if(library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
-		if(library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit(ht);
-		if(library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit(ht);
-		if(library_type == UNSTRANDED && ht.xs == '.') bb1.add_hit(ht);
-		if(library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit(ht);
-		if(library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit(ht);
-		if(library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit(ht);
+		if(cfg.uniquely_mapped_only == true && ht.nh != 1) continue;
+		if(cfg.library_type != UNSTRANDED && ht.strand == '+' && ht.xs == '-') continue;
+		if(cfg.library_type != UNSTRANDED && ht.strand == '-' && ht.xs == '+') continue;
+		if(cfg.library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
+		if(cfg.library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit(ht);
+		if(cfg.library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit(ht);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bb1.add_hit(ht);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit(ht);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit(ht);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit(ht);
 	}
 
 	pool.push_back(bb1);
@@ -105,13 +106,13 @@ int generator::process(int n)
 
 		//printf("bundle %d has %lu reads\n", i, bb.hits.size());
 
-		if(bb.hits.size() < min_num_hits_in_bundle) continue;
+		if(bb.hits.size() < cfg.min_num_hits_in_bundle) continue;
 		if(bb.tid < 0) continue;
 
 		char buf[1024];
 		strcpy(buf, hdr->target_name[bb.tid]);
 
-		bundle bd(bb);
+		bundle bd(bb, &cfg);
 
 		bd.chrm = string(buf);
 		bd.build();
@@ -128,7 +129,7 @@ int generator::process(int n)
 
 int generator::generate(const splice_graph &gr0, const hyper_set &hs0)
 {
-	super_graph sg(gr0, hs0);
+	super_graph sg(gr0, hs0, &cfg);
 	sg.build();
 
 	vector<transcript> gv;
@@ -136,7 +137,7 @@ int generator::generate(const splice_graph &gr0, const hyper_set &hs0)
 	{
 		string gid = "gene." + tostring(index) + "." + tostring(k);
 
-		if(verbose >= 2 && k == 0) sg.print();
+		if(cfg.verbose >= 2 && k == 0) sg.print();
 
 		splice_graph &gr = sg.subs[k];
 		hyper_set &hs = sg.hss[k];
@@ -164,7 +165,7 @@ int generator::write_graph(splice_graph &gr, hyper_set &hs)
 		gr.write(grout, v, c, "phase");
 	}
 
-	scallop sc(gr, hs);
+	scallop sc(gr, hs, &cfg);
 	sc.preassemble();
 
 	for(int i = 0; i < sc.paths.size(); i++)

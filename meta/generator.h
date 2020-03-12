@@ -14,16 +14,18 @@ See LICENSE for licensing.
 #include "splice_graph.h"
 #include "hyper_set.h"
 #include "combined_graph.h"
+#include "scallop/config.h"
 
 using namespace std;
 
 class generator
 {
 public:
-	generator(const string &bamfile, const string &gfile, vector<combined_graph> &cbv);
+	generator(vector<combined_graph> &cbv, const config &c);
 	~generator();
 
 private:
+	config cfg;
 	samFile *sfn;
 	bam_hdr_t *hdr;
 	bam1_t *b1t;

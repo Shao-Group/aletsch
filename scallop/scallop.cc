@@ -14,7 +14,7 @@ See LICENSE for licensing.
 #include <algorithm>
 
 scallop::scallop(const splice_graph &g, const hyper_set &h1, config *c)
-	: gr(g), hs(h1), hx(c), cfg(c)
+	: gr(g), hs(h1), cfg(c)
 {
 	round = 0;
 	if(cfg->output_tex_files == true) gr.draw(gr.gid + "." + tostring(round++) + ".tex");

@@ -29,9 +29,6 @@ typedef pair< pair<int, int>, int> PPII;
 class hyper_set
 {
 public:
-	hyper_set(config *c);
-
-public:
 	config *cfg;		// pointer to config
 	MVII nodes;			// hyper-edges using list-of-nodes
 	VVI edges;			// hyper-edges using list-of-edges

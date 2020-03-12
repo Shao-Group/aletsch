@@ -18,7 +18,7 @@ See LICENSE for licensing.
 #include "graph_revise.h"
 
 bundle::bundle(const bundle_base &bb, config *c)
-	: bundle_base(bb), cfg(c), hs(c)
+	: bundle_base(bb), cfg(c)
 {
 }
 
