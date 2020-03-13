@@ -46,8 +46,8 @@ generator::~generator()
 
 int generator::resolve()
 {
-	bundle bd1(&cfg);
-	bundle bd2(&cfg);
+	bundle_base bb1;
+	bundle_base bb2;
 
 	boost::asio::thread_pool pool(max_threads / 2); // thread pool
 
@@ -76,21 +76,23 @@ int generator::resolve()
 		qcnt += 1;
 
 		// truncate
-		if(ht.tid != bd1.tid || ht.pos > bd1.rpos + cfg.min_bundle_gap)
+		if(ht.tid != bb1.tid || ht.pos > bb1.rpos + cfg.min_bundle_gap)
 		{
-			if(bd1.hits.size() >= cfg.min_num_hits_in_bundle && bd1.tid >= 0)
+			if(bb1.hits.size() >= cfg.min_num_hits_in_bundle && bb1.tid >= 0)
 			{
-				boost::asio::post(pool, [this, bd1]{ this->generate(bd1); });
+				bundle bd(bb1, &cfg);
+				boost::asio::post(pool, [this, &bd]{ this->generate(bd); });
 			}
-			bd1.clear();
+			bb1.clear();
 		}
-		if(ht.tid != bd2.tid || ht.pos > bd2.rpos + cfg.min_bundle_gap)
+		if(ht.tid != bb2.tid || ht.pos > bb2.rpos + cfg.min_bundle_gap)
 		{
-			if(bd2.hits.size() >= cfg.min_num_hits_in_bundle && bd2.tid >= 0)
+			if(bb2.hits.size() >= cfg.min_num_hits_in_bundle && bb2.tid >= 0)
 			{
-				boost::asio::post(pool, [this, bd2]{ this->generate(bd2); });
+				bundle bd(bb2, &cfg);
+				boost::asio::post(pool, [this, &bd]{ this->generate(bd); });
 			}
-			bd2.clear();
+			bb2.clear();
 		}
 
 		//printf("read strand = %c, xs = %c, ts = %c\n", ht.strand, ht.xs, ht.ts);
@@ -100,28 +102,33 @@ int generator::resolve()
 		if(cfg.library_type != UNSTRANDED && ht.strand == '+' && ht.xs == '-') continue;
 		if(cfg.library_type != UNSTRANDED && ht.strand == '-' && ht.xs == '+') continue;
 		if(cfg.library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
-		if(cfg.library_type != UNSTRANDED && ht.strand == '+') bd1.add_hit(ht);
-		if(cfg.library_type != UNSTRANDED && ht.strand == '-') bd2.add_hit(ht);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bd1.add_hit(ht);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bd2.add_hit(ht);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '+') bd1.add_hit(ht);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '-') bd2.add_hit(ht);
+		if(cfg.library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit(ht);
+		if(cfg.library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit(ht);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bb1.add_hit(ht);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit(ht);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit(ht);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit(ht);
 
 	}
 
-	if(bd1.hits.size() >= cfg.min_num_hits_in_bundle && bd1.tid >= 0)
+	if(bb1.hits.size() >= cfg.min_num_hits_in_bundle && bb1.tid >= 0)
 	{
-		boost::asio::post(pool, [this, bd1]{ this->generate(bd1); });
+		bundle bd(bb1, &cfg);
+		boost::asio::post(pool, [this, &bd]{ this->generate(bd); });
 	}
 
-	if(bd2.hits.size() >= cfg.min_num_hits_in_bundle && bd2.tid >= 0)
+	if(bb2.hits.size() >= cfg.min_num_hits_in_bundle && bb2.tid >= 0)
 	{
-		boost::asio::post(pool, [this, bd2]{ this->generate(bd2); });
+		bundle bd(bb2, &cfg);
+		boost::asio::post(pool, [this, &bd]{ this->generate(bd); });
 	}
+
+	bb1.clear();
+	bb2.clear();
 	return 0;
 }
 
-int generator::generate(bundle bd)
+int generator::generate(bundle &bd)
 {
 	char buf[1024];
 	strcpy(buf, hdr->target_name[bd.tid]);

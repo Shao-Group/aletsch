@@ -41,7 +41,7 @@ public:
 	int resolve();
 
 private:
-	int generate(bundle bd);
+	int generate(bundle &bd);
 	int write_graph(splice_graph &gr, hyper_set &hs);
 };
 
