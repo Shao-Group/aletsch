@@ -19,7 +19,7 @@ config::config()
 {
 	// for bam file and reads
 	min_flank_length = 3;
-	max_num_cigar = 100;
+	max_num_cigar = 1000;
 	max_edit_distance = 10;
 	min_bundle_gap = 50;
 	min_num_hits_in_bundle = 20;
@@ -127,6 +127,7 @@ int config::parse_arguments(int argc, const char ** argv)
 			output_tex_files = true;
 		}
 
+		/*
 		// user specified
 		else if(string(argv[i]) == "--version")
 		{
@@ -141,6 +142,7 @@ int config::parse_arguments(int argc, const char ** argv)
 			print_logo();
 			exit(0);
 		}
+		*/
 		else if(string(argv[i]) == "--min_flank_length")
 		{
 			min_flank_length = atoi(argv[i + 1]);

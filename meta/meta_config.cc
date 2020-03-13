@@ -1,5 +1,5 @@
 /*
-Part of Scallop Transcript Assembler
+Part of meta-scallop Transcript Assembler
 (c) 2017 by  Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
 See LICENSE for licensing.
 */
@@ -106,6 +106,7 @@ int parse_meta_arguments(int argc, const char ** argv)
 
 int print_meta_logo()
 {
+	return 0;
 	printf("      ___           ___           ___                                       ___           ___    \n");
 	printf("     /  /\\         /  /\\         /  /\\                                     /  /\\         /  /\\   \n");
 	printf("    /  /:/_       /  /:/        /  /::\\                                   /  /::\\       /  /::\\  \n");
@@ -125,24 +126,27 @@ int print_meta_logo()
 int print_meta_help()
 {
 	printf("\n");
-	printf("Usage: meta-scallop -i <bam-file> -o <gtf-file> [options]\n");
+	printf("Usage: meta-scallop -i <input-bam-list> -o <output.gtf> [options]\n");
 	printf("\n");
 	printf("Options:\n");
-	printf(" %-42s  %s\n", "--help",  "print usage of Scallop and exit");
-	printf(" %-42s  %s\n", "--version",  "print current version of Scallop and exit");
-	printf(" %-42s  %s\n", "--verbose <0, 1, 2>",  "0: quiet; 1: one line for each graph; 2: with details, default: 1");
-	printf(" %-42s  %s\n", "--library_type <first, second, unstranded>",  "library type of the sample, default: unstranded");
+	printf(" %-42s  %s\n", "--help",  "print usage of meta-scallop and exit");
+	printf(" %-42s  %s\n", "--version",  "print current version of meta-scallop and exit");
+	printf(" %-42s  %s\n", "-t/--max_threads <integer>",  "number of threads, default 10");
+	printf(" %-42s  %s\n", "--max_combined <integer>",  "the maximized number of splice graphs that will be combined, default: 100");
+	printf(" %-42s  %s\n", "--merge_threshold <float>",  "the minimized similarity for two graphs to be combined, default: 0.5");
+	printf(" %-42s  %s\n", "--min_supporting_samples <integer>",  "the minimized number of samples needed to support a splicing site, default: 2");
+	printf(" %-42s  %s\n", "--min_splicing_count <integer>",  "the minimized coverage needed to support a splicing site, default: 5");
+	printf(" %-42s  %s\n", "--min_splice_bundary_hits <integer>",  "the minimum number of spliced reads required to support a junction, default: 1");
 	printf(" %-42s  %s\n", "--min_transcript_coverage <float>",  "minimum coverage required for a multi-exon transcript, default: 1.01");
 	printf(" %-42s  %s\n", "--min_single_exon_coverage <float>",  "minimum coverage required for a single-exon transcript, default: 20");
 	printf(" %-42s  %s\n", "--min_transcript_length_increase <integer>",  "default: 50");
 	printf(" %-42s  %s\n", "--min_transcript_length_base <integer>",  "default: 150, minimum length of a transcript would be");
 	printf(" %-42s  %s\n", "",  "--min_transcript_length_base + --min_transcript_length_increase * num-of-exons");
 	printf(" %-42s  %s\n", "--min_mapping_quality <integer>",  "ignore reads with mapping quality less than this value, default: 1");
-	printf(" %-42s  %s\n", "--max_num_cigar <integer>",  "ignore reads with CIGAR size larger than this value, default: 7");
+	printf(" %-42s  %s\n", "--max_num_cigar <integer>",  "ignore reads with CIGAR size larger than this value, default: 1000");
 	printf(" %-42s  %s\n", "--min_bundle_gap <integer>",  "minimum distances required to start a new bundle, default: 50");
 	printf(" %-42s  %s\n", "--min_num_hits_in_bundle <integer>",  "minimum number of reads required in a bundle, default: 20");
 	printf(" %-42s  %s\n", "--min_flank_length <integer>",  "minimum match length in each side for a spliced read, default: 3");
-	printf(" %-42s  %s\n", "--min_splice_bundary_hits <integer>",  "minimum number of spliced reads required for a junction, default: 1");
 	return 0;
 }
 
