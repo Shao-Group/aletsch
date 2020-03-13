@@ -65,7 +65,7 @@ make
 
 If some of the dependencies are installed in the default system directory (for example, `/usr/lib`),
 then the corresponding `--with-` option might not be necessary.
-The executable file `meta-scallop` will appear at `src/meta-scallop`.
+The executable file `meta-scallop` will appear at `meta/meta-scallop`.
 
 
 # Usage
