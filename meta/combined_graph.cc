@@ -319,6 +319,8 @@ int combined_graph::build(splice_graph &gr, hyper_set &hs)
 		}
 	}
 
+	num_combined++;
+
 	return 0;
 }
 

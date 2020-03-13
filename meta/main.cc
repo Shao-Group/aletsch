@@ -32,10 +32,12 @@ int main(int argc, const char **argv)
 		return 0;
 	}
 
+
 	config cfg;
 	cfg.parse_arguments(argc, argv);
 	parse_meta_arguments(argc, argv);
 
+	cfg.print_command_line(argc, argv);
 	incubator icbt(cfg);
 	icbt.resolve();
 
