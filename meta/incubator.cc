@@ -23,22 +23,22 @@ incubator::incubator(const config &c)
 
 int incubator::resolve()
 {
-	printf("loading bam/sam files ...\n");
-	load();
+	printf("\nStep 1: generate graphs for individual bam/sam files ...\n");
+	generate();
 
-	printf("merge splice graphs ...\n");
+	printf("\nStep 2: merge splice graphs ...\n");
 	merge();
 
-	printf("assemble merged splice graphs ...\n");
+	printf("\nStep 3: assemble merged splice graphs ...\n");
 	assemble();
 
-	printf("filtering and output gtf files ...\n");
+	printf("\nStep 4: filter and output assembled transcripts ...\n");
 	postprocess();
 
 	return 0;
 }
 
-int incubator::load()
+int incubator::generate()
 {
 	ifstream fin(input_bam_list.c_str());
 	if(fin.fail())
@@ -47,31 +47,18 @@ int incubator::load()
 		exit(0);
 	}
 
-	vector< vector<string> > files(max_threads);
+	mutex mylock;								// lock for trsts
+	boost::asio::thread_pool pool(max_threads); // thread pool
 
 	char line[102400];
-	int index = 0;
 	while(fin.getline(line, 10240, '\n'))
 	{
-		string s(line);
-		if(s.size() == 0) continue;
-		int k = index % max_threads;
-		files[k].push_back(s);
-		index++;
+		string file(line);
+		if(file.size() == 0) continue;
+		boost::asio::post(pool, [this, &mylock, file]{ generate_single(file, this->groups, mylock, this->g2g, this->cfg); });
 	}
 
-	mutex mylock;								// lock for trsts
-	vector<thread> threads;
-	for(int k = 0; k < files.size(); k++)
-	{
-		printf("thread %d processes %lu files\n", k, files[k].size());
-		threads.emplace_back(load_multiple, files[k], std::ref(groups), std::ref(mylock), std::ref(g2g), std::ref(cfg));
-	}
-	for(int k = 0; k < threads.size(); k++)
-	{
-		threads[k].join();
-	}
-
+	printf("finish processing all individual samples: groups of graphs are:\n");
 	print_groups();
 	return 0;
 }
@@ -220,18 +207,13 @@ int incubator::print_groups()
 	return 0;
 }
 
-int load_multiple(const vector<string> &files, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &m, const config &cfg)
+int generate_single(const string &file, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &m, const config &cfg)
 {	
 	vector<combined_graph> v;
-	for(int k = 0; k < files.size(); k++) 
-	{
-		//printf("load file %s\n", files[k].c_str());
-		//load_single(files[k], v);
-		config c = cfg;
-		c.input_file = files[k];
-		generator gt(v, c);
-		gt.resolve();
-	}
+	config c = cfg;
+	c.input_file = file;
+	generator gt(v, c);
+	gt.resolve();
 
 	mylock.lock();
 	for(int k = 0; k < v.size(); k++)
@@ -254,6 +236,8 @@ int load_multiple(const vector<string> &files, vector<combined_group> &gv, mutex
 		}
 	}
 	mylock.unlock();
+
+	printf("finish processing individual sample %s\n", file.c_str());
 	return 0;
 }
 

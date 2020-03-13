@@ -29,7 +29,7 @@ public:
 	int resolve();
 
 public:
-	int load();
+	int generate();
 	int merge();
 	int assemble();
 	int postprocess();
@@ -39,7 +39,7 @@ public:
 	int print_groups();
 };
 
-int load_multiple(const vector<string> &files, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &g2g, const config &cfg);
+int generate_single(const string &file, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &g2g, const config &cfg);
 int load_single(const string &file, vector<combined_graph> &vc);
 
 int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg);
