@@ -47,7 +47,8 @@ int incubator::load()
 		exit(0);
 	}
 
-	vector< vector<string> > files(2);
+	int cur_threads = 2;
+	vector< vector<string> > files(cur_threads);
 
 	char line[102400];
 	int index = 0;
@@ -55,7 +56,7 @@ int incubator::load()
 	{
 		string s(line);
 		if(s.size() == 0) continue;
-		int k = index % max_threads;
+		int k = index % cur_threads;
 		files[k].push_back(s);
 		index++;
 	}
