@@ -47,6 +47,11 @@ int parse_meta_arguments(int argc, const char ** argv)
 			output_gtf_file = string(argv[i + 1]);
 			i++;
 		}
+		else if(string(argv[i]) == "-t")
+		{
+			max_threads = atoi(argv[i + 1]);
+			i++;
+		}
 		else if(string(argv[i]) == "--version")
 		{
 			printf("%s\n", meta_version.c_str());
