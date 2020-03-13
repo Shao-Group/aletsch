@@ -104,8 +104,8 @@ int previewer::preview()
 
 	if(cfg->verbose >= 1)
 	{
-		printf("preview: reads = %d, single = %d, paired = %d, spliced reads = %d, first = %d, second = %d, inferred cfg->library_type = %s, given cfg->library_type = %s\n",
-			total, single, paired, sp, first, second, vv[s1 + 1].c_str(), vv[cfg->library_type + 1].c_str());
+		printf("preview (%s): reads = %d, single = %d, paired = %d, spliced reads = %d, first = %d, second = %d, inferred library_type = %s, given library_type = %s\n",
+			cfg->input_file.c_str(), total, single, paired, sp, first, second, vv[s1 + 1].c_str(), vv[cfg->library_type + 1].c_str());
 	}
 
 	if(cfg->library_type == EMPTY) cfg->library_type = s1;
