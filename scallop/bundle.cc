@@ -17,13 +17,10 @@ See LICENSE for licensing.
 #include "undirected_graph.h"
 #include "graph_revise.h"
 
-bundle::bundle(config *c)
-	: cfg(c)
-{}
-
 bundle::bundle(const bundle_base &bb, config *c)
 	: bundle_base(bb), cfg(c)
-{}
+{
+}
 
 bundle::~bundle()
 {}

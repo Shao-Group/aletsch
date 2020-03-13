@@ -29,6 +29,9 @@ private:
 	samFile *sfn;
 	bam_hdr_t *hdr;
 	bam1_t *b1t;
+	bundle_base bb1;		// +
+	bundle_base bb2;		// -
+	vector<bundle_base> pool;
 
 	ofstream grout;
 	vector<combined_graph> &vcb;
@@ -41,7 +44,8 @@ public:
 	int resolve();
 
 private:
-	int generate(bundle bd);
+	int process(int n);
+	int generate(const splice_graph &gr, const hyper_set &hs);
 	int write_graph(splice_graph &gr, hyper_set &hs);
 };
 
