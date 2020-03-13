@@ -16,6 +16,10 @@ See LICENSE for licensing.
 #include "scallop.h"
 #include "super_graph.h"
 #include "previewer.h"
+#include "meta_config.h"
+#include <thread>
+#include <boost/asio/thread_pool.hpp>
+#include <boost/asio/post.hpp>
 
 generator::generator(vector<combined_graph> &v, const config &c)
 	: vcb(v), cfg(c)
@@ -42,6 +46,11 @@ generator::~generator()
 
 int generator::resolve()
 {
+	bundle bd1(&cfg);
+	bundle bd2(&cfg);
+
+	boost::asio::thread_pool pool(max_threads / 2); // thread pool
+
     while(sam_read1(sfn, hdr, b1t) >= 0)
 	{
 		bam1_core_t &p = b1t->core;
@@ -67,19 +76,22 @@ int generator::resolve()
 		qcnt += 1;
 
 		// truncate
-		if(ht.tid != bb1.tid || ht.pos > bb1.rpos + cfg.min_bundle_gap)
+		if(ht.tid != bd1.tid || ht.pos > bd1.rpos + cfg.min_bundle_gap)
 		{
-			pool.push_back(bb1);
-			bb1.clear();
+			if(bd1.hits.size() >= cfg.min_num_hits_in_bundle && bd1.tid >= 0)
+			{
+				boost::asio::post(pool, [this, bd1]{ this->generate(bd1); });
+			}
+			bd1.clear();
 		}
-		if(ht.tid != bb2.tid || ht.pos > bb2.rpos + cfg.min_bundle_gap)
+		if(ht.tid != bd2.tid || ht.pos > bd2.rpos + cfg.min_bundle_gap)
 		{
-			pool.push_back(bb2);
-			bb2.clear();
+			if(bd2.hits.size() >= cfg.min_num_hits_in_bundle && bd2.tid >= 0)
+			{
+				boost::asio::post(pool, [this, bd2]{ this->generate(bd2); });
+			}
+			bd2.clear();
 		}
-
-		// process
-		process(cfg.batch_bundle_size);
 
 		//printf("read strand = %c, xs = %c, ts = %c\n", ht.strand, ht.xs, ht.ts);
 
@@ -88,56 +100,37 @@ int generator::resolve()
 		if(cfg.library_type != UNSTRANDED && ht.strand == '+' && ht.xs == '-') continue;
 		if(cfg.library_type != UNSTRANDED && ht.strand == '-' && ht.xs == '+') continue;
 		if(cfg.library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
-		if(cfg.library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit(ht);
-		if(cfg.library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit(ht);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bb1.add_hit(ht);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit(ht);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit(ht);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit(ht);
+		if(cfg.library_type != UNSTRANDED && ht.strand == '+') bd1.add_hit(ht);
+		if(cfg.library_type != UNSTRANDED && ht.strand == '-') bd2.add_hit(ht);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bd1.add_hit(ht);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bd2.add_hit(ht);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '+') bd1.add_hit(ht);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '-') bd2.add_hit(ht);
 
 	}
 
-	pool.push_back(bb1);
-	pool.push_back(bb2);
-	process(0);
-
-	return 0;
-}
-
-int generator::process(int n)
-{
-	if(pool.size() < n) return 0;
-
-	for(int i = 0; i < pool.size(); i++)
+	if(bd1.hits.size() >= cfg.min_num_hits_in_bundle && bd1.tid >= 0)
 	{
-		bundle_base &bb = pool[i];
-
-		//printf("bundle %d has %lu reads\n", i, bb.hits.size());
-
-		if(bb.hits.size() < cfg.min_num_hits_in_bundle) continue;
-		if(bb.tid < 0) continue;
-
-		char buf[1024];
-		strcpy(buf, hdr->target_name[bb.tid]);
-
-		bundle bd(bb, &cfg);
-
-		bd.chrm = string(buf);
-		bd.build();
-		//bd.print(index);
-
-		//if(verbose >= 1) bd.print(index);
-
-		generate(bd.gr, bd.hs);
-		index++;
+		boost::asio::post(pool, [this, bd1]{ this->generate(bd1); });
 	}
-	pool.clear();
+
+	if(bd2.hits.size() >= cfg.min_num_hits_in_bundle && bd2.tid >= 0)
+	{
+		boost::asio::post(pool, [this, bd2]{ this->generate(bd2); });
+	}
 	return 0;
 }
 
-int generator::generate(const splice_graph &gr0, const hyper_set &hs0)
+int generator::generate(bundle bd)
 {
-	super_graph sg(gr0, hs0, &cfg);
+	char buf[1024];
+	strcpy(buf, hdr->target_name[bd.tid]);
+	bd.chrm = string(buf);
+	bd.build();
+	bd.print(index);
+	//if(verbose >= 1) bd.print(index);
+
+	super_graph sg(bd.gr, bd.hs, &cfg);
 	sg.build();
 
 	vector<transcript> gv;

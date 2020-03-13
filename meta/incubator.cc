@@ -47,7 +47,7 @@ int incubator::load()
 		exit(0);
 	}
 
-	vector< vector<string> > files(max_threads);
+	vector< vector<string> > files(2);
 
 	char line[102400];
 	int index = 0;

@@ -24,6 +24,7 @@ using namespace std;
 class bundle : public bundle_base
 {
 public:
+	bundle(config *c);
 	bundle(const bundle_base &bb, config *c);
 	virtual ~bundle();
 
