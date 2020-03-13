@@ -65,7 +65,7 @@ int combined_group::stats()
 
 	for(map<int, int>::iterator it = m.begin(); it != m.end(); it++)
 	{
-		printf("total %d graphs with combined %d graphs\n", it->second, it->first);
+		printf("chrm %s, strand %c, total %d graphs with combined %d graphs\n", chrm.c_str(), strand, it->second, it->first);
 	}
 	return 0;
 }
@@ -181,8 +181,7 @@ int combined_group::combine_graphs()
 
 		int sum = csize[px] + csize[py]; 
 
-		printf("combine graph %d (#splices = %lu) and %d (#splices = %lu) with score = %.3lf: %d + %d -> %d\n", 
-				x, gset[x].splices.size(), y, gset[y].splices.size(), r, csize[px], csize[py], sum);
+		//printf("combine graph %d (#splices = %lu) and %d (#splices = %lu) with score = %.3lf: %d + %d -> %d\n", x, gset[x].splices.size(), y, gset[y].splices.size(), r, csize[px], csize[py], sum);
 
 		ds.link(px, py);
 		int q = ds.find_set(px);

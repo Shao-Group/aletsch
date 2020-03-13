@@ -12,6 +12,7 @@
 #include <iostream>
 #include <algorithm>
 #include <thread>
+#include <ctime>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/asio/post.hpp>
 
@@ -23,16 +24,21 @@ incubator::incubator(const config &c)
 
 int incubator::resolve()
 {
-	printf("\nStep 1: generate graphs for individual bam/sam files ...\n");
+	time_t mytime;
+	mytime = time(NULL);
+	printf("\nStep 1: generate graphs for individual bam/sam files %s\n", ctime(&mytime));
 	generate();
 
-	printf("\nStep 2: merge splice graphs ...\n");
+	mytime = time(NULL);
+	printf("\nStep 2: merge splice graphs %s\n", ctime(&mytime));
 	merge();
 
-	printf("\nStep 3: assemble merged splice graphs ...\n");
+	mytime = time(NULL);
+	printf("\nStep 3: assemble merged splice graphs %s\n", ctime(&mytime));
 	assemble();
 
-	printf("\nStep 4: filter and output assembled transcripts ...\n");
+	mytime = time(NULL);
+	printf("\nStep 4: filter and output assembled transcripts %s\n", ctime(&mytime));
 	postprocess();
 
 	return 0;
@@ -58,8 +64,10 @@ int incubator::generate()
 		boost::asio::post(pool, [this, &mylock, file]{ generate_single(file, this->groups, mylock, this->g2g, this->cfg); });
 	}
 
-	printf("finish processing all individual samples: groups of graphs are:\n");
 	print_groups();
+
+	time_t mytime = time(NULL);
+	printf("finish processing all individual samples %s\n", ctime(&mytime));
 	return 0;
 }
 
@@ -76,6 +84,8 @@ int incubator::merge()
 	pool.join();
 	print_groups();
 
+	time_t mytime = time(NULL);
+	printf("finish merging all splice graphs %s\n", ctime(&mytime));
 	return 0;	
 }
 
@@ -95,6 +105,10 @@ int incubator::assemble()
 		}
 	}
 	pool.join();
+
+	time_t mytime = time(NULL);
+	printf("finish assembling all merged graphs %s\n", ctime(&mytime));
+
 	return 0;
 }
 
@@ -161,6 +175,10 @@ int incubator::postprocess()
 
 	pool.join();
 	fout.close();
+
+	time_t mytime = time(NULL);
+	printf("finish filtering and reporting final assembled transcripts %s\n", ctime(&mytime));
+
 	return 0;
 }
 
@@ -237,7 +255,8 @@ int generate_single(const string &file, vector<combined_group> &gv, mutex &myloc
 	}
 	mylock.unlock();
 
-	printf("finish processing individual sample %s\n", file.c_str());
+	time_t mytime = time(NULL);
+	printf("finish processing individual sample %s %s\n", file.c_str(), ctime(&mytime));
 	return 0;
 }
 
@@ -421,8 +440,10 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 			}
 		}
 
-		printf("combined-graph %s, %d transcripts, %d child %s, %d -> %d transcripts\n", cm.gid.c_str(), z, i, cb.gr.gid.c_str(), z1, z2);
+		//printf("combined-graph %s, %d transcripts, %d child %s, %d -> %d transcripts\n", cm.gid.c_str(), z, i, cb.gr.gid.c_str(), z1, z2);
 	}
+
+	printf("combined-graph %s, %lu children, %lu assembled transcripts\n", cm.gid.c_str(), children.size(), vt.size());
 
 	if(vt.size() >= 1)
 	{
