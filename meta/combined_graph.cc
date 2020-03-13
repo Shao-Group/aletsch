@@ -232,8 +232,9 @@ int combined_graph::build(splice_graph &gr, hyper_set &hs)
 		}
 	}
 
-	// junctions
+	// junctions and splices
 	pei = gr.edges();
+	set<int32_t> sp;
 	for(edge_iterator it = pei.first; it != pei.second; it++)
 	{
 		int s = (*it)->source(); 
@@ -258,7 +259,12 @@ int combined_graph::build(splice_graph &gr, hyper_set &hs)
 			tp->second.first += w;
 			tp->second.second += c;
 		}
+		sp.insert(p1);
+		sp.insert(p2);
 	}
+	splices.clear();
+	splices.assign(sp.begin(), sp.end());
+	sort(splices.begin(), splices.end());
 
 	// phasing paths
 	for(MVII::const_iterator it = hs.nodes.begin(); it != hs.nodes.end(); it++)
