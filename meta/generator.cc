@@ -57,6 +57,9 @@ int generator::resolve()
 		ht.set_strand(&cfg);
 		//ht.print();
 
+		// TODO for test
+		if(ht.tid >= 1) break;
+
 		//if(ht.nh >= 2 && p.qual < min_mapping_quality) continue;
 		//if(ht.nm > max_edit_distance) continue;
 
@@ -92,8 +95,6 @@ int generator::resolve()
 		if(cfg.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit(ht);
 		if(cfg.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit(ht);
 
-		// TODO for test
-		if(ht.tid >= 1) break;
 	}
 
 	pool.push_back(bb1);
