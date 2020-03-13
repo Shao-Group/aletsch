@@ -126,7 +126,7 @@ int combined_group::build_similarity()
 				if(c <= 1.50) b = false;
 				if(r < merge_threshold) b = false;
 
-				//printf("r1 = %.3lf, r2 = %.3lf, r = %.3lf, size1 = %lu, size2 = %lu\n", r1, r2, r, gset[i].splices.size(), gset[j].splices.size());
+				printf("b = %c, r = %.3lf, c = %d, size1 = %lu, size2 = %lu\n", b ? 'T' : 'F', r, c, gset[i].splices.size(), gset[j].splices.size());
 
 				if(b == true)
 				{

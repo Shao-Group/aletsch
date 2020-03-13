@@ -124,7 +124,7 @@ int generator::process(int n)
 
 		bd.chrm = string(buf);
 		bd.build();
-		bd.print(index);
+		//bd.print(index);
 
 		//if(verbose >= 1) bd.print(index);
 
