@@ -10,26 +10,11 @@ See LICENSE for licensing.
 #include <sstream>
 #include <cmath>
 
-#include "hit.h"
+#include "hit_base.h"
 #include "util.h"
 #include "constants.h"
 
-/*
-hit::hit(int32_t p)
-{
-	bam1_core_t::pos = p;
-	strand = '.';
-	xs = '.';
-	ts = '.';
-	hi = -1;
-	nh = -1;
-	nm = 0;
-	qlen = 0;
-	cigar = NULL;
-}
-*/
-
-hit& hit::operator=(const hit &h)
+hit_base& hit_base::operator=(const hit_base &h)
 {
 	bam1_core_t::operator=(h);
 	rpos = h.rpos;
@@ -41,13 +26,10 @@ hit& hit::operator=(const hit &h)
 	ts = h.ts;
 	hi = h.hi;
 	nm = h.nm;
-	itvm = h.itvm;
-	itvi = h.itvi;
-	itvd = h.itvd;
 	return *this;
 }
 
-hit::hit(const hit &h)
+hit_base::hit_base(const hit_base &h)
 	:bam1_core_t(h)
 {
 	rpos = h.rpos;
@@ -59,16 +41,13 @@ hit::hit(const hit &h)
 	ts = h.ts;
 	hi = h.hi;
 	nm = h.nm;
-	itvm = h.itvm;
-	itvi = h.itvi;
-	itvd = h.itvd;
 }
 
-hit::~hit()
+hit_base::~hit_base()
 {
 }
 
-hit::hit(bam1_t *b)
+hit_base::hit_base(bam1_t *b)
 	:bam1_core_t(b->core)
 {
 	// fetch query name
@@ -84,7 +63,7 @@ hit::hit(bam1_t *b)
 	qlen = (int32_t)bam_cigar2qlen(n_cigar, bam_get_cigar(b));
 }
 
-int hit::set_splices(bam1_t *b, int min_flank)
+int hit_base::set_splices(bam1_t *b, int min_flank)
 {
 	uint32_t *cigar = bam_get_cigar(b);
 
@@ -112,43 +91,7 @@ int hit::set_splices(bam1_t *b, int min_flank)
 	return 0;
 }
 
-int hit::set_intervals(bam1_t *b)
-{
-	itvm.clear();
-	itvi.clear();
-	itvd.clear();
-	int32_t p = pos;
-
-	uint32_t *cigar = bam_get_cigar(b);
-
-    for(int k = 0; k < n_cigar; k++)
-	{
-		if (bam_cigar_type(bam_cigar_op(cigar[k]))&2)
-		{
-			p += bam_cigar_oplen(cigar[k]);
-		}
-
-		if(bam_cigar_op(cigar[k]) == BAM_CMATCH)
-		{
-			int32_t s = p - bam_cigar_oplen(cigar[k]);
-			itvm.push_back(pack(s, p));
-		}
-
-		if(bam_cigar_op(cigar[k]) == BAM_CINS)
-		{
-			itvi.push_back(pack(p - 1, p + 1));
-		}
-
-		if(bam_cigar_op(cigar[k]) == BAM_CDEL)
-		{
-			int32_t s = p - bam_cigar_oplen(cigar[k]);
-			itvd.push_back(pack(s, p));
-		}
-	}
-	return 0;
-}
-
-int hit::set_tags(bam1_t *b)
+int hit_base::set_tags(bam1_t *b)
 {
 	ts = '.';
 	uint8_t *p0 = bam_aux_get(b, "ts");
@@ -185,7 +128,7 @@ int hit::set_tags(bam1_t *b)
 	return 0;
 }
 
-int hit::set_concordance()
+int hit_base::set_concordance()
 {
 	bool concordant = false;
 	if((flag & 0x10) <= 0 && (flag & 0x20) >= 1 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) concordant = true;		// F1R2
@@ -195,7 +138,7 @@ int hit::set_concordance()
 	return 0;
 }
 
-int hit::set_strand(int libtype)
+int hit_base::set_strand(int libtype)
 {
 	strand = '.';
 	
@@ -230,7 +173,7 @@ int hit::set_strand(int libtype)
 	return 0;
 }
 
-bool hit::operator<(const hit &h) const
+bool hit_base::operator<(const hit_base &h) const
 {
 	if(qname < h.qname) return true;
 	if(qname > h.qname) return false;
@@ -239,7 +182,7 @@ bool hit::operator<(const hit &h) const
 	return (pos < h.pos);
 }
 
-int hit::print() const
+int hit_base::print() const
 {
 	// print basic information
 	printf("Hit %s: [%d-%d), mpos = %d, flag = %d, quality = %d, strand = %c, xs = %c, ts = %c, isize = %d, qlen = %d, hi = %d\n", 

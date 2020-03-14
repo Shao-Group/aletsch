@@ -4,8 +4,8 @@ Part of Scallop Transcript Assembler
 See LICENSE for licensing.
 */
 
-#ifndef __HIT_H__
-#define __HIT_H__
+#ifndef __HIT_BASE_H__
+#define __HIT_BASE_H__
 
 #include <string>
 #include <vector>
@@ -40,15 +40,15 @@ typedef struct {
 } bam1_core_t;
 */
 
-class hit: public bam1_core_t
+class hit_base: public bam1_core_t
 {
 public:
-	//hit(int32_t p);
-	hit(bam1_t *b);
-	hit(const hit &h);
-	~hit();
-	bool operator<(const hit &h) const;
-	hit& operator=(const hit &h);
+	//hit_base(int32_t p);
+	hit_base(bam1_t *b);
+	hit_base(const hit_base &h);
+	virtual ~hit_base();
+	virtual bool operator<(const hit_base &h) const;
+	virtual hit_base& operator=(const hit_base &h);
 
 public:
 	int32_t rpos;							// right position mapped to reference [pos, rpos)
@@ -62,19 +62,13 @@ public:
 	int32_t nm;								// NM aux in sam
 	bool concordant;						// whether it is concordant
 	vector<int64_t> spos;					// splice positions
-	vector<int64_t> itvm;					// matched interval
-	vector<int64_t> itvi;					// insert interval
-	vector<int64_t> itvd;					// delete interval
 
 public:
 	int set_tags(bam1_t *b);
-	int set_intervals(bam1_t *b);
 	int set_splices(bam1_t *b, int min_flank);
 	int set_strand(int lib_type);
 	int set_concordance();
 	int print() const;
 };
-
-//inline bool hit_compare_by_name(const hit &x, const hit &y);
 
 #endif
