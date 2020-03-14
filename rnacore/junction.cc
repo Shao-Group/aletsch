@@ -1,6 +1,8 @@
 /*
 Part of Scallop Transcript Assembler
-(c) 2017 by  Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
+(c) 2017 by Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
+Part of Coral, an efficient tool to bridge mate pairs
+(c) 2018 by Mingfu Shao and The Pennsylvania State University.
 See LICENSE for licensing.
 */
 
@@ -19,6 +21,8 @@ junction::junction(int64_t _p)
 	strand = '.';
 	lexon = -1;
 	rexon = -1;
+	lregion = -1;
+	rregion = -1;
 	nm = 0;
 }
 
@@ -30,6 +34,8 @@ junction::junction(int64_t _p, int _c)
 	strand = '.';
 	lexon = -1;
 	rexon = -1;
+	lregion = -1;
+	rregion = -1;
 	nm = 0;
 }
 
@@ -41,6 +47,8 @@ junction::junction(const junction &sp)
 	lexon = sp.lexon;
 	rexon = sp.rexon;
 	strand = sp.strand;
+	lregion = sp.lregion;
+	rregion = sp.rregion;
 	nm = sp.nm;
 }
 
@@ -52,8 +60,8 @@ bool junction::operator<(const junction &x) const
 
 int junction::print(const string &chrm, int index) const
 {
-	printf("junction %d: region = %s:%d-%d, %d -> %d, length = %d, count = %d, strand = %c, nm = %d\n", 
-			index, chrm.c_str(), lpos, rpos, lexon, rexon, rpos - lpos, count, strand, nm);
+	printf("junction %d: region = %s:%d-%d, region = %d -> %d, pexon = %d -> %d, length = %d, count = %d, strand = %c, nm = %d\n", 
+			index, chrm.c_str(), lpos, rpos, lregion, rregion, lexon, rexon, rpos - lpos, count, strand, nm);
 	return 0;
 }
 

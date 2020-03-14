@@ -1,6 +1,6 @@
 /*
 Part of Scallop Transcript Assembler
-(c) 2017 by  Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
+(c) 2017 by Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
 See LICENSE for licensing.
 */
 
@@ -29,8 +29,10 @@ public:
 	char strand;		// strandness of this junction
 	int nm;				// total mismatch
 
-	int lexon;			// region index corresponds to lpos
-	int rexon;			// region index corresponds to rpos
+	int lexon;			// pexon index corresponds to lpos
+	int rexon;			// pexon index corresponds to rpos
+	int lregion;		// region index corresponds to lpos
+	int rregion;		// region index corresponds to rpos
 
 public:
 	int print(const string &chrm, int index) const;

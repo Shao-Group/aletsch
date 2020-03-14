@@ -1,6 +1,6 @@
 /*
 Part of Scallop Transcript Assembler
-(c) 2017 by  Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
+(c) 2017 by Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
 See LICENSE for licensing.
 */
 
@@ -34,6 +34,11 @@ SIMI locate_right_iterator(const split_interval_map &imap, int32_t x)
 	return imap.upper_bound(ROI(x - 1, x));
 }
 
+ISMI locate_right_iterator(const interval_set_map &ism, int32_t x)
+{
+	return ism.upper_bound(interval32(x - 1, x));
+}
+
 SIMI locate_left_iterator(const split_interval_map &imap, int32_t x)
 {
 	SIMI it = imap.lower_bound(ROI(x - 1, x));
@@ -43,6 +48,20 @@ SIMI locate_left_iterator(const split_interval_map &imap, int32_t x)
 	while(upper(it->first) > x)
 	{
 		if(it == imap.begin()) return imap.end();
+		it--;
+	}
+	return it;
+}
+
+ISMI locate_left_iterator(const interval_set_map &ism, int32_t x)
+{
+	ISMI it = ism.lower_bound(interval32(x - 1, x));
+	if(it == ism.end() && it == ism.begin()) return it;
+	if(it == ism.end()) it--;
+
+	while(upper(it->first) > x)
+	{
+		if(it == ism.begin()) return ism.end();
 		it--;
 	}
 	return it;
@@ -65,6 +84,25 @@ PSIMI locate_boundary_iterators(const split_interval_map &imap, int32_t x, int32
 	}
 
 	return PSIMI(lit, rit); 
+}
+
+PISMI locate_boundary_iterators(const interval_set_map &ism, int32_t x, int32_t y)
+{
+	ISMI lit, rit;
+	lit = locate_right_iterator(ism, x);
+	if(lit == ism.end() || upper(lit->first) > y) lit = ism.end();
+
+	rit = locate_left_iterator(ism, y);
+	if(rit == ism.end() || lower(rit->first) < x) rit = ism.end();
+
+	if(lit == ism.end()) assert(rit == ism.end());
+	if(rit == ism.end() && lit != ism.end()) 
+	{
+		//printf("x = %d, y = %d, lit = [%d, %d)\n", x, y, lower(lit->first), upper(lit->first));
+		assert(lit == ism.end());
+	}
+
+	return PISMI(lit, rit); 
 }
 
 int32_t compute_max_overlap(const split_interval_map &imap, SIMI &p, SIMI &q)
@@ -215,6 +253,24 @@ int evaluate_triangle(const split_interval_map &imap, int ll, int rr, double &av
 	return 0;
 }
 
+set<int> get_overlapped_set(const interval_set_map &ism, int32_t x, int32_t y)
+{
+	PISMI pei = locate_boundary_iterators(ism, x, y);
+	ISMI lit = pei.first, rit = pei.second;
+
+	set<int> s;
+	if(lit == ism.end()) return s;
+	if(rit == ism.end()) return s;
+
+	for(ISMI it = lit; ; it++)
+	{
+		assert(upper(it->first) > lower(it->first));
+		s.insert((it->second).begin(), (it->second).end());
+		if(it == rit) break;
+	}
+	return s;
+}
+
 int test_split_interval_map()
 {
 	split_interval_map imap;
@@ -287,4 +343,45 @@ int test_split_interval_map()
 	return 0;
 }
 
+int test_interval_set_map()
+{
+	interval_set_map ism;
+	int v1[] = {1, 2};
+	int v2[] = {1, 2, 3};
+	int v3[] = {3, 4};
+	set<int> s1(v1, v1 + 2);
+	set<int> s2(v2, v2 + 3);
+	set<int> s3(v3, v3 + 2);
+	ism += make_pair(interval32(1, 2), s1);
+	ism += make_pair(interval32(2, 3), s2);
+	ism += make_pair(interval32(1, 5), s3);
 
+	for(ISMI it = ism.begin(); it != ism.end(); it++)
+	{
+		interval32 iv = it->first;
+		set<int> s = it->second;
+		printf("[%d, %d) -> ", lower(iv), upper(iv));
+		for(set<int>::iterator x = s.begin(); x != s.end(); x++)
+		{
+			printf("%d ", *x);
+		}
+		printf("\n");
+	}
+	return 0;
+}
+
+int print_interval_set_map(const interval_set_map &ism)
+{
+	for(ISMI it = ism.begin(); it != ism.end(); it++)
+	{
+		const interval32 &iv = it->first;
+		const set<int> &s = it->second;
+		printf("[%d, %d) -> ", lower(iv), upper(iv));
+		for(set<int>::const_iterator x = s.begin(); x != s.end(); x++)
+		{
+			printf("%d ", *x);
+		}
+		printf("\n");
+	}
+	return 0;
+}
