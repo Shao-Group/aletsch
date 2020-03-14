@@ -95,6 +95,7 @@ int config::parse_arguments(int argc, const char ** argv)
 	for(int i = 1; i < argc; i++)
 	{
 		// necessary ones
+		/*
 		if(string(argv[i]) == "-i")
 		{
 			input_file = string(argv[i + 1]);
@@ -126,6 +127,7 @@ int config::parse_arguments(int argc, const char ** argv)
 		{
 			output_tex_files = true;
 		}
+		*/
 
 		/*
 		// user specified
@@ -143,7 +145,7 @@ int config::parse_arguments(int argc, const char ** argv)
 			exit(0);
 		}
 		*/
-		else if(string(argv[i]) == "--min_flank_length")
+		if(string(argv[i]) == "--min_flank_length")
 		{
 			min_flank_length = atoi(argv[i + 1]);
 			i++;
