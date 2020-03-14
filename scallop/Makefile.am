@@ -21,4 +21,5 @@ libscallop_a_SOURCES = super_graph.h super_graph.cc \
 					   previewer.h previewer.cc \
 					   filter.h filter.cc \
 					   cluster.h cluster.cc \
+					   path.h path.cc \
 					   graph_revise.h graph_revise.cc
