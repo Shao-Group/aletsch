@@ -69,6 +69,8 @@ int incubator::generate()
 
 	time_t mytime = time(NULL);
 	printf("finish processing all individual samples, %s\n", ctime(&mytime));
+
+	fin.close();
 	return 0;
 }
 
