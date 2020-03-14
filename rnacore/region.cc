@@ -11,6 +11,11 @@ See LICENSE for licensing.
 
 using namespace std;
 
+region::region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype)
+	:lpos(_lpos), rpos(_rpos), mmap(NULL), imap(NULL), ltype(_ltype), rtype(_rtype), subregion_gap(-1), subregion_length(-1), subregion_overlap(-1)
+{
+} 
+
 region::region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype, const split_interval_map *_mmap, const split_interval_map *_imap, double p1, double p2, double p3)
 	:lpos(_lpos), rpos(_rpos), mmap(_mmap), imap(_imap), ltype(_ltype), rtype(_rtype), subregion_gap(p1), subregion_length(p2), subregion_overlap(p3)
 {

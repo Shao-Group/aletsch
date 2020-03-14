@@ -19,6 +19,7 @@ typedef pair<int, int> PI;
 class region
 {
 public:
+	region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype);
 	region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype, const split_interval_map *_mmap, const split_interval_map *_imap, double p1, double p2, double p3);
 	~region();
 
