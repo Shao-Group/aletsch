@@ -279,7 +279,7 @@ int bundle::build_regions()
 		if(ltype == LEFT_RIGHT_SPLICE) ltype = RIGHT_SPLICE;
 		if(rtype == LEFT_RIGHT_SPLICE) rtype = LEFT_SPLICE;
 
-		regions.push_back(region(l, r, ltype, rtype, &mmap, &imap, cfg));
+		regions.push_back(region(l, r, ltype, rtype, &mmap, &imap, cfg->min_subregion_gap, cfg->min_subregion_length, cfg->min_subregion_overlap));
 	}
 
 	return 0;
