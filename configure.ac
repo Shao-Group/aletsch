@@ -72,6 +72,7 @@ AC_CONFIG_FILES([Makefile
 				 lib/util/Makefile
 				 lib/gtf/Makefile
 				 lib/graph/Makefile
+				 rnacore/Makefile
 				 scallop/Makefile
 				 coral/Makefile
 				 meta/Makefile])

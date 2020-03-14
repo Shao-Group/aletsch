@@ -10,6 +10,7 @@ See LICENSE for licensing.
 #include <climits>
 
 #include "bundle_base.h"
+#include "util.h"
 
 bundle_base::bundle_base()
 {

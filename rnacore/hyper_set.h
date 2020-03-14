@@ -14,7 +14,6 @@ See LICENSE for licensing.
 #include "util.h"
 #include "splice_graph.h"
 #include "hyper_graph.h"
-#include "config.h"
 
 using namespace std;
 
@@ -29,7 +28,6 @@ typedef pair< pair<int, int>, int> PPII;
 class hyper_set
 {
 public:
-	config *cfg;		// pointer to config
 	MVII nodes;			// hyper-edges using list-of-nodes
 	VVI edges;			// hyper-edges using list-of-edges
 	vector<int> ecnts;	// counts for edges

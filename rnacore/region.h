@@ -11,7 +11,6 @@ See LICENSE for licensing.
 #include <vector>
 #include "interval_map.h"
 #include "partial_exon.h"
-#include "config.h"
 
 using namespace std;
 
@@ -20,11 +19,10 @@ typedef pair<int, int> PI;
 class region
 {
 public:
-	region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype, const split_interval_map *_mmap, const split_interval_map *_imap, config *c);
+	region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype, const split_interval_map *_mmap, const split_interval_map *_imap, double p1, double p2, double p3);
 	~region();
 
 public:
-	config *cfg;					// config
 	int32_t lpos;					// the leftmost boundary on reference
 	int32_t rpos;					// the rightmost boundary on reference
 	int ltype;						// type of the left boundary
@@ -32,8 +30,11 @@ public:
 	const split_interval_map *mmap;	// pointer to match interval map
 	const split_interval_map *imap;	// pointer to indel interval map
 	join_interval_map jmap;			// subregion intervals
-
 	vector<partial_exon> pexons;	// generated partial exons
+
+	double subregion_gap;
+	double subregion_length;
+	double subregion_overlap;
 
 public:
 	int print(int index) const;

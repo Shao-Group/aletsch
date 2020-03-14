@@ -6,7 +6,7 @@ See LICENSE for licensing.
 
 #include <cstdio>
 #include "junction.h"
-#include "config.h"
+#include "util.h"
 
 junction::junction()
 {}

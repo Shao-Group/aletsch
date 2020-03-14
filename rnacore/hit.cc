@@ -68,7 +68,7 @@ hit::~hit()
 {
 }
 
-hit::hit(bam1_t *b, config* cfg)
+hit::hit(bam1_t *b)
 	:bam1_core_t(b->core)
 {
 	// fetch query name
@@ -82,13 +82,12 @@ hit::hit(bam1_t *b, config* cfg)
 	// compute rpos
 	rpos = pos + (int32_t)bam_cigar2rlen(n_cigar, bam_get_cigar(b));
 	qlen = (int32_t)bam_cigar2qlen(n_cigar, bam_get_cigar(b));
+}
 
-	// get cigar
-	assert(n_cigar <= cfg->max_num_cigar);
-	assert(n_cigar >= 1);
-	uint32_t * cigar = bam_get_cigar(b);
+int hit::set_splices(bam1_t *b, int min_flank)
+{
+	uint32_t *cigar = bam_get_cigar(b);
 
-	// build splice positions
 	spos.clear();
 	int32_t p = pos;
 	int32_t q = 0;
@@ -104,17 +103,24 @@ hit::hit(bam1_t *b, config* cfg)
 		if(bam_cigar_op(cigar[k]) != BAM_CREF_SKIP) continue;
 		if(bam_cigar_op(cigar[k-1]) != BAM_CMATCH) continue;
 		if(bam_cigar_op(cigar[k+1]) != BAM_CMATCH) continue;
-		if(bam_cigar_oplen(cigar[k-1]) < cfg->min_flank_length) continue;
-		if(bam_cigar_oplen(cigar[k+1]) < cfg->min_flank_length) continue;
+		if(bam_cigar_oplen(cigar[k-1]) < min_flank) continue;
+		if(bam_cigar_oplen(cigar[k+1]) < min_flank) continue;
 
 		int32_t s = p - bam_cigar_oplen(cigar[k]);
 		spos.push_back(pack(s, p));
 	}
+	return 0;
+}
 
+int hit::set_intervals(bam1_t *b)
+{
 	itvm.clear();
 	itvi.clear();
 	itvd.clear();
-	p = pos;
+	int32_t p = pos;
+
+	uint32_t *cigar = bam_get_cigar(b);
+
     for(int k = 0; k < n_cigar; k++)
 	{
 		if (bam_cigar_type(bam_cigar_op(cigar[k]))&2)
@@ -139,8 +145,7 @@ hit::hit(bam1_t *b, config* cfg)
 			itvd.push_back(pack(s, p));
 		}
 	}
-
-	//printf("call regular constructor\n");
+	return 0;
 }
 
 int hit::set_tags(bam1_t *b)
@@ -190,11 +195,11 @@ int hit::set_concordance()
 	return 0;
 }
 
-int hit::set_strand(config *cfg)
+int hit::set_strand(int libtype)
 {
 	strand = '.';
 	
-	if(cfg->library_type == FR_FIRST && ((flag & 0x1) >= 1))
+	if(libtype == FR_FIRST && ((flag & 0x1) >= 1))
 	{
 		if((flag & 0x10) <= 0 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) strand = '-';
 		if((flag & 0x10) >= 1 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) strand = '+';
@@ -202,7 +207,7 @@ int hit::set_strand(config *cfg)
 		if((flag & 0x10) >= 1 && (flag & 0x40) <= 0 && (flag & 0x80) >= 1) strand = '-';
 	}
 
-	if(cfg->library_type == FR_SECOND && ((flag & 0x1) >= 1))
+	if(libtype == FR_SECOND && ((flag & 0x1) >= 1))
 	{
 		if((flag & 0x10) <= 0 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) strand = '+';
 		if((flag & 0x10) >= 1 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) strand = '-';
@@ -210,13 +215,13 @@ int hit::set_strand(config *cfg)
 		if((flag & 0x10) >= 1 && (flag & 0x40) <= 0 && (flag & 0x80) >= 1) strand = '+';
 	}
 
-	if(cfg->library_type == FR_FIRST && ((flag & 0x1) <= 0))
+	if(libtype == FR_FIRST && ((flag & 0x1) <= 0))
 	{
 		if((flag & 0x10) <= 0) strand = '-';
 		if((flag & 0x10) >= 1) strand = '+';
 	}
 
-	if(cfg->library_type == FR_SECOND && ((flag & 0x1) <= 0))
+	if(libtype == FR_SECOND && ((flag & 0x1) <= 0))
 	{
 		if((flag & 0x10) <= 0) strand = '+';
 		if((flag & 0x10) >= 1) strand = '-';

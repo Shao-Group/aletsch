@@ -11,7 +11,6 @@ See LICENSE for licensing.
 #include <vector>
 
 #include "htslib/sam.h"
-#include "config.h"
 
 using namespace std;
 
@@ -45,7 +44,7 @@ class hit: public bam1_core_t
 {
 public:
 	//hit(int32_t p);
-	hit(bam1_t *b, config *cfg);
+	hit(bam1_t *b);
 	hit(const hit &h);
 	~hit();
 	bool operator<(const hit &h) const;
@@ -69,7 +68,9 @@ public:
 
 public:
 	int set_tags(bam1_t *b);
-	int set_strand(config *cfg);
+	int set_intervals(bam1_t *b);
+	int set_splices(bam1_t *b, int min_flank);
+	int set_strand(int lib_type);
 	int set_concordance();
 	int print() const;
 };
