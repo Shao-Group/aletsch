@@ -112,6 +112,9 @@ private:
 	int collect_phasing_paths();
 	int collect_phasing_path(int e, int s, int t);
 
+	// output transcripts
+	int output_transcripts();
+	int output_transcript(transcript &trst, const path &p, const string &tid) const;
 };
 
 #endif

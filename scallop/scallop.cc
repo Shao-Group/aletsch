@@ -6,6 +6,7 @@ See LICENSE for licensing.
 
 #include "scallop.h"
 #include "constants.h"
+#include "interval_map.h"
 
 #include <cstdio>
 #include <iostream>
@@ -142,8 +143,7 @@ int scallop::assemble()
 
 	greedy_decompose();
 
-	trsts.clear();
-	gr.output_transcripts(trsts, paths);
+	output_transcripts();
 
 	if(cfg->verbose >= 2) 
 	{
@@ -1809,5 +1809,43 @@ int scallop::draw_splice_graph(const string &file)
 	
 	vector<int> tp = topological_sort();
 	gr.draw(file, mis, mes, 4.5, tp);
+	return 0;
+}
+
+int scallop::output_transcripts()
+{
+	trsts.clear();
+	for(int i = 0; i < paths.size(); i++)
+	{
+		string tid = gr.gid + "." + tostring(i);
+		transcript trst;
+		output_transcript(trst, paths[i], tid);
+		trsts.push_back(trst);
+	}
+	return 0;
+}
+
+int scallop::output_transcript(transcript &trst, const path &p, const string &tid) const
+{
+	trst.seqname = gr.chrm;
+	trst.source = "scallop";
+	trst.gene_id = gr.gid;
+	trst.transcript_id = tid;
+	trst.coverage = p.abd;
+	trst.strand = gr.strand;
+
+	const vector<int> &v = p.v;
+	join_interval_map jmap;
+	for(int k = 1; k < v.size() - 1; k++)
+	{
+		int32_t p1 = gr.get_vertex_info(v[k]).lpos;
+		int32_t p2 = gr.get_vertex_info(v[k]).rpos;
+		jmap += make_pair(ROI(p1, p2), 1);
+	}
+
+	for(JIMI it = jmap.begin(); it != jmap.end(); it++)
+	{
+		trst.add_exon(lower(it->first), upper(it->first));
+	}
 	return 0;
 }
