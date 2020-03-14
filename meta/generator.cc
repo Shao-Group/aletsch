@@ -52,9 +52,11 @@ int generator::resolve()
 		if(p.qual < cfg.min_mapping_quality) continue;								// ignore hits with small quality
 		if(p.n_cigar < 1) continue;												// should never happen
 
-		hit ht(b1t, &cfg);
+		hit ht(b1t);
+		ht.set_splices(b1t, cfg.min_flank_length);
+		ht.set_intervals(b1t);
 		ht.set_tags(b1t);
-		ht.set_strand(&cfg);
+		ht.set_strand(cfg.library_type);
 		//ht.print();
 
 		// TODO for test
