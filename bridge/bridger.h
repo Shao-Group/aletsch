@@ -11,6 +11,8 @@ See LICENSE for licensing.
 #include "fragment.h"
 #include "fcluster.h"
 
+typedef pair< vector<int>, vector<int> > PVV;
+
 using namespace std;
 
 class entry
@@ -43,6 +45,8 @@ public:
 	vector<fragment> fragments;		// fragments needs to be bridged
 	vector<fcluster> fclusters;		// clusters
 	vector<pier> piers;				// piers
+
+	map<PVV, int> findex;			// index for fclusters
 
 	int32_t length_median;
 	int32_t length_low;

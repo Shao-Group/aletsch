@@ -101,10 +101,6 @@ bool bridger::align_hit(const hit &h, vector<int> &vv)
 
 int bridger::build_fragments()
 {
-	// TODO: parameters
-	int32_t max_misalignment1 = 20;
-	int32_t max_misalignment2 = 10;
-
 	vector<bool> paired(hits.size(), false);
 
 	fragments.clear();
@@ -184,13 +180,37 @@ int bridger::build_fragments()
 		fr.lpos = h.pos;
 		fr.rpos = hits[x].rpos;
 
-		/*
-		vector<int> v1 = decode_vlist(hits[i].vlist);
-		vector<int> v2 = decode_vlist(hits[x].vlist);
-		fr.k1l = fr.h1->pos - regions[v1.front()].lpos;
-		fr.k1r = regions[v1.back()].rpos - fr.h1->rpos;
-		fr.k2l = fr.h2->pos - regions[v2.front()].lpos;
-		fr.k2r = regions[v2.back()].rpos - fr.h2->rpos;
+		fragments.push_back(fr);
+
+		paired[i] = true;
+		paired[x] = true;
+	}
+
+	//printf("total hits = %lu, total fragments = %lu\n", hits.size(), fragments.size());
+	return 0;
+}
+
+int bridger::build_fclusters()
+{
+	// TODO: parameters
+	int32_t max_misalignment1 = 20;
+	int32_t max_misalignment2 = 10;
+
+	for(int i = 0; i < fragments.size(); i++)
+	{
+		fragment &fr = fragments[i];
+
+		vector<int> v1;
+		vector<int> v2;
+		bool b1 = align_hit(*(fr.h1), v1);
+		bool b2 = align_hit(*(fr.h2), v2);
+		if(b1 == false || b2 == false) continue;
+
+		// setup fragment
+		fr.k1l = fr.h1->pos - gr.get_vertex_info(v1.front()).lpos;
+		fr.k1r = gr.get_vertex_info(v1.back()).rpos - fr.h1->rpos;
+		fr.k2l = fr.h2->pos - gr.get_vertex_info(v2.front()).lpos;
+		fr.k2r = gr.get_vertex_info(v2.back()).rpos - fr.h2->rpos;
 
 		fr.b1 = true;
 		if(v1.size() <= 1) 
@@ -199,11 +219,11 @@ int bridger::build_fragments()
 		}
 		else if(v1.size() >= 2 && v1[v1.size() - 2] == v1.back() - 1)
 		{
-			if(fr.h1->rpos - regions[v1.back()].lpos > max_misalignment1 + fr.h1->nm) fr.b1 = false;
+			if(fr.h1->rpos - gr.get_vertex_info(v1.back()).lpos > max_misalignment1 + fr.h1->nm) fr.b1 = false;
 		}
 		else if(v1.size() >= 2 && v1[v1.size() - 2] != v1.back() - 1)
 		{
-			if(fr.h1->rpos - regions[v1.back()].lpos > max_misalignment2 + fr.h1->nm) fr.b1 = false;
+			if(fr.h1->rpos - gr.get_vertex_info(v1.back()).lpos > max_misalignment2 + fr.h1->nm) fr.b1 = false;
 		}
 
 		fr.b2 = true;
@@ -213,21 +233,32 @@ int bridger::build_fragments()
 		}
 		else if(v2.size() >= 2 || v2[1] == v2.front() + 1)
 		{
-			if(regions[v2.front()].rpos - fr.h2->pos > max_misalignment1 + fr.h2->nm) fr.b2 = false;
+			if(gr.get_vertex_info(v2.front()).rpos - fr.h2->pos > max_misalignment1 + fr.h2->nm) fr.b2 = false;
 		}
 		else if(v2.size() >= 2 || v2[1] != v2.front() + 1)
 		{
-			if(regions[v2.front()].rpos - fr.h2->pos > max_misalignment2 + fr.h2->nm) fr.b2 = false;
+			if(gr.get_vertex_info(v2.front()).rpos - fr.h2->pos > max_misalignment2 + fr.h2->nm) fr.b2 = false;
 		}
-		*/
 
-		fragments.push_back(fr);
-
-		paired[i] = true;
-		paired[x] = true;
+		PVV pvv(v1, v2);
+		if(findex.find(pvv) == findex.end())
+		{
+			fcluster fc;
+			fc.v1 = v1;
+			fc.v2 = v2;
+			fc.fset.push_back(&fr);
+			findex.insert(pair<PVV, int>(pvv, fclusters.size()));
+			fclusters.push_back(fc);
+		}
+		else
+		{
+			int k = findex[pvv];
+			fcluster &fc = fclusters[k];
+			assert(fc.v1 == v1);
+			assert(fc.v2 == v2);
+			fc.fset.push_back(&fr);
+		}
 	}
-
-	//printf("total hits = %lu, total fragments = %lu\n", hits.size(), fragments.size());
 	return 0;
 }
 
