@@ -17,7 +17,6 @@ libscallop_a_SOURCES = super_graph.h super_graph.cc \
 					   equation.h equation.cc \
 					   gtf.h gtf.cc \
 					   scallop.h scallop.cc \
-					   previewer.h previewer.cc \
 					   filter.h filter.cc \
 					   cluster.h cluster.cc \
 					   path.h path.cc \
