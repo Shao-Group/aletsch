@@ -37,8 +37,8 @@ public:
 	vector<hit> &hits;				// given hits
 
 public:
-	map<int32_t, int> lindex;		// index for left-vertex
-	map<int32_t, int> rindex;		// index for right-vertex
+	map<int32_t, int> lindex;		// index for left-vertex of gr
+	map<int32_t, int> rindex;		// index for right-vertex of gr
 
 	vector<fragment> fragments;		// fragments needs to be bridged
 	vector<fcluster> fclusters;		// clusters
@@ -57,11 +57,14 @@ private:
 	int build_fclusters();
 	int build_piers();
 	int bridge();
-	bool align_hit(const hit &h, vector<int> &vv);
+	int vote();
+
 	int locate_vertex(int32_t p, int a, int b);
+	bool align_hit(const hit &h, vector<int> &vv);
 	int dynamic_programming(int k1, int k2, vector< vector<entry> > &table);
 	vector<int> update_stack(const vector<int> &v, int s);
 	vector< vector<int> > trace_back(int k, const vector< vector<entry> > &table);
+	int32_t compute_aligned_length(fragment &fr, const vector<int> &v);
 };
 
 #endif

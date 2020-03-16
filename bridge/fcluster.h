@@ -24,6 +24,7 @@ public:
 	vector<int> v2;					// vlist for mate2
 	vector< vector<int> > phase;	// possible phasing w.r.t. reference
 	vector<int> count;				// phase count
+	path bestp;						// best path for this cluster
 	pier *pr;						// pointer to pier
 
 public:

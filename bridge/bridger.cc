@@ -340,7 +340,89 @@ int bridger::bridge()
 				p.v = pb[j];
 				piers[b].paths.push_back(p);
 			}
+
+			sort(piers[b].paths.begin(), piers[b].paths.end(), compare_path_score);
 		}
+	}
+	return 0;
+}
+
+int bridger::vote()
+{
+	for(int i = 0; i < fclusters.size(); i++)
+	{
+		fcluster &fc = fclusters[i];
+		if(fc.pr == NULL) continue;
+
+		vector<path> &pb = fc.pr->paths;
+		vector< vector<int> > pn;
+		for(int e = 0; e < pb.size(); e++)
+		{
+			vector<int> px = fc.v1;
+			if(pb[e].v.size() >= 2) px.insert(px.end(), pb[e].v.begin() + 1, pb[e].v.end() - 1);
+			px.insert(px.end(), fc.v2.begin(), fc.v2.end());
+			pn.push_back(px);
+		}
+
+		vector<int> votes;
+		votes.resize(pb.size(), 0);
+		for(int i = 0; i < fc.fset.size(); i++)
+		{
+			fragment *fr = fc.fset[i];
+			for(int e = 0; e < pb.size(); e++)
+			{
+				int32_t length = compute_aligned_length(*fr, pn[e]);
+				//printf(" fragment %d length = %d using path %d\n", i, p.length, e);
+				if(length < length_low) continue;
+				if(length > length_high) continue;
+				votes[e]++;
+				break;
+			}
+		}
+
+		int be = 0;
+		int voted = votes[0];
+		for(int i = 1; i < votes.size(); i++)
+		{
+			voted += votes[i];
+			if(votes[i] > votes[be]) be = i;
+		}
+
+		if(votes[be] <= 0) continue;
+		if(voted <= 0) continue;
+
+		double voting_ratio = 100.0 * voted / fc.fset.size();
+		double best_ratio = 100.0 * votes[be] / voted;
+
+		fc.bestp.v = pn[be];
+
+		/*
+		   printf("total %lu fragments, %d voted, best = %d, voting-ratio = %.2lf, best-ratio = %.2lf ( ", 
+		   fc.fset.size(), voted, be, voting_ratio, best_ratio);
+		   printv(votes);
+		   printf(")\n");
+		 */
+
+		//if(voting_ratio <= 0.49) continue;
+		//if(best_ratio < 0.8 && be != best_path) continue;
+
+		/*
+		   printf("fcluster with %lu fragments, total %lu paths, best = %d, from %d to %d, v1 = (", fc.fset.size(), pb.size(), be, k, j);
+		   printv(fc.v1);
+		   printf("), v2 = ( ");
+		   printv(fc.v2);
+		   printf(")\n");
+		   for(int e = 0; e < pb.size(); e++)
+		   {
+		   printf(" path %d, votes = %d, score = %d, stack = (", e, votes[e], ps[e]); 
+		   printv(table[j][e].stack);
+		   printf("), pb = (");
+		   printv(pb[e]);
+		   printf("), pn = (");
+		   printv(pn[e]);
+		   printf(")\n");
+		   }
+		 */
 	}
 	return 0;
 }
@@ -439,3 +521,14 @@ vector< vector<int> > bridger::trace_back(int k, const vector< vector<entry> > &
 	return vv;
 }
 
+int32_t bridger::compute_aligned_length(fragment &fr, const vector<int>& v)
+{
+	if(v.size() == 0) return -1;
+	int32_t flen = 0;
+	for(int i = 0; i < v.size(); i++)
+	{
+		const vertex_info &x = gr.get_vertex_info(v[i]);
+		flen += x.rpos - x.lpos;
+	}
+	return flen - fr.k1l - fr.k2r;
+}
