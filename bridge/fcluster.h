@@ -8,8 +8,9 @@ See LICENSE for licensing.
 #define __FRAGMENT_CLUSTER_H__
 
 #include <vector>
-#include "path.h"
 #include "fragment.h"
+#include "path.h"
+#include "pier.h"
 
 using namespace std;
 
@@ -23,6 +24,7 @@ public:
 	vector<int> v2;					// vlist for mate2
 	vector< vector<int> > phase;	// possible phasing w.r.t. reference
 	vector<int> count;				// phase count
+	pier *pr;						// pointer to pier
 
 public:
 	int clear();

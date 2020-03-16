@@ -273,26 +273,26 @@ int bridger::build_piers()
 	piers.clear();
 	map<PI, int> m;
 	int n = gr.num_vertices();
-	for(int k = 0; k < fragments.size(); k++)
+	for(int k = 0; k < fclusters.size(); k++)
 	{
-		fragment &fr = fragments[k];
-		fr.pr = NULL;
-		int32_t p = fr.h1->rpos;
-		int32_t q = fr.h2->pos;
-		int s = locate_vertex(p - 1, 0, n);
-		int t = locate_vertex(q, 0, n);
-		if(s < 0 || t < 0) continue;
+		fcluster &fc = fclusters[k];
+		fc.pr = NULL;
+		if(fc.v1.size() <= 0) continue;
+		if(fc.v2.size() <= 0) continue;
+		int s = fc.v1.back();
+		int t = fc.v2.front();
+		if(s >= t) continue;
 
 		if(m.find(PI(s, t)) == m.end())
 		{
 			pier pr(s, t);
 			m.insert(pair<PI, int>(PI(s, t), piers.size()));
 			piers.push_back(pr);
-			fr.pr = &(piers.back());
+			fc.pr = &(piers.back());
 		}
 		else
 		{
-			fr.pr = &(piers[m[PI(s, t)]]);
+			fc.pr = &(piers[m[PI(s, t)]]);
 		}
 	}
 	return 0;

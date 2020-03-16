@@ -25,14 +25,8 @@ fragment::fragment(hit *x1, hit *x2)
 
 int fragment::print(int index)
 {
-	printf("fragment %d: name0 = %s, cnt = %d, lpos = %d, rpos = %d, len = %d, b1 = %c, b2 = %c, #paths = %lu\n",
-			index, h1->qname.c_str(), cnt, lpos, rpos, rpos - lpos, b1 ? 'T' : 'F', b2 ? 'T' : 'F', pr->paths.size());
-
-	for(int k = 0; k < pr->paths.size(); k++)
-	{
-		printf("\t\t");
-		pr->paths[k].print_bridge(k);
-	}
+	printf("fragment %d: name0 = %s, cnt = %d, lpos = %d, rpos = %d, len = %d, b1 = %c, b2 = %c\n",
+			index, h1->qname.c_str(), cnt, lpos, rpos, rpos - lpos, b1 ? 'T' : 'F', b2 ? 'T' : 'F');
 	return 0;
 }
 

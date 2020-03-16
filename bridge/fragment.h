@@ -11,7 +11,6 @@ See LICENSE for licensing.
 #include <stdint.h>
 
 #include "hit.h"
-#include "pier.h"
 
 using namespace std;
 
@@ -32,7 +31,6 @@ public:
 	int32_t k2r;		// k2-right-outside length
 	bool b1;			// whether left mate can be shorten
 	bool b2;			// whether right mate can be shorten
-	pier *pr;			// pointer to the pier
 
 public:
 	bool equal(const fragment &f) const;
