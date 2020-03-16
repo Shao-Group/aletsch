@@ -39,6 +39,7 @@ public:
 	double prlen;
 	double score;
 	double reads;
+	vector<int> stack;
 
 public:
 	int clear();
@@ -51,5 +52,6 @@ public:
 bool compare_path_abundance(const path &p1, const path &p2);
 bool compare_path_vertices(const path &p1, const path &p2);
 bool compare_path_score(const path &p1, const path &p2);
+bool compare_path_stack(const path &p1, const path &p2);
 
 #endif

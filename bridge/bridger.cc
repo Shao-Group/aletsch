@@ -339,11 +339,12 @@ int bridger::bridge()
 			{
 				path p;
 				p.score = table[bt][j].stack.front();
+				p.stack = table[bt][j].stack;
 				p.v = pb[j];
 				piers[b].paths.push_back(p);
 			}
 
-			sort(piers[b].paths.begin(), piers[b].paths.end(), compare_path_score);
+			sort(piers[b].paths.begin(), piers[b].paths.end(), compare_path_stack);
 		}
 	}
 	return 0;

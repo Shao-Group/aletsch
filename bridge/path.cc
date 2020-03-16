@@ -120,3 +120,13 @@ bool compare_path_score(const path &p1, const path &p2)
 	if(p1.score > p2.score) return true;
 	else return false;
 }
+
+bool compare_path_stack(const path &p1, const path &p2)
+{
+	for(int k = 0; k < p1.stack.size() && k < p2.stack.size(); k++)
+	{
+		if(p1.stack[k] > p2.stack[k]) return true;
+		if(p1.stack[k] < p2.stack[k]) return false;
+	}
+	return p1.stack.size() > p2.stack.size();
+}
