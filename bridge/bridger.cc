@@ -37,6 +37,7 @@ int bridger::resolve()
 {
 	build_vertex_index();
 	build_fragments();
+	build_fclusters();
 	build_piers();
 	bridge();
 	return 0;
