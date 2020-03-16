@@ -55,6 +55,50 @@ int bridger::build_vertex_index()
 	return 0;
 }
 
+bool bridger::align_hit(const hit &h, vector<int> &vv)
+{
+	vv.clear();
+	vector<int64_t> v;
+	h.get_aligned_intervals(v);
+	if(v.size() == 0) return false;
+
+	vector<PI> sp;
+	sp.resize(v.size());
+
+	int32_t p1 = high32(v.front());
+	int32_t p2 = low32(v.back());
+
+	sp[0].first = locate_vertex(p1, 0, gr.num_vertices());
+	if(sp[0].first < 0) return false;
+
+	for(int k = 1; k < v.size(); k++)
+	{
+		p1 = high32(v[k]);
+		map<int32_t, int>::const_iterator it = lindex.find(p1);
+		if(it == lindex.end()) return false;
+		sp[k].first = it->second;
+	}
+
+	sp[sp.size() - 1].second = locate_vertex(p2 - 1, 0, gr.num_vertices());
+	if(sp[sp.size() - 1].second < 0) return false;
+
+	for(int k = 0; k < v.size() - 1; k++)
+	{
+		p2 = low32(v[k]);
+		map<int32_t, int>::const_iterator it = rindex.find(p2);
+		if(it == rindex.end()) return false;
+		sp[k].second = it->second; 
+	}
+
+	for(int k = 0; k < sp.size(); k++)
+	{
+		assert(sp[k].first <= sp[k].second);
+		if(k > 0) assert(sp[k - 1].second < sp[k].first);
+		for(int j = sp[k].first; j <= sp[k].second; j++) vv.push_back(j);
+	}
+	return true;
+}
+
 int bridger::build_fragments()
 {
 	// TODO: parameters

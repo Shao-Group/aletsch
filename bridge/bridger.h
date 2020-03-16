@@ -57,6 +57,7 @@ private:
 	int build_fclusters();
 	int build_piers();
 	int bridge();
+	bool align_hit(const hit &h, vector<int> &vv);
 	int locate_vertex(int32_t p, int a, int b);
 	int dynamic_programming(int k1, int k2, vector< vector<entry> > &table);
 	vector<int> update_stack(const vector<int> &v, int s);
