@@ -35,6 +35,7 @@ bridger::bridger(splice_graph &g, vector<hit> &h)
 
 int bridger::resolve()
 {
+	build_vertex_index();
 	build_fragments();
 	build_piers();
 	bridge();
@@ -192,6 +193,10 @@ int bridger::build_fragments()
 
 int bridger::build_fclusters()
 {
+	typedef pair< vector<int>, vector<int> > PVV;
+	map<PVV, int> findex;			// index for fclusters
+	fclusters.clear();
+
 	// TODO: parameters
 	int32_t max_misalignment1 = 20;
 	int32_t max_misalignment2 = 10;
@@ -205,6 +210,25 @@ int bridger::build_fclusters()
 		bool b1 = align_hit(*(fr.h1), v1);
 		bool b2 = align_hit(*(fr.h2), v2);
 		if(b1 == false || b2 == false) continue;
+
+		PVV pvv(v1, v2);
+		if(findex.find(pvv) == findex.end())
+		{
+			fcluster fc;
+			fc.v1 = v1;
+			fc.v2 = v2;
+			fc.fset.push_back(&fr);
+			findex.insert(pair<PVV, int>(pvv, fclusters.size()));
+			fclusters.push_back(fc);
+		}
+		else
+		{
+			int k = findex[pvv];
+			fcluster &fc = fclusters[k];
+			assert(fc.v1 == v1);
+			assert(fc.v2 == v2);
+			fc.fset.push_back(&fr);
+		}
 
 		// setup fragment
 		fr.k1l = fr.h1->pos - gr.get_vertex_info(v1.front()).lpos;
@@ -238,25 +262,6 @@ int bridger::build_fclusters()
 		else if(v2.size() >= 2 || v2[1] != v2.front() + 1)
 		{
 			if(gr.get_vertex_info(v2.front()).rpos - fr.h2->pos > max_misalignment2 + fr.h2->nm) fr.b2 = false;
-		}
-
-		PVV pvv(v1, v2);
-		if(findex.find(pvv) == findex.end())
-		{
-			fcluster fc;
-			fc.v1 = v1;
-			fc.v2 = v2;
-			fc.fset.push_back(&fr);
-			findex.insert(pair<PVV, int>(pvv, fclusters.size()));
-			fclusters.push_back(fc);
-		}
-		else
-		{
-			int k = findex[pvv];
-			fcluster &fc = fclusters[k];
-			assert(fc.v1 == v1);
-			assert(fc.v2 == v2);
-			fc.fset.push_back(&fr);
 		}
 	}
 	return 0;
