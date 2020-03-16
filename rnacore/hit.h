@@ -70,6 +70,7 @@ public:
 	int set_concordance();
 	int print() const;
 	int get_aligned_intervals(vector<int64_t> &v) const;
+	size_t get_qhash() const;
 };
 
 #endif

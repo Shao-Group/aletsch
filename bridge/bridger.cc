@@ -48,7 +48,6 @@ int bridger::build_vertex_index()
 	int n = gr.num_vertices() - 1;
 	for(int i = 0; i <= n; i++)
 	{
-		PI32 p = regions[i].first;
 		const vertex_info &v = gr.get_vertex_info(i);
 		if(i != 0) lindex.insert(pair<int32_t, int>(v.lpos, i));
 		if(i != n) rindex.insert(pair<int32_t, int>(v.rpos, i));

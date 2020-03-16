@@ -215,3 +215,8 @@ int hit::get_aligned_intervals(vector<int64_t> &v) const
 	v.push_back(pack(p1, rpos));
 	return 0;
 }
+
+size_t hit::get_qhash() const
+{
+	return string_hash(qname);
+}
