@@ -24,6 +24,13 @@ bundle_base::bundle_base()
 bundle_base::~bundle_base()
 {}
 
+int bundle_base::add_hit_intervals(const hit &ht, bam1_t *b)
+{
+	add_hit(ht);
+	add_intervals(b);
+	return 0;
+}
+
 int bundle_base::add_hit(const hit &ht)
 {
 	// store new hit
@@ -41,36 +48,38 @@ int bundle_base::add_hit(const hit &ht)
 	if(hits.size() <= 1) strand = ht.strand;
 	assert(strand == ht.strand);
 
-	// DEBUG
-	/*
-	if(strand != ht.strand)
-	{
-		printf("strand = %c, ht.strand = %c, ht.xs = %c,\n", strand, ht.strand, ht.xs);
-	}
-	*/
+	return 0;
+}
 
-	for(int k = 0; k < ht.itvm.size(); k++)
-	{
-		int32_t s = high32(ht.itvm[k]);
-		int32_t t = low32(ht.itvm[k]);
-		//printf(" add interval %d-%d\n", s, t);
-		mmap += make_pair(ROI(s, t), 1);
-	}
+int bundle_base::add_intervals(bam1_t *b)
+{
+	int32_t p = b->core.pos;
+	uint32_t *cigar = bam_get_cigar(b);
 
-	for(int k = 0; k < ht.itvi.size(); k++)
+    for(int k = 0; k < b->core.n_cigar; k++)
 	{
-		int32_t s = high32(ht.itvi[k]);
-		int32_t t = low32(ht.itvi[k]);
-		imap += make_pair(ROI(s, t), 1);
-	}
+		if (bam_cigar_type(bam_cigar_op(cigar[k]))&2)
+		{
+			p += bam_cigar_oplen(cigar[k]);
+		}
 
-	for(int k = 0; k < ht.itvd.size(); k++)
-	{
-		int32_t s = high32(ht.itvd[k]);
-		int32_t t = low32(ht.itvd[k]);
-		imap += make_pair(ROI(s, t), 1);
-	}
+		if(bam_cigar_op(cigar[k]) == BAM_CMATCH)
+		{
+			int32_t s = p - bam_cigar_oplen(cigar[k]);
+			mmap += make_pair(ROI(s, p), 1);
+		}
 
+		if(bam_cigar_op(cigar[k]) == BAM_CINS)
+		{
+			imap += make_pair(ROI(p - 1, p + 1), 1);
+		}
+
+		if(bam_cigar_op(cigar[k]) == BAM_CDEL)
+		{
+			int32_t s = p - bam_cigar_oplen(cigar[k]);
+			imap += make_pair(ROI(s, p), 1);
+		}
+	}
 	return 0;
 }
 

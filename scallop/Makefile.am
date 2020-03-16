@@ -12,7 +12,6 @@ libscallop_a_SOURCES = super_graph.h super_graph.cc \
 					   config.h config.cc \
 					   subsetsum.h subsetsum.cc \
 					   router.h router.cc \
-					   hit.h hit.cc \
 					   bundle_base.h bundle_base.cc \
 					   bundle.h bundle.cc \
 					   equation.h equation.cc \

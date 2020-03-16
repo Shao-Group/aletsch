@@ -34,9 +34,13 @@ public:
 	split_interval_map imap;		// indel interval map
 
 public:
-	int add_hit(const hit &ht);
+	int add_hit_intervals(const hit &ht, bam1_t *b);
 	bool overlap(const hit &ht) const;
 	int clear();
+
+private:
+	int add_hit(const hit &ht);
+	int add_intervals(bam1_t *b);
 };
 
 #endif

@@ -54,7 +54,6 @@ int generator::resolve()
 
 		hit ht(b1t);
 		ht.set_splices(b1t, cfg.min_flank_length);
-		ht.set_intervals(b1t);
 		ht.set_tags(b1t);
 		ht.set_strand(cfg.library_type);
 		//ht.print();
@@ -90,12 +89,12 @@ int generator::resolve()
 		if(cfg.library_type != UNSTRANDED && ht.strand == '+' && ht.xs == '-') continue;
 		if(cfg.library_type != UNSTRANDED && ht.strand == '-' && ht.xs == '+') continue;
 		if(cfg.library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
-		if(cfg.library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit(ht);
-		if(cfg.library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit(ht);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bb1.add_hit(ht);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit(ht);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit(ht);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit(ht);
+		if(cfg.library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit_intervals(ht, b1t);
+		if(cfg.library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit_intervals(ht, b1t);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bb1.add_hit_intervals(ht, b1t);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit_intervals(ht, b1t);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit_intervals(ht, b1t);
+		if(cfg.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit_intervals(ht, b1t);
 
 	}
 

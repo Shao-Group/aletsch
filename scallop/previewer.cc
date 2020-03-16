@@ -55,7 +55,6 @@ int previewer::preview()
 
 		hit ht(b1t);
 		ht.set_splices(b1t, cfg->min_flank_length);
-		ht.set_intervals(b1t);
 		ht.set_tags(b1t);
 
 		if((ht.flag & 0x1) >= 1) paired ++;

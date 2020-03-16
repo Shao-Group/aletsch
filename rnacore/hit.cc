@@ -10,11 +10,11 @@ See LICENSE for licensing.
 #include <sstream>
 #include <cmath>
 
-#include "hit_base.h"
+#include "hit.h"
 #include "util.h"
 #include "constants.h"
 
-hit_base& hit_base::operator=(const hit_base &h)
+hit& hit::operator=(const hit &h)
 {
 	bam1_core_t::operator=(h);
 	rpos = h.rpos;
@@ -29,7 +29,7 @@ hit_base& hit_base::operator=(const hit_base &h)
 	return *this;
 }
 
-hit_base::hit_base(const hit_base &h)
+hit::hit(const hit &h)
 	:bam1_core_t(h)
 {
 	rpos = h.rpos;
@@ -43,11 +43,11 @@ hit_base::hit_base(const hit_base &h)
 	nm = h.nm;
 }
 
-hit_base::~hit_base()
+hit::~hit()
 {
 }
 
-hit_base::hit_base(bam1_t *b)
+hit::hit(bam1_t *b)
 	:bam1_core_t(b->core)
 {
 	// fetch query name
@@ -63,7 +63,7 @@ hit_base::hit_base(bam1_t *b)
 	qlen = (int32_t)bam_cigar2qlen(n_cigar, bam_get_cigar(b));
 }
 
-int hit_base::set_splices(bam1_t *b, int min_flank)
+int hit::set_splices(bam1_t *b, int min_flank)
 {
 	uint32_t *cigar = bam_get_cigar(b);
 
@@ -91,7 +91,7 @@ int hit_base::set_splices(bam1_t *b, int min_flank)
 	return 0;
 }
 
-int hit_base::set_tags(bam1_t *b)
+int hit::set_tags(bam1_t *b)
 {
 	ts = '.';
 	uint8_t *p0 = bam_aux_get(b, "ts");
@@ -128,7 +128,7 @@ int hit_base::set_tags(bam1_t *b)
 	return 0;
 }
 
-int hit_base::set_concordance()
+int hit::set_concordance()
 {
 	bool concordant = false;
 	if((flag & 0x10) <= 0 && (flag & 0x20) >= 1 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) concordant = true;		// F1R2
@@ -138,7 +138,7 @@ int hit_base::set_concordance()
 	return 0;
 }
 
-int hit_base::set_strand(int libtype)
+int hit::set_strand(int libtype)
 {
 	strand = '.';
 	
@@ -173,7 +173,7 @@ int hit_base::set_strand(int libtype)
 	return 0;
 }
 
-bool hit_base::operator<(const hit_base &h) const
+bool hit::operator<(const hit &h) const
 {
 	if(qname < h.qname) return true;
 	if(qname > h.qname) return false;
@@ -182,7 +182,7 @@ bool hit_base::operator<(const hit_base &h) const
 	return (pos < h.pos);
 }
 
-int hit_base::print() const
+int hit::print() const
 {
 	// print basic information
 	printf("Hit %s: [%d-%d), mpos = %d, flag = %d, quality = %d, strand = %c, xs = %c, ts = %c, isize = %d, qlen = %d, hi = %d\n", 
@@ -199,5 +199,19 @@ int hit_base::print() const
 	printf(" end position (%d - )\n", rpos);
 
 
+	return 0;
+}
+
+int hit::get_aligned_intervals(vector<int64_t> &v) const
+{
+	v.clear();
+	int32_t p1 = pos;
+	for(int k = 0; k < spos.size(); k++)
+	{
+		int32_t p2 = high32(spos[k]);
+		v.push_back(pack(p1, p2));
+		p1 = low32(spos[k]);
+	}
+	v.push_back(pack(p1, rpos));
 	return 0;
 }

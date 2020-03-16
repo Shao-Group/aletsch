@@ -383,10 +383,12 @@ int bundle::build_hyper_edges2()
 		if((h.flag & 0x4) >= 1) continue;
 
 		vector<int> sp2;
-		for(int k = 0; k < h.itvm.size(); k++)
+		vector<int64_t> itv;
+		h.get_aligned_intervals(itv);
+		for(int k = 0; k < itv.size(); k++)
 		{
-			int32_t p1 = high32(h.itvm[k]);
-			int32_t p2 = low32(h.itvm[k]);
+			int32_t p1 = high32(itv[k]);
+			int32_t p2 = low32(itv[k]);
 
 			int k1 = locate_left_partial_exon(p1);
 			int k2 = locate_right_partial_exon(p2);

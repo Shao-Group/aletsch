@@ -75,5 +75,6 @@ AC_CONFIG_FILES([Makefile
 				 rnacore/Makefile
 				 scallop/Makefile
 				 coral/Makefile
+				 bridge/Makefile
 				 meta/Makefile])
 AC_OUTPUT
