@@ -6,7 +6,6 @@ See LICENSE for licensing.
 
 #include "fragment.h"
 #include "util.h"
-#include "config.h"
 #include <cstdio>
 
 fragment::fragment(hit *x1, hit *x2)

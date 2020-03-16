@@ -44,6 +44,8 @@ public:
 	vector<fcluster> fclusters;		// clusters
 	vector<pier> piers;				// piers
 
+	int dp_solution_size;
+	int dp_stack_size;
 	int32_t length_median;
 	int32_t length_low;
 	int32_t length_high;

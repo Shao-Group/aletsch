@@ -6,7 +6,6 @@ See LICENSE for licensing.
 
 #include "bridger.h"
 #include "util.h"
-#include "config.h"
 
 #include <algorithm>
 
@@ -31,7 +30,10 @@ bool entry_compare(const entry &x, const entry &y)
 
 bridger::bridger(splice_graph &g, vector<hit> &h)
 	: gr(g), hits(h)
-{}
+{
+	dp_solution_size = 10;
+	dp_stack_size = 5;
+}
 
 int bridger::resolve()
 {
