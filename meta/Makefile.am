@@ -5,19 +5,19 @@ UTIL_INCLUDE = $(top_srcdir)/lib/util
 GRAPH_INCLUDE = $(top_srcdir)/lib/graph
 RNACORE_INCLUDE = $(top_srcdir)/rnacore
 SCALLOP_INCLUDE = $(top_srcdir)/scallop
-CORAL_INCLUDE = $(top_srcdir)/coral
+BRIDGE_INCLUDE = $(top_srcdir)/bridge
 
 GTF_LIB = $(top_builddir)/lib/gtf
 UTIL_LIB = $(top_builddir)/lib/util
 GRAPH_LIB = $(top_builddir)/lib/graph
 RNACORE_LIB = $(top_builddir)/rnacore
 SCALLOP_LIB = $(top_builddir)/scallop
-CORAL_LIB = $(top_builddir)/coral
+BRIDGE_LIB = $(top_builddir)/bridge
 
 #scallop_CPPFLAGS = -std=c++11 -I$(GTF_INCLUDE) -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE)
-meta_scallop_CPPFLAGS = -std=c++11 -I$(GTF_INCLUDE) -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE) -I$(SCALLOP_INCLUDE) -I$(RNACORE_INCLUDE) -I$(CORAL_INCLUDE)
-meta_scallop_LDFLAGS = -pthread -L$(GTF_LIB) -L$(GRAPH_LIB) -L$(UTIL_LIB) -L$(SCALLOP_LIB) -L$(RNACORE_LIB) -L$(CORAL_LIB)
-meta_scallop_LDADD = -lscallop -lgtf -lgraph -lutil -lrnacore -lcoral
+meta_scallop_CPPFLAGS = -std=c++11 -I$(GTF_INCLUDE) -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE) -I$(SCALLOP_INCLUDE) -I$(RNACORE_INCLUDE) -I$(BRIDGE_INCLUDE)
+meta_scallop_LDFLAGS = -pthread -L$(GTF_LIB) -L$(GRAPH_LIB) -L$(UTIL_LIB) -L$(SCALLOP_LIB) -L$(RNACORE_LIB) -L$(BRIDGE_LIB)
+meta_scallop_LDADD = -lscallop -lgtf -lgraph -lutil -lrnacore -lbridge
 meta_scallop_SOURCES = generator.h generator.cc \
 					   merged_graph.h merged_graph.cc \
 					   incubator.h incubator.cc \

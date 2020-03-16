@@ -10,7 +10,7 @@ See LICENSE for licensing.
 #include <vector>
 #include <stdint.h>
 
-#include "path.h"
+#include "phase.h"
 
 using namespace std;
 
@@ -23,9 +23,9 @@ public:
 	bool operator<(const pier &p) const;
 
 public:
-	int bs;				// source of bridge
-	int bt;				// target of bridge
-	vector<path> paths;	// bridging candidates 
+	int bs;					// source of bridge
+	int bt;					// target of bridge
+	vector<phase> phases;	// bridging candidates 
 };
 
 #endif

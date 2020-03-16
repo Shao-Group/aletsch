@@ -337,14 +337,14 @@ int bridger::bridge()
 
 			for(int j = 0; j < pb.size(); j++)
 			{
-				path p;
+				phase p;
 				p.score = table[bt][j].stack.front();
 				p.stack = table[bt][j].stack;
 				p.v = pb[j];
-				piers[b].paths.push_back(p);
+				piers[b].phases.push_back(p);
 			}
 
-			sort(piers[b].paths.begin(), piers[b].paths.end(), compare_path_stack);
+			sort(piers[b].phases.begin(), piers[b].phases.end(), compare_phase_stack);
 		}
 	}
 	return 0;
@@ -357,7 +357,7 @@ int bridger::vote()
 		fcluster &fc = fclusters[i];
 		if(fc.pr == NULL) continue;
 
-		vector<path> &pb = fc.pr->paths;
+		vector<phase> &pb = fc.pr->phases;
 		vector< vector<int> > pn;
 		for(int e = 0; e < pb.size(); e++)
 		{
@@ -375,7 +375,7 @@ int bridger::vote()
 			for(int e = 0; e < pb.size(); e++)
 			{
 				int32_t length = compute_aligned_length(*fr, pn[e]);
-				//printf(" fragment %d length = %d using path %d\n", i, p.length, e);
+				//printf(" fragment %d length = %d using phase %d\n", i, p.length, e);
 				if(length < length_low) continue;
 				if(length > length_high) continue;
 				votes[e]++;
@@ -407,17 +407,17 @@ int bridger::vote()
 		 */
 
 		//if(voting_ratio <= 0.49) continue;
-		//if(best_ratio < 0.8 && be != best_path) continue;
+		//if(best_ratio < 0.8 && be != best_phase) continue;
 
 		/*
-		   printf("fcluster with %lu fragments, total %lu paths, best = %d, from %d to %d, v1 = (", fc.fset.size(), pb.size(), be, k, j);
+		   printf("fcluster with %lu fragments, total %lu phases, best = %d, from %d to %d, v1 = (", fc.fset.size(), pb.size(), be, k, j);
 		   printv(fc.v1);
 		   printf("), v2 = ( ");
 		   printv(fc.v2);
 		   printf(")\n");
 		   for(int e = 0; e < pb.size(); e++)
 		   {
-		   printf(" path %d, votes = %d, score = %d, stack = (", e, votes[e], ps[e]); 
+		   printf(" phase %d, votes = %d, score = %d, stack = (", e, votes[e], ps[e]); 
 		   printv(table[j][e].stack);
 		   printf("), pb = (");
 		   printv(pb[e]);

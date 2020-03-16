@@ -8,37 +8,25 @@ Part of Coral, an efficient tool to bridge mate pairs
 See LICENSE for licensing.
 */
 
-#ifndef __PATH_H__
-#define __PATH_H__
+#ifndef __PHASE_H__
+#define __PHASE_H__
 
 #include <vector>
 #include <stdint.h>
 
-#include "region.h"
-
 using namespace std;
 
-class path
+class phase
 {
 public:
-	path();
-	~path();
-
-public:
-	bool operator< (const path& p) const;
+	phase();
+	~phase();
 
 public:
 	int type;
-	int ex1;
-	int ex2;
 	vector<int> v;
-	vector<int32_t> acc;
 	int32_t length;
-	int fcindex;
-	double abd;
-	double prlen;
 	double score;
-	double reads;
 	vector<int> stack;
 
 public:
@@ -46,12 +34,10 @@ public:
 	int print(int index) const;
 	int print_bridge(int index) const;
 	vector<int> index(int n) const;
-	int build_accumulate_length(const vector<region> &regions);
 };
 
-bool compare_path_abundance(const path &p1, const path &p2);
-bool compare_path_vertices(const path &p1, const path &p2);
-bool compare_path_score(const path &p1, const path &p2);
-bool compare_path_stack(const path &p1, const path &p2);
+bool compare_phase_vertices(const phase &p1, const phase &p2);
+bool compare_phase_score(const phase &p1, const phase &p2);
+bool compare_phase_stack(const phase &p1, const phase &p2);
 
 #endif

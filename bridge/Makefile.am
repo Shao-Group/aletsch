@@ -9,6 +9,6 @@ libbridge_a_CPPFLAGS = -I$(GTF_INCLUDE) -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE) -I$
 
 libbridge_a_SOURCES = fragment.h fragment.cc \
 					  fcluster.h fcluster.cc \
-					  path.h path.cc \
+					  phase.h phase.cc \
 					  bridger.h bridger.cc \
 					  pier.h pier.cc 

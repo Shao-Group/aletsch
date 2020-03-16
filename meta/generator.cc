@@ -16,6 +16,7 @@ See LICENSE for licensing.
 #include "scallop.h"
 #include "super_graph.h"
 #include "previewer.h"
+#include "bridger.h"
 
 generator::generator(vector<combined_graph> &v, const config &c)
 	: vcb(v), cfg(c)
@@ -82,8 +83,6 @@ int generator::resolve()
 		// process
 		process(cfg.batch_bundle_size);
 
-		//printf("read strand = %c, xs = %c, ts = %c\n", ht.strand, ht.xs, ht.ts);
-
 		// add hit
 		if(cfg.uniquely_mapped_only == true && ht.nh != 1) continue;
 		if(cfg.library_type != UNSTRANDED && ht.strand == '+' && ht.xs == '-') continue;
@@ -95,7 +94,6 @@ int generator::resolve()
 		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit_intervals(ht, b1t);
 		if(cfg.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit_intervals(ht, b1t);
 		if(cfg.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit_intervals(ht, b1t);
-
 	}
 
 	pool.push_back(bb1);
@@ -128,6 +126,9 @@ int generator::process(int n)
 		//bd.print(index);
 
 		//if(verbose >= 1) bd.print(index);
+
+		bridger br(bd.gr, bb.hits);
+		br.resolve();
 
 		generate(bd.gr, bd.hs);
 		index++;
