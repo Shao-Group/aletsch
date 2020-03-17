@@ -11,6 +11,7 @@ See LICENSE for licensing.
 #include "fragment.h"
 #include "fcluster.h"
 #include "pier.h"
+#include "hyper_set.h"
 
 using namespace std;
 
@@ -36,6 +37,7 @@ public:
 public:
 	splice_graph &gr;				// given splice graph
 	vector<hit> &hits;				// given hits
+	hyper_set hs;					// constructed hyper-set
 
 public:
 	map<int32_t, int> lindex;		// index for left-vertex of gr
@@ -61,6 +63,7 @@ private:
 	int build_piers();
 	int bridge();
 	int vote();
+	int link_fcluster_pier();
 
 	int locate_vertex(int32_t p, int a, int b);
 	bool align_hit(const hit &h, vector<int> &vv);

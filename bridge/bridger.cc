@@ -36,6 +36,7 @@ bridger::bridger(splice_graph &g, vector<hit> &h)
 	length_median = 300;
 	length_low = 100;
 	length_high = 500;
+	hs.clear();
 }
 
 int bridger::resolve()
@@ -58,8 +59,12 @@ int bridger::resolve()
 	bridge();
 	printf("finish bridging\n");
 
+	link_fcluster_pier();
 	vote();
 	printf("finish voting\n\n");
+
+	build_hyper_set();
+	printf("finish building hyper-set\n\n");
 
 	return 0;
 }
@@ -301,8 +306,8 @@ int bridger::build_fclusters()
 int bridger::build_piers()
 {
 	piers.clear();
-	map<PI, int> m;
 	int n = gr.num_vertices();
+	set<PI> ss;
 	for(int k = 0; k < fclusters.size(); k++)
 	{
 		fcluster &fc = fclusters[k];
@@ -311,17 +316,13 @@ int bridger::build_piers()
 		int s = fc.v1.back();
 		int t = fc.v2.front();
 		if(s >= t) continue;
+		ss.insert(PI(s, t));
+	}
 
-		if(m.find(PI(s, t)) == m.end())
-		{
-			pier pr(s, t);
-			pr.fcset.push_back(k);
-			piers.push_back(pr);
-		}
-		else
-		{
-			piers[m[PI(s, t)]].fcset.push_back(k);
-		}
+	for(set<PI>::iterator it = ss.begin(); it != ss.end(); it++)
+	{
+		pier pr(it->first, it->second);
+		piers.push_back(pr);
 	}
 	return 0;
 }
@@ -385,71 +386,110 @@ int bridger::bridge()
 	return 0;
 }
 
-int bridger::vote()
+int bridger::link_fcluster_pier()
 {
+	// build index for piers
+	map<PI, int> pindex;
 	for(int k = 0; k < piers.size(); k++)
 	{
-		pier &pr = piers[k];
-		if(pr.phases.size() == 0) continue;
+		PI p(piers[k].bs, piers[k].bt);
+		pindex.insert(pair<PI, int>(p, k));
+	}
 
-		vector<phase> &pb = pr.phases;
-
-		for(int i = 0; i < pr.fcset.size(); i++)
-		{
-			fcluster &fc = fclusters[pr.fcset[i]];
-			vector< vector<int> > pn;
-			for(int e = 0; e < pb.size(); e++)
-			{
-				vector<int> px = fc.v1;
-				if(pb[e].v.size() >= 2) px.insert(px.end(), pb[e].v.begin() + 1, pb[e].v.end() - 1);
-				px.insert(px.end(), fc.v2.begin(), fc.v2.end());
-				pn.push_back(px);
-			}
-
-			vector<int> votes;
-			votes.resize(pb.size(), 0);
-			for(int j = 0; j < fc.frset.size(); j++)
-			{
-				fragment &fr = fragments[fc.frset[j]];
-				for(int e = 0; e < pb.size(); e++)
-				{
-					int32_t length = compute_aligned_length(fr, pn[e]);
-
-					if(length < length_low) continue;
-					if(length > length_high) continue;
-					votes[e]++;
-					break;
-				}
-			}
-
-			int be = 0;
-			int voted = votes[0];
-			for(int j = 1; j < votes.size(); j++)
-			{
-				voted += votes[j];
-				if(votes[j] > votes[be]) be = j;
-			}
-
-			if(votes[be] <= 0) continue;
-			if(voted <= 0) continue;
-
-			double voting_ratio = 100.0 * voted / fc.frset.size();
-			double best_ratio = 100.0 * votes[be] / voted;
-
-			fc.bestp = pr.phases[be];
-			fc.bestp.v = pn[be];
-
-			fc.print(fc.frset[i]);
-			printf("fcluster %d: total %lu fragments, %d voted, best = %d, voting-ratio = %.2lf, best-ratio = %.2lf\n", 
-					fc.frset[i], fc.frset.size(), voted, be, voting_ratio, best_ratio);
-			printf("best path = ");
-			fc.bestp.print(be);
-
-			//if(voting_ratio <= 0.49) continue;
-			//if(best_ratio < 0.8 && be != best_phase) continue;
-		}
+	for(int i = 0; i < fclusters.size(); i++)
+	{
+		fcluster &fc = fclusters[i];
+		fc.pr = NULL;
+		if(fc.v1.size() == 0) continue;
+		if(fc.v2.size() == 0) continue;
+		int s = fc.v1.back();
+		int t = fc.v2.front();
+		PI p(s, t);
+		if(pindex.find(p) == pindex.end()) continue;
+		int k = pindex[p];
+		fc.pr = &(piers[k]);
 	}
 	return 0;
+}
+
+int bridger::vote()
+{
+	for(int i = 0; i < fclusters.size(); i++)
+	{
+		fcluster &fc = fclusters[i];
+		if(fc.pr == NULL) continue;
+		if(fc.pr->phases.size() == 0) continue;
+
+		vector<phase> &pb = pr.phases;
+		vector< vector<int> > pn;
+		for(int e = 0; e < pb.size(); e++)
+		{
+			vector<int> px = fc.v1;
+			if(pb[e].v.size() >= 2) px.insert(px.end(), pb[e].v.begin() + 1, pb[e].v.end() - 1);
+			px.insert(px.end(), fc.v2.begin(), fc.v2.end());
+			pn.push_back(px);
+		}
+
+		vector<int> votes;
+		votes.resize(pb.size(), 0);
+		for(int j = 0; j < fc.frset.size(); j++)
+		{
+			fragment &fr = fragments[fc.frset[j]];
+			for(int e = 0; e < pb.size(); e++)
+			{
+				int32_t length = compute_aligned_length(fr, pn[e]);
+				if(length < length_low) continue;
+				if(length > length_high) continue;
+				votes[e]++;
+				break;
+			}
+		}
+
+		int be = 0;
+		int voted = votes[0];
+		for(int j = 1; j < votes.size(); j++)
+		{
+			voted += votes[j];
+			if(votes[j] > votes[be]) be = j;
+		}
+
+		if(votes[be] <= 0) continue;
+		if(voted <= 0) continue;
+
+		double voting_ratio = 100.0 * voted / fc.frset.size();
+		double best_ratio = 100.0 * votes[be] / voted;
+
+		// TODO parameters
+		if(voting_ratio <= 0.49) continue;
+		if(best_ratio < 0.8 && be != best_phase) continue;
+
+		fc.bestp = pr.phases[be];
+		fc.bestp.v = pn[be];
+
+		fc.print(fc.frset[i]);
+		printf("fcluster %d: total %lu fragments, %d voted, best = %d, voting-ratio = %.2lf, best-ratio = %.2lf\n", 
+				i, fc.frset.size(), voted, be, voting_ratio, best_ratio);
+		printf("best path = ");
+		fc.bestp.print(be);
+	}
+	return 0;
+}
+
+int bridger::bridge_trivial()
+{
+	for(int i = 0; i < fclusters.size(); i++)
+	{
+		fcluster &fc = fclusters[i];
+		if(fc.v1.size() <= 0) continue;
+		if(fc.v2.size() <= 0) continue;
+		int s = fc.v1.back();
+		int t = fc.v2.front();
+		if(s < t) continue;
+
+		if(fc.pr == NULL) continue;
+		if(fc.pr->phases.size() == 0) continue;
+
+
 }
 
 int bridger::dynamic_programming(int k1, int k2, vector< vector<entry> > &table)

@@ -364,6 +364,36 @@ int compare_phasing_paths(const vector<int> &ref, const vector<int> &qry)
 	return CONFLICTING;
 }
 
+bool merge_phasing_paths(const vector<int> &ref, const vector<int> &qry, vector<int> &merged)
+{
+	merged.clear();
+	int t = compare_phasing_paths(ref, qry);
+
+	if(t == CONFLICTING) return false;
+	if(t == IDENTICAL) merged = ref;
+	if(t == FALL_RIGHT) return false;
+	if(t == FALL_LEFT) return false;
+	if(t == CONTAINED) merged = ref;
+	if(t == CONTAINING) merged = qry;
+	if(t == NESTED) merged = ref;
+	if(t == NESTING) merged = qry;
+	if(t == EXTEND_LEFT)
+	{
+		vector<int>::const_iterator q1 = lower_bound(qry.begin(), qry.end(), ref.front());
+		assert(*q1 == ref.front());
+		merged.insert(merged.end(), qry.begin(), q1);
+		merged.insert(merged.end(), ref.begin(), ref.end());
+	}
+	if(t == EXTEND_RIGHT)
+	{
+		vector<int>::const_iterator q2 = lower_bound(qry.begin(), qry.end(), ref.back());
+		assert(*q2 == ref.back());
+		merged.insert(merged.end(), ref.begin(), ref.end());
+		merged.insert(merged.end(), q2 + 1, qry.end());
+	}
+	return true;
+}
+
 bool identical(const vector<int> &x, int x1, int x2, const vector<int> &y, int y1, int y2)
 {
 	assert(x1 >= 0 && x1 < x.size());
