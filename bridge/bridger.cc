@@ -458,6 +458,7 @@ int bridger::vote()
 		fc.bbp.count = votes[be];
 		fc.bbp.v = pn[be];
 
+		/*
 		printf("fcluster %d: %lu fragments, %d voted, %lu candidates, best = %d, voted-best = %d, score = %d, type = %d, v = ( ", 
 				i, fc.frset.size(), voted, pn.size(), be, votes[be], ps[be], fc.bbp.type);
 		printv(fc.bbp.v);
@@ -466,6 +467,7 @@ int bridger::vote()
 		printf("), v2 = ( ");
 		printv(fc.v2);
 		printf(")\n");
+		*/
 	}
 	return 0;
 }
