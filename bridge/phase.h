@@ -25,7 +25,7 @@ public:
 public:
 	int type;
 	vector<int> v;
-	int32_t length;
+	int count;
 	double score;
 	vector<int> stack;
 

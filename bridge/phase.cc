@@ -19,7 +19,7 @@ phase::phase()
 	v.clear();
 	type = 0;
 	score = 0;
-	length = 0;
+	count = 0;
 	stack.clear();
 }
 
@@ -31,7 +31,7 @@ int phase::clear()
 	type = 0;
 	v.clear();
 	score = 0;
-	length = 0;
+	count = 0;
 	stack.clear();
 	return 0;
 }
@@ -39,7 +39,7 @@ int phase::clear()
 int phase::print(int index) const
 {
 	if(v.size() == 0) return 0;
-	printf("phase %d: score = %.2lf, length = %d, stack = ( ", index, score, length);
+	printf("phase %d: score = %.2lf, count = %d, stack = ( ", index, score, count);
 	printv(stack);
 	printf("), v = ( ");
 	printv(v);

@@ -56,7 +56,7 @@ int bridger::resolve()
 	build_piers();
 	printf("built %lu piers\n", piers.size());
 
-	bridge();
+	nominate();
 	printf("finish bridging\n");
 
 	vote();
@@ -148,16 +148,9 @@ int bridger::build_fragments()
 	{
 		hit &h = hits[i];
 		if(h.isize >= 0) continue;
-		//if(h.vlist.size() == 0) continue;
 
 		// do not use hi; as long as qname, pos and isize are identical
 		int k = (h.get_qhash() % max_index + h.pos % max_index + (0 - h.isize) % max_index) % max_index;
-		/*
-		SI si(h.qname, h.hi);
-		MSI &m = vv[k];
-		assert(m.find(si) == m.end());
-		m.insert(PSI(si, i));
-		*/
 		vv[k].push_back(i);
 	}
 
@@ -166,20 +159,8 @@ int bridger::build_fragments()
 		hit &h = hits[i];
 		if(paired[i] == true) continue;
 		if(h.isize <= 0) continue;
-		//if(h.vlist.size() == 0) continue;
 
 		int k = (h.get_qhash() % max_index + h.mpos % max_index + h.isize % max_index) % max_index;
-
-		/*
-		h.print();
-		for(int j = 0; j < vv[k].size(); j++)
-		{
-			hit &z = hits[vv[k][j]];
-			printf(" ");
-			z.print();
-		}
-		*/
-
 		int x = -1;
 		for(int j = 0; j < vv[k].size(); j++)
 		{
@@ -195,19 +176,9 @@ int bridger::build_fragments()
 			break;
 		}
 
-		/*
-		SI si(h.qname, h.hi);
-		MSI::iterator it = vv[k].find(si);
-		if(it == vv[k].end()) continue;
-		int x = it->second;
-		*/
-
-		//printf("HIT: i = %d, x = %d, hits[i].vlist = %lu | ", i, x, hits[i].vlist.size(), hits[i].qname.c_str()); hits[i].print();
-
 		if(x == -1) continue;
-		//if(hits[x].vlist.size() == 0) continue;
 
-		fragment fr(&hits[i], &hits[x]);
+		fragment fr(i, x);
 		fr.lpos = h.pos;
 		fr.rpos = hits[x].rpos;
 
@@ -238,8 +209,8 @@ int bridger::build_fclusters()
 
 		vector<int> v1;
 		vector<int> v2;
-		bool b1 = align_hit(*(fr.h1), v1);
-		bool b2 = align_hit(*(fr.h2), v2);
+		bool b1 = align_hit(hits[fr.h1], v1);
+		bool b2 = align_hit(hits[fr.h2], v2);
 		if(b1 == false || b2 == false) continue;
 
 		aligned++;
@@ -264,10 +235,10 @@ int bridger::build_fclusters()
 		}
 
 		// setup fragment
-		fr.k1l = fr.h1->pos - gr.get_vertex_info(v1.front()).lpos;
-		fr.k1r = gr.get_vertex_info(v1.back()).rpos - fr.h1->rpos;
-		fr.k2l = fr.h2->pos - gr.get_vertex_info(v2.front()).lpos;
-		fr.k2r = gr.get_vertex_info(v2.back()).rpos - fr.h2->rpos;
+		fr.k1l = hits[fr.h1].pos - gr.get_vertex_info(v1.front()).lpos;
+		fr.k1r = gr.get_vertex_info(v1.back()).rpos - hits[fr.h1].rpos;
+		fr.k2l = hits[fr.h2].pos - gr.get_vertex_info(v2.front()).lpos;
+		fr.k2r = gr.get_vertex_info(v2.back()).rpos - hits[fr.h2].rpos;
 
 		fr.b1 = true;
 		if(v1.size() <= 1) 
@@ -276,11 +247,11 @@ int bridger::build_fclusters()
 		}
 		else if(v1.size() >= 2 && v1[v1.size() - 2] == v1.back() - 1)
 		{
-			if(fr.h1->rpos - gr.get_vertex_info(v1.back()).lpos > max_misalignment1 + fr.h1->nm) fr.b1 = false;
+			if(hits[fr.h1].rpos - gr.get_vertex_info(v1.back()).lpos > max_misalignment1 + hits[fr.h1].nm) fr.b1 = false;
 		}
 		else if(v1.size() >= 2 && v1[v1.size() - 2] != v1.back() - 1)
 		{
-			if(fr.h1->rpos - gr.get_vertex_info(v1.back()).lpos > max_misalignment2 + fr.h1->nm) fr.b1 = false;
+			if(hits[fr.h1].rpos - gr.get_vertex_info(v1.back()).lpos > max_misalignment2 + hits[fr.h1].nm) fr.b1 = false;
 		}
 
 		fr.b2 = true;
@@ -290,11 +261,11 @@ int bridger::build_fclusters()
 		}
 		else if(v2.size() >= 2 || v2[1] == v2.front() + 1)
 		{
-			if(gr.get_vertex_info(v2.front()).rpos - fr.h2->pos > max_misalignment1 + fr.h2->nm) fr.b2 = false;
+			if(gr.get_vertex_info(v2.front()).rpos - hits[fr.h2].pos > max_misalignment1 + hits[fr.h2].nm) fr.b2 = false;
 		}
 		else if(v2.size() >= 2 || v2[1] != v2.front() + 1)
 		{
-			if(gr.get_vertex_info(v2.front()).rpos - fr.h2->pos > max_misalignment2 + fr.h2->nm) fr.b2 = false;
+			if(gr.get_vertex_info(v2.front()).rpos - hits[fr.h2].pos > max_misalignment2 + hits[fr.h2].nm) fr.b2 = false;
 		}
 	}
 
@@ -326,7 +297,7 @@ int bridger::build_piers()
 	return 0;
 }
 
-int bridger::bridge()
+int bridger::nominate()
 {
 	if(piers.size() <= 0) return 0;
 
@@ -387,6 +358,8 @@ int bridger::bridge()
 
 int bridger::vote()
 {
+	bridged.resize(hits.size(), false);
+
 	// build index for piers
 	map<PI, int> pindex;
 	for(int k = 0; k < piers.size(); k++)
@@ -437,8 +410,8 @@ int bridger::vote()
 
 		if(pn.size() == 0) continue;
 
-		vector<int> votes;
-		votes.resize(pn.size(), 0);
+		vector<int> votes(pn.size(), 0);
+		vector<int> bulls(fc.frset.size(), -1);
 		for(int j = 0; j < fc.frset.size(); j++)
 		{
 			fragment &fr = fragments[fc.frset[j]];
@@ -448,6 +421,7 @@ int bridger::vote()
 				if(length < length_low) continue;
 				if(length > length_high) continue;
 				votes[e]++;
+				bulls[j] = e;
 				break;
 			}
 		}
@@ -472,14 +446,26 @@ int bridger::vote()
 		if(best_ratio < 0.8 && be != best_phase) continue;
 		*/
 
+		for(int j = 0; j < fc.frset.size(); j++)
+		{
+			fragment &fr = fragments[fc.frset[j]];
+			if(bulls[j] != be) continue;
+			bridged[fr.h1] = true;
+			bridged[fr.h2] = true;
+		}
+
 		fc.bbp.type = type;
 		fc.bbp.score = ps[be];
+		fc.bbp.count = votes[be];
 		fc.bbp.v = pn[be];
 
-		fc.print(fc.frset[i]);
-		printf("fcluster %d: %lu fragments, %d voted, %lu candidates, best = %d, score = %d, type = %d, voting-ratio = %.2lf, best-ratio = %.2lf, v = ( \n", 
-				i, fc.frset.size(), voted, pn.size(), be, ps[be], fc.bbp.type, voting_ratio, best_ratio);
+		printf("fcluster %d: %lu fragments, %d voted, %lu candidates, best = %d, voted-best = %d, score = %d, type = %d, v = ( ", 
+				i, fc.frset.size(), voted, pn.size(), be, votes[be], ps[be], fc.bbp.type);
 		printv(fc.bbp.v);
+		printf("), v1 = ( ");
+		printv(fc.v1);
+		printf("), v2 = ( ");
+		printv(fc.v2);
 		printf(")\n");
 	}
 	return 0;
@@ -488,15 +474,32 @@ int bridger::vote()
 int bridger::build_hyper_set()
 {
 	hs.clear();
+
+	int c1 = 0;
 	for(int i = 0; i < fclusters.size(); i++)
 	{
 		fcluster &fc = fclusters[i];
 		if(fc.bbp.type < 0) continue;
-		int c = fc.frset.size();
+		int c = fc.bbp.count;
 		vector<int> v = fc.bbp.v;
 		for(int k = 0; k < v.size(); k++) v[k]--;
 		hs.add_node_list(v, c);
+		c1 += c * 2;
 	}
+
+	int c2 = 0;
+	for(int i = 0; i < hits.size(); i++)
+	{
+		if(bridged[i] == true) continue;
+		vector<int> v;
+		bool b = align_hit(hits[i], v);
+		if(b == false) continue;
+		for(int k = 0; k < v.size(); k++) v[k]--;
+		hs.add_node_list(v, 1);
+		c2++;
+	}
+
+	printf("total %d hits are paired, %d hits are isolated\n", c1, c2);
 	return 0;
 }
 

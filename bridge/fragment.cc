@@ -8,7 +8,7 @@ See LICENSE for licensing.
 #include "util.h"
 #include <cstdio>
 
-fragment::fragment(hit *x1, hit *x2)
+fragment::fragment(int x1, int x2)
 	: h1(x1), h2(x2)
 {
 	b1 = false;
@@ -24,13 +24,15 @@ fragment::fragment(hit *x1, hit *x2)
 
 int fragment::print(int index)
 {
-	printf("fragment %d: name0 = %s, cnt = %d, lpos = %d, rpos = %d, len = %d, b1 = %c, b2 = %c\n",
-			index, h1->qname.c_str(), cnt, lpos, rpos, rpos - lpos, b1 ? 'T' : 'F', b2 ? 'T' : 'F');
+	printf("fragment %d: (%d, %d), cnt = %d, lpos = %d, rpos = %d, len = %d, b1 = %c, b2 = %c\n",
+			index, h1, h2, cnt, lpos, rpos, rpos - lpos, b1 ? 'T' : 'F', b2 ? 'T' : 'F');
 	return 0;
 }
 
 int fragment::clear()
 {
+	h1 = -1;
+	h2 = -1;
 	b1 = false;
 	b2 = false;
 	k1l = 0;
@@ -40,23 +42,6 @@ int fragment::clear()
 	lpos = -1;
 	rpos = -1;
 	cnt = 1;
-	return 0;
-}
-
-int fragment::append(const fragment &f) 
-{
-	assert(f.cnt == 1);
-	hit *x1 = f.h1;
-	hit *x2 = f.h2;
-	/*
-	assert(x1->next == NULL);
-	assert(x2->next == NULL);
-	x1->next = h1;
-	x2->next = h2;
-	*/
-	h1 = x1;
-	h2 = x2;
-	cnt++;
 	return 0;
 }
 
@@ -76,67 +61,3 @@ bool fragment::equal(const fragment &f) const
 	if(b2 != f.b2) return false;
 	return true;
 }
-
-/*
-int fragment::set_paired(bool b)
-{
-	hit *x = h1;
-	hit *y = h2;
-	while(x != NULL && y != NULL)
-	{
-		x->paired = b;
-		y->paired = b;
-		x = x->next;
-		y = y->next;
-	}
-	return 0;
-}
-
-int fragment::set_bridged(bool b)
-{
-	hit *x = h1;
-	hit *y = h2;
-	while(x != NULL && y != NULL)
-	{
-		x->bridged = b;
-		y->bridged = b;
-		x = x->next;
-		y = y->next;
-	}
-	return 0;
-}
-
-bool compare_fragment(const fragment &f1, const fragment &f2)
-{
-	if(f1.h1->vlist.size() < f2.h1->vlist.size()) return true;
-	if(f1.h1->vlist.size() > f2.h1->vlist.size()) return false;
-	if(f1.h2->vlist.size() < f2.h2->vlist.size()) return true;
-	if(f1.h2->vlist.size() > f2.h2->vlist.size()) return false;
-
-	for(int k = 0; k < f1.h1->vlist.size(); k++)
-	{
-		if(f1.h1->vlist[k] < f2.h1->vlist[k]) return true;
-		if(f1.h1->vlist[k] > f2.h1->vlist[k]) return false;
-	}
-
-	for(int k = 0; k < f1.h2->vlist.size(); k++)
-	{
-		if(f1.h2->vlist[k] < f2.h2->vlist[k]) return true;
-		if(f1.h2->vlist[k] > f2.h2->vlist[k]) return false;
-	}
-
-	if(f1.b1 == true && f2.b1 == false) return true;
-	if(f1.b1 == false && f2.b1 == true) return false;
-	if(f1.b2 == true && f2.b2 == false) return true;
-	if(f1.b2 == false && f2.b2 == true) return false;
-
-	if(f1.k1l + f1.k1r + f1.k2l + f1.k2r < f2.k1l + f2.k1r + f2.k2l + f2.k2r) return true;
-	if(f1.k1l + f1.k1r + f1.k2l + f1.k2r > f2.k1l + f2.k1r + f2.k2l + f2.k2r) return false;
-	if(f1.k2l + f1.k1r < f2.k2l + f2.k1r) return true;
-	if(f1.k2l + f1.k1r > f2.k2l + f2.k1r) return false;
-	if(f1.k1l + f1.k2r < f2.k1l + f2.k2r) return true;
-	if(f1.k1l + f1.k2r > f2.k1l + f2.k2r) return false;
-
-	return (f1.lpos < f2.lpos);
-}
-*/

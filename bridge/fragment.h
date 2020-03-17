@@ -10,18 +10,16 @@ See LICENSE for licensing.
 #include <vector>
 #include <stdint.h>
 
-#include "hit.h"
-
 using namespace std;
 
 class fragment
 {
 public:
-	fragment(hit *x1, hit *x2);
+	fragment(int h1, int h2);
 
 public:
-	hit* h1;			// list of first mate
-	hit* h2;			// list of second mate
+	int h1;			// first mate
+	int h2;			// second mate
 	int cnt;			// count of the equal hits
 	int32_t lpos;		// equals to hits[k1].pos
 	int32_t rpos;		// equals to hits[k2].rpos
@@ -34,13 +32,8 @@ public:
 
 public:
 	bool equal(const fragment &f) const;
-	int append(const fragment &f);
 	int print(int index);
-	//int set_paired(bool b);
-	//int set_bridged(bool b);
 	int clear();
 };
-
-//bool compare_fragment(const fragment &f1, const fragment &f2);
 
 #endif
