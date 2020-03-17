@@ -440,10 +440,9 @@ int bridger::vote()
 		double best_ratio = 100.0 * votes[be] / voted;
 
 		// TODO parameters
-		/*
+		if(pn.size() >= 2 && ps[be] <= 1) continue;
 		if(voting_ratio <= 0.49) continue;
-		if(best_ratio < 0.8 && be != best_phase) continue;
-		*/
+		if(best_ratio < 0.8 && be != 0) continue;
 
 		for(int j = 0; j < fc.frset.size(); j++)
 		{
