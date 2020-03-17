@@ -8,21 +8,17 @@ See LICENSE for licensing.
 #define __FRAGMENT_CLUSTER_H__
 
 #include <vector>
-#include "fragment.h"
 #include "phase.h"
-#include "pier.h"
 
 using namespace std;
 
 class fcluster
 {
 public:
-	vector<fragment*> fset;			// set of fragments in this cluster
-	int type;						// for multiple uses
+	vector<int> frset;				// set of fragments in this cluster
 	vector<int> v1;					// vlist for mate1
 	vector<int> v2;					// vlist for mate2
 	phase bestp;					// best phase for this cluster
-	pier *pr;						// pointer to pier
 
 public:
 	int clear();

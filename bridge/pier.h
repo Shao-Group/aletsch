@@ -25,6 +25,7 @@ public:
 public:
 	int bs;					// source of bridge
 	int bt;					// target of bridge
+	vector<int> fcset;		// fcluster set
 	vector<phase> phases;	// bridging candidates 
 };
 

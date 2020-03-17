@@ -10,7 +10,7 @@ See LICENSE for licensing.
 
 int fcluster::clear()
 {
-	fset.clear();
+	frset.clear();
 	v1.clear();
 	v2.clear();
 	return 0;
@@ -18,7 +18,7 @@ int fcluster::clear()
 
 int fcluster::print(int index) const
 {
-	printf("fcluster %d: type = %d, #fragments = %lu, ", index, type, fset.size());
+	printf("fcluster %d: #fragments = %lu, ", index, frset.size());
 	printf("  v1 = ( ");
 	printv(v1);
 	printf("), v2 = ( ");

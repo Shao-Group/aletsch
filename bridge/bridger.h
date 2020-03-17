@@ -10,6 +10,7 @@ See LICENSE for licensing.
 #include "splice_graph.h"
 #include "fragment.h"
 #include "fcluster.h"
+#include "pier.h"
 
 using namespace std;
 

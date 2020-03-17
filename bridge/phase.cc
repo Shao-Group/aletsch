@@ -43,7 +43,7 @@ int phase::print(int index) const
 	printv(stack);
 	printf("), v = ( ");
 	printv(v);
-	printf("\n");
+	printf(")\n");
 	return 0;
 }
 
