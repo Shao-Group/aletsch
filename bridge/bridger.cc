@@ -4,6 +4,7 @@ Part of Coral
 See LICENSE for licensing.
 */
 
+#include "hyper_graph.h"
 #include "bridger.h"
 #include "util.h"
 
@@ -36,7 +37,6 @@ bridger::bridger(splice_graph &g, vector<hit> &h)
 	length_median = 300;
 	length_low = 100;
 	length_high = 500;
-	hs.clear();
 }
 
 int bridger::resolve()
@@ -59,7 +59,6 @@ int bridger::resolve()
 	bridge();
 	printf("finish bridging\n");
 
-	link_fcluster_pier();
 	vote();
 	printf("finish voting\n\n");
 
@@ -386,7 +385,7 @@ int bridger::bridge()
 	return 0;
 }
 
-int bridger::link_fcluster_pier()
+int bridger::vote()
 {
 	// build index for piers
 	map<PI, int> pindex;
@@ -399,43 +398,51 @@ int bridger::link_fcluster_pier()
 	for(int i = 0; i < fclusters.size(); i++)
 	{
 		fcluster &fc = fclusters[i];
-		fc.pr = NULL;
 		if(fc.v1.size() == 0) continue;
 		if(fc.v2.size() == 0) continue;
-		int s = fc.v1.back();
-		int t = fc.v2.front();
-		PI p(s, t);
-		if(pindex.find(p) == pindex.end()) continue;
-		int k = pindex[p];
-		fc.pr = &(piers[k]);
-	}
-	return 0;
-}
 
-int bridger::vote()
-{
-	for(int i = 0; i < fclusters.size(); i++)
-	{
-		fcluster &fc = fclusters[i];
-		if(fc.pr == NULL) continue;
-		if(fc.pr->phases.size() == 0) continue;
+		fc.bbp.type = -1;
+		int ss = fc.v1.back();
+		int tt = fc.v2.front();
 
-		vector<phase> &pb = pr.phases;
+		// construct candidate bridging paths
+		int type = 0;
 		vector< vector<int> > pn;
-		for(int e = 0; e < pb.size(); e++)
+		vector<int> ps;
+		if(ss >= tt)
 		{
-			vector<int> px = fc.v1;
-			if(pb[e].v.size() >= 2) px.insert(px.end(), pb[e].v.begin() + 1, pb[e].v.end() - 1);
-			px.insert(px.end(), fc.v2.begin(), fc.v2.end());
-			pn.push_back(px);
+			vector<int> v;
+			bool b = merge_phasing_paths(fc.v1, fc.v2, v);
+			if(b == true) 
+			{
+				type = 1;
+				pn.push_back(v);
+				ps.push_back(10);
+			}
+		}
+		else if(pindex.find(PI(ss, tt)) != pindex.end())
+		{
+			type = 2;
+			int k = pindex[PI(ss, tt)];
+			vector<phase> &pb = piers[k].phases;
+			for(int e = 0; e < pb.size(); e++)
+			{
+				vector<int> px = fc.v1;
+				if(pb[e].v.size() >= 2) px.insert(px.end(), pb[e].v.begin() + 1, pb[e].v.end() - 1);
+				px.insert(px.end(), fc.v2.begin(), fc.v2.end());
+				pn.push_back(px);
+				ps.push_back(pb[e].score);
+			}
 		}
 
+		if(pn.size() == 0) continue;
+
 		vector<int> votes;
-		votes.resize(pb.size(), 0);
+		votes.resize(pn.size(), 0);
 		for(int j = 0; j < fc.frset.size(); j++)
 		{
 			fragment &fr = fragments[fc.frset[j]];
-			for(int e = 0; e < pb.size(); e++)
+			for(int e = 0; e < pn.size(); e++)
 			{
 				int32_t length = compute_aligned_length(fr, pn[e]);
 				if(length < length_low) continue;
@@ -460,36 +467,37 @@ int bridger::vote()
 		double best_ratio = 100.0 * votes[be] / voted;
 
 		// TODO parameters
+		/*
 		if(voting_ratio <= 0.49) continue;
 		if(best_ratio < 0.8 && be != best_phase) continue;
+		*/
 
-		fc.bestp = pr.phases[be];
-		fc.bestp.v = pn[be];
+		fc.bbp.type = type;
+		fc.bbp.score = ps[be];
+		fc.bbp.v = pn[be];
 
 		fc.print(fc.frset[i]);
-		printf("fcluster %d: total %lu fragments, %d voted, best = %d, voting-ratio = %.2lf, best-ratio = %.2lf\n", 
-				i, fc.frset.size(), voted, be, voting_ratio, best_ratio);
-		printf("best path = ");
-		fc.bestp.print(be);
+		printf("fcluster %d: %lu fragments, %d voted, %lu candidates, best = %d, score = %d, type = %d, voting-ratio = %.2lf, best-ratio = %.2lf, v = ( \n", 
+				i, fc.frset.size(), voted, pn.size(), be, ps[be], fc.bbp.type, voting_ratio, best_ratio);
+		printv(fc.bbp.v);
+		printf(")\n");
 	}
 	return 0;
 }
 
-int bridger::bridge_trivial()
+int bridger::build_hyper_set()
 {
+	hs.clear();
 	for(int i = 0; i < fclusters.size(); i++)
 	{
 		fcluster &fc = fclusters[i];
-		if(fc.v1.size() <= 0) continue;
-		if(fc.v2.size() <= 0) continue;
-		int s = fc.v1.back();
-		int t = fc.v2.front();
-		if(s < t) continue;
-
-		if(fc.pr == NULL) continue;
-		if(fc.pr->phases.size() == 0) continue;
-
-
+		if(fc.bbp.type < 0) continue;
+		int c = fc.frset.size();
+		vector<int> v = fc.bbp.v;
+		for(int k = 0; k < v.size(); k++) v[k]--;
+		hs.add_node_list(v, c);
+	}
+	return 0;
 }
 
 int bridger::dynamic_programming(int k1, int k2, vector< vector<entry> > &table)

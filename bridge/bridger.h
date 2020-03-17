@@ -63,7 +63,7 @@ private:
 	int build_piers();
 	int bridge();
 	int vote();
-	int link_fcluster_pier();
+	int build_hyper_set();
 
 	int locate_vertex(int32_t p, int a, int b);
 	bool align_hit(const hit &h, vector<int> &vv);

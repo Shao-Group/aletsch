@@ -53,6 +53,7 @@ public:
 };
 
 int compare_phasing_paths(const vector<int> &ref, const vector<int> &qry);
+bool merge_phasing_paths(const vector<int> &ref, const vector<int> &qry, vector<int> &merged);
 bool identical(const vector<int> &x, int x1, int x2, const vector<int> &y, int y1, int y2);
 
 #endif

@@ -18,7 +18,7 @@ public:
 	vector<int> frset;				// set of fragments in this cluster
 	vector<int> v1;					// vlist for mate1
 	vector<int> v2;					// vlist for mate2
-	phase bestp;					// best phase for this cluster
+	phase bbp;						// best briding path
 
 public:
 	int clear();
