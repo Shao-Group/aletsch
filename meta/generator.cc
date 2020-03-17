@@ -130,7 +130,7 @@ int generator::process(int n)
 		bridger br(bd.gr, bb.hits);
 		br.resolve();
 
-		generate(bd.gr, bd.hs);
+		generate(bd.gr, br.hs);
 		index++;
 	}
 	pool.clear();

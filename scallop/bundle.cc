@@ -41,10 +41,8 @@ int bundle::build()
 	link_partial_exons();
 	build_splice_graph();
 
-	/* TODO test
 	revise_splice_graph_full(gr, cfg);
-	build_hyper_edges2();
-	*/
+	//build_hyper_edges2();
 
 	return 0;
 }

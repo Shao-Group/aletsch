@@ -41,29 +41,28 @@ bridger::bridger(splice_graph &g, vector<hit> &h)
 
 int bridger::resolve()
 {
-	printf("start bridger: %lu hits, splice graph with %lu vertices and %lu edges\n", hits.size(), gr.num_vertices(), gr.num_edges());
-
+	//printf("start bridger: %lu hits, splice graph with %lu vertices and %lu edges\n", hits.size(), gr.num_vertices(), gr.num_edges());
 	//gr.print();
 
 	build_vertex_index();
 
 	build_fragments();
-	printf("built %lu fragments\n", fragments.size());
+	//printf("built %lu fragments\n", fragments.size());
 
 	build_fclusters();
-	printf("built %lu fclusters\n", fclusters.size());
+	//printf("built %lu fclusters\n", fclusters.size());
 
 	build_piers();
-	printf("built %lu piers\n", piers.size());
+	//printf("built %lu piers\n", piers.size());
 
 	nominate();
-	printf("finish bridging\n");
+	//printf("finish bridging\n");
 
 	vote();
-	printf("finish voting\n\n");
+	//printf("finish voting\n\n");
 
 	build_hyper_set();
-	printf("finish building hyper-set\n\n");
+	//printf("finish building hyper-set\n\n");
 
 	return 0;
 }
@@ -269,7 +268,7 @@ int bridger::build_fclusters()
 		}
 	}
 
-	printf(" total %d / %lu aligned fragments\n", aligned, fragments.size());
+	//printf(" total %d / %lu aligned fragments\n", aligned, fragments.size());
 	return 0;
 }
 
@@ -499,7 +498,7 @@ int bridger::build_hyper_set()
 		c2++;
 	}
 
-	printf("total %d hits are paired, %d hits are isolated\n", c1, c2);
+	//printf("total %d hits are paired, %d hits are isolated\n", c1, c2);
 	return 0;
 }
 
