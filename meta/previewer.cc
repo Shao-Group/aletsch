@@ -203,14 +203,17 @@ int previewer::infer_insertsize(config &cfg, sample_profile &sp)
 	sp.insertsize_low = -1;
 	sp.insertsize_high = -1;
 	sp.insertsize_median = -1;
-	for(map<int32_t, int>::iterator it = m.begin(); it != m.end(); it++)
+	vector<PI> vv(m.begin(), m.end());
+	sort(vv.begin(), vv.end());
+	//for(map<int32_t, int>::iterator it = m.begin(); it != m.end(); it++)
+	for(int k = 0; k < vv.size(); k++)
 	{
-		n += it->second;
-		if(n >= 0.5 * total && sp.insertsize_median < 0) sp.insertsize_median = it->first;
-		sp.insertsize_ave += it->second * it->first;
-		sx2 += it->second * it->first * it->first;
-		if(sp.insertsize_low == -1 && n >= 0.01 * total) sp.insertsize_low = it->first;
-		if(sp.insertsize_high == -1 && n >= 0.98 * total) sp.insertsize_high = it->first;
+		n += vv[k].second;
+		if(n >= 0.5 * total && sp.insertsize_median < 0) sp.insertsize_median = vv[k].first;
+		sp.insertsize_ave += vv[k].second * vv[k].first;
+		sx2 += vv[k].second * vv[k].first * vv[k].first;
+		if(sp.insertsize_low == -1 && n >= 0.005 * total) sp.insertsize_low = vv[k].first;
+		if(sp.insertsize_high == -1 && n >= 0.99 * total) sp.insertsize_high = vv[k].first;
 		if(n >= 0.998 * total) break;
 	}
 	
