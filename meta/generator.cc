@@ -23,8 +23,8 @@ generator::generator(vector<combined_graph> &v, const config &c)
 {
 	previewer pre(cfg.input_file);
 	pre.infer_library_type(cfg, sp);
-	pre.infer_insertsize(cfg, sp);
 	cfg.library_type = sp.library_type;
+	pre.infer_insertsize(cfg, sp);
 
     sfn = sam_open(cfg.input_file.c_str(), "r");
     hdr = sam_hdr_read(sfn);
