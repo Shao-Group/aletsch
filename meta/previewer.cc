@@ -130,6 +130,7 @@ int previewer::infer_library_type(config &cfg, sample_profile &sx)
 
 int previewer::infer_insertsize(config &cfg, sample_profile &sp)
 {
+	//printf("preview insertsize for file %s\n", input_file.c_str());
 	open_file();
 
 	bundle_base bb1;
@@ -192,7 +193,8 @@ int previewer::infer_insertsize(config &cfg, sample_profile &sp)
 	if(total < 10000)
 	{
 		printf("not enough paired-end reads to create the profile (%d collected)\n", total);
-		exit(0);
+		close_file();
+		return 0;
 	}
 
 	int n = 0;
@@ -201,7 +203,7 @@ int previewer::infer_insertsize(config &cfg, sample_profile &sp)
 	sp.insertsize_low = -1;
 	sp.insertsize_high = -1;
 	sp.insertsize_median = -1;
-	for(map<int, int>::iterator it = m.begin(); it != m.end(); it++)
+	for(map<int32_t, int>::iterator it = m.begin(); it != m.end(); it++)
 	{
 		n += it->second;
 		if(n >= 0.5 * total && sp.insertsize_median < 0) sp.insertsize_median = it->first;
@@ -215,22 +217,24 @@ int previewer::infer_insertsize(config &cfg, sample_profile &sp)
 	sp.insertsize_ave = sp.insertsize_ave * 1.0 / n;
 	sp.insertsize_std = sqrt((sx2 - n * sp.insertsize_ave * sp.insertsize_ave) * 1.0 / n);
 
+	/*
 	sp.insertsize_profile.assign(sp.insertsize_high, 1);
 	n = sp.insertsize_high;
-	for(map<int, int>::iterator it = m.begin(); it != m.end(); it++)
+	for(map<int32_t, int>::iterator it = m.begin(); it != m.end(); it++)
 	{
 		if(it->first >= sp.insertsize_high) continue;
 		sp.insertsize_profile[it->first] += it->second;
 		n += it->second;
 	}
 
-	printf("preview (%s) insertsize: sampled reads = %d, isize = %.2lf +/- %.2lf, median = %d, low = %d, high = %d\n", 
-				input_file.c_str(), total, sp.insertsize_ave, sp.insertsize_std, sp.insertsize_median, sp.insertsize_low, sp.insertsize_high);
-
 	for(int i = 0; i < sp.insertsize_profile.size(); i++)
 	{
 		sp.insertsize_profile[i] = sp.insertsize_profile[i] * 1.0 / n;
 	}
+	*/
+
+	printf("preview (%s) insertsize: sampled reads = %d, isize = %.2lf +/- %.2lf, median = %d, low = %d, high = %d\n", 
+				input_file.c_str(), total, sp.insertsize_ave, sp.insertsize_std, sp.insertsize_median, sp.insertsize_low, sp.insertsize_high);
 
 	close_file();
 	return 0;
@@ -273,7 +277,7 @@ int previewer::process(bundle_base &bb, config &cfg, map<int32_t, int> &m)
 			cnt++;
 
 			if(m.find(len) != m.end()) m[len]++;
-			else m.insert(pair<int, int>(len, 1));
+			else m.insert(pair<int32_t, int>(len, 1));
 			if(cnt >= 1000) return cnt;
 		}
 	}
