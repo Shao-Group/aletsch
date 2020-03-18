@@ -10,6 +10,7 @@ See LICENSE for licensing.
 #include "hit.h"
 #include "scallop/config.h"
 #include "bundle_base.h"
+#include "sample_profile.h"
 
 #include <fstream>
 #include <string>
@@ -34,18 +35,11 @@ private:
 	int min_preview_spliced_reads;
 	double preview_infer_ratio;
 
-	double insertsize_ave;
-	double insertsize_std;
-	int insertsize_low;
-	int insertsize_high;
-	int insertsize_median;
-	vector<double> insertsize_profile;
-
 public:
 	int open_file();
 	int close_file();
-	int infer_library_type(config &cfg);
-	int infer_insertsize(config &cfg);
+	int infer_library_type(config &cfg, sample_profile &sp);
+	int infer_insertsize(config &cfg, sample_profile &sp);
 	int process(bundle_base &bb, config &cfg, map<int32_t, int> &m);
 };
 

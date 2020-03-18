@@ -25,4 +25,5 @@ meta_scallop_SOURCES = generator.h generator.cc \
 					   combined_group.h combined_group.cc \
 					   meta_config.h meta_config.cc \
 					   previewer.h previewer.cc \
+					   sample_profile.h sample_profile.cc \
 					   main.cc

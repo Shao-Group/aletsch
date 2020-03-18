@@ -42,7 +42,7 @@ int previewer::close_file()
 	return 0;
 }
 
-int previewer::infer_library_type(config &cfg)
+int previewer::infer_library_type(config &cfg, sample_profile &sx)
 {
 	open_file();
 
@@ -123,11 +123,12 @@ int previewer::infer_library_type(config &cfg)
 	printf("infer-library-type (%s): reads = %d, single = %d, paired = %d, spliced = %d, first = %d, second = %d, inferred = %s\n",
 			input_file.c_str(), total, single, paired, sp, first, second, vv[s1 + 1].c_str());
 
+	sx.library_type = s1;
 	close_file();
-	return s1;
+	return 0;
 }
 
-int previewer::infer_insertsize(config &cfg)
+int previewer::infer_insertsize(config &cfg, sample_profile &sp)
 {
 	open_file();
 
@@ -167,6 +168,8 @@ int previewer::infer_insertsize(config &cfg)
 			bb2.strand = '-';
 		}
 
+		if(cnt >= 200000) break;
+
 		// add hit
 		if(cfg.uniquely_mapped_only == true && ht.nh != 1) continue;
 		if(cfg.library_type != UNSTRANDED && ht.strand == '+' && ht.xs == '-') continue;
@@ -194,40 +197,39 @@ int previewer::infer_insertsize(config &cfg)
 
 	int n = 0;
 	double sx2 = 0;
-	insertsize_ave = 0;
-	insertsize_low = -1;
-	insertsize_high = -1;
-	insertsize_median = -1;
+	sp.insertsize_ave = 0;
+	sp.insertsize_low = -1;
+	sp.insertsize_high = -1;
+	sp.insertsize_median = -1;
 	for(map<int, int>::iterator it = m.begin(); it != m.end(); it++)
 	{
 		n += it->second;
-		if(n >= 0.5 * total && insertsize_median < 0) insertsize_median = it->first;
-		insertsize_ave += it->second * it->first;
+		if(n >= 0.5 * total && sp.insertsize_median < 0) sp.insertsize_median = it->first;
+		sp.insertsize_ave += it->second * it->first;
 		sx2 += it->second * it->first * it->first;
-		if(insertsize_low == -1 && n >= 0.01 * total) insertsize_low = it->first;
-		if(insertsize_high == -1 && n >= 0.95 * total) insertsize_high = it->first;
+		if(sp.insertsize_low == -1 && n >= 0.01 * total) sp.insertsize_low = it->first;
+		if(sp.insertsize_high == -1 && n >= 0.98 * total) sp.insertsize_high = it->first;
 		if(n >= 0.998 * total) break;
 	}
 	
-	insertsize_ave = insertsize_ave * 1.0 / n;
-	insertsize_std = sqrt((sx2 - n * insertsize_ave * insertsize_ave) * 1.0 / n);
+	sp.insertsize_ave = sp.insertsize_ave * 1.0 / n;
+	sp.insertsize_std = sqrt((sx2 - n * sp.insertsize_ave * sp.insertsize_ave) * 1.0 / n);
 
-	insertsize_profile.assign(insertsize_high, 1);
-	n = insertsize_high;
+	sp.insertsize_profile.assign(sp.insertsize_high, 1);
+	n = sp.insertsize_high;
 	for(map<int, int>::iterator it = m.begin(); it != m.end(); it++)
 	{
-		if(it->first >= insertsize_high) continue;
-		insertsize_profile[it->first] += it->second;
+		if(it->first >= sp.insertsize_high) continue;
+		sp.insertsize_profile[it->first] += it->second;
 		n += it->second;
 	}
 
 	printf("preview (%s) insertsize: sampled reads = %d, isize = %.2lf +/- %.2lf, median = %d, low = %d, high = %d\n", 
-				input_file.c_str(), total, insertsize_ave, insertsize_std, insertsize_median, insertsize_low, insertsize_high);
+				input_file.c_str(), total, sp.insertsize_ave, sp.insertsize_std, sp.insertsize_median, sp.insertsize_low, sp.insertsize_high);
 
-	for(int i = 0; i < insertsize_profile.size(); i++)
+	for(int i = 0; i < sp.insertsize_profile.size(); i++)
 	{
-		insertsize_profile[i] = insertsize_profile[i] * 1.0 / n;
-		//printf("insertsize_profile %d %.8lf\n", i, insertsize_profile[i]);
+		sp.insertsize_profile[i] = sp.insertsize_profile[i] * 1.0 / n;
 	}
 
 	close_file();
@@ -237,6 +239,7 @@ int previewer::infer_insertsize(config &cfg)
 int previewer::process(bundle_base &bb, config &cfg, map<int32_t, int> &m)
 {
 	if(bb.hits.size() < cfg.min_num_hits_in_bundle) return 0;
+	if(bb.hits.size() > 20000) return 0;
 	if(bb.tid < 0) return 0;
 
 	char buf[1024];
@@ -266,11 +269,12 @@ int previewer::process(bundle_base &bb, config &cfg, map<int32_t, int> &m)
 		{
 			fragment &fr = br.fragments[fc.frset[j]];
 			int32_t len = br.compute_aligned_length(fr, fc.bbp.v);
+
 			cnt++;
 
 			if(m.find(len) != m.end()) m[len]++;
 			else m.insert(pair<int, int>(len, 1));
-			if(cnt >= 10000) return cnt;
+			if(cnt >= 1000) return cnt;
 		}
 	}
 	return cnt;

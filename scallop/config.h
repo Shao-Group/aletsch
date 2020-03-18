@@ -31,6 +31,14 @@ public:
 	bool use_second_alignment;
 	int min_splice_boundary_hits;
 
+	// for preview
+	bool preview_only;
+	int max_preview_reads;
+	int max_preview_spliced_reads;
+	int min_preview_spliced_reads;
+	double preview_infer_ratio;
+	bool merge_intersection;
+
 	// for identifying subgraphs
 	int32_t min_subregion_gap;
 	double min_subregion_overlap;

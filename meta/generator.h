@@ -15,6 +15,7 @@ See LICENSE for licensing.
 #include "hyper_set.h"
 #include "combined_graph.h"
 #include "scallop/config.h"
+#include "sample_profile.h"
 
 using namespace std;
 
@@ -26,6 +27,7 @@ public:
 
 private:
 	config cfg;
+	sample_profile sp;
 	samFile *sfn;
 	bam_hdr_t *hdr;
 	bam1_t *b1t;

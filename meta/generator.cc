@@ -22,8 +22,9 @@ generator::generator(vector<combined_graph> &v, const config &c)
 	: vcb(v), cfg(c)
 {
 	previewer pre(cfg.input_file);
-	cfg.library_type = pre.infer_library_type(cfg);
-	pre.infer_insertsize(cfg);
+	pre.infer_library_type(cfg, sp);
+	pre.infer_insertsize(cfg, sp);
+	cfg.library_type = sp.library_type;
 
     sfn = sam_open(cfg.input_file.c_str(), "r");
     hdr = sam_hdr_read(sfn);
@@ -126,9 +127,10 @@ int generator::process(int n)
 		bd.build();
 		//bd.print(index);
 
-		//if(verbose >= 1) bd.print(index);
-
 		bridger br(bd.gr, bb.hits);
+		br.length_median = sp.insertsize_median;
+		br.length_low = sp.insertsize_low;
+		br.length_high = sp.insertsize_high;
 		br.resolve();
 
 		generate(bd.gr, br.hs);
