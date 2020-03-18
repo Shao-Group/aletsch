@@ -34,13 +34,6 @@ config::config()
 	max_cluster_intron_distance = 5;
 	min_cluster_single_exon_ratio = 0.8;
 	
-	// for preview
-	max_preview_reads = 2000000;
-	max_preview_spliced_reads = 50000;
-	min_preview_spliced_reads = 10000;
-	preview_infer_ratio = 0.8;
-	preview_only = false;
-	
 	// for identifying subgraphs
 	min_subregion_gap = 3;
 	min_subregion_overlap = 1.5;
@@ -178,30 +171,6 @@ int config::parse_arguments(int argc, const char ** argv)
 		else if(string(argv[i]) == "--min_splice_boundary_hits")
 		{
 			min_splice_boundary_hits = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--max_preview_spliced_reads")
-		{
-			max_preview_spliced_reads = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_preview_spliced_reads")
-		{
-			min_preview_spliced_reads = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--preview")
-		{
-			preview_only = true;
-		}
-		else if(string(argv[i]) == "--max_preview_reads")
-		{
-			max_preview_reads = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--preview_infer_ratio")
-		{
-			preview_infer_ratio = atof(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "--min_subregion_gap")

@@ -58,7 +58,6 @@ public:
 public:
 	int resolve();
 	
-private:
 	int build_vertex_index();
 	int build_fragments();
 	int build_fclusters();

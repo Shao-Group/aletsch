@@ -8,9 +8,12 @@ See LICENSE for licensing.
 #define __PREVIEWER_H__
 
 #include "hit.h"
+#include "scallop/config.h"
+#include "bundle_base.h"
 
 #include <fstream>
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -31,8 +34,19 @@ private:
 	int min_preview_spliced_reads;
 	double preview_infer_ratio;
 
+	double insertsize_ave;
+	double insertsize_std;
+	int insertsize_low;
+	int insertsize_high;
+	int insertsize_median;
+	vector<double> insertsize_profile;
+
 public:
-	int infer_library_type();
+	int open_file();
+	int close_file();
+	int infer_library_type(config &cfg);
+	int infer_insertsize(config &cfg);
+	int process(bundle_base &bb, config &cfg, map<int32_t, int> &m);
 };
 
 #endif
