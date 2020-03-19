@@ -45,7 +45,6 @@ public:
 	map<int32_t, int> lindex;		// index for left-vertex of gr
 	map<int32_t, int> rindex;		// index for right-vertex of gr
 
-	vector<fragment> fragments;		// fragments needs to be bridged
 	vector<fcluster> fclusters;		// clusters
 	vector<pier> piers;				// piers
 
@@ -59,8 +58,8 @@ public:
 	int resolve();
 	
 	int build_vertex_index();
-	int build_fragments();
-	int build_fclusters();
+	int build_fragments(vector<fragment> &fs);
+	int build_fclusters(vector<fragment> &fs);
 	int build_piers();
 	int nominate();
 	int vote();

@@ -9,13 +9,14 @@ See LICENSE for licensing.
 
 #include <vector>
 #include "phase.h"
+#include "fragment.h"
 
 using namespace std;
 
 class fcluster
 {
 public:
-	vector<int> frset;				// set of fragments in this cluster
+	vector<fragment> frset;			// set of fragments in this cluster
 	vector<int> v1;					// vlist for mate1
 	vector<int> v2;					// vlist for mate2
 	phase bbp;						// best briding path

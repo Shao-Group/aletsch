@@ -259,11 +259,12 @@ int previewer::process(bundle_base &bb, config &cfg, map<int32_t, int> &m)
 	//bd.print(index);
 
 	bridger br(bd.gr, bb.hits);
+	vector<fragment> fs;
 	br.length_low = 0;
 	br.length_high = 9999;
 	br.build_vertex_index();
-	br.build_fragments();
-	br.build_fclusters();
+	br.build_fragments(fs);
+	br.build_fclusters(fs);
 	br.vote();
 
 	int cnt = 0;
@@ -274,7 +275,7 @@ int previewer::process(bundle_base &bb, config &cfg, map<int32_t, int> &m)
 
 		for(int j = 0; j < fc.frset.size(); j++)
 		{
-			fragment &fr = br.fragments[fc.frset[j]];
+			fragment &fr = fc.frset[j];
 			int32_t len = br.compute_aligned_length(fr, fc.bbp.v);
 
 			cnt++;
