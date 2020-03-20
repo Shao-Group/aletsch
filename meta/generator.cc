@@ -133,7 +133,13 @@ int generator::process(int n)
 		br.length_high = sp.insertsize_high;
 		br.resolve();
 
-		generate(bd.gr, br.hs);
+		if(bd.gr.count_junctions() <= 0) continue;
+
+		//generate(bd.gr, br.hs);
+		string gid = "gene." + tostring(index);
+		combined_graph cb;
+		cb.build(bd.gr, br.hs);
+		vcb.push_back(cb);
 		index++;
 	}
 	pool.clear();

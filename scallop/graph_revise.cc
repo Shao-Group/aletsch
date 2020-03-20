@@ -17,6 +17,9 @@ int revise_splice_graph_full(splice_graph &gr, config *cfg)
 	{
 		bool b = false;
 
+		b = remove_trivial_vertices(gr);
+		if(b == true) continue;
+
 		b = extend_boundaries(gr);
 		if(b == true) continue;
 
@@ -157,6 +160,23 @@ VE compute_maximal_edges(splice_graph &gr)
 		sc.insert(c1);
 	}
 	return x;
+}
+
+bool remove_trivial_vertices(splice_graph &gr)
+{
+	bool flag = false;
+	for(int i = 1; i < gr.num_vertices() - 1; i++)
+	{
+		if(gr.in_degree(i) != 1) continue;
+		if(gr.out_degree(i) != 1) continue;
+		PEB p1 = gr.edge(0, i);
+		PEB p2 = gr.edge(i, gr.num_vertices() - 1);
+		if(p1.second == false) continue;
+		if(p2.second == false) continue;
+		gr.clear_vertex(i);
+		flag = true;
+	}
+	return flag;
 }
 
 bool remove_small_exons(splice_graph &gr, int min_exon)

@@ -13,6 +13,7 @@ int revise_splice_graph_full(splice_graph &gr, config *cfg);
 
 VE compute_maximal_edges(splice_graph &gr);
 bool extend_boundaries(splice_graph &gr);
+bool remove_trivial_vertices(splice_graph &gr);
 bool remove_small_junctions(splice_graph &gr);
 bool remove_small_exons(splice_graph &gr, int min_exon);
 bool remove_inner_boundaries(splice_graph &gr);
