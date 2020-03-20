@@ -280,7 +280,7 @@ int combined_graph::build(splice_graph &gr, hyper_set &hs)
 		if(v.back() == n) vv.push_back(-2);
 		if(v.back() == n) vv.push_back(-2);
 
-		if(vv.size() <= 3) continue;
+		if(vv.size() <= 1) continue;
 		vector<int32_t> zz(vv.begin() + 1, vv.end() - 1);
 		PPDI pd(PI32(vv.front(), vv.back()), DI(w, c));
 

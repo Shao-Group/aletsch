@@ -133,19 +133,8 @@ int generator::process(int n)
 		br.length_high = sp.insertsize_high;
 		br.resolve();
 
-		string gid = "gene." + tostring(index++);
-
-		splice_graph &gr = bd.gr;
-		hyper_set &hs = br.hs;
-		gr.gid = gid;
-
-		if(gr.count_junctions() >= 1)
-		{
-			//write_graph(gr, hs);
-			combined_graph cb;
-			cb.build(gr, hs);
-			vcb.push_back(cb);
-		}
+		generate(bd.gr, br.hs);
+		index++;
 	}
 	pool.clear();
 	return 0;
@@ -161,19 +150,16 @@ int generator::generate(const splice_graph &gr0, const hyper_set &hs0)
 	{
 		string gid = "gene." + tostring(index) + "." + tostring(k);
 
-		if(cfg.verbose >= 2 && k == 0) sg.print();
-
 		splice_graph &gr = sg.subs[k];
 		hyper_set &hs = sg.hss[k];
 		gr.gid = gid;
 
-		if(gr.count_junctions() >= 1)
-		{
-			//write_graph(gr, hs);
-			combined_graph cb;
-			cb.build(gr, hs);
-			vcb.push_back(cb);
-		}
+		if(gr.count_junctions() <= 0) continue;
+
+		//write_graph(gr, hs);
+		combined_graph cb;
+		cb.build(gr, hs);
+		vcb.push_back(cb);
 	}
 	return 0;
 }

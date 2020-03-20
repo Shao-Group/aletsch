@@ -567,21 +567,21 @@ int merged_graph::group_phasing_paths()
 		vector<int32_t> &v = phase[i].first;
 		vector<PPDI> &z = phase[i].second;
 		assert(z.size() >= 1);
-		assert(v.size() >= 2);
 		assert(v.size() % 2 == 0);
 
-		int n = v.size() - 1;
-
-		if(v[0] == -1 && v[1] >= 0)
+		if(v.size() >= 2)
 		{
-			int32_t p = v[1];
-			if(smap.find(p) != smap.end()) v[1] = smap[p];
-		}
-
-		if(v[n] == -2 && v[n - 1] >= 0)
-		{
-			int32_t p = v[n - 1];
-			if(tmap.find(p) != tmap.end()) v[n - 1] = tmap[p];
+			int n = v.size() - 1;
+			if(v[0] == -1 && v[1] >= 0)
+			{
+				int32_t p = v[1];
+				if(smap.find(p) != smap.end()) v[1] = smap[p];
+			}
+			if(v[n] == -2 && v[n - 1] >= 0)
+			{
+				int32_t p = v[n - 1];
+				if(tmap.find(p) != tmap.end()) v[n - 1] = tmap[p];
+			}
 		}
 
 		for(int j = 0; j < z.size(); j++)
