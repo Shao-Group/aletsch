@@ -185,34 +185,6 @@ int incubator::postprocess()
 	return 0;
 }
 
-int incubator::write(const string &file, bool headers)
-{
-	ofstream fout(file.c_str());
-	if(fout.fail()) exit(1);
-
-	int os = 0;
-	vector<int> offset;
-	for(int k = 0; k < groups.size(); k++)
-	{
-		offset.push_back(os);
-		os += groups[k].mset.size();
-	}
-
-	boost::asio::thread_pool pool(max_threads); // thread pool
-	mutex mylock;								// lock for trsts
-	for(int k = 0; k < groups.size(); k++)
-	{
-		combined_group &gp = groups[k];
-		int os = offset[k];
-		boost::asio::post(pool, [&gp, &fout, &mylock, os]{ gp.write(mylock, fout, os); });
-	}
-	pool.join();
-
-	fout.flush();
-	fout.close();
-	return 0;
-}
-
 int incubator::print_groups()
 {
 	for(int k = 0; k < groups.size(); k++)
@@ -260,39 +232,6 @@ int generate_single(const string &file, vector<combined_group> &gv, mutex &myloc
 
 	time_t mytime = time(NULL);
 	printf("finish processing individual sample %s, %s", file.c_str(), ctime(&mytime));
-	return 0;
-}
-
-int load_single(const string &file, vector<combined_graph> &vc)
-{
-	ifstream fin(file.c_str());
-	if(fin.fail())
-	{
-		printf("could not load file %s\n", file.c_str());
-		exit(0);
-	}
-
-	char line[10240];
-	char gid[10240];
-	char chrm[10240];
-	char tmp[1024];
-	char strand[1024];
-	int nodes;
-
-	while(fin.getline(line, 10240, '\n'))
-	{
-		if(line[0] != '#') continue;
-		stringstream sstr(line);
-		sstr >> tmp >> gid >> chrm >> strand;
-
-		combined_graph gr(line);
-		gr.build(fin, chrm, strand[0]);
-		vc.push_back(gr);
-	}
-
-	printf("loaded graphs in file %s\n", file.c_str());
-
-	fin.close();
 	return 0;
 }
 

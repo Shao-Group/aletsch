@@ -28,7 +28,6 @@ private:
 public:
 	int add_graph(const combined_graph &gr);
 	int resolve();
-	int write(mutex &mylock, ofstream &fout, int offset);
 	int stats();
 
 private:

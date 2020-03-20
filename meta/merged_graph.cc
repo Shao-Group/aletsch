@@ -35,14 +35,13 @@ int merged_graph::clear()
 	junctions.clear();
 	sbounds.clear();
 	tbounds.clear();
-	paths.clear();
+	phase.clear();
 	lindex.clear();
 	rindex.clear();
 	smap.clear();
 	tmap.clear();
 	gr.clear();
 	hs.clear();
-	hx.clear();
 	return 0;
 }
 
@@ -563,257 +562,124 @@ int merged_graph::build_splice_graph(splice_graph &xr)
 
 int merged_graph::group_phasing_paths()
 {
-	for(int i = 0; i < paths.size(); i++)
+	for(int i = 0; i < phase.size(); i++)
 	{
-		vector<int32_t> &v = paths[i].first;
+		vector<int32_t> &v = phase[i].first;
+		vector<PPDI> &z = phase[i].second;
+		assert(z.size() >= 1);
 		assert(v.size() >= 2);
 		assert(v.size() % 2 == 0);
 
-		int n = v.size() / 2 - 1;
+		int n = v.size() - 1;
 
-		if(v[0] == -1 && v.size() >= 4)
+		if(v[0] == -1 && v[1] >= 0)
 		{
-			assert(v[1] == -1);
-			int32_t p = v[2];
-			if(smap.find(p) != smap.end()) v[2] = smap[p];
-		}
-		else if(v[0] > 0)
-		{
-			int32_t p = v[0];
-			if(smap.find(p) != smap.end()) v[0] = smap[p];
+			int32_t p = v[1];
+			if(smap.find(p) != smap.end()) v[1] = smap[p];
 		}
 
-		if(v[n * 2] == -2 && v.size() >= 4)
+		if(v[n] == -2 && v[n - 1] >= 0)
 		{
-			assert(v[2 * n + 1] == -2);
-			int32_t p = v[2 * n - 1];
-			if(tmap.find(p) != tmap.end()) v[2 * n - 1] = tmap[p];
-		}
-		else if(v[n * 2 + 1] > 0)
-		{
-			int32_t p = v[2 * n + 1];
-			if(tmap.find(p) != tmap.end()) v[2 * n + 1] = tmap[p];
+			int32_t p = v[n - 1];
+			if(tmap.find(p) != tmap.end()) v[n - 1] = tmap[p];
 		}
 
+		for(int j = 0; j < z.size(); j++)
+		{
+			PI &p = z[j].first;
+			if(p.first >= 0 && smap.find(p.first) != smap.end()) p.first = smap[p.first];
+			if(p.second >= 0 && tmap.find(p.second) != tmap.end()) p.second = tmap[p.second];
+		}
+
+		if(z.size() <= 1) continue;
+
+		sort(z.begin(), z.end());
+
+		vector<PPDI> zz;
+		PPDI p = z[0];
+		for(int j = 1; j < z.size(); j++)
+		{
+			if(z[j].first == p.first)
+			{
+				p.second.first += z[j].second.first;
+				p.second.second += z[j].second.second;
+			}
+			else
+			{
+				zz.push_back(p);
+				p = z[j];
+			}
+		}
+		zz.push_back(p);
+		phase[i].second = zz;
 	}
-
-	if(paths.size() <= 1) return 0;
-
-	sort(paths.begin(), paths.end(), compare_phasing_path);
-
-	vector<PVDI> vv;
-	PVDI p = paths[0];
-
-	for(int i = 1; i < paths.size(); i++)
-	{
-		if(paths[i].first == p.first)
-		{
-			p.second.first += paths[i].second.first;
-			p.second.second += paths[i].second.second;
-		}
-		else
-		{
-			vv.push_back(p);
-			p = paths[i];
-		}
-	}
-
-	paths = vv;
 	return 0;
 }
 
 int merged_graph::build_phasing_paths()
 {
 	hs.clear();
-	for(int i = 0; i < paths.size(); i++)
+	for(int i = 0; i < phase.size(); i++)
 	{
-		const vector<int32_t> &v = paths[i].first;
-		assert(v.size() >= 2);
-		assert(v.size() % 2 == 0);
-
-		double w = paths[i].second.first;
-		int c = paths[i].second.second;
-
-		// filtering here
-		//if((v.front() != -1 || v.back() != -2) &&)
-		//if(c < min_supporting_samples &&);
-		//if(w < min_phasing_count) continue;
-
-		vector<int> vv;
-		int n = v.size() / 2 - 1;
-		for(int k = 0; k <= n; k++)
+		const vector<PPDI> &z = phase[i].second;
+		for(int j = 0; j < z.size(); j++)
 		{
-			if(v[2 * k + 0] == -1)
-			{
-				assert(k == 0);
-				assert(v[2 * k + 1] == -1);
-				vv.push_back(0); 
-			}
-			else if(v[2 * k + 0] == -2)
-			{
-				assert(v[2 * k + 1] == -2);
-				vv.push_back(gr.num_vertices() - 1); 
-			}
-			else
-			{
-				assert(v[2 * k + 0] >= 0);
-				assert(v[2 * k + 1] >= 0);
-				int32_t p = v[2 * k + 0];
-				int32_t q = v[2 * k + 1];
+			vector<int32_t> v;
+			v.push_back(z[j].first.first);
+			v.insert(v.end(), phase[i].first.begin(), phase[i].first.end());
+			v.push_back(z[j].first.second);
 
-				assert(lindex.find(p) != lindex.end());
-				assert(rindex.find(q) != rindex.end());
-				int kp = lindex[p] + 1;
-				int kq = rindex[q] + 1;
-				if(vv.size() >= 1) assert(kp > vv.back());
-				for(int j = kp; j <= kq; j++)
+			assert(v.size() >= 2);
+			assert(v.size() % 2 == 0);
+
+			double w = z[j].second.first;
+			int c = z[j].second.second;
+
+			// filtering here
+			//if((v.front() != -1 || v.back() != -2) &&)
+			//if(c < min_supporting_samples &&);
+			//if(w < min_phasing_count) continue;
+
+			vector<int> vv;
+			int n = v.size() / 2 - 1;
+			for(int k = 0; k <= n; k++)
+			{
+				if(v[2 * k + 0] == -1)
 				{
-					vv.push_back(j);
-					if(j == kp) continue;
-					assert(regions[j - 2].first.second == regions[j - 1].first.first);
+					assert(k == 0);
+					assert(v[2 * k + 1] == -1);
+					vv.push_back(0); 
+				}
+				else if(v[2 * k + 0] == -2)
+				{
+					assert(v[2 * k + 1] == -2);
+					vv.push_back(gr.num_vertices() - 1); 
+				}
+				else
+				{
+					assert(v[2 * k + 0] >= 0);
+					assert(v[2 * k + 1] >= 0);
+					int32_t p = v[2 * k + 0];
+					int32_t q = v[2 * k + 1];
+
+					assert(lindex.find(p) != lindex.end());
+					assert(rindex.find(q) != rindex.end());
+					int kp = lindex[p] + 1;
+					int kq = rindex[q] + 1;
+					if(vv.size() >= 1) assert(kp > vv.back());
+					for(int j = kp; j <= kq; j++)
+					{
+						vv.push_back(j);
+						if(j == kp) continue;
+						assert(regions[j - 2].first.second == regions[j - 1].first.first);
+					}
 				}
 			}
+
+			for(int k = 0; k < vv.size(); k++) vv[k]--;
+
+			hs.add_node_list(vv, (int)w);
 		}
-		
-		for(int k = 0; k < vv.size(); k++) vv[k]--;
-
-		if(meta_verbose >= 2)
-		{
-			printf("phasing path %d: count = %d, weight = %.2lf, vertices = ", i, c, w);
-			printv(vv);
-			printf("\n");
-		}
-		hs.add_node_list(vv, (int)w);
-	}
-	return 0;
-}
-
-
-int merged_graph::build_phasing_paths(const vector<PVDI> &px)
-{
-	hx.clear();
-
-	int32_t leftbound = get_leftmost_bound().first;
-	int32_t rightbound = get_rightmost_bound().first;
-
-	for(int i = 0; i < px.size(); i++)
-	{
-		const vector<int32_t> &v = px[i].first;
-		assert(v.size() >= 2);
-		assert(v.size() % 2 == 0);
-
-		/*
-		if(v.front() < 0 && v.back() < 0 && v.size() <= 6) continue;
-		if(v.front() < 0 && v.back() >= 0 && v.size() <= 4) continue;
-		if(v.front() >=0 && v.back() < 0 && v.size() <= 4) continue;
-		if(v.front() >=0 && v.back() >=0 && v.size() <= 2) continue;
-		*/
-
-		if(v.front() >= 0 && v.front() > rightbound) continue;
-		if(v.back() >= 0 && v.back() < leftbound) continue;
-		if(v.front() < 0 && v[2] > rightbound) continue;
-		if(v.back() < 0 && v[v.size() - 3] < leftbound) continue;
-
-		double w = px[i].second.first;
-		int c = px[i].second.second;
-
-		vector<int> vv;
-		int n = v.size() / 2 - 1;
-		bool fail = false;
-		for(int k = 0; k <= n; k++)
-		{
-			if(v[2 * k + 0] == -1)
-			{
-				assert(k == 0);
-				assert(v[2 * k + 1] == -1);
-				vv.push_back(0);
-			}
-			else if(v[2 * k + 0] == -2)
-			{
-				assert(v[2 * k + 1] == -2);
-				vv.push_back(gr.num_vertices() - 1);
-			}
-			else if((k == 0 && v[0] != -1) || (k == 1 && v[0] == -1))
-			{
-				assert(v[2 * k + 0] >= 0);
-				assert(v[2 * k + 1] >= 0);
-				int32_t p = v[2 * k + 0];
-				int32_t q = v[2 * k + 1];
-
-				if(rindex.find(q) == rindex.end()) fail = true;
-				if(fail == true) break;
-				int kq = rindex[q] + 1;
-				//int kp = kq;
-
-				int r = locate_left_region(p, 0, regions.size());
-				if(r == -1) fail = true;
-				if(fail == true) break;
-				int kp = r + 1;
-
-				if(vv.size() >= 1) assert(kp > vv.back());
-				for(int j = kp; j <= kq; j++)
-				{
-					vv.push_back(j);
-				}
-			}
-			else if((k == n && v[2 * n] != -2) || (k == n - 1 && v[2 * n] == -2))
-			{
-				assert(v[2 * k + 0] >= 0);
-				assert(v[2 * k + 1] >= 0);
-				int32_t p = v[2 * k + 0];
-				int32_t q = v[2 * k + 1];
-
-				if(lindex.find(p) == lindex.end()) fail = true;
-				if(fail == true) break;
-				int kp = lindex[p] + 1;
-				//int kq = kp;
-
-				int r = locate_right_region(q, 0, regions.size());
-				if(r == -1) fail = true;
-				if(fail == true) break;
-				int kq = r + 1;
-
-				if(vv.size() >= 1) assert(kp > vv.back());
-				for(int j = kp; j <= kq; j++)
-				{
-					vv.push_back(j);
-				}
-			}
-			else
-			{
-				assert(v[2 * k + 0] >= 0);
-				assert(v[2 * k + 1] >= 0);
-				int32_t p = v[2 * k + 0];
-				int32_t q = v[2 * k + 1];
-
-				if(lindex.find(p) == lindex.end()) fail = true;
-				if(fail == true) break;
-
-				if(rindex.find(q) == rindex.end()) fail = true;
-				if(fail == true) break;
-
-				int kp = lindex[p] + 1;
-				int kq = rindex[q] + 1;
-				if(vv.size() >= 1) assert(kp > vv.back());
-				for(int j = kp; j <= kq; j++)
-				{
-					vv.push_back(j);
-				}
-			}
-		}
-
-		if(fail == true) continue;
-		
-		for(int k = 0; k < vv.size(); k++) vv[k]--;
-
-		if(meta_verbose >= 2)
-		{
-			printf("phasing path %d: count = %d, weight = %.2lf, vertices = ", i, c, w);
-			printv(vv);
-			printf("\n");
-		}
-
-		hx.add_node_list(vv, (int)w);
 	}
 	return 0;
 }
@@ -859,108 +725,20 @@ int merged_graph::build(combined_graph &cb, string s)
 		junctions.push_back(PPDI(PI32(s, t), DI(w, c)));
 	}
 
-	for(map<vector<int32_t>, DI>::iterator it = cb.phase.begin(); it != cb.phase.end(); it++)
+	for(map<vector<int32_t>, vector<PPDI> >::iterator it = cb.phase.begin(); it != cb.phase.end(); it++)
 	{
 		const vector<int32_t> &vv = it->first;
-		double w = it->second.first;
-		int c = it->second.second;
-		paths.push_back(PVDI(vv, DI(w, c)));
+		const vector<PPDI> &zz = it->second;
+		phase.push_back(PVDI(vv, zz));
 	}
 
-	for(map<vector<int32_t>, DI>::iterator it = cb.paths.begin(); it != cb.paths.end(); it++)
-	{
-		const vector<int32_t> &vv = it->first;
-		double w = it->second.first;
-		int c = it->second.second;
-		paths.push_back(PVDI(vv, DI(w, c)));
-	}
-
-	return 0;
-}
-
-int merged_graph::build(istream &is, const string &id, const string &ch, char st, int num)
-{
-	gid = id;
-	chrm = ch;
-	strand = st;
-	num_combined = num;
-
-	char line[10240];
-	char name[10240];
-	while(is.getline(line, 10240, '\n'))
-	{
-		stringstream sstr(line);
-		if(string(line).length() == 0) break;
-		
-		sstr >> name;
-		if(string(name) == "region")
-		{
-			double weight;
-			int32_t lpos;
-			int32_t rpos;
-			sstr >> lpos >> rpos >> weight;
-			regions.push_back(PPDI(PI32(lpos, rpos), DI(weight, 1)));
-		}
-		else if(string(name) == "sbound")
-		{
-			int32_t p;
-			double w;
-			int c;
-			sstr >> p >> w >> c;
-			sbounds.push_back(PIDI(p, DI(w, c)));
-		}
-		else if(string(name) == "tbound")
-		{
-			int32_t p;
-			double w;
-			int c;
-			sstr >> p >> w >> c;
-			tbounds.push_back(PIDI(p, DI(w, c)));
-		}
-		else if(string(name) == "junction")
-		{
-			int32_t s, t;
-			double w;
-			int c;
-			sstr >> s >> t >> w >> c;
-			junctions.push_back(PPDI(PI32(s, t), DI(w, c)));
-		}
-		else if(string(name) == "phase")
-		{
-			int z;
-			sstr >> z;
-			vector<int32_t> v;
-			v.resize(z);
-			for(int k = 0; k < z; k++) sstr >> v[k];
-			double w;
-			int c;
-			sstr >> w >> c;
-			paths.push_back(PVDI(v, DI(w, c)));
-		}
-		else if(string(name) == "path" && parent == true)
-		{
-			int z;
-			sstr >> z;
-			vector<int32_t> v;
-			v.resize(z);
-			for(int k = 0; k < z; k++) sstr >> v[k];
-			double w;
-			int c;
-			sstr >> w >> c;
-			paths.push_back(PVDI(v, DI(w, c)));
-		}
-		else
-		{
-			break;
-		}
-	}
 	return 0;
 }
 
 int merged_graph::print(int index)
 {
-	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phasing-paths = %lu\n", 
-			index, num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), paths.size());
+	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phasing-phase = %lu\n", 
+			index, num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), phase.size());
 
 	for(int i = 0; i < regions.size(); i++)
 	{
@@ -986,17 +764,16 @@ int merged_graph::print(int index)
 		DI d = tbounds[i].second;
 		printf("tbound %d: %d, w = %.2lf, c = %d\n", i, p, d.first, d.second);
 	}
-	for(int i = 0; i < paths.size(); i++)
+	for(int i = 0; i < phase.size(); i++)
 	{
-		vector<int32_t> &v = paths[i].first;
-		DI d = paths[i].second;
-		printf("path %d: w = %.2lf, c = %d, list = ", i, d.first, d.second);
+		vector<int32_t> &v = phase[i].first;
+		vector<PPDI> &z = phase[i].second;
+		printf("path %d: %lu components, list = ", i, z.size());
 		for(int k = 0; k < v.size(); k++) printf("%d ", v[k]);
 		printf("\n");
 	}
 	return 0;
 }
-
 
 bool merged_graph::continue_vertices(int x, int y, splice_graph &xr)
 {
@@ -1074,13 +851,4 @@ int merged_graph::locate_right_region(int32_t p, int kl, int kr)
 
 	if(p >= regions[m].first.first) return locate_right_region(p, m, kr);
 	else return locate_right_region(p, kl, m);
-}
-
-bool compare_phasing_path(const PVDI &x, const PVDI &y)
-{
-	if(x.first < y.first) return true;
-	if(x.first > y.first) return false;
-	if(x.second.second < y.second.second) return true;
-	if(x.second.second > y.second.second) return false;
-	return x.second.first < y.second.first;
 }

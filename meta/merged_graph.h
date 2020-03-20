@@ -18,7 +18,7 @@ typedef pair<int32_t, int32_t> PI32;
 typedef pair<double, int> DI;
 typedef pair<int32_t, DI> PIDI;
 typedef pair<PI32, DI> PPDI;
-typedef pair<vector<int32_t>, DI> PVDI;
+typedef pair< vector<int32_t>, vector<PPDI> > PVDI;
 
 class merged_graph
 {
@@ -36,7 +36,7 @@ public:
 	vector<PPDI> junctions;
 	vector<PIDI> sbounds;
 	vector<PIDI> tbounds;
-	vector<PVDI> paths;
+	vector<PVDI> phase;
 
 	map<int32_t, int> lindex;
 	map<int32_t, int> rindex;
@@ -45,15 +45,12 @@ public:
 	map<int32_t, int32_t> tmap;
 
 	splice_graph gr;
-	hyper_set hs;		// paths from the same graph
-	hyper_set hx;		// paths from the combined graph
+	hyper_set hs;
 
 public:
 	int solve();
 	int print(int index);
 	int build(combined_graph &gr, string s);
-	int build(istream &is, const string &gid, const string &chrm, char c, int n);
-	int build_phasing_paths(const vector<PVDI> &px);
 	set<PI32> get_reliable_junctions(int samples, double weight);
 	set<int32_t> get_reliable_splices(int samples, double weight);
 	set<int32_t> get_reliable_adjacencies(int samples, double weight);
@@ -75,7 +72,5 @@ private:
 	int locate_left_region(int32_t p, int kl, int kr);
 	int locate_right_region(int32_t p, int kl, int kr);
 };
-
-bool compare_phasing_path(const PVDI &x, const PVDI &y);
 
 #endif

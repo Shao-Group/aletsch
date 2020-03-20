@@ -27,32 +27,6 @@ int combined_group::resolve()
 	return 0;
 }
 
-int combined_group::write(mutex &mylock, ofstream &fout, int offset)
-{
-	stringstream ss;
-	for(int k = 0; k < mset.size(); k++)
-	{
-		if(k > 0 && k % 1000 == 0)
-		{
-			const string &s = ss.str();
-			mylock.lock();
-			fout.write(s.c_str(), s.size());
-			mylock.unlock();
-			ss.str("");
-		}
-		else
-		{
-			mset[k].write(ss, offset + k, false);
-		}
-	}
-	const string &s = ss.str();
-	mylock.lock();
-	fout.write(s.c_str(), s.size());
-	mylock.unlock();
-
-	return 0;
-}
-
 int combined_group::stats()
 {
 	map<int, int> m;
