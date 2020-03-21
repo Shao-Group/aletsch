@@ -158,7 +158,7 @@ int generator::process(int n)
 			// TODO, handle uv[k]
 			string gid = "gene." + tostring(index) + "." + tostring(k);
 			combined_graph cb;
-			cb.build(bd.gr, br.hs);
+			cb.build(gr, hs);
 			vcb.push_back(cb);
 		}
 
