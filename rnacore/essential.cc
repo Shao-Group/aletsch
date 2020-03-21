@@ -7,6 +7,9 @@ int build_child_splice_graph(splice_graph &root, splice_graph &gr, const set<int
 {
 	// make sure ss does not contain 0 and n
 	gr.clear();
+	gr.chrm = root.chrm;
+	gr.strand = root.strand;
+
 	if(ss.size() <= 0) return 0;
 
 	vector<int> vv(ss.begin(), ss.end());
