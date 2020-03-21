@@ -56,6 +56,7 @@ public:
 
 public:
 	int resolve();
+	int collect_unbridged_fclusters(vector<fcluster> &ub);
 	
 	int build_vertex_index();
 	int build_fragments(vector<fragment> &fs);

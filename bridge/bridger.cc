@@ -472,6 +472,34 @@ int bridger::vote()
 	return 0;
 }
 
+int bridger::collect_unbridged_fclusters(vector<fcluster> &ub)
+{
+	ub.clear();
+	for(int i = 0; i < fclusters.size(); i++)
+	{
+		fcluster &fc = fclusters[i];
+		if(fc.v1.size() == 0) continue;
+		if(fc.v2.size() == 0) continue;
+
+		vector<fragment> fs;
+		for(int j = 0; j < fc.frset.size(); j++)
+		{
+			fragment &fr = fc.frset[j];
+			if(bridged[fr.h1] && bridged[fr.h2]) continue;
+			fs.push_back(fr);
+		}
+		if(fs.size() <= 0) continue;
+
+		fcluster fx;
+		fx.v1 = fc.v1;
+		fx.v2 = fc.v2;
+		fx.frset = fs;
+
+		ub.push_back(fx);
+	}
+	return 0;
+}
+
 int bridger::build_hyper_set()
 {
 	hs.clear();

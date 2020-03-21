@@ -7,6 +7,7 @@ See LICENSE for licensing.
 #include <cstdio>
 #include <cassert>
 #include <sstream>
+#include "boost/pending/disjoint_sets.hpp"
 
 #include "constants.h"
 #include "scallop/config.h"
@@ -17,6 +18,8 @@ See LICENSE for licensing.
 #include "super_graph.h"
 #include "previewer.h"
 #include "bridger.h"
+#include "fcluster.h"
+#include "essential.h"
 
 generator::generator(vector<combined_graph> &v, const config &c)
 	: vcb(v), cfg(c)
@@ -127,19 +130,38 @@ int generator::process(int n)
 		bd.build();
 		//bd.print(index);
 
+		if(bd.gr.count_junctions() <= 0) continue;
+
 		bridger br(bd.gr, bb.hits);
 		br.length_median = sp.insertsize_median;
 		br.length_low = sp.insertsize_low;
 		br.length_high = sp.insertsize_high;
 		br.resolve();
 
-		if(bd.gr.count_junctions() <= 0) continue;
-
 		//generate(bd.gr, br.hs);
-		string gid = "gene." + tostring(index);
-		combined_graph cb;
-		cb.build(bd.gr, br.hs);
-		vcb.push_back(cb);
+
+		vector<fcluster> ub;
+		br.collect_unbridged_fclusters(ub);
+
+		vector< set<int> > vv;
+		vector< vector<int> > uv;
+		partition(bd.gr, ub, vv, uv);
+		assert(vv.size() == uv.size());
+
+		for(int k = 0; k < vv.size(); k++)
+		{
+			splice_graph gr;
+			hyper_set hs;
+			build_child_splice_graph(bd.gr, gr, vv[k]);
+			build_child_hyper_set(br.hs, hs, vv[k]);
+
+			// TODO, handle uv[k]
+			string gid = "gene." + tostring(index) + "." + tostring(k);
+			combined_graph cb;
+			cb.build(bd.gr, br.hs);
+			vcb.push_back(cb);
+		}
+
 		index++;
 	}
 	pool.clear();
@@ -148,7 +170,7 @@ int generator::process(int n)
 
 int generator::generate(const splice_graph &gr0, const hyper_set &hs0)
 {
-	super_graph sg(gr0, hs0, &cfg);
+	super_graph sg(gr0, hs0);
 	sg.build();
 
 	vector<transcript> gv;
@@ -167,6 +189,74 @@ int generator::generate(const splice_graph &gr0, const hyper_set &hs0)
 		cb.build(gr, hs);
 		vcb.push_back(cb);
 	}
+	return 0;
+}
+
+int generator::partition(splice_graph &gr, const vector<fcluster> &ub, vector< set<int> > vv, vector< vector<int> > uv)
+{
+	int n = gr.num_vertices();
+
+	vector<int> rank(n, -1);
+	vector<int> parent(n, -1);
+
+	disjoint_sets<int*, int*> ds(&rank[0], &parent[0]);
+	for(int k = 0; k < n; k++) ds.make_set(k);
+
+	PEEI pei = gr.edges();
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = (*it);
+		int s = e->source();
+		int t = e->target();
+		if(s == 0) continue;
+		if(t == n) continue;
+		ds.union_set(s, t);
+	}
+
+	for(int i = 0; i < ub.size(); i++)
+	{
+		if(ub[i].v1.size() <= 0) continue;
+		if(ub[i].v2.size() <= 0) continue;
+		int x = ub[i].v1.back();
+		int y = ub[i].v2.front();
+		ds.union_set(x, y);
+	}
+
+	map<int, int> m;
+	vv.clear();
+	uv.clear();
+	for(int i = 1; i < n - 1; i++)
+	{
+		int p = ds.find_set(i);
+		if(m.find(p) == m.end())
+		{
+			m.insert(pair<int, int>(p, vv.size()));
+			set<int> v;
+			v.insert(i);
+			vv.push_back(v);
+		}
+		else
+		{
+			int k = m[p];
+			vv[k].insert(i);
+		}
+	}
+
+	uv.resize(vv.size());
+	for(int i = 0; i < ub.size(); i++)
+	{
+		if(ub[i].v1.size() <= 0) continue;
+		if(ub[i].v2.size() <= 0) continue;
+		int x = ub[i].v1.back();
+		int y = ub[i].v2.front();
+		int p = ds.find_set(x);
+		assert(p == ds.find_set(y));
+		assert(m.find(p) != m.end());
+		int k = m[p];
+		assert(k >= 0 && k < uv.size());
+		uv[k].push_back(i);
+	}
+
 	return 0;
 }
 

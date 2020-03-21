@@ -18,8 +18,8 @@ public:
 	fragment(int h1, int h2);
 
 public:
-	int h1;			// first mate
-	int h2;			// second mate
+	int h1;				// first mate
+	int h2;				// second mate
 	int cnt;			// count of the equal hits
 	int32_t lpos;		// equals to hits[k1].pos
 	int32_t rpos;		// equals to hits[k2].rpos

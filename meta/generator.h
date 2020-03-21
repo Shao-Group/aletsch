@@ -16,6 +16,7 @@ See LICENSE for licensing.
 #include "combined_graph.h"
 #include "scallop/config.h"
 #include "sample_profile.h"
+#include "fcluster.h"
 
 using namespace std;
 
@@ -49,6 +50,7 @@ private:
 	int process(int n);
 	int generate(const splice_graph &gr, const hyper_set &hs);
 	int write_graph(splice_graph &gr, hyper_set &hs);
+	int partition(splice_graph &gr, const vector<fcluster> &ub, vector< set<int> > vv, vector< vector<int> > uv);
 };
 
 #endif

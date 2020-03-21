@@ -1016,4 +1016,3 @@ int hyper_set::write(ostream &os) const
 	//os << endl;
 	return 0;
 }
-

@@ -1111,4 +1111,3 @@ int splice_graph::print_weights()
 	}
 	return 0;
 }
-

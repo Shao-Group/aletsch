@@ -17,4 +17,5 @@ librnacore_a_SOURCES = splice_graph.h splice_graph.cc \
 					   hyper_graph.h hyper_graph.cc \
 					   region.h region.cc \
 					   junction.h junction.cc \
+					   essential.h essential.cc \
 					   constants.h constants.cc
