@@ -1,6 +1,8 @@
 #include "essential.h"
 #include "splice_graph.h"
 
+#include <algorithm>
+
 int build_child_splice_graph(splice_graph &root, splice_graph &gr, const set<int> &ss)
 {
 	// make sure ss does not contain 0 and n

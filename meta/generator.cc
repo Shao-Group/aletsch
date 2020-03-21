@@ -162,8 +162,6 @@ int generator::process(int n)
 			vcb.push_back(cb);
 		}
 
-		printf("\n");
-
 		index++;
 	}
 	pool.clear();
