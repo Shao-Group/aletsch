@@ -1,5 +1,5 @@
 #include "combined_graph.h"
-#include "draw.h"
+#include "essential.h"
 
 combined_graph::combined_graph()
 {
@@ -10,6 +10,23 @@ combined_graph::combined_graph(const string &line)
 {
 	hline = line;
 	num_combined = 0;
+}
+
+int combined_graph::clear()
+{
+	imap.clear();
+	junctions.clear();
+	sbounds.clear();
+	tbounds.clear();
+	splices.clear();
+	phase.clear();
+	reads.clear();
+	num_combined = 0;
+	chrm = "";
+	strand = '.';
+	hline = "";
+	for(int i = 0; i < children.size(); i++) children[i].clear();
+	return 0;
 }
 
 int combined_graph::combine(const combined_graph &gt)
@@ -26,6 +43,7 @@ int combined_graph::combine(const combined_graph &gt)
 	combine_regions(gt);
 	combine_junctions(gt);
 	combine_phase(gt);
+	combine_reads(gt);
 	combine_start_bounds(gt);
 	combine_end_bounds(gt);
 	combine_splice_positions(gt);
@@ -74,6 +92,25 @@ int combined_graph::combine_phase(const combined_graph &gt)
 		if(x == phase.end())
 		{
 			phase.insert(pair<vector<int32_t>, vector<PPDI> >(p, it->second));
+		}
+		else 
+		{
+			x->second.insert(x->second.end(), it->second.begin(), it->second.end());
+		}
+	}
+	return 0;
+}
+
+int combined_graph::combine_reads(const combined_graph &gt)
+{
+	for(map<vector<int32_t>, vector<int32_t> >::const_iterator it = gt.reads.begin(); it != gt.reads.end(); it++)
+	{
+		const vector<int32_t> &p = it->first;
+		map< vector<int32_t>, vector<int32_t> >::iterator x = reads.find(p);
+
+		if(x == reads.end())
+		{
+			reads.insert(pair<vector<int32_t>, vector<int32_t> >(p, it->second));
 		}
 		else 
 		{
@@ -143,7 +180,7 @@ int combined_graph::get_overlapped_splice_positions(const vector<int32_t> &v) co
 	return it - vv.begin();
 }
 
-int combined_graph::build(splice_graph &gr, hyper_set &hs)
+int combined_graph::build(splice_graph &gr, hyper_set &hs, vector<fcluster> &ub)
 {
 	chrm = gr.chrm;
 	strand = gr.strand;
@@ -249,36 +286,7 @@ int combined_graph::build(splice_graph &gr, hyper_set &hs)
 
 		if(v.size() <= 0) continue;
 		vector<int32_t> vv;
-		int32_t pre = -9999;
-
-		if(v.front() == 0) vv.push_back(-1);
-		if(v.front() == 0) vv.push_back(-1);
-
-		for(int i = 0; i < v.size(); i++)
-		{
-			int p = v[i];
-
-			if(p == 0) continue;
-			if(p == n) continue;
-
-			int32_t pp = gr.get_vertex_info(p).lpos;
-			int32_t qq = gr.get_vertex_info(p).rpos;
-
-			if(pp == pre) 
-			{
-				pre = qq;
-				continue;
-			}
-
-			if(pre >= 0) vv.push_back(pre);
-			vv.push_back(pp);
-
-			pre = qq;
-		}
-
-		if(pre >= 0) vv.push_back(pre);
-		if(v.back() == n) vv.push_back(-2);
-		if(v.back() == n) vv.push_back(-2);
+		build_path_coordinates(gr, v, vv);
 
 		if(vv.size() <= 1) continue;
 		vector<int32_t> zz(vv.begin() + 1, vv.end() - 1);
@@ -298,6 +306,57 @@ int combined_graph::build(splice_graph &gr, hyper_set &hs)
 		}
 	}
 
+	// reads
+	for(int i = 0; i < ub.size(); i++)
+	{
+		fcluster &fc = ub[i];
+		if(fc.v1.size() <= 0) continue;
+		if(fc.v2.size() <= 0) continue;
+		assert(fc.v1.front() != 0);
+		assert(fc.v2.front() != 0);
+		assert(fc.v1.back() != n);
+		assert(fc.v2.back() != n);
+
+		vector<int32_t> vv1;
+		vector<int32_t> vv2;
+		build_path_coordinates(gr, fc.v1, vv1);
+		build_path_coordinates(gr, fc.v2, vv2);
+
+		assert(vv1.size() >= 2);
+		assert(vv2.size() >= 2);
+
+		vector<int32_t> vv;
+		vv.push_back(vv1.size() - 2);
+		vv.push_back(vv2.size() - 2);
+		vv.insert(vv.end(), vv1.begin() + 1, vv1.end() - 1);
+		vv.insert(vv.end(), vv2.begin() + 1, vv2.end() - 1);
+
+		vector<int32_t> uu;
+		for(int j = 0; j < fc.frset.size(); j++)
+		{
+			fragment &fr = fc.frset[j];
+			assert(vv1[1] - vv1[0] >= fr.k1l);
+			assert(vv2[1] - vv2[0] >= fr.k2l);
+			assert(vv1[vv1.size() - 1] - vv1[vv1.size() - 2] >= fr.k1r);
+			assert(vv2[vv2.size() - 1] - vv2[vv2.size() - 2] >= fr.k2r);
+
+			uu.push_back(vv1[0] + fr.k1l);
+			uu.push_back(vv2[0] + fr.k2l);
+			uu.push_back(vv1[vv1.size() - 1] - fr.k1r);
+			uu.push_back(vv2[vv2.size() - 1] - fr.k2r);
+		}
+
+		if(reads.find(vv) == reads.end())
+		{
+			reads.insert(pair< vector<int32_t>, vector<int32_t> >(vv, uu));
+		}
+		else
+		{
+			reads[vv].insert(reads[vv].end(), uu.begin(), uu.end());
+		}
+	}
+
+	// set up num_combined
 	num_combined++;
 
 	return 0;

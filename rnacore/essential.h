@@ -10,5 +10,6 @@ typedef map<vector<int>, int> MVII;
 
 int build_child_splice_graph(splice_graph &root, splice_graph &gr, const set<int> &ss);
 int build_child_hyper_set(hyper_set &hyper, hyper_set &hs, const set<int> &ss);
+int build_path_coordinates(splice_graph &gr, const vector<int> &v, vector<int32_t> &vv);
 
 #endif

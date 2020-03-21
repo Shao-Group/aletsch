@@ -190,12 +190,6 @@ int incubator::print_groups()
 	for(int k = 0; k < groups.size(); k++)
 	{
 		printf("group %d (chrm = %s, strand = %c) contains %lu graphs (%lu merged graphs)\n", k, groups[k].chrm.c_str(), groups[k].strand, groups[k].gset.size(), groups[k].mset.size());
-		/*
-		for(int j = 0; j < groups[k].gset.size(); j++)
-		{
-			groups[k].gset[j].print(j);
-		}
-		*/
 	}
 	return 0;
 }

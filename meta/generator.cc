@@ -141,11 +141,12 @@ int generator::process(int n)
 		//generate(bd.gr, br.hs);
 
 		vector<fcluster> ub;
-		br.collect_unbridged_fclusters(ub);
+		// TODO
+		//br.collect_unbridged_fclusters(ub);
 
 		vector< set<int> > vv;
 		vector< vector<int> > uv;
-		partition(bd.gr, ub, vv, uv);
+		//partition(bd.gr, ub, vv, uv);
 		assert(vv.size() == uv.size());
 
 		//bd.gr.print();
@@ -168,10 +169,12 @@ int generator::process(int n)
 			hs.print_nodes();
 			*/
 
-			// TODO, handle uv[k]
+			vector<fcluster> vf;
+			for(int j = 0; j < uv[k].size(); j++) vf.push_back(ub[uv[k][j]]);
+
 			string gid = "gene." + tostring(index) + "." + tostring(k);
 			combined_graph cb;
-			cb.build(gr, hs);
+			cb.build(gr, hs, vf);
 			vcb.push_back(cb);
 		}
 
@@ -180,30 +183,6 @@ int generator::process(int n)
 		index++;
 	}
 	pool.clear();
-	return 0;
-}
-
-int generator::generate(const splice_graph &gr0, const hyper_set &hs0)
-{
-	super_graph sg(gr0, hs0);
-	sg.build();
-
-	vector<transcript> gv;
-	for(int k = 0; k < sg.subs.size(); k++)
-	{
-		string gid = "gene." + tostring(index) + "." + tostring(k);
-
-		splice_graph &gr = sg.subs[k];
-		hyper_set &hs = sg.hss[k];
-		gr.gid = gid;
-
-		if(gr.count_junctions() <= 0) continue;
-
-		//write_graph(gr, hs);
-		combined_graph cb;
-		cb.build(gr, hs);
-		vcb.push_back(cb);
-	}
 	return 0;
 }
 

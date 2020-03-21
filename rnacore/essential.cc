@@ -129,3 +129,43 @@ int build_child_hyper_set(hyper_set &hyper, hyper_set &hs, const set<int> &ss)
 	}
 	return 0;
 }
+
+int build_path_coordinates(splice_graph &gr, const vector<int> &v, vector<int32_t> &vv)
+{
+	vv.clear();
+	if(v.size() <= 0) return 0;
+
+	int n = gr.num_vertices() - 1;
+	int32_t pre = -99999;
+
+	if(v.front() == 0) vv.push_back(-1);
+	if(v.front() == 0) vv.push_back(-1);
+
+	for(int i = 0; i < v.size(); i++)
+	{
+		int p = v[i];
+
+		if(p == 0) continue;
+		if(p == n) continue;
+
+		int32_t pp = gr.get_vertex_info(p).lpos;
+		int32_t qq = gr.get_vertex_info(p).rpos;
+
+		if(pp == pre) 
+		{
+			pre = qq;
+			continue;
+		}
+
+		if(pre >= 0) vv.push_back(pre);
+		vv.push_back(pp);
+
+		pre = qq;
+	}
+
+	if(pre >= 0) vv.push_back(pre);
+	if(v.back() == n) vv.push_back(-2);
+	if(v.back() == n) vv.push_back(-2);
+
+	return 0;
+}

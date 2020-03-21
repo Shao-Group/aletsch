@@ -178,6 +178,7 @@ int combined_group::combine_graphs()
 		if(pp[i] == i) continue;
 		int p = pp[i];
 		cc[p].combine(gset[i]);
+		gset[i].clear();
 	}
 
 	mset.clear();
@@ -188,6 +189,8 @@ int combined_group::combine_graphs()
 			mset.push_back(cc[i]);
 		}
 	}
+
+	gset.clear();
 	return 0;
 }
 
