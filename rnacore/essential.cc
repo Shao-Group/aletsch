@@ -54,9 +54,12 @@ int build_child_splice_graph(splice_graph &root, splice_graph &gr, const set<int
 	for(pei = root.out_edges(0), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
 	{
 		int t = (*it1)->target();
+
+		//printf("there exists edge from 0 to %d in root\n", t);
 		if(ss.find(t) == ss.end()) continue;
 		assert(a2b.find(t) != a2b.end());
 		int y = a2b[t];
+		//printf("y = a2b[%d] = %d\n", t, y);
 
 		edge_descriptor e = gr.add_edge(0, y);
 		gr.set_edge_weight(e, root.get_edge_weight(*it1));

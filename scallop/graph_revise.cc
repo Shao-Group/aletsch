@@ -17,8 +17,8 @@ int revise_splice_graph_full(splice_graph &gr, config *cfg)
 	{
 		bool b = false;
 
-		b = remove_trivial_vertices(gr);
-		if(b == true) continue;
+		//b = remove_trivial_vertices(gr);
+		//if(b == true) continue;
 
 		b = extend_boundaries(gr);
 		if(b == true) continue;

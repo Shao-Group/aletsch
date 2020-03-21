@@ -148,6 +148,8 @@ int generator::process(int n)
 		partition(bd.gr, ub, vv, uv);
 		assert(vv.size() == uv.size());
 
+		//bd.gr.print();
+		//br.hs.print_nodes();
 		for(int k = 0; k < vv.size(); k++)
 		{
 			splice_graph gr;
@@ -155,12 +157,25 @@ int generator::process(int n)
 			build_child_splice_graph(bd.gr, gr, vv[k]);
 			build_child_hyper_set(br.hs, hs, vv[k]);
 
+			if(gr.count_junctions() <= 0) continue;
+			
+			/*
+			printf("---\n");
+			printf("set = ( ");
+			printv(vector<int>(vv[k].begin(), vv[k].end()));
+			printf(")\n");
+			gr.print();
+			hs.print_nodes();
+			*/
+
 			// TODO, handle uv[k]
 			string gid = "gene." + tostring(index) + "." + tostring(k);
 			combined_graph cb;
 			cb.build(gr, hs);
 			vcb.push_back(cb);
 		}
+
+		//printf("\n");
 
 		index++;
 	}
@@ -209,7 +224,7 @@ int generator::partition(splice_graph &gr, const vector<fcluster> &ub, vector< s
 		int s = e->source();
 		int t = e->target();
 		if(s == 0) continue;
-		if(t == n) continue;
+		if(t == n - 1) continue;
 		ds.union_set(s, t);
 	}
 
