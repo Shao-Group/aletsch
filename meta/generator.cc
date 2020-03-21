@@ -162,6 +162,8 @@ int generator::process(int n)
 			vcb.push_back(cb);
 		}
 
+		printf("\n");
+
 		index++;
 	}
 	pool.clear();
@@ -192,7 +194,7 @@ int generator::generate(const splice_graph &gr0, const hyper_set &hs0)
 	return 0;
 }
 
-int generator::partition(splice_graph &gr, const vector<fcluster> &ub, vector< set<int> > vv, vector< vector<int> > uv)
+int generator::partition(splice_graph &gr, const vector<fcluster> &ub, vector< set<int> > &vv, vector< vector<int> > &uv)
 {
 	int n = gr.num_vertices();
 

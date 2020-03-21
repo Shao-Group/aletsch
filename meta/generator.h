@@ -50,7 +50,7 @@ private:
 	int process(int n);
 	int generate(const splice_graph &gr, const hyper_set &hs);
 	int write_graph(splice_graph &gr, hyper_set &hs);
-	int partition(splice_graph &gr, const vector<fcluster> &ub, vector< set<int> > vv, vector< vector<int> > uv);
+	int partition(splice_graph &gr, const vector<fcluster> &ub, vector< set<int> > &vv, vector< vector<int> > &uv);
 };
 
 #endif
