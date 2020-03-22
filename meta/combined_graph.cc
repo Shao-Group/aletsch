@@ -18,11 +18,16 @@ int combined_graph::build(splice_graph &gr, hyper_set &hs, vector<fcluster> &ub)
 	strand = gr.strand;
 	num_combined = 1;
 
+	gr.print();
+
 	build_regions(gr);
 	build_start_bounds(gr);
 	build_end_bounds(gr);
 	build_splices_junctions(gr);
 	build_phase(gr, hs);
+
+	gr.print();
+
 	build_reads(gr, ub);
 	return 0;
 }
@@ -167,6 +172,11 @@ int combined_graph::build_reads(splice_graph &gr, vector<fcluster> &ub)
 		assert(fc.v2.front() != 0);
 		assert(fc.v1.back() != n);
 		assert(fc.v2.back() != n);
+
+		printv(fc.v1);
+		printf("\n");
+		printv(fc.v2);
+		printf("\n");
 
 		vector<int32_t> vv1;
 		vector<int32_t> vv2;
@@ -1014,8 +1024,10 @@ int combined_graph::clear()
 
 int combined_graph::print(int index)
 {
-	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phasing-phase = %lu\n", 
-			index, num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), phase.size());
+	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phase = %lu, #reads = %lu\n", 
+			index, num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), phase.size(), reads.size());
+
+	return 0;
 
 	for(int i = 0; i < regions.size(); i++)
 	{

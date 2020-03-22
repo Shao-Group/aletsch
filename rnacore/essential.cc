@@ -1,26 +1,33 @@
+#include "util.h"
 #include "essential.h"
 #include "splice_graph.h"
 
 #include <algorithm>
 
-int build_child_splice_graph(splice_graph &root, splice_graph &gr, const set<int> &ss)
+int transform_vertex_set_map(const set<int> &s, map<int, int> &m)
 {
-	// make sure ss does not contain 0 and n
-	gr.clear();
-	gr.chrm = root.chrm;
-	gr.strand = root.strand;
+	m.clear();
+	if(s.size() <= 0) return 0;
 
-	if(ss.size() <= 0) return 0;
-
-	vector<int> vv(ss.begin(), ss.end());
+	vector<int> vv(s.begin(), s.end());
 	sort(vv.begin(), vv.end());
-	map<int, int> a2b;
-	map<int, int> b2a;
 	for(int i = 0; i < vv.size(); i++)
 	{
-		a2b.insert(pair<int, int>(vv[i], i + 1));
-		b2a.insert(pair<int, int>(i + 1, vv[i]));
+		m.insert(pair<int, int>(vv[i], i + 1));
 	}
+	return 0;
+}
+
+int build_child_splice_graph(splice_graph &root, splice_graph &gr, map<int, int> &a2b)
+{
+	gr.clear();
+	if(a2b.size() <= 0) return 0;
+
+	vector<int> vv = get_keys(a2b);
+	sort(vv.begin(), vv.end());
+
+	gr.chrm = root.chrm;
+	gr.strand = root.strand;
 
 	int32_t lpos = root.get_vertex_info(vv.front()).lpos;
 	int32_t rpos = root.get_vertex_info(vv.back()).rpos;
@@ -56,8 +63,7 @@ int build_child_splice_graph(splice_graph &root, splice_graph &gr, const set<int
 		int t = (*it1)->target();
 
 		//printf("there exists edge from 0 to %d in root\n", t);
-		if(ss.find(t) == ss.end()) continue;
-		assert(a2b.find(t) != a2b.end());
+		if(a2b.find(t) == a2b.end()) continue;
 		int y = a2b[t];
 		//printf("y = a2b[%d] = %d\n", t, y);
 
@@ -78,7 +84,6 @@ int build_child_splice_graph(splice_graph &root, splice_graph &gr, const set<int
 		for(it1 = pei.first; it1 != pei.second; it1++)
 		{
 			int t = (*it1)->target();
-			assert(t == n || ss.find(t) != ss.end());
 			assert(t == n || a2b.find(t) != a2b.end());
 			int y = ((t == n) ? gr.num_vertices() - 1 : a2b[t]);
 
@@ -90,44 +95,38 @@ int build_child_splice_graph(splice_graph &root, splice_graph &gr, const set<int
 	return 0;
 }
 
-int build_child_hyper_set(hyper_set &hyper, hyper_set &hs, const set<int> &ss)
+int build_child_hyper_set(hyper_set &hyper, hyper_set &hs, map<int, int> &a2b)
 {
-	// hyper-set
 	hs.clear();
-	if(ss.size() <= 0) return 0;
-
-	vector<int> vv(ss.begin(), ss.end());
-	sort(vv.begin(), vv.end());
-	map<int, int> a2b;
-	map<int, int> b2a;
-	for(int i = 0; i < vv.size(); i++)
-	{
-		a2b.insert(pair<int, int>(vv[i], i + 1));
-		b2a.insert(pair<int, int>(i + 1, vv[i]));
-	}
+	if(a2b.size() <= 0) return 0;
 
 	for(MVII::const_iterator it = hyper.nodes.begin(); it != hyper.nodes.end(); it++)
 	{
 		vector<int> v = it->first;
 		int c = it->second;
 
-		bool b = true;
-		vector<int> vv;
-		for(int k = 0; k < v.size(); k++)
-		{
-			if(ss.find(v[k]) == ss.end()) b = false;
-			if(b == false) break;
-			assert(a2b.find(v[k]) != a2b.end());
-			int x = a2b[v[k]];
-			vv.push_back(x);
-		}
+		if(v.size() <= 0) continue;
+		if(a2b.find(v.front()) == a2b.end()) continue;
 
-		if(b == false) continue;
+		vector<int> vv = project_vector(v, a2b);
+		assert(vv.size() == v.size());
 
 		for(int i = 0; i < vv.size(); i++) vv[i]--;
 		hs.add_node_list(vv, c);
 	}
 	return 0;
+}
+
+vector<int> project_vector(const vector<int> &v, const map<int, int> &a2b)
+{
+	vector<int> vv;
+	for(int k = 0; k < v.size(); k++)
+	{
+		map<int, int>::const_iterator it = a2b.find(v[k]);
+		if(it == a2b.end()) break;
+		vv.push_back(it->second);
+	}
+	return vv;
 }
 
 int build_path_coordinates(splice_graph &gr, const vector<int> &v, vector<int32_t> &vv)

@@ -154,28 +154,21 @@ int generator::process(int n)
 		for(int k = 0; k < vv.size(); k++)
 		{
 			splice_graph gr;
-			hyper_set hs;
 			build_child_splice_graph(bd.gr, gr, vv[k]);
+			if(gr.count_junctions() <= 0) continue;
+
+			hyper_set hs;
 			build_child_hyper_set(br.hs, hs, vv[k]);
 
-			if(gr.count_junctions() <= 0) continue;
-			
-			/*
-			printf("---\n");
-			printf("set = ( ");
-			printv(vector<int>(vv[k].begin(), vv[k].end()));
-			printf(")\n");
-			gr.print();
-			hs.print_nodes();
-			*/
-
 			vector<fcluster> vf;
+			build_child_reads(ub, vv[k], vf);
 			//for(int j = 0; j < uv[k].size(); j++) vf.push_back(ub[uv[k][j]]);
 
 			string gid = "gene." + tostring(index) + "." + tostring(k);
 			combined_graph cb;
 			cb.gid = gid;
 			cb.build(gr, hs, vf);
+			cb.print(k);
 			vcb.push_back(cb);
 		}
 
