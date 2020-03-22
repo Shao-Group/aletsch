@@ -169,3 +169,15 @@ int build_path_coordinates(splice_graph &gr, const vector<int> &v, vector<int32_
 
 	return 0;
 }
+
+bool continue_vertices(int x, int y, splice_graph &gr)
+{
+	if(x >= y) return true;
+	for(int i = x; i < y; i++)
+	{
+		PEB p = gr.edge(i, i + 1);
+		if(p.second == false) return false;
+		if(gr.get_vertex_info(i).rpos != gr.get_vertex_info(i + 1).lpos) return false;
+	}
+	return true;
+}

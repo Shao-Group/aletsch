@@ -235,121 +235,66 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 
 	char name[10240];
 	sprintf(name, "instance.%d.0", instance);
-	merged_graph cm;
-	cm.build(cb, name);
-	if(merge_intersection == true) cm.parent = false;
-	else cm.parent = true;
+	cb.gid = name;
+	if(merge_intersection == true) cb.parent = false;
+	else cb.parent = true;
 
-	vector<merged_graph> children(cb.children.size());
 	for(int j = 0; j < cb.children.size(); j++)
 	{
 		sprintf(name, "instance.%d.%d", instance, j + 1);
-		children[j].build(cb.children[j], name);
-		children[j].parent = false;
+		cb.children[j].gid = name;
+		cb.children[j].parent = false;
 	}
-
-	//if(cm.num_combined <= 0) return 0;
 
 	int z = 0;
 	map< size_t, vector<transcript> > mt;
 	vector<transcript> vt;
 
-	set<int32_t> ps = cm.get_reliable_splices(min_supporting_samples, 99999);
-	set<int32_t> sb = cm.get_reliable_start_boundaries(min_supporting_samples, 99999);
-	set<int32_t> tb = cm.get_reliable_end_boundaries(min_supporting_samples, 99999);
-	set<int32_t> aj = cm.get_reliable_adjacencies(min_supporting_samples, min_splicing_count);
-	set<PI32> rs = cm.get_reliable_junctions(min_supporting_samples, min_splicing_count);
+	set<int32_t> ps = cb.get_reliable_splices(min_supporting_samples, 99999);
+	set<int32_t> sb = cb.get_reliable_start_boundaries(min_supporting_samples, 99999);
+	set<int32_t> tb = cb.get_reliable_end_boundaries(min_supporting_samples, 99999);
+	set<int32_t> aj = cb.get_reliable_adjacencies(min_supporting_samples, min_splicing_count);
+	set<PI32> rs = cb.get_reliable_junctions(min_supporting_samples, min_splicing_count);
 
-	cm.solve();
+	splice_graph gx;
+	hyper_set hx;
+	cb.resolve(gx, hx);
 
-	keep_surviving_edges(cm.gr, min_splicing_count);
-	//keep_surviving_edges(cm.gr, ps, min_splicing_count);
+	keep_surviving_edges(gx, min_splicing_count);
+	hx.filter_nodes(gx);
 
-	cm.hs.filter_nodes(cm.gr);
-
-	//cm.hs.print_nodes();
-	//cm.hs.filter();
-
-	//cm.gr.print();
-	//cm.hs.print_nodes();
-
-	string gid = cm.gr.gid;
-	cm.gr.gid = gid + ".0";
-
+	gx.gid = cb.gid;
 	cfg.algo = "single";
-	scallop sm(cm.gr, cm.hs, &cfg);
+	scallop sx(gx, hx, &cfg);
+	sx.assemble();
 
-	//sm.gr.print();
-	//sm.hs.print_nodes();
-
-	sm.assemble();
-
-	//for(int k = 0; k < sm.paths.size(); k++) sm.paths[k].print(k);
-
-
-	for(int k = 0; k < sm.trsts.size(); k++)
+	for(int k = 0; k < sx.trsts.size(); k++)
 	{
-		transcript &t = sm.trsts[k];
+		transcript &t = sx.trsts[k];
 		t.RPKM = 0;
 		if(t.exons.size() <= 1) continue;
 		z++;
 		index_transcript(mt, t);
-		//t.write(cout);
-		//if(merge_intersection == false || children.size() == 0) index_transcript(trsts, t);
-		if(merge_intersection == false || children.size() == 0)
+		if(merge_intersection == false || cb.children.size() == 0)
 		{
 			vt.push_back(t);
-			//mylock.lock();
-			//index_transcript(trsts, t);
-			//mylock.unlock();
 		}
 	}
 
-	//printf("--------\n");
-
-	for(int i = 0; i < children.size(); i++)
+	for(int i = 0; i < cb.children.size(); i++)
 	{
-		merged_graph &cb = children[i];
-		cb.solve();
+		splice_graph gr;
+		hyper_set hs;
+		cb.children[i].resolve(gr, hs);
 
-		keep_surviving_edges(cb.gr, ps, min_splicing_count);
-		//filter_graph(cb.gr, ps, aj, sb, tb, min_splicing_count);
-		//keep_surviving(cb.gr, ps, aj, sb, tb, min_splicing_count);
-		//filter_junctions(cb.gr, ps, min_splicing_count);
-		//filter_start_boundaries(cb.gr, sb, min_splicing_count);
-		//filter_end_boundaries(cb.gr, tb, min_splicing_count);
+		keep_surviving_edges(gr, ps, min_splicing_count);
+		hs.filter_nodes(gr);
 
-		cb.hs.filter_nodes(cb.gr);
-
-		//cb.hs.print_nodes();
-
-		//cb.build_phasing_paths(cm.paths);
-		//cb.hx.filter_nodes(cb.gr);
-		//cb.hx.filter();
-
-		/*
-		printf("--------------\n");
-		hyper_graph hg(cb.hs.nodes);
-		hg.keep_maximal_nodes();
-		hg.build_overlap_index();
-		hg.print_nodes();
-		hg.print_index();
-		hg.align_paths(cb.hx.nodes);
-		printf("--------------\n\n");
-		*/
-
-		//cb.hs.extend(cb.hx);
-		//cb.hs.filter();
-
-		cb.gr.gid = gid + "." + tostring(i + 1);
+		gr.gid = cb.children[i].gid;
 
 		cfg.algo = "single";
-		//scallop sc(cb.gr, cb.hs, cb.hx);
-		scallop sc(cb.gr, cb.hs, &cfg);
+		scallop sc(gr, hs, &cfg);
 		sc.assemble();
-
-		//for(int k = 0; k < sc.paths.size(); k++) sc.paths[k].print(k);
-
 
 		int z1 = 0;
 		int z2 = 0;
@@ -357,29 +302,20 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 		{
 			transcript &t = sc.trsts[k];
 			t.RPKM = 0;
-			//if(t.exons.size() <= 1) t.write(fout);
 			if(t.exons.size() <= 1) continue;
-
-			//t.write(cout);
 
 			z1++;
 			bool b = query_transcript(mt, t);
 			if(b == false) index_transcript(mt, t);
 			if(b == true) z2++;
-			//if(b == false) 
 			if(b || merge_intersection == false)
 			{
 				vt.push_back(t);
-				//mylock.lock();
-				//index_transcript(trsts, t);
-				//mylock.unlock();
 			}
 		}
-
-		//printf("combined-graph %s, %d transcripts, %d child %s, %d -> %d transcripts\n", cm.gid.c_str(), z, i, cb.gr.gid.c_str(), z1, z2);
 	}
 
-	printf("assemble combined-graph %s, %lu children, %lu assembled transcripts\n", cm.gid.c_str(), children.size(), vt.size());
+	printf("assemble combined-graph %s, %lu children, %lu assembled transcripts\n", cb.gid.c_str(), cb.children.size(), vt.size());
 
 	if(vt.size() >= 1)
 	{
@@ -391,7 +327,6 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 		mylock.unlock();
 	}
 
-	//printf("=====\n");
 	return 0;
 }
 

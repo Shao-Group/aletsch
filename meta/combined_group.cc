@@ -27,23 +27,6 @@ int combined_group::resolve()
 	return 0;
 }
 
-int combined_group::stats()
-{
-	map<int, int> m;
-	for(int k = 0; k < mset.size(); k++)
-	{
-		int n = mset[k].num_combined;
-		if(m.find(n) == m.end()) m.insert(pair<int, int>(n, 1));
-		else m[n]++;
-	}
-
-	for(map<int, int>::iterator it = m.begin(); it != m.end(); it++)
-	{
-		printf("chrm %s, strand %c, total %d graphs with combined %d graphs\n", chrm.c_str(), strand, it->second, it->first);
-	}
-	return 0;
-}
-
 int combined_group::build_splice_map()
 {
 	mis.clear();
@@ -132,10 +115,7 @@ int combined_group::combine_graphs()
 	vector<int> parent(gset.size(), -1);
 
 	disjoint_sets<int*, int*> ds(&rank[0], &parent[0]);
-	for(int k = 0; k < gset.size(); k++)
-	{
-		ds.make_set(k);
-	}
+	for(int k = 0; k < gset.size(); k++) ds.make_set(k);
 
 	sort(vpid.begin(), vpid.end(), compare_graph_similarity);
 
@@ -190,7 +170,29 @@ int combined_group::combine_graphs()
 		}
 	}
 
+	for(int i = 0; i < mset.size(); i++)
+	{
+		mset[i].combine_children();
+	}
+
 	gset.clear();
+	return 0;
+}
+
+int combined_group::stats()
+{
+	map<int, int> m;
+	for(int k = 0; k < mset.size(); k++)
+	{
+		int n = mset[k].num_combined;
+		if(m.find(n) == m.end()) m.insert(pair<int, int>(n, 1));
+		else m[n]++;
+	}
+
+	for(map<int, int>::iterator it = m.begin(); it != m.end(); it++)
+	{
+		printf("chrm %s, strand %c, total %d graphs with combined %d graphs\n", chrm.c_str(), strand, it->second, it->first);
+	}
 	return 0;
 }
 

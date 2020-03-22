@@ -5,7 +5,6 @@
 #include "interval_map.h"
 #include "combined_graph.h"
 #include "combined_group.h"
-#include "merged_graph.h"
 #include "transcript.h"
 #include "scallop/config.h"
 #include <mutex>

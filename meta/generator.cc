@@ -174,6 +174,7 @@ int generator::process(int n)
 
 			string gid = "gene." + tostring(index) + "." + tostring(k);
 			combined_graph cb;
+			cb.gid = gid;
 			cb.build(gr, hs, vf);
 			vcb.push_back(cb);
 		}
