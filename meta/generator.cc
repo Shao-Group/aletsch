@@ -142,11 +142,11 @@ int generator::process(int n)
 
 		vector<fcluster> ub;
 		// TODO
-		//br.collect_unbridged_fclusters(ub);
+		br.collect_unbridged_fclusters(ub);
 
 		vector< set<int> > vv;
 		vector< vector<int> > uv;
-		//partition(bd.gr, ub, vv, uv);
+		partition(bd.gr, ub, vv, uv);
 		assert(vv.size() == uv.size());
 
 		//bd.gr.print();
@@ -170,7 +170,7 @@ int generator::process(int n)
 			*/
 
 			vector<fcluster> vf;
-			for(int j = 0; j < uv[k].size(); j++) vf.push_back(ub[uv[k][j]]);
+			//for(int j = 0; j < uv[k].size(); j++) vf.push_back(ub[uv[k][j]]);
 
 			string gid = "gene." + tostring(index) + "." + tostring(k);
 			combined_graph cb;
