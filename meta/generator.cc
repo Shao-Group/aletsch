@@ -195,7 +195,11 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 	{
 		const vector<int> &v = it->first;
 		if(v.size() <= 1) continue;
+		// here just verify all vertices in a phase are valid paths
 		int p = ds.find_set(v[0]);
+		int q = ds.find_set(v[1]);
+		assert(p == q);
+		/*
 		for(int k = 1; k < v.size(); k++)
 		{
 			int q = ds.find_set(v[k]);
@@ -203,6 +207,7 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 			ds.link(p, q);
 			p = ds.find_set(v[0]);
 		}
+		*/
 	}
 
 	// group with unbridged pairs
@@ -215,6 +220,7 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 		ds.union_set(x, y);
 	}
 
+	// create connected components
 	vector< set<int> > vv;
 	map<int, int> m;
 	for(int i = 1; i < n - 1; i++)

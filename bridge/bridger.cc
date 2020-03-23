@@ -4,6 +4,7 @@ Part of Coral
 See LICENSE for licensing.
 */
 
+#include "essential.h"
 #include "hyper_graph.h"
 #include "bridger.h"
 #include "util.h"
@@ -512,6 +513,9 @@ int bridger::build_hyper_set()
 		int c = fc.bbp.count;
 		vector<int> v = fc.bbp.v;
 
+		bool b = check_valid_path(gr, v);
+		if(b == false) continue;
+
 		for(int k = 0; k < v.size(); k++) v[k]--;
 		hs.add_node_list(v, c);
 		c1 += c * 2;
@@ -523,6 +527,9 @@ int bridger::build_hyper_set()
 		if(bridged[i] == true) continue;
 		vector<int> v;
 		bool b = align_hit(hits[i], v);
+		if(b == false) continue;
+
+		b = check_valid_path(gr, v);
 		if(b == false) continue;
 
 		for(int k = 0; k < v.size(); k++) v[k]--;

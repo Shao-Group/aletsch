@@ -4,6 +4,7 @@ Part of Scallop Transcript Assembler
 See LICENSE for licensing.
 */
 
+#include "essential.h"
 #include "constants.h"
 #include "hyper_set.h"
 #include "hyper_graph.h"
@@ -329,19 +330,8 @@ int hyper_set::filter_nodes(splice_graph &gr)
 		const vector<int> &vv = it->first;
 		if(vv.size() <= 1) continue;
 
-		bool b = true;
-		bool j = false;
-		for(int k = 0; k < vv.size() - 1; k++)
-		{
-			PEB p = gr.edge(vv[k], vv[k + 1]);
-			if(p.second == false) b = false;
-			if(b == false) break;
-			int32_t k1 = gr.get_vertex_info(vv[k + 0]).rpos;
-			int32_t k2 = gr.get_vertex_info(vv[k + 1]).lpos;
-			if(k1 + 1 < k2) j = true;
-		}
+		bool b = check_valid_path(gr, vv);
 		if(b == false) continue;
-		//if(j == false) continue;
 		mv.insert(PVII(it->first, it->second));
 	}
 	nodes = mv;

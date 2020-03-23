@@ -461,7 +461,7 @@ int combined_graph::group_start_boundaries(splice_graph &xr)
 		double wb = xr.get_edge_weight(pb.first);
 		edge_info eb = xr.get_edge_info(pb.first);
 
-		bool b = continue_vertices(k2, v[i], xr);
+		bool b = check_continue_vertices(xr, k2, v[i]);
 
 		assert(p >= p2);
 		if(p - p2 > max_group_boundary_distance) b = false;
@@ -540,7 +540,7 @@ int combined_graph::group_end_boundaries(splice_graph &xr)
 		assert(pb.second == true);
 		double wb = xr.get_edge_weight(pb.first);
 
-		bool b = continue_vertices(v[i], k2, xr);
+		bool b = check_continue_vertices(xr, v[i], k2);
 
 		assert(p <= p2);
 		if(p2 - p > max_group_boundary_distance) b = false;

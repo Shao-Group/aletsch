@@ -176,7 +176,7 @@ int build_path_coordinates(splice_graph &gr, const vector<int> &v, vector<int32_
 	return 0;
 }
 
-bool continue_vertices(int x, int y, splice_graph &gr)
+bool check_continue_vertices(splice_graph &gr, int x, int y)
 {
 	if(x >= y) return true;
 	for(int i = x; i < y; i++)
@@ -184,6 +184,19 @@ bool continue_vertices(int x, int y, splice_graph &gr)
 		PEB p = gr.edge(i, i + 1);
 		if(p.second == false) return false;
 		if(gr.get_vertex_info(i).rpos != gr.get_vertex_info(i + 1).lpos) return false;
+	}
+	return true;
+}
+
+bool check_valid_path(splice_graph &gr, const vector<int> &vv)
+{
+	int n = gr.num_vertices() - 1;
+	for(int k = 0; k < vv.size() - 1; k++)
+	{
+		if(vv[k + 0] < 0 && vv[k + 0] > n) return false;
+		if(vv[k + 1] < 0 && vv[k + 1] > n) return false;
+		PEB p = gr.edge(vv[k], vv[k + 1]);
+		if(p.second == false) return false;
 	}
 	return true;
 }
