@@ -65,7 +65,7 @@ int generator::resolve()
 		//ht.print();
 
 		// TODO for test
-		//if(ht.tid >= 1) break;
+		if(ht.tid >= 1) break;
 
 		//if(ht.nh >= 2 && p.qual < min_mapping_quality) continue;
 		//if(ht.nm > max_edit_distance) continue;
@@ -85,8 +85,8 @@ int generator::resolve()
 			bb2.clear();
 		}
 
-		// process
-		process(cfg.batch_bundle_size);
+		// generate
+		generate(cfg.batch_bundle_size);
 
 		// add hit
 		if(cfg.uniquely_mapped_only == true && ht.nh != 1) continue;
@@ -103,12 +103,12 @@ int generator::resolve()
 
 	pool.push_back(bb1);
 	pool.push_back(bb2);
-	process(0);
+	generate(0);
 
 	return 0;
 }
 
-int generator::process(int n)
+int generator::generate(int n)
 {
 	if(pool.size() < n) return 0;
 
@@ -138,37 +138,26 @@ int generator::process(int n)
 		br.length_high = sp.insertsize_high;
 		br.resolve();
 
-		//generate(bd.gr, br.hs);
-
 		vector<fcluster> ub;
-		// TODO
 		br.collect_unbridged_fclusters(ub);
 
-		vector< set<int> > vv;
-		vector< vector<int> > uv;
-		partition(bd.gr, ub, vv, uv);
-		assert(vv.size() == uv.size());
+		vector<splice_graph> grv;
+		vector<hyper_set> hsv;
+		vector< vector<fcluster> > ubv;
+		partition(bd.gr, br.hs, ub, grv, hsv, ubv);
+		
+		assert(grv.size() == hsv.size());
+		assert(grv.size() == ubv.size());
 
-		//bd.gr.print();
-		//br.hs.print_nodes();
-		for(int k = 0; k < vv.size(); k++)
+		for(int k = 0; k < grv.size(); k++)
 		{
-			splice_graph gr;
-			build_child_splice_graph(bd.gr, gr, vv[k]);
-			if(gr.count_junctions() <= 0) continue;
-
-			hyper_set hs;
-			build_child_hyper_set(br.hs, hs, vv[k]);
-
-			vector<fcluster> vf;
-			build_child_reads(ub, vv[k], vf);
-			//for(int j = 0; j < uv[k].size(); j++) vf.push_back(ub[uv[k][j]]);
+			if(grv[k].count_junctions() <= 0) continue;
 
 			string gid = "gene." + tostring(index) + "." + tostring(k);
 			combined_graph cb;
 			cb.gid = gid;
-			cb.build(gr, hs, vf);
-			cb.print(k);
+			cb.build(grv[k], hsv[k], ubv[k]);
+			//cb.print(k);	// TODO
 			vcb.push_back(cb);
 		}
 
@@ -180,7 +169,7 @@ int generator::process(int n)
 	return 0;
 }
 
-int generator::partition(splice_graph &gr, const vector<fcluster> &ub, vector< set<int> > &vv, vector< vector<int> > &uv)
+int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster> &ub, vector<splice_graph> &grv, vector<hyper_set> &hsv, vector< vector<fcluster> > &ubv)
 {
 	int n = gr.num_vertices();
 
@@ -190,6 +179,7 @@ int generator::partition(splice_graph &gr, const vector<fcluster> &ub, vector< s
 	disjoint_sets<int*, int*> ds(&rank[0], &parent[0]);
 	for(int k = 0; k < n; k++) ds.make_set(k);
 
+	// group with edges in gr
 	PEEI pei = gr.edges();
 	for(edge_iterator it = pei.first; it != pei.second; it++)
 	{
@@ -201,6 +191,22 @@ int generator::partition(splice_graph &gr, const vector<fcluster> &ub, vector< s
 		ds.union_set(s, t);
 	}
 
+	// group with hyper_set
+	for(MVII::const_iterator it = hs.nodes.begin(); it != hs.nodes.end(); it++)
+	{
+		const vector<int> &v = it->first;
+		if(v.size() <= 1) continue;
+		int p = ds.find_set(v[0]);
+		for(int k = 1; k < v.size(); k++)
+		{
+			int q = ds.find_set(v[k]);
+			if(p == q) continue;
+			ds.link(p, q);
+			p = ds.find_set(v[0]);
+		}
+	}
+
+	// group with unbridged pairs
 	for(int i = 0; i < ub.size(); i++)
 	{
 		if(ub[i].v1.size() <= 0) continue;
@@ -210,9 +216,8 @@ int generator::partition(splice_graph &gr, const vector<fcluster> &ub, vector< s
 		ds.union_set(x, y);
 	}
 
+	vector< set<int> > vv;
 	map<int, int> m;
-	vv.clear();
-	uv.clear();
 	for(int i = 1; i < n - 1; i++)
 	{
 		int p = ds.find_set(i);
@@ -230,19 +235,56 @@ int generator::partition(splice_graph &gr, const vector<fcluster> &ub, vector< s
 		}
 	}
 
-	uv.resize(vv.size());
+	vector< map<int, int> > vm;
+	for(int k = 0; k < vv.size(); k++)
+	{
+		map<int, int> a2b;
+		transform_vertex_set_map(vv[k], a2b);
+		vm.push_back(a2b);
+	}
+
+	grv.resize(vv.size());
+	for(int k = 0; k < vv.size(); k++)
+	{
+		build_child_splice_graph(gr, grv[k], vm[k]);
+	}
+
+	hsv.resize(vv.size());
+	for(MVII::const_iterator it = hs.nodes.begin(); it != hs.nodes.end(); it++)
+	{
+		vector<int> v = it->first;
+		int c = it->second;
+		if(v.size() <= 0) continue;
+		int p = ds.find_set(v[0]);
+		assert(m.find(p) != m.end());
+		int k = m[p];
+		assert(k >= 0 && k < vv.size());
+		vector<int> vv = project_vector(v, vm[k]);
+		assert(vv.size() == v.size());
+
+		for(int i = 0; i < vv.size(); i++) vv[i]--;
+		hsv[k].add_node_list(vv, c);
+	}
+
+	ubv.resize(vv.size());
 	for(int i = 0; i < ub.size(); i++)
 	{
 		if(ub[i].v1.size() <= 0) continue;
 		if(ub[i].v2.size() <= 0) continue;
-		int x = ub[i].v1.back();
-		int y = ub[i].v2.front();
+		int x = ub[i].v1.front();
+		int y = ub[i].v2.back();
 		int p = ds.find_set(x);
 		assert(p == ds.find_set(y));
 		assert(m.find(p) != m.end());
 		int k = m[p];
-		assert(k >= 0 && k < uv.size());
-		uv[k].push_back(i);
+		assert(k >= 0 && k < vv.size());
+
+		fcluster fc = ub[i];
+		fc.v1 = project_vector(fc.v1, vm[k]);
+		fc.v2 = project_vector(fc.v2, vm[k]);
+		assert(fc.v1.size() == ub[i].v1.size());
+		assert(fc.v2.size() == ub[i].v2.size());
+		ubv[k].push_back(fc);
 	}
 
 	return 0;

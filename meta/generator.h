@@ -47,9 +47,9 @@ public:
 	int resolve();
 
 private:
-	int process(int n);
+	int generate(int n);
+	int partition(splice_graph &gr, hyper_set &hs, const vector<fcluster> &ub, vector<splice_graph> &grv, vector<hyper_set> &hsv, vector< vector<fcluster> > &ubv);
 	int write_graph(splice_graph &gr, hyper_set &hs);
-	int partition(splice_graph &gr, const vector<fcluster> &ub, vector< set<int> > &vv, vector< vector<int> > &uv);
 };
 
 #endif

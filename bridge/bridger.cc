@@ -84,9 +84,11 @@ int bridger::build_vertex_index()
 
 bool bridger::align_hit(const hit &h, vector<int> &vv)
 {
+	// NOTE: do not guarantee vv forms a valid path in the splice graph
 	vv.clear();
 	vector<int64_t> v;
 	h.get_aligned_intervals(v);
+
 	if(v.size() == 0) return false;
 
 	vector<PI> sp;
@@ -103,20 +105,17 @@ bool bridger::align_hit(const hit &h, vector<int> &vv)
 	{
 		p1 = high32(v[k]);
 		map<int32_t, int>::const_iterator it = lindex.find(p1);
-		//if(it == lindex.end()) printf("lindex fail\n");
 		if(it == lindex.end()) return false;
 		sp[k].first = it->second;
 	}
 
 	sp[sp.size() - 1].second = locate_vertex(p2 - 1, 0, gr.num_vertices());
-	//if(sp[sp.size() - 1].second < 0) printf("end boundary fail\n");
 	if(sp[sp.size() - 1].second < 0) return false;
 
 	for(int k = 0; k < v.size() - 1; k++)
 	{
 		p2 = low32(v[k]);
 		map<int32_t, int>::const_iterator it = rindex.find(p2);
-		//if(it == rindex.end()) printf("rindex fail\n");
 		if(it == rindex.end()) return false;
 		sp[k].second = it->second; 
 	}
@@ -127,6 +126,7 @@ bool bridger::align_hit(const hit &h, vector<int> &vv)
 		if(k > 0) assert(sp[k - 1].second < sp[k].first);
 		for(int j = sp[k].first; j <= sp[k].second; j++) vv.push_back(j);
 	}
+
 	return true;
 }
 
@@ -511,6 +511,7 @@ int bridger::build_hyper_set()
 		if(fc.bbp.type < 0) continue;
 		int c = fc.bbp.count;
 		vector<int> v = fc.bbp.v;
+
 		for(int k = 0; k < v.size(); k++) v[k]--;
 		hs.add_node_list(v, c);
 		c1 += c * 2;
@@ -523,6 +524,7 @@ int bridger::build_hyper_set()
 		vector<int> v;
 		bool b = align_hit(hits[i], v);
 		if(b == false) continue;
+
 		for(int k = 0; k < v.size(); k++) v[k]--;
 		hs.add_node_list(v, 1);
 		c2++;

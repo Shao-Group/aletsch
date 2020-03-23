@@ -108,7 +108,14 @@ int build_child_hyper_set(hyper_set &hyper, hyper_set &hs, map<int, int> &a2b)
 		if(v.size() <= 0) continue;
 		if(a2b.find(v.front()) == a2b.end()) continue;
 
+		// TODO: test
+		vector<int> z = get_keys(a2b);
+		printf("v = ( "); printv(v); printf(") \n");
+		printf("z = ( "); printv(z); printf(") \n");
+
 		vector<int> vv = project_vector(v, a2b);
+		printf("V = ( "); printv(vv); printf(") \n");
+
 		assert(vv.size() == v.size());
 
 		for(int i = 0; i < vv.size(); i++) vv[i]--;

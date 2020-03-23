@@ -18,16 +18,11 @@ int combined_graph::build(splice_graph &gr, hyper_set &hs, vector<fcluster> &ub)
 	strand = gr.strand;
 	num_combined = 1;
 
-	gr.print();
-
 	build_regions(gr);
 	build_start_bounds(gr);
 	build_end_bounds(gr);
 	build_splices_junctions(gr);
 	build_phase(gr, hs);
-
-	gr.print();
-
 	build_reads(gr, ub);
 	return 0;
 }
@@ -173,11 +168,6 @@ int combined_graph::build_reads(splice_graph &gr, vector<fcluster> &ub)
 		assert(fc.v1.back() != n);
 		assert(fc.v2.back() != n);
 
-		printv(fc.v1);
-		printf("\n");
-		printv(fc.v2);
-		printf("\n");
-
 		vector<int32_t> vv1;
 		vector<int32_t> vv2;
 		build_path_coordinates(gr, fc.v1, vv1);
@@ -235,6 +225,8 @@ int combined_graph::combine(const combined_graph &gt)
 	assert(gt.chrm == chrm);
 	assert(gt.strand == strand);
 
+	num_combined += gt.num_combined;
+
 	// combine splices
 	vector<int32_t> vv(gt.splices.size() + splices.size(), 0);
 	vector<int32_t>::iterator it = set_union(gt.splices.begin(), gt.splices.end(), splices.begin(), splices.end(), vv.begin());
@@ -253,6 +245,8 @@ int combined_graph::get_overlapped_splice_positions(const vector<int32_t> &v) co
 
 int combined_graph::combine_children()
 {
+	if(children.size() == 0) return 0;
+
 	split_interval_map imap;
 	map<PI32, DI> mj;
 	map<int32_t, DI> ms;
@@ -260,6 +254,7 @@ int combined_graph::combine_children()
 	MV32 mp;
 	MV32 mr;
 
+	int num = 0;
 	for(int i = 0; i < children.size(); i++)
 	{
 		combined_graph &gt = children[i];
@@ -269,8 +264,9 @@ int combined_graph::combine_children()
 		combine_reads(mr, gt);
 		combine_start_bounds(ms, gt);
 		combine_end_bounds(mt, gt);
-		num_combined += gt.num_combined;
+		num += gt.num_combined;
 	}
+	assert(num == num_combined);
 
 	for(SIMI it = imap.begin(); it != imap.end(); it++)
 	{
