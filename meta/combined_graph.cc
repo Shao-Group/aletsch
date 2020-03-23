@@ -945,38 +945,25 @@ int combined_graph::build_phasing_paths(splice_graph &gr, hyper_set &hs)
 			int32_t p2 = z[j * 3 + 1];
 			int w = z[j * 3 + 2];
 
-			vector<int> vv = uu;
+			assert(p1 >= 0 && p2 >= 0);
+			assert(lindex.find(p1) != lindex.end());
+			assert(rindex.find(p2) != rindex.end());
+			int a = lindex[p1] + 1;
+			int b = rindex[p2] + 1;
 
-			if(p1 == -1) 
+			vector<int> vv;
+			if(uu.size() == 0)
 			{
-				assert(vv.front() == 0);
+				for(int k = a; k <= b; k++) vv.push_back(k);
 			}
 			else
 			{
-				assert(p1 >= 0);
-				assert(lindex.find(p1) != lindex.end());
-				int a = lindex[p1] + 1;
-				int b = vv.front();
-				assert(check_continue_vertices(gr, a, b));
-				for(int k = b - 1; k >= a; k++) vv.insert(vv.begin(), k);
-			}
-
-			if(p2 == -2) 
-			{
-				assert(vv.back() == gr.num_vertices() - 1);
-			}
-			else
-			{
-				assert(p2 >= 0);
-				assert(rindex.find(p2) != rindex.end());
-				int a = vv.back();
-				int b = rindex[p2] + 1;
-				assert(check_continue_vertices(gr, a, b));
-				for(int k = a + 1; k <= b; k++) vv.insert(vv.begin(), k);
+				for(int k = a; k < uu.front(); k++) vv.push_back(k);
+				vv.insert(vv.end(), uu.begin(), uu.end());
+				for(int k = uu.back() + 1; k <= b; k++) vv.push_back(k);
 			}
 
 			for(int k = 0; k < vv.size(); k++) vv[k]--;
-
 			hs.add_node_list(vv, w);
 		}
 	}

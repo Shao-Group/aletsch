@@ -193,8 +193,8 @@ bool check_valid_path(splice_graph &gr, const vector<int> &vv)
 	int n = gr.num_vertices() - 1;
 	for(int k = 0; k < vv.size() - 1; k++)
 	{
-		if(vv[k + 0] < 0 && vv[k + 0] > n) return false;
-		if(vv[k + 1] < 0 && vv[k + 1] > n) return false;
+		if(vv[k + 0] < 0 || vv[k + 0] > n) return false;
+		if(vv[k + 1] < 0 || vv[k + 1] > n) return false;
 		PEB p = gr.edge(vv[k], vv[k + 1]);
 		if(p.second == false) return false;
 	}
