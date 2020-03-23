@@ -482,6 +482,9 @@ int bridger::collect_unbridged_fclusters(vector<fcluster> &ub)
 		if(fc.v1.size() == 0) continue;
 		if(fc.v2.size() == 0) continue;
 
+		if(check_valid_path(gr, fc.v1) == false) continue;
+		if(check_valid_path(gr, fc.v2) == false) continue;
+
 		vector<fragment> fs;
 		for(int j = 0; j < fc.frset.size(); j++)
 		{
