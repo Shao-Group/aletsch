@@ -9,7 +9,6 @@ RNACORE_INCLUDE = $(top_srcdir)/rnacore
 libscallop_a_CPPFLAGS = -I$(GTF_INCLUDE) -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE) -I$(RNACORE_INCLUDE)
 
 libscallop_a_SOURCES = config.h config.cc \
-					   super_graph.h super_graph.cc \
 					   subsetsum.h subsetsum.cc \
 					   router.h router.cc \
 					   bundle_base.h bundle_base.cc \

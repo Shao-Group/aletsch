@@ -15,7 +15,6 @@ See LICENSE for licensing.
 #include "genome.h"
 #include "generator.h"
 #include "scallop.h"
-#include "super_graph.h"
 #include "previewer.h"
 #include "bridger.h"
 #include "fcluster.h"
