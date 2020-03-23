@@ -366,3 +366,4 @@ bool query_transcript(const map< size_t, vector<transcript> > &mt, const transcr
 	printf("hash fail");
 	return false;
 }
+
