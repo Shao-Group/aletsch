@@ -131,6 +131,7 @@ VE compute_maximal_edges(splice_graph &gr)
 		int t = e->target();
 		if(s == 0) continue;
 		if(t == gr.num_vertices() - 1) continue;
+		//printf(" add edge to ug: s = %d, t = %d, gr.vs = %lu, ug.vs = %lu, w = %.2lf\n", s, t, gr.num_vertices(), ug.num_vertices(), w);
 		ug.add_edge(s, t);
 		ve.push_back(PDE(w, e));
 	}

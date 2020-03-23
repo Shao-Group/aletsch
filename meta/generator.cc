@@ -64,7 +64,7 @@ int generator::resolve()
 		//ht.print();
 
 		// TODO for test
-		if(ht.tid >= 1) break;
+		//if(ht.tid >= 1) break;
 
 		//if(ht.nh >= 2 && p.qual < min_mapping_quality) continue;
 		//if(ht.nm > max_edit_distance) continue;
@@ -140,6 +140,8 @@ int generator::generate(int n)
 		vector<fcluster> ub;
 		br.collect_unbridged_fclusters(ub);
 
+		//for(int k = 0; k < ub.size(); k++) ub[k].print(k);
+
 		vector<splice_graph> grv;
 		vector<hyper_set> hsv;
 		vector< vector<fcluster> > ubv;
@@ -157,8 +159,8 @@ int generator::generate(int n)
 			cb.gid = gid;
 			cb.build(grv[k], hsv[k], ubv[k]);
 
-			cb.print(k);	// TODO
-			printf("\n");
+			//cb.print(k);	// TODO
+			//printf("\n");
 
 			vcb.push_back(cb);
 		}
@@ -193,6 +195,7 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 		ds.union_set(s, t);
 	}
 
+	/*
 	// group with hyper_set
 	for(MVII::const_iterator it = hs.nodes.begin(); it != hs.nodes.end(); it++)
 	{
@@ -202,16 +205,8 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 		int p = ds.find_set(v[0]);
 		int q = ds.find_set(v[1]);
 		assert(p == q);
-		/*
-		for(int k = 1; k < v.size(); k++)
-		{
-			int q = ds.find_set(v[k]);
-			if(p == q) continue;
-			ds.link(p, q);
-			p = ds.find_set(v[0]);
-		}
-		*/
 	}
+	*/
 
 	// group with unbridged pairs
 	for(int i = 0; i < ub.size(); i++)
@@ -268,7 +263,8 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 		int k = m[p];
 		assert(k >= 0 && k < vv.size());
 		vector<int> vv = project_vector(v, vm[k]);
-		assert(vv.size() == v.size());
+		if(vv.size() != v.size()) continue;
+		//assert(vv.size() == v.size());
 
 		for(int i = 0; i < vv.size(); i++) vv[i]--;
 		hsv[k].add_node_list(vv, c);
@@ -279,8 +275,8 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 	{
 		if(ub[i].v1.size() <= 0) continue;
 		if(ub[i].v2.size() <= 0) continue;
-		int x = ub[i].v1.front();
-		int y = ub[i].v2.back();
+		int x = ub[i].v1.back();
+		int y = ub[i].v2.front();
 		int p = ds.find_set(x);
 		assert(p == ds.find_set(y));
 		assert(m.find(p) != m.end());
@@ -290,8 +286,10 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 		fcluster fc = ub[i];
 		fc.v1 = project_vector(fc.v1, vm[k]);
 		fc.v2 = project_vector(fc.v2, vm[k]);
-		assert(fc.v1.size() == ub[i].v1.size());
-		assert(fc.v2.size() == ub[i].v2.size());
+		//assert(fc.v1.size() == ub[i].v1.size());
+		//assert(fc.v2.size() == ub[i].v2.size());
+		if(fc.v1.size() != ub[i].v1.size()) continue;
+		if(fc.v2.size() != ub[i].v2.size()) continue;
 		ubv[k].push_back(fc);
 	}
 

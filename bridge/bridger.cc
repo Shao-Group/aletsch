@@ -482,8 +482,8 @@ int bridger::collect_unbridged_fclusters(vector<fcluster> &ub)
 		if(fc.v1.size() == 0) continue;
 		if(fc.v2.size() == 0) continue;
 
-		if(check_valid_path(gr, fc.v1) == false) continue;
-		if(check_valid_path(gr, fc.v2) == false) continue;
+		//if(check_valid_path(gr, fc.v1) == false) continue;
+		//if(check_valid_path(gr, fc.v2) == false) continue;
 
 		vector<fragment> fs;
 		for(int j = 0; j < fc.frset.size(); j++)
@@ -516,8 +516,8 @@ int bridger::build_hyper_set()
 		int c = fc.bbp.count;
 		vector<int> v = fc.bbp.v;
 
-		bool b = check_valid_path(gr, v);
-		if(b == false) continue;
+		//bool b = check_valid_path(gr, v);
+		//if(b == false) continue;
 
 		for(int k = 0; k < v.size(); k++) v[k]--;
 		hs.add_node_list(v, c);
@@ -532,8 +532,8 @@ int bridger::build_hyper_set()
 		bool b = align_hit(hits[i], v);
 		if(b == false) continue;
 
-		b = check_valid_path(gr, v);
-		if(b == false) continue;
+		//b = check_valid_path(gr, v);
+		//if(b == false) continue;
 
 		for(int k = 0; k < v.size(); k++) v[k]--;
 		hs.add_node_list(v, 1);

@@ -263,6 +263,12 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	vector<fcluster> ux;
 	cb.resolve(gx, hx, ux);
 
+	/*
+	printf("-----\n");
+	gx.print();
+	hx.print_nodes();
+	*/
+
 	keep_surviving_edges(gx, min_splicing_count);
 	hx.filter_nodes(gx);
 

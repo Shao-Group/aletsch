@@ -406,7 +406,6 @@ int combined_graph::resolve(splice_graph &gr, hyper_set &hs, vector<fcluster> &u
 {
 	build_region_index();
 	group_junctions();
-
 	build_splice_graph(gr);
 	group_start_boundaries(gr);
 	group_end_boundaries(gr);
@@ -417,6 +416,8 @@ int combined_graph::resolve(splice_graph &gr, hyper_set &hs, vector<fcluster> &u
 
 int combined_graph::build_region_index()
 {
+	lindex.clear();
+	rindex.clear();
 	for(int i = 0; i < regions.size(); i++)
 	{
 		PI32 p = regions[i].first;
@@ -1072,7 +1073,7 @@ int combined_graph::print(int index)
 		printf(")\n");
 		for(int k = 0; k < z.size() / 3; k++)
 		{
-			printf(" bounds = (%d, %d), w = %d\n", z[k * 3 + 0], z[k * 3 + 1], z[k * 3 + 2]);
+			printf(" bounds = (%d, %d), w = %.2lf, c = 1\n", z[k * 3 + 0], z[k * 3 + 1], 1.0 * z[k * 3 + 2]);
 		}
 	}
 	return 0;
