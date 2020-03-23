@@ -268,6 +268,7 @@ int combined_graph::combine_children()
 	}
 	assert(num == num_combined);
 
+	regions.clear();
 	for(SIMI it = imap.begin(); it != imap.end(); it++)
 	{
 		int32_t l = lower(it->first);
@@ -897,6 +898,7 @@ int combined_graph::build_splice_graph(splice_graph &xr)
 	{
 		int32_t p1 = regions[i - 1].first.second;
 		int32_t p2 = regions[i - 0].first.first;
+
 		assert(p1 <= p2);
 		if(p1 < p2) continue;
 
