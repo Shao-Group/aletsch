@@ -251,14 +251,17 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	vector<transcript> vt;
 
 	set<int32_t> ps = cb.get_reliable_splices(min_supporting_samples, 99999);
+	/*
 	set<int32_t> sb = cb.get_reliable_start_boundaries(min_supporting_samples, 99999);
 	set<int32_t> tb = cb.get_reliable_end_boundaries(min_supporting_samples, 99999);
 	set<int32_t> aj = cb.get_reliable_adjacencies(min_supporting_samples, min_splicing_count);
 	set<PI32> rs = cb.get_reliable_junctions(min_supporting_samples, min_splicing_count);
+	*/
 
 	splice_graph gx;
 	hyper_set hx;
-	cb.resolve(gx, hx);
+	vector<fcluster> ux;
+	cb.resolve(gx, hx, ux);
 
 	keep_surviving_edges(gx, min_splicing_count);
 	hx.filter_nodes(gx);
@@ -285,7 +288,8 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	{
 		splice_graph gr;
 		hyper_set hs;
-		cb.children[i].resolve(gr, hs);
+		vector<fcluster> ub;
+		cb.children[i].resolve(gr, hs, ub);
 
 		keep_surviving_edges(gr, ps, min_splicing_count);
 		hs.filter_nodes(gr);

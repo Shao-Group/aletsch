@@ -402,7 +402,7 @@ int combined_graph::combine_end_bounds(map<int32_t, DI> &m, const combined_graph
 	return 0;
 }
 
-int combined_graph::resolve(splice_graph &gr, hyper_set &hs)
+int combined_graph::resolve(splice_graph &gr, hyper_set &hs, vector<fcluster> &ub)
 {
 	build_region_index();
 	group_junctions();
@@ -410,7 +410,6 @@ int combined_graph::resolve(splice_graph &gr, hyper_set &hs)
 	build_splice_graph(gr);
 	group_start_boundaries(gr);
 	group_end_boundaries(gr);
-
 	refine_splice_graph(gr);
 	build_phasing_paths(gr, hs);
 	return 0;
@@ -937,67 +936,95 @@ int combined_graph::build_phasing_paths(splice_graph &gr, hyper_set &hs)
 	hs.clear();
 	for(int i = 0; i < phase.size(); i++)
 	{
+		vector<int> uu = fetch_vertices_from_coordinates(gr, phase[i].first);
 		const vector<int32_t> &z = phase[i].second;
 		assert(z.size() % 3 == 0);
 		for(int j = 0; j < z.size() / 3; j++)
 		{
-			vector<int32_t> v;
-			v.push_back(z[j * 3 + 0]);
-			v.insert(v.end(), phase[i].first.begin(), phase[i].first.end());
-			v.push_back(z[j * 3 + 1]);
-
-			assert(v.size() >= 2);
-			assert(v.size() % 2 == 0);
-
+			int32_t p1 = z[j * 3 + 0];
+			int32_t p2 = z[j * 3 + 1];
 			int w = z[j * 3 + 2];
 
-			// filtering here
-			//if((v.front() != -1 || v.back() != -2) &&)
-			//if(c < min_supporting_samples &&);
-			//if(w < min_phasing_count) continue;
+			vector<int> vv = uu;
 
-			vector<int> vv;
-			int n = v.size() / 2 - 1;
-			for(int k = 0; k <= n; k++)
+			if(p1 == -1) 
 			{
-				if(v[2 * k + 0] == -1)
-				{
-					assert(k == 0);
-					assert(v[2 * k + 1] == -1);
-					vv.push_back(0); 
-				}
-				else if(v[2 * k + 0] == -2)
-				{
-					assert(v[2 * k + 1] == -2);
-					vv.push_back(gr.num_vertices() - 1); 
-				}
-				else
-				{
-					assert(v[2 * k + 0] >= 0);
-					assert(v[2 * k + 1] >= 0);
-					int32_t p = v[2 * k + 0];
-					int32_t q = v[2 * k + 1];
+				assert(vv.front() == 0);
+			}
+			else
+			{
+				assert(p1 >= 0);
+				assert(lindex.find(p1) != lindex.end());
+				int a = lindex[p1] + 1;
+				int b = vv.front();
+				assert(check_continue_vertices(gr, a, b));
+				for(int k = b - 1; k >= a; k++) vv.insert(vv.begin(), k);
+			}
 
-					assert(lindex.find(p) != lindex.end());
-					assert(rindex.find(q) != rindex.end());
-					int kp = lindex[p] + 1;
-					int kq = rindex[q] + 1;
-					if(vv.size() >= 1) assert(kp > vv.back());
-					for(int j = kp; j <= kq; j++)
-					{
-						vv.push_back(j);
-						if(j == kp) continue;
-						assert(regions[j - 2].first.second == regions[j - 1].first.first);
-					}
-				}
+			if(p2 == -2) 
+			{
+				assert(vv.back() == gr.num_vertices() - 1);
+			}
+			else
+			{
+				assert(p2 >= 0);
+				assert(rindex.find(p2) != rindex.end());
+				int a = vv.back();
+				int b = rindex[p2] + 1;
+				assert(check_continue_vertices(gr, a, b));
+				for(int k = a + 1; k <= b; k++) vv.insert(vv.begin(), k);
 			}
 
 			for(int k = 0; k < vv.size(); k++) vv[k]--;
 
-			hs.add_node_list(vv, (int)w);
+			hs.add_node_list(vv, w);
 		}
 	}
 	return 0;
+}
+
+vector<int> combined_graph::fetch_vertices_from_coordinates(splice_graph &gr, const vector<int32_t> &v)
+{
+	// assume v encodes intron chain coordinates
+	vector<int> vv;
+	assert(v.size() % 2 == 0);
+	if(v.size() <= 0) return vv;
+
+	int n = v.size() / 2;
+	vector<PI> pp(n);
+	for(int k = 0; k < n; k++)
+	{
+		int32_t p = v[2 * k + 0];
+		int32_t q = v[2 * k + 1];
+		assert(p != -2);
+		assert(q != -1);
+
+		if(p == -1) pp[k].first = 0;
+		if(q == -2) pp[k].first = gr.num_vertices() - 1;
+
+		if(p < 0 || q < 0) continue;
+
+		assert(p <= q);
+		assert(rindex.find(p) != rindex.end());
+		assert(lindex.find(q) != lindex.end());
+		int kp = rindex[p] + 1;
+		int kq = lindex[q] + 1;
+		pp[k].first = kp;
+		pp[k].second = kq;
+	}
+
+	vv.push_back(pp.front().first);
+	for(int k = 0; k < n - 1; k++)
+	{
+		int a = pp[k + 0].second;
+		int b = pp[k + 1].first;
+		assert(a <= b);
+		assert(check_continue_vertices(gr, a, b));
+		for(int j = a; j <= b; j++) vv.push_back(j);
+	}
+	vv.push_back(pp.back().second);
+
+	return vv;
 }
 
 int combined_graph::clear()

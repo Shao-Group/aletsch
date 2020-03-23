@@ -73,13 +73,14 @@ public:
 	int combine_reads(MV32 &m, const combined_graph &gt);
 
 	// recover splice graph and phasing paths
-	int resolve(splice_graph &gr, hyper_set &hs);
+	int resolve(splice_graph &gr, hyper_set &hs, vector<fcluster> &ub);
 	int build_region_index();
 	int group_junctions();
 	int build_splice_graph(splice_graph &xr);
 	int group_start_boundaries(splice_graph &xr);
 	int group_end_boundaries(splice_graph &xr);
 	int build_phasing_paths(splice_graph &xr, hyper_set &hs);
+	vector<int> fetch_vertices_from_coordinates(splice_graph &gr, const vector<int32_t> &v);
 	PIDI get_leftmost_bound();
 	PIDI get_rightmost_bound();
 
