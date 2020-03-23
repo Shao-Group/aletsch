@@ -156,7 +156,10 @@ int generator::generate(int n)
 			combined_graph cb;
 			cb.gid = gid;
 			cb.build(grv[k], hsv[k], ubv[k]);
-			//cb.print(k);	// TODO
+
+			cb.print(k);	// TODO
+			printf("\n");
+
 			vcb.push_back(cb);
 		}
 

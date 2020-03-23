@@ -410,8 +410,8 @@ int combined_graph::resolve(splice_graph &gr, hyper_set &hs, vector<fcluster> &u
 	build_splice_graph(gr);
 	group_start_boundaries(gr);
 	group_end_boundaries(gr);
-	refine_splice_graph(gr);
 	build_phasing_paths(gr, hs);
+	refine_splice_graph(gr);
 	return 0;
 }
 
@@ -1039,8 +1039,6 @@ int combined_graph::print(int index)
 	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phase = %lu, #reads = %lu\n", 
 			index, num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), phase.size(), reads.size());
 
-	return 0;
-
 	for(int i = 0; i < regions.size(); i++)
 	{
 		PI32 p = regions[i].first;
@@ -1069,9 +1067,13 @@ int combined_graph::print(int index)
 	{
 		vector<int32_t> &v = phase[i].first;
 		vector<int32_t> &z = phase[i].second;
-		printf("path %d: %lu components, list = ", i, z.size() / 3);
-		for(int k = 0; k < v.size(); k++) printf("%d ", v[k]);
-		printf("\n");
+		printf("path %d: %lu components, core = ( ", i, z.size() / 3);
+		printv(v);
+		printf(")\n");
+		for(int k = 0; k < z.size() / 3; k++)
+		{
+			printf(" bounds = (%d, %d), w = %d\n", z[k * 3 + 0], z[k * 3 + 1], z[k * 3 + 2]);
+		}
 	}
 	return 0;
 }
