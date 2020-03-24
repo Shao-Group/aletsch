@@ -265,8 +265,8 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 		int k = m[p];
 		assert(k >= 0 && k < vv.size());
 		vector<int> vv = project_vector(v, vm[k]);
+		assert(vv.size() == v.size());
 		if(vv.size() != v.size()) continue;
-		//assert(vv.size() == v.size());
 
 		for(int i = 0; i < vv.size(); i++) vv[i]--;
 		hsv[k].add_node_list(vv, c);
@@ -288,8 +288,8 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 		fcluster fc = ub[i];
 		fc.v1 = project_vector(fc.v1, vm[k]);
 		fc.v2 = project_vector(fc.v2, vm[k]);
-		//assert(fc.v1.size() == ub[i].v1.size());
-		//assert(fc.v2.size() == ub[i].v2.size());
+		assert(fc.v1.size() == ub[i].v1.size());
+		assert(fc.v2.size() == ub[i].v2.size());
 		if(fc.v1.size() != ub[i].v1.size()) continue;
 		if(fc.v2.size() != ub[i].v2.size()) continue;
 		ubv[k].push_back(fc);
