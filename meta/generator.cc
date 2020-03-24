@@ -197,7 +197,6 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 		ds.union_set(s, t);
 	}
 
-	/*
 	// group with hyper_set
 	for(MVII::const_iterator it = hs.nodes.begin(); it != hs.nodes.end(); it++)
 	{
@@ -205,10 +204,14 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 		if(v.size() <= 1) continue;
 		// here just verify all vertices in a phase are valid paths
 		int p = ds.find_set(v[0]);
-		int q = ds.find_set(v[1]);
-		assert(p == q);
+		for(int i = 1; i < v.size(); i++)
+		{
+			int q = ds.find_set(v[i]);
+			if(p == q) continue;
+			ds.link(p, q);
+			p = ds.find_set(v[0]);
+		}
 	}
-	*/
 
 	// group with unbridged pairs
 	for(int i = 0; i < ub.size(); i++)
@@ -266,8 +269,6 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 		assert(k >= 0 && k < vv.size());
 		vector<int> vv = project_vector(v, vm[k]);
 		assert(vv.size() == v.size());
-		if(vv.size() != v.size()) continue;
-
 		for(int i = 0; i < vv.size(); i++) vv[i]--;
 		hsv[k].add_node_list(vv, c);
 	}
@@ -288,8 +289,8 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 		fcluster fc = ub[i];
 		fc.v1 = project_vector(fc.v1, vm[k]);
 		fc.v2 = project_vector(fc.v2, vm[k]);
-		assert(fc.v1.size() == ub[i].v1.size());
-		assert(fc.v2.size() == ub[i].v2.size());
+		//assert(fc.v1.size() == ub[i].v1.size());
+		//assert(fc.v2.size() == ub[i].v2.size());
 		if(fc.v1.size() != ub[i].v1.size()) continue;
 		if(fc.v2.size() != ub[i].v2.size()) continue;
 		ubv[k].push_back(fc);
