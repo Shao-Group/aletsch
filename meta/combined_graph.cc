@@ -963,12 +963,6 @@ int combined_graph::build_phasing_paths(splice_graph &gr, hyper_set &hs)
 		const vector<int32_t> &z = phase[i].second;
 		assert(z.size() % 3 == 0);
 
-		printf("phase %d: core = ( ", i);
-		printv(phase[i].first);
-		printf(") => ( ");
-		printv(uu);
-		printf(")\n");
-
 		for(int j = 0; j < z.size() / 3; j++)
 		{
 			int32_t p1 = z[j * 3 + 0];
@@ -994,10 +988,6 @@ int combined_graph::build_phasing_paths(splice_graph &gr, hyper_set &hs)
 			}
 
 			for(int k = 0; k < vv.size(); k++) vv[k]--;
-
-			printf(" (%d, %d, %d) => a = %d, b = %d, ( ", p1, p2, w, a, b);
-			printv(vv);
-			printf(")\n");
 			hs.add_node_list(vv, w);
 		}
 	}
