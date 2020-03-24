@@ -79,6 +79,7 @@ public:
 	int build_splice_graph(splice_graph &xr);
 	int group_start_boundaries(splice_graph &xr);
 	int group_end_boundaries(splice_graph &xr);
+	int group_phasing_paths();
 	int build_phasing_paths(splice_graph &xr, hyper_set &hs);
 	vector<int> fetch_vertices_from_coordinates(splice_graph &gr, const vector<int32_t> &v);
 	PIDI get_leftmost_bound();

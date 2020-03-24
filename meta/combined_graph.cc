@@ -409,6 +409,7 @@ int combined_graph::resolve(splice_graph &gr, hyper_set &hs, vector<fcluster> &u
 	build_splice_graph(gr);
 	group_start_boundaries(gr);
 	group_end_boundaries(gr);
+	group_phasing_paths();
 	build_phasing_paths(gr, hs);
 	refine_splice_graph(gr);
 	return 0;
@@ -575,6 +576,27 @@ int combined_graph::group_end_boundaries(splice_graph &xr)
 
 			if(meta_verbose >= 2) printf("map end boundary %d:%d (weight = %.2lf) to %d:%d (weight = %.2lf)\n", v[i], p, wb, k1, p1, wa);
 		}
+	}
+	return 0;
+}
+
+int combined_graph::group_phasing_paths()
+{
+	for(int i = 0; i < phase.size(); i++)
+	{
+		vector<int32_t> &v = phase[i].first;
+		vector<int32_t> &z = phase[i].second;
+		assert(v.size() % 2 == 0);
+		assert(z.size() % 3 == 0);
+
+		for(int j = 0; j < z.size(); j++)
+		{
+			int32_t p = z[j];
+			if(j % 3 == 0 && smap.find(p) != smap.end()) z[j] = smap[p];
+			if(j % 3 == 1 && tmap.find(p) != tmap.end()) z[j] = tmap[p];
+		}
+
+		// TODO merge identical ones to improve speed / save space
 	}
 	return 0;
 }
@@ -940,6 +962,13 @@ int combined_graph::build_phasing_paths(splice_graph &gr, hyper_set &hs)
 		vector<int> uu = fetch_vertices_from_coordinates(gr, phase[i].first);
 		const vector<int32_t> &z = phase[i].second;
 		assert(z.size() % 3 == 0);
+
+		printf("phase %d: core = ( ", i);
+		printv(phase[i].first);
+		printf(") => ( ");
+		printv(uu);
+		printf(")\n");
+
 		for(int j = 0; j < z.size() / 3; j++)
 		{
 			int32_t p1 = z[j * 3 + 0];
@@ -965,6 +994,10 @@ int combined_graph::build_phasing_paths(splice_graph &gr, hyper_set &hs)
 			}
 
 			for(int k = 0; k < vv.size(); k++) vv[k]--;
+
+			printf(" (%d, %d, %d) => a = %d, b = %d, ( ", p1, p2, w, a, b);
+			printv(vv);
+			printf(")\n");
 			hs.add_node_list(vv, w);
 		}
 	}
@@ -984,15 +1017,9 @@ vector<int> combined_graph::fetch_vertices_from_coordinates(splice_graph &gr, co
 	{
 		int32_t p = v[2 * k + 0];
 		int32_t q = v[2 * k + 1];
-		assert(p != -2);
-		assert(q != -1);
-
-		if(p == -1) pp[k].first = 0;
-		if(q == -2) pp[k].first = gr.num_vertices() - 1;
-
-		if(p < 0 || q < 0) continue;
-
+		assert(p >= 0 && q >= 0);
 		assert(p <= q);
+
 		assert(rindex.find(p) != rindex.end());
 		assert(lindex.find(q) != lindex.end());
 		int kp = rindex[p] + 1;
@@ -1037,8 +1064,12 @@ int combined_graph::clear()
 
 int combined_graph::print(int index)
 {
-	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phase = %lu, #reads = %lu\n", 
-			index, num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), phase.size(), reads.size());
+	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phasing-phase = %lu\n", 
+			index, num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), phase.size());
+
+	//printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phase = %lu, #reads = %lu\n", 
+	//		index, num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), phase.size(), reads.size());
+
 
 	for(int i = 0; i < regions.size(); i++)
 	{

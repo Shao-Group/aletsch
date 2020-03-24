@@ -297,6 +297,12 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 		vector<fcluster> ub;
 		cb.children[i].resolve(gr, hs, ub);
 
+		/*
+		printf("-----\n");
+		gr.print();
+		hs.print_nodes();
+		*/
+
 		keep_surviving_edges(gr, ps, min_splicing_count);
 		hs.filter_nodes(gr);
 
@@ -373,7 +379,6 @@ bool query_transcript(const map< size_t, vector<transcript> > &mt, const transcr
 		if(b == true) return true;
 	}
 
-	printf("hash fail");
 	return false;
 }
 

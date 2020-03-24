@@ -137,6 +137,8 @@ int generator::generate(int n)
 		br.length_high = sp.insertsize_high;
 		br.resolve();
 
+		//bd.gr.print();
+
 		vector<fcluster> ub;
 		br.collect_unbridged_fclusters(ub);
 
