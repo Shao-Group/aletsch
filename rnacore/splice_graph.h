@@ -39,6 +39,9 @@ public:
 	MED ewrt;
 	MEIF einf;
 
+	map<int32_t, int> lindex;
+	map<int32_t, int> rindex;
+
 public:
 	// get and set properties
 	double get_vertex_weight(int v) const;
@@ -103,6 +106,11 @@ public:
 	// rounding all weights to integers
 	int round_weights();
 	int locate(int v);
+
+	// indexes and queries
+	int build_vertex_index();
+	int locate_vertex(int32_t p, int a, int b);
+	int locate_vertex(int32_t p);
 
 	// draw and print
 	int draw(const string &file, bool footer = true);

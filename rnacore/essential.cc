@@ -200,3 +200,109 @@ bool check_valid_path(splice_graph &gr, const vector<int> &vv)
 	}
 	return true;
 }
+
+bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv)
+{
+	// NOTE: do not guarantee vv forms a valid path in the splice graph
+	// make sure that lindex and rindex are available in gr
+	vv.clear();
+	vector<int64_t> v;
+	h.get_aligned_intervals(v);
+
+	if(v.size() == 0) return false;
+
+	vector<PI> sp;
+	sp.resize(v.size());
+
+	int32_t p1 = high32(v.front());
+	int32_t p2 = low32(v.back());
+
+	sp[0].first = gr.locate_vertex(p1);
+	if(sp[0].first < 0) return false;
+
+	for(int k = 1; k < v.size(); k++)
+	{
+		p1 = high32(v[k]);
+		map<int32_t, int>::const_iterator it = gr.lindex.find(p1);
+		if(it == gr.lindex.end()) return false;
+		sp[k].first = it->second;
+	}
+
+	sp[sp.size() - 1].second = gr.locate_vertex(p2 - 1);
+	if(sp[sp.size() - 1].second < 0) return false;
+
+	for(int k = 0; k < v.size() - 1; k++)
+	{
+		p2 = low32(v[k]);
+		map<int32_t, int>::const_iterator it = gr.rindex.find(p2);
+		if(it == gr.rindex.end()) return false;
+		sp[k].second = it->second; 
+	}
+
+	for(int k = 0; k < sp.size(); k++)
+	{
+		assert(sp[k].first <= sp[k].second);
+		if(k > 0) assert(sp[k - 1].second < sp[k].first);
+		for(int j = sp[k].first; j <= sp[k].second; j++) vv.push_back(j);
+	}
+
+	return true;
+}
+
+int build_fragments(const vector<hit> &hits, vector<PI> &fs)
+{
+	vector<bool> paired(hits.size(), false);
+
+	fs.clear();
+	if(hits.size() == 0) return 0;
+
+	int max_index = hits.size() + 1;
+	if(max_index > 1000000) max_index = 1000000;
+
+	vector< vector<int> > vv;
+	vv.resize(max_index);
+
+	// first build index
+	for(int i = 0; i < hits.size(); i++)
+	{
+		const hit &h = hits[i];
+		if(h.isize >= 0) continue;
+
+		// do not use hi; as long as qname, pos and isize are identical
+		int k = (h.get_qhash() % max_index + h.pos % max_index + (0 - h.isize) % max_index) % max_index;
+		vv[k].push_back(i);
+	}
+
+	for(int i = 0; i < hits.size(); i++)
+	{
+		const hit &h = hits[i];
+		if(paired[i] == true) continue;
+		if(h.isize <= 0) continue;
+
+		int k = (h.get_qhash() % max_index + h.mpos % max_index + h.isize % max_index) % max_index;
+		int x = -1;
+		for(int j = 0; j < vv[k].size(); j++)
+		{
+			int u = vv[k][j];
+			const hit &z = hits[u];
+			//if(z.hi != h.hi) continue;
+			if(paired[u] == true) continue;
+			if(z.pos != h.mpos) continue;
+			if(z.isize + h.isize != 0) continue;
+			//if(z.qhash != h.qhash) continue;
+			if(z.qname != h.qname) continue;
+			x = vv[k][j];
+			break;
+		}
+
+		if(x == -1) continue;
+
+		fs.push_back(PI(i, x));
+
+		paired[i] = true;
+		paired[x] = true;
+	}
+
+	//printf("total hits = %lu, total fragments = %lu\n", hits.size(), fragments.size());
+	return 0;
+}

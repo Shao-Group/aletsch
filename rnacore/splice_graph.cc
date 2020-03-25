@@ -25,6 +25,8 @@ splice_graph::splice_graph(const splice_graph &gr)
 	chrm = gr.chrm;
 	gid = gr.gid;
 	strand = gr.strand;
+	lindex = gr.lindex;
+	rindex = gr.rindex;
 
 	MEE x2y;
 	MEE y2x;
@@ -68,6 +70,8 @@ int splice_graph::clear()
 	vinf.clear();
 	ewrt.clear();
 	einf.clear();
+	lindex.clear();
+	rindex.clear();
 	return 0;
 }
 
@@ -1031,6 +1035,36 @@ double splice_graph::compute_average_vertex_weight()
 	}
 	if(cnt >= 1) sum = sum / cnt;
 	return sum;
+}
+
+int splice_graph::build_vertex_index()
+{
+	lindex.clear();
+	rindex.clear();
+	int n = num_vertices() - 1;
+	for(int i = 0; i <= n; i++)
+	{
+		const vertex_info &v = get_vertex_info(i);
+		if(i != 0) lindex.insert(pair<int32_t, int>(v.lpos, i));
+		if(i != n) rindex.insert(pair<int32_t, int>(v.rpos, i));
+	}
+	return 0;
+}
+
+int splice_graph::locate_vertex(int32_t p)
+{
+	return locate_vertex(p, 0, num_vertices());
+}
+
+int splice_graph::locate_vertex(int32_t p, int a, int b)
+{
+	if(a >= b) return -1;
+	int m = (a + b) / 2;
+	assert(m >= 0 && m < num_vertices());
+	const vertex_info &v = get_vertex_info(m);
+	if(p >= v.lpos && p < v.rpos) return m;
+	if(p < v.lpos) return locate_vertex(p, a, m);
+	return locate_vertex(p, m + 1, b);
 }
 
 int splice_graph::draw(const string &file, const MIS &mis, const MES &mes, double len, const vector<int> &tp, bool footer)

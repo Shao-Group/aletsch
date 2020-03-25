@@ -34,19 +34,15 @@ class bridger
 {
 public:
 	bridger(splice_graph &gr, vector<hit> &hits);
+	bridger(splice_graph &gr, const vector<fcluster> &ub);
 
 public:
 	splice_graph &gr;				// given splice graph
-	vector<hit> &hits;				// given hits
-
-	hyper_set hs;					// constructed hyper-set
-	vector<bool> bridged;			// whether given hits are bridged
-
-	map<int32_t, int> lindex;		// index for left-vertex of gr
-	map<int32_t, int> rindex;		// index for right-vertex of gr
 
 	vector<fcluster> fclusters;		// clusters
 	vector<pier> piers;				// piers
+	vector<bool> bridged;			// whether given hits are bridged
+	hyper_set hs;					// constructed hyper-set
 
 	int dp_solution_size;
 	int dp_stack_size;
@@ -58,7 +54,6 @@ public:
 	int resolve();
 	int collect_unbridged_fclusters(vector<fcluster> &ub);
 	
-	int build_vertex_index();
 	int build_fragments(vector<fragment> &fs);
 	int build_fclusters(vector<fragment> &fs);
 	int build_piers();

@@ -38,22 +38,26 @@ bridger::bridger(splice_graph &g, vector<hit> &h)
 	length_median = 300;
 	length_low = 100;
 	length_high = 500;
+
+	gr.build_vertex_index();
+	vector<fragment> fs;
+	build_fragments(h, fs);
+	build_fclusters(fs);
+}
+
+bridger::bridger(splice_graph &g, const vector<fcluster> &ub)
+	: gr(g), fclusters(ub)
+{
+	dp_solution_size = 10;
+	dp_stack_size = 5;
+	length_median = 300;
+	length_low = 100;
+	length_high = 500;
+	build_vertex_index();
 }
 
 int bridger::resolve()
 {
-	//printf("start bridger: %lu hits, splice graph with %lu vertices and %lu edges\n", hits.size(), gr.num_vertices(), gr.num_edges());
-	//gr.print();
-
-	build_vertex_index();
-
-	vector<fragment> fs;
-	build_fragments(fs);
-	//printf("built %lu fragments\n", fragments.size());
-
-	build_fclusters(fs);
-	//printf("built %lu fclusters\n", fclusters.size());
-
 	build_piers();
 	//printf("built %lu piers\n", piers.size());
 
@@ -65,131 +69,6 @@ int bridger::resolve()
 
 	build_hyper_set();
 	//printf("finish building hyper-set\n\n");
-
-	return 0;
-}
-
-int bridger::build_vertex_index()
-{
-	lindex.clear();
-	rindex.clear();
-	int n = gr.num_vertices() - 1;
-	for(int i = 0; i <= n; i++)
-	{
-		const vertex_info &v = gr.get_vertex_info(i);
-		if(i != 0) lindex.insert(pair<int32_t, int>(v.lpos, i));
-		if(i != n) rindex.insert(pair<int32_t, int>(v.rpos, i));
-	}
-	return 0;
-}
-
-bool bridger::align_hit(const hit &h, vector<int> &vv)
-{
-	// NOTE: do not guarantee vv forms a valid path in the splice graph
-	vv.clear();
-	vector<int64_t> v;
-	h.get_aligned_intervals(v);
-
-	if(v.size() == 0) return false;
-
-	vector<PI> sp;
-	sp.resize(v.size());
-
-	int32_t p1 = high32(v.front());
-	int32_t p2 = low32(v.back());
-
-	sp[0].first = locate_vertex(p1, 0, gr.num_vertices());
-	//if(sp[0].first < 0) printf("start boundary fail\n");
-	if(sp[0].first < 0) return false;
-
-	for(int k = 1; k < v.size(); k++)
-	{
-		p1 = high32(v[k]);
-		map<int32_t, int>::const_iterator it = lindex.find(p1);
-		if(it == lindex.end()) return false;
-		sp[k].first = it->second;
-	}
-
-	sp[sp.size() - 1].second = locate_vertex(p2 - 1, 0, gr.num_vertices());
-	if(sp[sp.size() - 1].second < 0) return false;
-
-	for(int k = 0; k < v.size() - 1; k++)
-	{
-		p2 = low32(v[k]);
-		map<int32_t, int>::const_iterator it = rindex.find(p2);
-		if(it == rindex.end()) return false;
-		sp[k].second = it->second; 
-	}
-
-	for(int k = 0; k < sp.size(); k++)
-	{
-		assert(sp[k].first <= sp[k].second);
-		if(k > 0) assert(sp[k - 1].second < sp[k].first);
-		for(int j = sp[k].first; j <= sp[k].second; j++) vv.push_back(j);
-	}
-
-	return true;
-}
-
-int bridger::build_fragments(vector<fragment> &fs)
-{
-	vector<bool> paired(hits.size(), false);
-
-	fs.clear();
-	if(hits.size() == 0) return 0;
-
-	int max_index = hits.size() + 1;
-	if(max_index > 1000000) max_index = 1000000;
-
-	vector< vector<int> > vv;
-	vv.resize(max_index);
-
-	// first build index
-	for(int i = 0; i < hits.size(); i++)
-	{
-		hit &h = hits[i];
-		if(h.isize >= 0) continue;
-
-		// do not use hi; as long as qname, pos and isize are identical
-		int k = (h.get_qhash() % max_index + h.pos % max_index + (0 - h.isize) % max_index) % max_index;
-		vv[k].push_back(i);
-	}
-
-	for(int i = 0; i < hits.size(); i++)
-	{
-		hit &h = hits[i];
-		if(paired[i] == true) continue;
-		if(h.isize <= 0) continue;
-
-		int k = (h.get_qhash() % max_index + h.mpos % max_index + h.isize % max_index) % max_index;
-		int x = -1;
-		for(int j = 0; j < vv[k].size(); j++)
-		{
-			int u = vv[k][j];
-			hit &z = hits[u];
-			//if(z.hi != h.hi) continue;
-			if(paired[u] == true) continue;
-			if(z.pos != h.mpos) continue;
-			if(z.isize + h.isize != 0) continue;
-			//if(z.qhash != h.qhash) continue;
-			if(z.qname != h.qname) continue;
-			x = vv[k][j];
-			break;
-		}
-
-		if(x == -1) continue;
-
-		fragment fr(i, x);
-		fr.lpos = h.pos;
-		fr.rpos = hits[x].rpos;
-
-		fs.push_back(fr);
-
-		paired[i] = true;
-		paired[x] = true;
-	}
-
-	//printf("total hits = %lu, total fragments = %lu\n", hits.size(), fragments.size());
 	return 0;
 }
 
@@ -588,17 +467,6 @@ int bridger::dynamic_programming(int k1, int k2, vector< vector<entry> > &table)
 		table[k] = v;
 	}
 	return 0;
-}
-
-int bridger::locate_vertex(int32_t p, int a, int b)
-{
-	if(a >= b) return -1;
-	int m = (a + b) / 2;
-	assert(m >= 0 && m < gr.num_vertices());
-	const vertex_info &v = gr.get_vertex_info(m);
-	if(p >= v.lpos && p < v.rpos) return m;
-	if(p < v.lpos) return locate_vertex(p, a, m);
-	return locate_vertex(p, m + 1, b);
 }
 
 vector<int> bridger::update_stack(const vector<int> &v, int s)
