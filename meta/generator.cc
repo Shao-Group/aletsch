@@ -198,6 +198,8 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 	}
 
 	// group with hyper_set
+	// do not use it
+	/*
 	for(MVII::const_iterator it = hs.nodes.begin(); it != hs.nodes.end(); it++)
 	{
 		const vector<int> &v = it->first;
@@ -212,6 +214,7 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 			p = ds.find_set(v[0]);
 		}
 	}
+	*/
 
 	// group with unbridged pairs
 	for(int i = 0; i < ub.size(); i++)
@@ -268,7 +271,8 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 		int k = m[p];
 		assert(k >= 0 && k < vv.size());
 		vector<int> vv = project_vector(v, vm[k]);
-		assert(vv.size() == v.size());
+		//assert(vv.size() == v.size());
+		if(vv.size() != v.size()) continue;
 		for(int i = 0; i < vv.size(); i++) vv[i]--;
 		hsv[k].add_node_list(vv, c);
 	}
