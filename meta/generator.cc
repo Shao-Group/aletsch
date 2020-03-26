@@ -169,8 +169,10 @@ int generator::generate(int n)
 			cb.gid = gid;
 			cb.build(grv[k], hsv[k], ubv[k]);
 
-			//cb.print(k);	// TODO
-			//printf("\n");
+			/*
+			cb.print(k);	// TODO
+			printf("\n");
+			*/
 
 			vcb.push_back(cb);
 		}

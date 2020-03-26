@@ -195,8 +195,8 @@ int build_path_from_coordinates(splice_graph &gr, const vector<int32_t> &v, vect
 
 		assert(gr.rindex.find(p) != gr.rindex.end());
 		assert(gr.lindex.find(q) != gr.lindex.end());
-		int kp = gr.rindex[p] + 1;
-		int kq = gr.lindex[q] + 1;
+		int kp = gr.rindex[p];
+		int kq = gr.lindex[q];
 		pp[k].first = kp;
 		pp[k].second = kq;
 	}

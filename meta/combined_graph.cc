@@ -961,7 +961,7 @@ int combined_graph::print(int index)
 		printf("path %d: vv = ( ", i);
 		printv(r.vv);
 		printf(")\n");
-		for(int k = 0; k < r.vl.size() / 3; k++)
+		for(int k = 0; k < r.vl.size(); k++)
 		{
 			printf(" bounds = (%d, %d), w = %d, c = 1\n", r.vl[k], r.vr[k], r.cc[k]);
 		}
