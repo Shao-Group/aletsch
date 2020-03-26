@@ -132,6 +132,8 @@ int generator::generate(int n)
 
 		if(bd.gr.count_junctions() <= 0) continue;
 
+		bd.gr.build_vertex_index();
+
 		hyper_set hs;
 		vector<PRC> vpr;
 		vector<bool> paired;
