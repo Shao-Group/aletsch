@@ -12,7 +12,7 @@ combined_graph::combined_graph()
 	strand = '?';
 }
 
-int combined_graph::build(splice_graph &gr, hyper_set &hs, vector<fcluster> &ub)
+int combined_graph::build(splice_graph &gr, hyper_set &hs, vector<PRC> &ub)
 {
 	chrm = gr.chrm;
 	strand = gr.strand;
@@ -128,88 +128,52 @@ int combined_graph::build_phase(splice_graph &gr, hyper_set &hs)
 
 		if(v.size() <= 0) continue;
 		vector<int32_t> vv;
-		build_path_coordinates(gr, v, vv);
+		build_coordinates_from_path(gr, v, vv);
 
 		if(vv.size() <= 1) continue;
 		vector<int32_t> zz(vv.begin() + 1, vv.end() - 1);
 		map<vector<int32_t>, int>::iterator tp = mm.find(zz);
 		if(tp == mm.end()) 
 		{
-			vector<int32_t> pv;
-			pv.push_back(vv.front());
-			pv.push_back(vv.back());
-			pv.push_back(w);
+			rcluster r;
+			r.vv = zz;
+			r.vl.push_back(vv.front());
+			r.vr.push_back(vv.back());
+			r.cc.push_back(w);
 			mm.insert(pair<vector<int32_t>, int>(zz, phase.size()));
-			phase.push_back(PV32(zz, pv));
+			phase.push_back(r);
 		}
 		else 
 		{
 			int k = tp->second;
-			phase[k].second.push_back(vv.front());
-			phase[k].second.push_back(vv.back());
-			phase[k].second.push_back(w);
+			assert(zz == phase[k].vv);
+			phase[k].vl.push_back(vv.front());
+			phase[k].vr.push_back(vv.back());
+			phase[k].cc.push_back(w);
 		}
 	}
 	return 0;
 }
 
-int combined_graph::build_reads(splice_graph &gr, vector<fcluster> &ub)
+int combined_graph::build_reads(splice_graph &gr, vector<PRC> &ub)
 {
 	reads.clear();
-	map<vector<int32_t>, int> mm;
 	int n = gr.num_vertices() - 1;
 	for(int i = 0; i < ub.size(); i++)
 	{
-		fcluster &fc = ub[i];
-		if(fc.v1.size() <= 0) continue;
-		if(fc.v2.size() <= 0) continue;
-		assert(fc.v1.front() != 0);
-		assert(fc.v2.front() != 0);
-		assert(fc.v1.back() != n);
-		assert(fc.v2.back() != n);
+		PRC &prc = ub[i];
+		if(prc.first.vv.size() <= 0) continue;
+		if(prc.second.vv.size() <= 0) continue;
+		assert(prc.first.vv.front() != 0);
+		assert(prc.second.vv.front() != 0);
+		assert(prc.first.vv.back() != n);
+		assert(prc.second.vv.back() != n);
 
-		vector<int32_t> vv1;
-		vector<int32_t> vv2;
-		build_path_coordinates(gr, fc.v1, vv1);
-		build_path_coordinates(gr, fc.v2, vv2);
-
-		assert(vv1.size() >= 2);
-		assert(vv2.size() >= 2);
-
-		vector<int32_t> vv;
-		vv.push_back(vv1.size() - 2);
-		vv.push_back(vv2.size() - 2);
-		vv.insert(vv.end(), vv1.begin() + 1, vv1.end() - 1);
-		vv.insert(vv.end(), vv2.begin() + 1, vv2.end() - 1);
-
-		vector<int32_t> uu;
-		for(int j = 0; j < fc.frset.size(); j++)
-		{
-			fragment &fr = fc.frset[j];
-			assert(vv1[1] - vv1[0] >= fr.k1l);
-			assert(vv2[1] - vv2[0] >= fr.k2l);
-			assert(vv1[vv1.size() - 1] - vv1[vv1.size() - 2] >= fr.k1r);
-			assert(vv2[vv2.size() - 1] - vv2[vv2.size() - 2] >= fr.k2r);
-
-			uu.push_back(vv1[0] + fr.k1l);
-			uu.push_back(vv2[0] + fr.k2l);
-			uu.push_back(vv1[vv1.size() - 1] - fr.k1r);
-			uu.push_back(vv2[vv2.size() - 1] - fr.k2r);
-		}
-
-		map<vector<int32_t>, int>::iterator tp = mm.find(vv);
-		if(tp == mm.end())
-		{
-			mm.insert(pair<vector<int32_t>, int>(vv, reads.size()));
-			reads.push_back(PV32(vv, uu));
-		}
-		else
-		{
-			int k = tp->second;
-			reads[k].second.insert(reads[k].second.end(), uu.begin(), uu.end());
-		}
+		PRC rr = prc;
+		build_coordinates_from_path(gr, prc.first.vv, rr.first.vv);
+		build_coordinates_from_path(gr, prc.second.vv, rr.second.vv);
+		reads.push_back(rr);
 	}
-
 	return 0;
 }
 
@@ -251,8 +215,8 @@ int combined_graph::combine_children()
 	map<PI32, DI> mj;
 	map<int32_t, DI> ms;
 	map<int32_t, DI> mt;
-	MV32 mp;
-	MV32 mr;
+	phase.clear();
+	reads.clear();
 
 	int num = 0;
 	for(int i = 0; i < children.size(); i++)
@@ -260,10 +224,10 @@ int combined_graph::combine_children()
 		combined_graph &gt = children[i];
 		combine_regions(imap, gt);
 		combine_junctions(mj, gt);
-		combine_phase(mp, gt);
-		combine_reads(mr, gt);
 		combine_start_bounds(ms, gt);
 		combine_end_bounds(mt, gt);
+		//phase.insert(phase.end(), gt.phase.begin(), gt.phase.end());
+		//reads.insert(reads.end(), gt.reads.begin(), gt.reads.end());
 		num += gt.num_combined;
 	}
 	assert(num == num_combined);
@@ -279,8 +243,6 @@ int combined_graph::combine_children()
 	junctions.assign(mj.begin(), mj.end());
 	sbounds.assign(ms.begin(), ms.end());
 	tbounds.assign(mt.begin(), mt.end());
-	phase.assign(mp.begin(), mp.end());
-	reads.assign(mr.begin(), mr.end());
 
 	return 0;
 }
@@ -313,46 +275,6 @@ int combined_graph::combine_junctions(map<PI32, DI> &m, const combined_graph &gt
 		{
 			x->second.first += d.first;
 			x->second.second += d.second;
-		}
-	}
-	return 0;
-}
-
-int combined_graph::combine_phase(MV32 &m, const combined_graph &gt)
-{
-	for(int i = 0; i < gt.phase.size(); i++)
-	{
-		const vector<int32_t> &p = gt.phase[i].first;
-		const vector<int32_t> &v = gt.phase[i].second;
-		MV32::iterator x = m.find(p);
-
-		if(x == m.end())
-		{
-			m.insert(PV32(p, v));
-		}
-		else 
-		{
-			x->second.insert(x->second.end(), v.begin(), v.end());
-		}
-	}
-	return 0;
-}
-
-int combined_graph::combine_reads(MV32 &m, const combined_graph &gt)
-{
-	for(int i = 0; i < gt.reads.size(); i++)
-	{
-		const vector<int32_t> &p = gt.reads[i].first;
-		const vector<int32_t> &v = gt.reads[i].second;
-		MV32::iterator x = m.find(p);
-
-		if(x == m.end())
-		{
-			m.insert(PV32(p, v));
-		}
-		else 
-		{
-			x->second.insert(x->second.end(), v.begin(), v.end());
 		}
 	}
 	return 0;
@@ -402,38 +324,23 @@ int combined_graph::combine_end_bounds(map<int32_t, DI> &m, const combined_graph
 	return 0;
 }
 
-int combined_graph::resolve(splice_graph &gr, hyper_set &hs, vector<fcluster> &ub)
+int combined_graph::resolve(splice_graph &gr, hyper_set &hs, vector<PRC> &ub)
 {
-	build_region_index();
 	group_junctions();
 	build_splice_graph(gr);
 	group_start_boundaries(gr);
 	group_end_boundaries(gr);
-	group_phasing_paths();
 	build_phasing_paths(gr, hs);
 	refine_splice_graph(gr);
 	return 0;
 }
 
-int combined_graph::build_region_index()
-{
-	lindex.clear();
-	rindex.clear();
-	for(int i = 0; i < regions.size(); i++)
-	{
-		PI32 p = regions[i].first;
-		lindex.insert(pair<int32_t, int>(p.first, i));
-		rindex.insert(pair<int32_t, int>(p.second, i));
-	}
-	return 0;
-}
-
-int combined_graph::group_start_boundaries(splice_graph &xr)
+int combined_graph::group_start_boundaries(splice_graph &gr)
 {
 	smap.clear();
 	vector<int> v;
 	edge_iterator it;
-	PEEI pei = xr.out_edges(0);
+	PEEI pei = gr.out_edges(0);
 	for(edge_iterator it = pei.first; it != pei.second; it++)
 	{
 		edge_descriptor e = *it;
@@ -445,24 +352,24 @@ int combined_graph::group_start_boundaries(splice_graph &xr)
 
 	sort(v.begin(), v.end());
 
-	int32_t p1 = xr.get_vertex_info(v[0]).lpos;
+	int32_t p1 = gr.get_vertex_info(v[0]).lpos;
 	int32_t p2 = p1;
 	int k1 = v[0];
 	int k2 = k1;
-	PEB pa = xr.edge(0, v[0]);
+	PEB pa = gr.edge(0, v[0]);
 	assert(pa.second == true);
-	double wa = xr.get_edge_weight(pa.first);
-	edge_info ea = xr.get_edge_info(pa.first);
+	double wa = gr.get_edge_weight(pa.first);
+	edge_info ea = gr.get_edge_info(pa.first);
 
 	for(int i = 1; i < v.size(); i++)
 	{
-		int32_t p = xr.get_vertex_info(v[i]).lpos;
-		PEB pb = xr.edge(0, v[i]);
+		int32_t p = gr.get_vertex_info(v[i]).lpos;
+		PEB pb = gr.edge(0, v[i]);
 		assert(pb.second == true);
-		double wb = xr.get_edge_weight(pb.first);
-		edge_info eb = xr.get_edge_info(pb.first);
+		double wb = gr.get_edge_weight(pb.first);
+		edge_info eb = gr.get_edge_info(pb.first);
 
-		bool b = check_continue_vertices(xr, k2, v[i]);
+		bool b = check_continue_vertices(gr, k2, v[i]);
 
 		assert(p >= p2);
 		if(p - p2 > max_group_boundary_distance) b = false;
@@ -482,23 +389,23 @@ int combined_graph::group_start_boundaries(splice_graph &xr)
 			smap.insert(pair<int32_t, int32_t>(p, p1));
 			for(int j = k1; j < v[i]; j++)
 			{
-				PEB pc = xr.edge(j, j + 1);
+				PEB pc = gr.edge(j, j + 1);
 				assert(pc.second == true);
-				double vc = xr.get_vertex_weight(j);
-				double wc = xr.get_edge_weight(pc.first);
-				xr.set_vertex_weight(j, vc + wb);
-				edge_info ec = xr.get_edge_info(pc.first);
+				double vc = gr.get_vertex_weight(j);
+				double wc = gr.get_edge_weight(pc.first);
+				gr.set_vertex_weight(j, vc + wb);
+				edge_info ec = gr.get_edge_info(pc.first);
 				ec.count += eb.count;
 				ec.weight += eb.weight;
-				xr.set_edge_weight(pc.first, wc + wb);
-				xr.set_edge_info(pc.first, ec);
+				gr.set_edge_weight(pc.first, wc + wb);
+				gr.set_edge_info(pc.first, ec);
 			}
 			wa += wb;
 			ea.count += eb.count;
 			ea.weight += eb.weight;
-			xr.set_edge_weight(pa.first, wa);
-			xr.set_edge_info(pa.first, ea);
-			xr.remove_edge(pb.first);
+			gr.set_edge_weight(pa.first, wa);
+			gr.set_edge_info(pa.first, ea);
+			gr.remove_edge(pb.first);
 
 			k2 = v[i];
 			p2 = p;
@@ -509,16 +416,16 @@ int combined_graph::group_start_boundaries(splice_graph &xr)
 	return 0;
 }
 
-int combined_graph::group_end_boundaries(splice_graph &xr)
+int combined_graph::group_end_boundaries(splice_graph &gr)
 {
 	tmap.clear();
 	vector<int> v;
 	edge_iterator it;
-	PEEI pei = xr.in_edges(xr.num_vertices() - 1);
+	PEEI pei = gr.in_edges(gr.num_vertices() - 1);
 	for(edge_iterator it = pei.first; it != pei.second; it++)
 	{
 		edge_descriptor e = *it;
-		assert(e->target() == xr.num_vertices() - 1);
+		assert(e->target() == gr.num_vertices() - 1);
 		v.push_back(e->source());
 	}
 
@@ -526,22 +433,22 @@ int combined_graph::group_end_boundaries(splice_graph &xr)
 
 	sort(v.begin(), v.end(), greater<int>());
 
-	int32_t p1 = xr.get_vertex_info(v[0]).rpos;
+	int32_t p1 = gr.get_vertex_info(v[0]).rpos;
 	int32_t p2 = p1;
 	int k1 = v[0];
 	int k2 = k1;
-	PEB pa = xr.edge(v[0], xr.num_vertices() - 1);
+	PEB pa = gr.edge(v[0], gr.num_vertices() - 1);
 	assert(pa.second == true);
-	double wa = xr.get_edge_weight(pa.first);
+	double wa = gr.get_edge_weight(pa.first);
 
 	for(int i = 1; i < v.size(); i++)
 	{
-		int32_t p = xr.get_vertex_info(v[i]).rpos;
-		PEB pb = xr.edge(v[i], xr.num_vertices() - 1);
+		int32_t p = gr.get_vertex_info(v[i]).rpos;
+		PEB pb = gr.edge(v[i], gr.num_vertices() - 1);
 		assert(pb.second == true);
-		double wb = xr.get_edge_weight(pb.first);
+		double wb = gr.get_edge_weight(pb.first);
 
-		bool b = check_continue_vertices(xr, v[i], k2);
+		bool b = check_continue_vertices(gr, v[i], k2);
 
 		assert(p <= p2);
 		if(p2 - p > max_group_boundary_distance) b = false;
@@ -560,43 +467,22 @@ int combined_graph::group_end_boundaries(splice_graph &xr)
 			tmap.insert(pair<int32_t, int32_t>(p, p1));
 			for(int j = v[i]; j < k1; j++)
 			{
-				PEB pc = xr.edge(j, j + 1);
+				PEB pc = gr.edge(j, j + 1);
 				assert(pc.second == true);
-				double wc = xr.get_edge_weight(pc.first);
-				double vc = xr.get_vertex_weight(j + 1);
-				xr.set_edge_weight(pc.first, wc + wb);
-				xr.set_vertex_weight(j + 1, wc + wb);
+				double wc = gr.get_edge_weight(pc.first);
+				double vc = gr.get_vertex_weight(j + 1);
+				gr.set_edge_weight(pc.first, wc + wb);
+				gr.set_vertex_weight(j + 1, wc + wb);
 			}
 			wa += wb;
-			xr.set_edge_weight(pa.first, wa);
-			xr.remove_edge(pb.first);
+			gr.set_edge_weight(pa.first, wa);
+			gr.remove_edge(pb.first);
 
 			k2 = v[i];
 			p2 = p;
 
 			if(meta_verbose >= 2) printf("map end boundary %d:%d (weight = %.2lf) to %d:%d (weight = %.2lf)\n", v[i], p, wb, k1, p1, wa);
 		}
-	}
-	return 0;
-}
-
-int combined_graph::group_phasing_paths()
-{
-	for(int i = 0; i < phase.size(); i++)
-	{
-		vector<int32_t> &v = phase[i].first;
-		vector<int32_t> &z = phase[i].second;
-		assert(v.size() % 2 == 0);
-		assert(z.size() % 3 == 0);
-
-		for(int j = 0; j < z.size(); j++)
-		{
-			int32_t p = z[j];
-			if(j % 3 == 0 && smap.find(p) != smap.end()) z[j] = smap[p];
-			if(j % 3 == 1 && tmap.find(p) != tmap.end()) z[j] = tmap[p];
-		}
-
-		// TODO merge identical ones to improve speed / save space
 	}
 	return 0;
 }
@@ -642,6 +528,203 @@ int combined_graph::group_junctions()
 	junctions = v;
 	return 0;
 }
+
+int combined_graph::build_splice_graph(splice_graph &gr)
+{
+	gr.clear();
+
+	gr.gid = gid;
+	gr.chrm = chrm;
+	gr.strand = strand;
+
+	// add vertices
+	gr.add_vertex();	// 0
+	PIDI sb = get_leftmost_bound();
+	vertex_info v0;
+	v0.lpos = sb.first;
+	v0.rpos = sb.first;
+	gr.set_vertex_weight(0, 0);
+	gr.set_vertex_info(0, v0);
+
+	for(int i = 0; i < regions.size(); i++) 
+	{
+		gr.add_vertex();
+		vertex_info vi;
+		vi.lpos = regions[i].first.first;
+		vi.rpos = regions[i].first.second;
+		vi.count = regions[i].second.second;
+		double w = regions[i].second.first;
+		vi.length = vi.rpos - vi.lpos;
+		gr.set_vertex_weight(i + 1, w);
+		gr.set_vertex_info(i + 1, vi);
+	}
+
+	gr.add_vertex();	// n
+	PIDI tb = get_rightmost_bound();
+	vertex_info vn;
+	vn.lpos = tb.first;
+	vn.rpos = tb.first;
+	gr.set_vertex_info(regions.size() + 1, vn);
+	gr.set_vertex_weight(regions.size() + 1, 0);
+
+	// build vertex index
+	gr.build_vertex_index();
+
+	// add sbounds
+	for(int i = 0; i < sbounds.size(); i++)
+	{
+		int32_t p = sbounds[i].first;
+		double w = sbounds[i].second.first;
+		int c = sbounds[i].second.second;
+
+		assert(gr.lindex.find(p) != gr.lindex.end());
+		int k = gr.lindex[p];
+		edge_descriptor e = gr.add_edge(0, k);
+		edge_info ei;
+		ei.weight = w;
+		ei.count = c;
+		gr.set_edge_info(e, ei);
+		gr.set_edge_weight(e, w);
+	}
+
+	// add tbounds
+	for(int i = 0; i < tbounds.size(); i++)
+	{
+		int32_t p = tbounds[i].first;
+		double w = tbounds[i].second.first;
+		int c = tbounds[i].second.second;
+
+		assert(gr.rindex.find(p) != gr.rindex.end());
+		int k = gr.rindex[p];
+		edge_descriptor e = gr.add_edge(k, gr.num_vertices() - 1);
+		edge_info ei;
+		ei.weight = w;
+		ei.count = c;
+		gr.set_edge_info(e, ei);
+		gr.set_edge_weight(e, w);
+	}
+
+	// add junctions
+	for(int i = 0; i < junctions.size(); i++)
+	{
+		PI32 p = junctions[i].first;
+		double w = junctions[i].second.first;
+		int c = junctions[i].second.second;
+
+		// filtering later on
+		//if(parent && c < min_supporting_samples && w < min_splicing_count - 0.01) continue;
+
+		assert(gr.rindex.find(p.first) != gr.rindex.end());
+		assert(gr.lindex.find(p.second) != gr.lindex.end());
+		int s = gr.rindex[p.first];
+		int t = gr.lindex[p.second];
+		edge_descriptor e = gr.add_edge(s, t);
+		edge_info ei;
+		ei.weight = w;
+		ei.count = c;
+		gr.set_edge_info(e, ei);
+		gr.set_edge_weight(e, w);
+	}
+
+	// connect adjacent regions
+	for(int i = 1; i < regions.size(); i++)
+	{
+		int32_t p1 = regions[i - 1].first.second;
+		int32_t p2 = regions[i - 0].first.first;
+
+		assert(p1 <= p2);
+		if(p1 < p2) continue;
+
+		PPDI ss = regions[i - 1];
+		PPDI tt = regions[i - 0];
+		if(ss.first.second != tt.first.first) continue;
+
+		// TODO
+		/*
+		double w1 = gr.get_out_weights(i + 0);
+		double w2 = gr.get_in_weights(i + 1);
+		double ws = ss.second.first - w1;
+		double wt = tt.second.first - w2;
+		double w = (ws + wt) * 0.5;
+		*/
+
+		int xd = gr.out_degree(i + 0);
+		int yd = gr.in_degree(i + 1);
+		double w = (xd < yd) ? ss.second.first : tt.second.first;
+		int c = ss.second.second;
+		if(ss.second.second > tt.second.second) c = tt.second.second;
+
+		if(w < 1) w = 1;
+		edge_descriptor e = gr.add_edge(i + 0, i + 1);
+		edge_info ei;
+		ei.weight = w;
+		ei.count = c;
+		gr.set_edge_info(e, ei);
+		gr.set_edge_weight(e, w);
+	}
+	return 0;
+}
+
+int combined_graph::build_phasing_paths(splice_graph &gr, hyper_set &hs, rcluster &rc)
+{
+	vector<int> uu;
+	build_path_from_coordinates(gr, rc.vv, uu);
+	for(int j = 0; j < rc.vl.size(); j++)
+	{
+		int32_t p1 = rc.vl[j];
+		int32_t p2 = rc.vr[j];
+		int w = rc.cc[j];
+
+		assert(p1 >= 0 && p2 >= 0);
+
+		// NOTE: group phasing here
+		if(smap.find(p1) != smap.end()) p1 = smap[p1];
+		if(tmap.find(p2) != tmap.end()) p2 = tmap[p2];
+
+		assert(gr.lindex.find(p1) != gr.lindex.end());
+		assert(gr.rindex.find(p2) != gr.rindex.end());
+
+		int a = gr.lindex[p1];
+		int b = gr.rindex[p2];
+
+		vector<int> vv;
+		if(uu.size() == 0)
+		{
+			for(int k = a; k <= b; k++) vv.push_back(k);
+		}
+		else
+		{
+			for(int k = a; k < uu.front(); k++) vv.push_back(k);
+			vv.insert(vv.end(), uu.begin(), uu.end());
+			for(int k = uu.back() + 1; k <= b; k++) vv.push_back(k);
+		}
+
+		for(int k = 0; k < vv.size(); k++) vv[k]--;
+		hs.add_node_list(vv, w);
+	}
+	return 0;
+}
+
+int combined_graph::build_phasing_paths(splice_graph &gr, hyper_set &hs)
+{
+	hs.clear();
+	for(int i = 0; i < phase.size(); i++)
+	{
+		build_phasing_paths(gr, hs, phase[i]);
+	}
+
+	for(int k = 0; k < children.size(); k++)
+	{
+		combined_graph &gt = children[k];
+		for(int i = 0; i < gt.phase.size(); i++)
+		{
+			build_phasing_paths(gr, hs, gt.phase[i]);
+		}
+	}
+	return 0;
+}
+
+
 
 set<int32_t> combined_graph::get_reliable_adjacencies(int samples, double weight)
 {
@@ -821,217 +904,6 @@ set<int32_t> combined_graph::get_reliable_end_boundaries(int samples, double wei
 	return ss;
 }
 
-int combined_graph::build_splice_graph(splice_graph &xr)
-{
-	xr.clear();
-
-	xr.gid = gid;
-	xr.chrm = chrm;
-	xr.strand = strand;
-
-	// add vertices
-	xr.add_vertex();	// 0
-	PIDI sb = get_leftmost_bound();
-	vertex_info v0;
-	v0.lpos = sb.first;
-	v0.rpos = sb.first;
-	xr.set_vertex_weight(0, 0);
-	xr.set_vertex_info(0, v0);
-
-	for(int i = 0; i < regions.size(); i++) 
-	{
-		xr.add_vertex();
-		vertex_info vi;
-		vi.lpos = regions[i].first.first;
-		vi.rpos = regions[i].first.second;
-		vi.count = regions[i].second.second;
-		double w = regions[i].second.first;
-		vi.length = vi.rpos - vi.lpos;
-		xr.set_vertex_weight(i + 1, w);
-		xr.set_vertex_info(i + 1, vi);
-	}
-
-	xr.add_vertex();	// n
-	PIDI tb = get_rightmost_bound();
-	vertex_info vn;
-	vn.lpos = tb.first;
-	vn.rpos = tb.first;
-	xr.set_vertex_info(regions.size() + 1, vn);
-	xr.set_vertex_weight(regions.size() + 1, 0);
-
-	// add sbounds
-	for(int i = 0; i < sbounds.size(); i++)
-	{
-		int32_t p = sbounds[i].first;
-		double w = sbounds[i].second.first;
-		int c = sbounds[i].second.second;
-
-		assert(lindex.find(p) != lindex.end());
-		int k = lindex[p];
-		edge_descriptor e = xr.add_edge(0, k + 1);
-		edge_info ei;
-		ei.weight = w;
-		ei.count = c;
-		xr.set_edge_info(e, ei);
-		xr.set_edge_weight(e, w);
-	}
-
-	// add tbounds
-	for(int i = 0; i < tbounds.size(); i++)
-	{
-		int32_t p = tbounds[i].first;
-		double w = tbounds[i].second.first;
-		int c = tbounds[i].second.second;
-
-		assert(rindex.find(p) != rindex.end());
-		int k = rindex[p];
-		edge_descriptor e = xr.add_edge(k + 1, regions.size() + 1);
-		edge_info ei;
-		ei.weight = w;
-		ei.count = c;
-		xr.set_edge_info(e, ei);
-		xr.set_edge_weight(e, w);
-	}
-
-	// add junctions
-	for(int i = 0; i < junctions.size(); i++)
-	{
-		PI32 p = junctions[i].first;
-		double w = junctions[i].second.first;
-		int c = junctions[i].second.second;
-
-		// filtering later on
-		//if(parent && c < min_supporting_samples && w < min_splicing_count - 0.01) continue;
-
-		assert(rindex.find(p.first) != rindex.end());
-		assert(lindex.find(p.second) != lindex.end());
-		int s = rindex[p.first];
-		int t = lindex[p.second];
-		edge_descriptor e = xr.add_edge(s + 1, t + 1);
-		edge_info ei;
-		ei.weight = w;
-		ei.count = c;
-		xr.set_edge_info(e, ei);
-		xr.set_edge_weight(e, w);
-	}
-
-	// connect adjacent regions
-	for(int i = 1; i < regions.size(); i++)
-	{
-		int32_t p1 = regions[i - 1].first.second;
-		int32_t p2 = regions[i - 0].first.first;
-
-		assert(p1 <= p2);
-		if(p1 < p2) continue;
-
-		PPDI ss = regions[i - 1];
-		PPDI tt = regions[i - 0];
-		if(ss.first.second != tt.first.first) continue;
-
-		// TODO
-		/*
-		double w1 = xr.get_out_weights(i + 0);
-		double w2 = xr.get_in_weights(i + 1);
-		double ws = ss.second.first - w1;
-		double wt = tt.second.first - w2;
-		double w = (ws + wt) * 0.5;
-		*/
-
-		int xd = xr.out_degree(i + 0);
-		int yd = xr.in_degree(i + 1);
-		double w = (xd < yd) ? ss.second.first : tt.second.first;
-		int c = ss.second.second;
-		if(ss.second.second > tt.second.second) c = tt.second.second;
-
-		if(w < 1) w = 1;
-		edge_descriptor e = xr.add_edge(i + 0, i + 1);
-		edge_info ei;
-		ei.weight = w;
-		ei.count = c;
-		xr.set_edge_info(e, ei);
-		xr.set_edge_weight(e, w);
-	}
-	return 0;
-}
-
-int combined_graph::build_phasing_paths(splice_graph &gr, hyper_set &hs)
-{
-	hs.clear();
-	for(int i = 0; i < phase.size(); i++)
-	{
-		vector<int> uu = fetch_vertices_from_coordinates(gr, phase[i].first);
-		const vector<int32_t> &z = phase[i].second;
-		assert(z.size() % 3 == 0);
-
-		for(int j = 0; j < z.size() / 3; j++)
-		{
-			int32_t p1 = z[j * 3 + 0];
-			int32_t p2 = z[j * 3 + 1];
-			int w = z[j * 3 + 2];
-
-			assert(p1 >= 0 && p2 >= 0);
-			assert(lindex.find(p1) != lindex.end());
-			assert(rindex.find(p2) != rindex.end());
-			int a = lindex[p1] + 1;
-			int b = rindex[p2] + 1;
-
-			vector<int> vv;
-			if(uu.size() == 0)
-			{
-				for(int k = a; k <= b; k++) vv.push_back(k);
-			}
-			else
-			{
-				for(int k = a; k < uu.front(); k++) vv.push_back(k);
-				vv.insert(vv.end(), uu.begin(), uu.end());
-				for(int k = uu.back() + 1; k <= b; k++) vv.push_back(k);
-			}
-
-			for(int k = 0; k < vv.size(); k++) vv[k]--;
-			hs.add_node_list(vv, w);
-		}
-	}
-	return 0;
-}
-
-vector<int> combined_graph::fetch_vertices_from_coordinates(splice_graph &gr, const vector<int32_t> &v)
-{
-	// assume v encodes intron chain coordinates
-	vector<int> vv;
-	assert(v.size() % 2 == 0);
-	if(v.size() <= 0) return vv;
-
-	int n = v.size() / 2;
-	vector<PI> pp(n);
-	for(int k = 0; k < n; k++)
-	{
-		int32_t p = v[2 * k + 0];
-		int32_t q = v[2 * k + 1];
-		assert(p >= 0 && q >= 0);
-		assert(p <= q);
-
-		assert(rindex.find(p) != rindex.end());
-		assert(lindex.find(q) != lindex.end());
-		int kp = rindex[p] + 1;
-		int kq = lindex[q] + 1;
-		pp[k].first = kp;
-		pp[k].second = kq;
-	}
-
-	vv.push_back(pp.front().first);
-	for(int k = 0; k < n - 1; k++)
-	{
-		int a = pp[k + 0].second;
-		int b = pp[k + 1].first;
-		assert(a <= b);
-		assert(check_continue_vertices(gr, a, b));
-		for(int j = a; j <= b; j++) vv.push_back(j);
-	}
-	vv.push_back(pp.back().second);
-
-	return vv;
-}
-
 int combined_graph::clear()
 {
 	num_combined = 0;
@@ -1045,8 +917,6 @@ int combined_graph::clear()
 	tbounds.clear();
 	phase.clear();
 	reads.clear();
-	lindex.clear();
-	rindex.clear();
 	smap.clear();
 	tmap.clear();
 	return 0;
@@ -1071,7 +941,7 @@ int combined_graph::print(int index)
 	{
 		PI32 p = junctions[i].first;
 		DI d = junctions[i].second;
-		printf("junction %d: [%d, %d), w = %.2lf, c = %d, regions = %d -> %d\n", i, p.first, p.second, d.first, d.second, rindex[p.first], lindex[p.second]);
+		printf("junction %d: [%d, %d), w = %.2lf, c = %d\n", i, p.first, p.second, d.first, d.second);
 	}
 	for(int i = 0; i < sbounds.size(); i++)
 	{
@@ -1087,14 +957,13 @@ int combined_graph::print(int index)
 	}
 	for(int i = 0; i < phase.size(); i++)
 	{
-		vector<int32_t> &v = phase[i].first;
-		vector<int32_t> &z = phase[i].second;
-		printf("path %d: %lu components, core = ( ", i, z.size() / 3);
-		printv(v);
+		rcluster &r = phase[i];
+		printf("path %d: vv = ( ", i);
+		printv(r.vv);
 		printf(")\n");
-		for(int k = 0; k < z.size() / 3; k++)
+		for(int k = 0; k < r.vl.size() / 3; k++)
 		{
-			printf(" bounds = (%d, %d), w = %.2lf, c = 1\n", z[k * 3 + 0], z[k * 3 + 1], 1.0 * z[k * 3 + 2]);
+			printf(" bounds = (%d, %d), w = %d, c = 1\n", r.vl[k], r.vr[k], r.cc[k]);
 		}
 	}
 	return 0;

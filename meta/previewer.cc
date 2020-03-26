@@ -12,6 +12,7 @@ See LICENSE for licensing.
 #include "constants.h"
 #include "bridger.h"
 #include "bundle.h"
+#include "graph_hits.h"
 
 previewer::previewer(const string &file)
 {
@@ -258,30 +259,34 @@ int previewer::process(bundle_base &bb, config &cfg, map<int32_t, int> &m)
 	bd.build();
 	//bd.print(index);
 
-	bridger br(bd.gr, bb.hits);
-	vector<fragment> fs;
+	vector<PRC> vpr;
+	vector<bool> paired;
+	graph_hits gh(bd.gr, bb.hits);
+	gh.build_paired_reads_clusters(vpr, paired);
+
+	bridger br(bd.gr, vpr);
 	br.length_low = 0;
 	br.length_high = 9999;
-	br.build_vertex_index();
-	br.build_fragments(fs);
-	br.build_fclusters(fs);
 	br.vote();
 
 	int cnt = 0;
-	for(int k = 0; k < br.fclusters.size(); k++)
+	assert(br.opt.size() == vpr.size());
+	for(int k = 0; k < br.opt.size(); k++)
 	{
-		fcluster &fc = br.fclusters[k];
-		if(fc.bbp.type != 1) continue;
+		phase &bbp = br.opt[k];
+		if(bbp.type != 1) continue;
 
-		for(int j = 0; j < fc.frset.size(); j++)
+		rcluster &r1 = vpr[k].first;
+		rcluster &r2 = vpr[k].second;
+		int32_t len = bd.gr.get_total_length_of_vertices(bbp.v);
+
+		for(int j = 0; j < r1.vl.size(); j++)
 		{
-			fragment &fr = fc.frset[j];
-			int32_t len = br.compute_aligned_length(fr, fc.bbp.v);
-
+			int32_t d = len - r1.vl[j] - r2.vr[j];
 			cnt++;
 
-			if(m.find(len) != m.end()) m[len]++;
-			else m.insert(pair<int32_t, int>(len, 1));
+			if(m.find(d) != m.end()) m[d]++;
+			else m.insert(pair<int32_t, int>(d, 1));
 			if(cnt >= 1000) return cnt;
 		}
 	}

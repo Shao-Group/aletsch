@@ -13,11 +13,12 @@ See LICENSE for licensing.
 #include "scallop/config.h"
 #include "gtf.h"
 #include "genome.h"
+#include "bundle.h"
 #include "generator.h"
 #include "scallop.h"
 #include "previewer.h"
 #include "bridger.h"
-#include "fcluster.h"
+#include "graph_hits.h"
 #include "essential.h"
 
 generator::generator(vector<combined_graph> &v, const config &c)
@@ -131,23 +132,30 @@ int generator::generate(int n)
 
 		if(bd.gr.count_junctions() <= 0) continue;
 
-		bridger br(bd.gr, bb.hits);
+		hyper_set hs;
+		vector<PRC> vpr;
+		vector<bool> paired;
+
+		graph_hits gh(bd.gr, bb.hits);
+		gh.build_paired_reads_clusters(vpr, paired);
+		gh.build_hyper_set_from_unpaired_reads(paired, hs);
+
+		bridger br(bd.gr, vpr);
 		br.length_median = sp.insertsize_median;
 		br.length_low = sp.insertsize_low;
 		br.length_high = sp.insertsize_high;
 		br.resolve();
+		br.build_hyper_set(hs);
 
-		//bd.gr.print();
-
-		vector<fcluster> ub;
-		br.collect_unbridged_fclusters(ub);
+		vector<PRC> ub;
+		br.collect_unbridged_clusters(ub);
 
 		//for(int k = 0; k < ub.size(); k++) ub[k].print(k);
 
 		vector<splice_graph> grv;
 		vector<hyper_set> hsv;
-		vector< vector<fcluster> > ubv;
-		partition(bd.gr, br.hs, ub, grv, hsv, ubv);
+		vector< vector<PRC> > ubv;
+		partition(bd.gr, hs, ub, grv, hsv, ubv);
 		
 		assert(grv.size() == hsv.size());
 		assert(grv.size() == ubv.size());
@@ -175,7 +183,7 @@ int generator::generate(int n)
 	return 0;
 }
 
-int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster> &ub, vector<splice_graph> &grv, vector<hyper_set> &hsv, vector< vector<fcluster> > &ubv)
+int generator::partition(splice_graph &gr, hyper_set &hs, const vector<PRC> &ub, vector<splice_graph> &grv, vector<hyper_set> &hsv, vector< vector<PRC> > &ubv)
 {
 	int n = gr.num_vertices();
 
@@ -219,10 +227,10 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 	// group with unbridged pairs
 	for(int i = 0; i < ub.size(); i++)
 	{
-		if(ub[i].v1.size() <= 0) continue;
-		if(ub[i].v2.size() <= 0) continue;
-		int x = ub[i].v1.back();
-		int y = ub[i].v2.front();
+		if(ub[i].first.vv.size() <= 0) continue;
+		if(ub[i].second.vv.size() <= 0) continue;
+		int x = ub[i].first.vv.back();
+		int y = ub[i].second.vv.front();
 		ds.union_set(x, y);
 	}
 
@@ -280,24 +288,24 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<fcluster>
 	ubv.resize(vv.size());
 	for(int i = 0; i < ub.size(); i++)
 	{
-		if(ub[i].v1.size() <= 0) continue;
-		if(ub[i].v2.size() <= 0) continue;
-		int x = ub[i].v1.back();
-		int y = ub[i].v2.front();
+		if(ub[i].first.vv.size() <= 0) continue;
+		if(ub[i].second.vv.size() <= 0) continue;
+		int x = ub[i].first.vv.back();
+		int y = ub[i].second.vv.front();
 		int p = ds.find_set(x);
 		assert(p == ds.find_set(y));
 		assert(m.find(p) != m.end());
 		int k = m[p];
 		assert(k >= 0 && k < vv.size());
 
-		fcluster fc = ub[i];
-		fc.v1 = project_vector(fc.v1, vm[k]);
-		fc.v2 = project_vector(fc.v2, vm[k]);
+		PRC prc = ub[i];
+		prc.first.vv = project_vector(prc.first.vv, vm[k]);
+		prc.second.vv = project_vector(prc.second.vv, vm[k]);
 		//assert(fc.v1.size() == ub[i].v1.size());
 		//assert(fc.v2.size() == ub[i].v2.size());
-		if(fc.v1.size() != ub[i].v1.size()) continue;
-		if(fc.v2.size() != ub[i].v2.size()) continue;
-		ubv[k].push_back(fc);
+		if(prc.first.vv.size() != ub[i].first.vv.size()) continue;
+		if(prc.second.vv.size() != ub[i].second.vv.size()) continue;
+		ubv[k].push_back(prc);
 	}
 
 	return 0;

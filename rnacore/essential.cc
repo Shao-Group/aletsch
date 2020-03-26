@@ -136,7 +136,7 @@ vector<int> project_vector(const vector<int> &v, const map<int, int> &a2b)
 	return vv;
 }
 
-int build_path_coordinates(splice_graph &gr, const vector<int> &v, vector<int32_t> &vv)
+int build_coordinates_from_path(splice_graph &gr, const vector<int> &v, vector<int32_t> &vv)
 {
 	vv.clear();
 	if(v.size() <= 0) return 0;
@@ -176,6 +176,44 @@ int build_path_coordinates(splice_graph &gr, const vector<int> &v, vector<int32_
 	return 0;
 }
 
+int build_path_from_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv)
+{
+	// assume v encodes intron chain coordinates
+	// assume that lindex and rindex are available in gr
+	vv.clear();
+	assert(v.size() % 2 == 0);
+	if(v.size() <= 0) return 0;
+
+	int n = v.size() / 2;
+	vector<PI> pp(n);
+	for(int k = 0; k < n; k++)
+	{
+		int32_t p = v[2 * k + 0];
+		int32_t q = v[2 * k + 1];
+		assert(p >= 0 && q >= 0);
+		assert(p <= q);
+
+		assert(gr.rindex.find(p) != gr.rindex.end());
+		assert(gr.lindex.find(q) != gr.lindex.end());
+		int kp = gr.rindex[p] + 1;
+		int kq = gr.lindex[q] + 1;
+		pp[k].first = kp;
+		pp[k].second = kq;
+	}
+
+	vv.push_back(pp.front().first);
+	for(int k = 0; k < n - 1; k++)
+	{
+		int a = pp[k + 0].second;
+		int b = pp[k + 1].first;
+		assert(a <= b);
+		assert(check_continue_vertices(gr, a, b));
+		for(int j = a; j <= b; j++) vv.push_back(j);
+	}
+	vv.push_back(pp.back().second);
+
+	return 0;
+}
 bool check_continue_vertices(splice_graph &gr, int x, int y)
 {
 	if(x >= y) return true;
@@ -249,7 +287,7 @@ bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv)
 	return true;
 }
 
-int build_fragments(const vector<hit> &hits, vector<PI> &fs)
+int build_paired_reads(const vector<hit> &hits, vector<PI> &fs)
 {
 	vector<bool> paired(hits.size(), false);
 
@@ -306,3 +344,4 @@ int build_fragments(const vector<hit> &hits, vector<PI> &fs)
 	//printf("total hits = %lu, total fragments = %lu\n", hits.size(), fragments.size());
 	return 0;
 }
+

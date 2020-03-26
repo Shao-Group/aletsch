@@ -18,4 +18,6 @@ librnacore_a_SOURCES = splice_graph.h splice_graph.cc \
 					   region.h region.cc \
 					   junction.h junction.cc \
 					   essential.h essential.cc \
+					   rcluster.h rcluster.cc \
+					   graph_hits.h graph_hits.cc \
 					   constants.h constants.cc

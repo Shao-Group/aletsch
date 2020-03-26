@@ -8,11 +8,9 @@ See LICENSE for licensing.
 #define __BRIDGER_H__
 
 #include "splice_graph.h"
-#include "fragment.h"
-#include "fcluster.h"
+#include "rcluster.h"
 #include "pier.h"
 #include "hyper_set.h"
-#include "hit.h"
 
 using namespace std;
 
@@ -33,16 +31,15 @@ bool entry_compare(const entry &x, const entry &y);
 class bridger
 {
 public:
-	bridger(splice_graph &gr, vector<hit> &hits);
-	bridger(splice_graph &gr, const vector<fcluster> &ub);
+	bridger(splice_graph &gr, const vector<PRC> &vpr);
 
 public:
 	splice_graph &gr;				// given splice graph
+	const vector<PRC> &vpr;			// given paired reads clusters
 
-	vector<fcluster> fclusters;		// clusters
 	vector<pier> piers;				// piers
-	vector<bool> bridged;			// whether given hits are bridged
-	hyper_set hs;					// constructed hyper-set
+	map<PI, int> pindex;			// piers index
+	vector<phase> opt;				// optimal bridging paths
 
 	int dp_solution_size;
 	int dp_stack_size;
@@ -52,21 +49,16 @@ public:
 
 public:
 	int resolve();
-	int collect_unbridged_fclusters(vector<fcluster> &ub);
-	
-	int build_fragments(vector<fragment> &fs);
-	int build_fclusters(vector<fragment> &fs);
 	int build_piers();
+	int build_piers_index();
 	int nominate();
-	int vote();
-	int build_hyper_set();
-
-	int locate_vertex(int32_t p, int a, int b);
-	bool align_hit(const hit &h, vector<int> &vv);
 	int dynamic_programming(int k1, int k2, vector< vector<entry> > &table);
 	vector<int> update_stack(const vector<int> &v, int s);
 	vector< vector<int> > trace_back(int k, const vector< vector<entry> > &table);
-	int32_t compute_aligned_length(fragment &fr, const vector<int> &v);
+	int vote();
+	int vote(const PRC &prc, phase &bbp);
+	int collect_unbridged_clusters(vector<PRC> &v);
+	int build_hyper_set(hyper_set &hs);
 };
 
 #endif

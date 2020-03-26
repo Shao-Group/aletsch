@@ -260,7 +260,7 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 
 	splice_graph gx;
 	hyper_set hx;
-	vector<fcluster> ux;
+	vector<PRC> ux;
 	cb.resolve(gx, hx, ux);
 
 	/*
@@ -294,7 +294,7 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	{
 		splice_graph gr;
 		hyper_set hs;
-		vector<fcluster> ub;
+		vector<PRC> ub;
 		cb.children[i].resolve(gr, hs, ub);
 
 		/*

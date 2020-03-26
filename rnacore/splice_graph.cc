@@ -1145,3 +1145,16 @@ int splice_graph::print_weights()
 	}
 	return 0;
 }
+
+int32_t splice_graph::get_total_length_of_vertices(const vector<int>& v) const
+{
+	if(v.size() == 0) return 0;
+	int32_t flen = 0;
+	for(int i = 0; i < v.size(); i++)
+	{
+		assert(v[i] >= 0 && v[i] < num_vertices());
+		const vertex_info &x = get_vertex_info(v[i]);
+		flen += x.rpos - x.lpos;
+	}
+	return flen;
+}

@@ -10,13 +10,12 @@ See LICENSE for licensing.
 #include <fstream>
 #include <string>
 #include "bundle_base.h"
-#include "bundle.h"
 #include "splice_graph.h"
 #include "hyper_set.h"
+#include "rcluster.h"
 #include "combined_graph.h"
 #include "scallop/config.h"
 #include "sample_profile.h"
-#include "fcluster.h"
 
 using namespace std;
 
@@ -48,7 +47,7 @@ public:
 
 private:
 	int generate(int n);
-	int partition(splice_graph &gr, hyper_set &hs, const vector<fcluster> &ub, vector<splice_graph> &grv, vector<hyper_set> &hsv, vector< vector<fcluster> > &ubv);
+	int partition(splice_graph &gr, hyper_set &hs, const vector<PRC> &ub, vector<splice_graph> &grv, vector<hyper_set> &hsv, vector< vector<PRC> > &ubv);
 	int write_graph(splice_graph &gr, hyper_set &hs);
 };
 
