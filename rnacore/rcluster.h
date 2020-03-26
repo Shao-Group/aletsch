@@ -1,6 +1,7 @@
 #ifndef __READ_CLUSTER_H__
 #define __READ_CLUSTER_H__
 
+#include <cstdint>
 #include <vector>
 
 using namespace std;
