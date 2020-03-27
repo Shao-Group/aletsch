@@ -258,6 +258,8 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	vector<PRC> ux;
 	cb.resolve(gx, hx, ux);
 
+	gx.build_vertex_index();
+
 	// collect and transform reads
 	vector<PRC> reads;
 	vector<int> index;
