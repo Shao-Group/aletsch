@@ -128,7 +128,7 @@ int combined_graph::build_phase(splice_graph &gr, hyper_set &hs)
 
 		if(v.size() <= 0) continue;
 		vector<int32_t> vv;
-		build_coordinates_from_path(gr, v, vv);
+		build_exon_coordinates_from_path(gr, v, vv);
 
 		if(vv.size() <= 1) continue;
 		vector<int32_t> zz(vv.begin() + 1, vv.end() - 1);
@@ -170,8 +170,8 @@ int combined_graph::build_reads(splice_graph &gr, vector<PRC> &ub)
 		assert(prc.second.vv.back() != n);
 
 		PRC rr = prc;
-		build_coordinates_from_path(gr, prc.first.vv, rr.first.vv);
-		build_coordinates_from_path(gr, prc.second.vv, rr.second.vv);
+		build_exon_coordinates_from_path(gr, prc.first.vv, rr.first.vv);
+		build_exon_coordinates_from_path(gr, prc.second.vv, rr.second.vv);
 		reads.push_back(rr);
 	}
 	return 0;
@@ -369,7 +369,7 @@ int combined_graph::group_start_boundaries(splice_graph &gr)
 		double wb = gr.get_edge_weight(pb.first);
 		edge_info eb = gr.get_edge_info(pb.first);
 
-		bool b = check_continue_vertices(gr, k2, v[i]);
+		bool b = check_continuous_vertices(gr, k2, v[i]);
 
 		assert(p >= p2);
 		if(p - p2 > max_group_boundary_distance) b = false;
@@ -448,7 +448,7 @@ int combined_graph::group_end_boundaries(splice_graph &gr)
 		assert(pb.second == true);
 		double wb = gr.get_edge_weight(pb.first);
 
-		bool b = check_continue_vertices(gr, v[i], k2);
+		bool b = check_continuous_vertices(gr, v[i], k2);
 
 		assert(p <= p2);
 		if(p2 - p > max_group_boundary_distance) b = false;
@@ -668,7 +668,9 @@ int combined_graph::build_splice_graph(splice_graph &gr)
 int combined_graph::build_phasing_paths(splice_graph &gr, hyper_set &hs, rcluster &rc)
 {
 	vector<int> uu;
-	build_path_from_coordinates(gr, rc.vv, uu);
+	bool b = build_path_from_intron_coordinates(gr, rc.vv, uu);
+	assert(b == true);
+
 	for(int j = 0; j < rc.vl.size(); j++)
 	{
 		int32_t p1 = rc.vl[j];

@@ -136,7 +136,7 @@ vector<int> project_vector(const vector<int> &v, const map<int, int> &a2b)
 	return vv;
 }
 
-int build_coordinates_from_path(splice_graph &gr, const vector<int> &v, vector<int32_t> &vv)
+int build_exon_coordinates_from_path(splice_graph &gr, const vector<int> &v, vector<int32_t> &vv)
 {
 	vv.clear();
 	if(v.size() <= 0) return 0;
@@ -176,13 +176,13 @@ int build_coordinates_from_path(splice_graph &gr, const vector<int> &v, vector<i
 	return 0;
 }
 
-int build_path_from_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv)
+bool build_path_from_exon_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv)
 {
-	// assume v encodes intron chain coordinates
+	// assume v encodes exon-chain coordinates
 	// assume that lindex and rindex are available in gr
 	vv.clear();
 	assert(v.size() % 2 == 0);
-	if(v.size() <= 0) return 0;
+	if(v.size() <= 0) return true;
 
 	int n = v.size() / 2;
 	vector<PI> pp(n);
@@ -193,8 +193,47 @@ int build_path_from_coordinates(splice_graph &gr, const vector<int32_t> &v, vect
 		assert(p >= 0 && q >= 0);
 		assert(p <= q);
 
-		assert(gr.rindex.find(p) != gr.rindex.end());
-		assert(gr.lindex.find(q) != gr.lindex.end());
+		if(gr.lindex.find(p) == gr.lindex.end()) return false;
+		if(gr.rindex.find(q) == gr.rindex.end()) return false;
+		int kp = gr.lindex[p];
+		int kq = gr.rindex[q];
+		pp[k].first = kp;
+		pp[k].second = kq;
+	}
+
+	for(int k = 0; k < n; k++)
+	{
+		int a = pp[k].first;
+		int b = pp[k].second;
+		assert(a <= b);
+		assert(check_continuous_vertices(gr, a, b));
+		for(int j = a; j <= b; j++) vv.push_back(j);
+	}
+
+	for(int i = 0; i < vv.size() - 1; i++) assert(vv[i] < vv[i + 1]);
+
+	return true;
+}
+
+bool build_path_from_intron_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv)
+{
+	// assume v encodes intron chain coordinates
+	// assume that lindex and rindex are available in gr
+	vv.clear();
+	assert(v.size() % 2 == 0);
+	if(v.size() <= 0) return true;
+
+	int n = v.size() / 2;
+	vector<PI> pp(n);
+	for(int k = 0; k < n; k++)
+	{
+		int32_t p = v[2 * k + 0];
+		int32_t q = v[2 * k + 1];
+		assert(p >= 0 && q >= 0);
+		assert(p <= q);
+
+		if(gr.rindex.find(p) == gr.rindex.end()) return false;
+		if(gr.lindex.find(q) == gr.lindex.end()) return false;
 		int kp = gr.rindex[p];
 		int kq = gr.lindex[q];
 		pp[k].first = kp;
@@ -207,14 +246,48 @@ int build_path_from_coordinates(splice_graph &gr, const vector<int32_t> &v, vect
 		int a = pp[k + 0].second;
 		int b = pp[k + 1].first;
 		assert(a <= b);
-		assert(check_continue_vertices(gr, a, b));
+		assert(check_continuous_vertices(gr, a, b));
 		for(int j = a; j <= b; j++) vv.push_back(j);
 	}
 	vv.push_back(pp.back().second);
 
-	return 0;
+	return true;
 }
-bool check_continue_vertices(splice_graph &gr, int x, int y)
+
+bool build_path_from_mixed_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv)
+{
+	// assume v[1..n-1] encodes intron-chain coordinates
+	// assume that lindex and rindex are available in gr
+
+	vv.clear();
+	assert(v.size() % 2 == 0);
+	if(v.size() <= 0) return true;
+
+	int u1 = gr.locate_vertex(v.front());
+	int u2 = gr.locate_vertex(v.back() - 1);
+
+	if(u1 < 0 || u2 < 0) return false;
+
+	if(v.size() == 2)
+	{
+		for(int k = u1; k <= u2; k++) vv.push_back(k);
+		return true;
+	}
+
+	vector<int> uu;
+	vector<int32_t> u(v.begin() + 1, v.end() - 1);
+	bool b = build_path_from_intron_coordinates(gr, u, uu);
+	
+	if(b == false) return false;
+
+	for(int i = u1; i < uu.front(); i++) vv.push_back(i);
+	vv.insert(vv.end(), uu.begin(), uu.end());
+	for(int i = uu.back() + 1; i <= u2; i++) vv.push_back(i);
+
+	return true;
+}
+
+bool check_continuous_vertices(splice_graph &gr, int x, int y)
 {
 	if(x >= y) return true;
 	for(int i = x; i < y; i++)
@@ -241,7 +314,6 @@ bool check_valid_path(splice_graph &gr, const vector<int> &vv)
 
 bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv)
 {
-	// NOTE: do not guarantee vv forms a valid path in the splice graph
 	// make sure that lindex and rindex are available in gr
 	vv.clear();
 	vector<int64_t> v;
@@ -249,42 +321,15 @@ bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv)
 
 	if(v.size() == 0) return false;
 
-	vector<PI> sp;
-	sp.resize(v.size());
-
-	int32_t p1 = high32(v.front());
-	int32_t p2 = low32(v.back());
-
-	sp[0].first = gr.locate_vertex(p1);
-	if(sp[0].first < 0) return false;
-
-	for(int k = 1; k < v.size(); k++)
+	vector<int32_t> u;
+	for(int i = 0; i < v.size(); i++)
 	{
-		p1 = high32(v[k]);
-		map<int32_t, int>::const_iterator it = gr.lindex.find(p1);
-		if(it == gr.lindex.end()) return false;
-		sp[k].first = it->second;
+		u.push_back(high32(v[i]));
+		u.push_back(low32(v[i]));
 	}
 
-	sp[sp.size() - 1].second = gr.locate_vertex(p2 - 1);
-	if(sp[sp.size() - 1].second < 0) return false;
-
-	for(int k = 0; k < v.size() - 1; k++)
-	{
-		p2 = low32(v[k]);
-		map<int32_t, int>::const_iterator it = gr.rindex.find(p2);
-		if(it == gr.rindex.end()) return false;
-		sp[k].second = it->second; 
-	}
-
-	for(int k = 0; k < sp.size(); k++)
-	{
-		assert(sp[k].first <= sp[k].second);
-		if(k > 0) assert(sp[k - 1].second < sp[k].first);
-		for(int j = sp[k].first; j <= sp[k].second; j++) vv.push_back(j);
-	}
-
-	return true;
+	bool b = build_path_from_mixed_coordinates(gr, u, vv);
+	return b;
 }
 
 int build_paired_reads(const vector<hit> &hits, vector<PI> &fs)
@@ -344,4 +389,3 @@ int build_paired_reads(const vector<hit> &hits, vector<PI> &fs)
 	//printf("total hits = %lu, total fragments = %lu\n", hits.size(), fragments.size());
 	return 0;
 }
-
