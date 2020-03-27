@@ -206,12 +206,11 @@ bool build_path_from_exon_coordinates(splice_graph &gr, const vector<int32_t> &v
 		int a = pp[k].first;
 		int b = pp[k].second;
 		assert(a <= b);
-		assert(check_continuous_vertices(gr, a, b));
+		if(check_continuous_vertices(gr, a, b) == false) return false;
 		for(int j = a; j <= b; j++) vv.push_back(j);
 	}
 
 	for(int i = 0; i < vv.size() - 1; i++) assert(vv[i] < vv[i + 1]);
-
 	return true;
 }
 
@@ -246,7 +245,7 @@ bool build_path_from_intron_coordinates(splice_graph &gr, const vector<int32_t> 
 		int a = pp[k + 0].second;
 		int b = pp[k + 1].first;
 		assert(a <= b);
-		assert(check_continuous_vertices(gr, a, b));
+		if(check_continuous_vertices(gr, a, b) == false) return false;
 		for(int j = a; j <= b; j++) vv.push_back(j);
 	}
 	vv.push_back(pp.back().second);
@@ -330,6 +329,18 @@ bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv)
 
 	bool b = build_path_from_mixed_coordinates(gr, u, vv);
 	return b;
+}
+
+int transform_to_paths(splice_graph &gr, PRC &p)
+{
+	vector<int> v1;
+	vector<int> v2;
+	bool b1 = build_path_from_exon_coordinates(gr, p.first.vv, v1);
+	bool b2 = build_path_from_exon_coordinates(gr, p.second.vv, v2);
+	assert(b1 && b2);
+	p.first.vv = v1;
+	p.second.vv = v2;
+	return 0;
 }
 
 int build_paired_reads(const vector<hit> &hits, vector<PI> &fs)

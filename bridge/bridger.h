@@ -43,12 +43,13 @@ public:
 
 	int dp_solution_size;
 	int dp_stack_size;
-	int32_t length_median;
 	int32_t length_low;
 	int32_t length_high;
 
 public:
 	int resolve();
+	int print();
+
 	int build_piers();
 	int build_piers_index();
 	int nominate();

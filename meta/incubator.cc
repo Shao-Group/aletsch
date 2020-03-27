@@ -6,15 +6,18 @@
 #include "scallop.h"
 #include "hyper_graph.h"
 #include "graph_revise.h"
-#include "boost/pending/disjoint_sets.hpp"
+#include "bridger.h"
+#include "essential.h"
+
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <algorithm>
 #include <thread>
 #include <ctime>
-#include <boost/asio/thread_pool.hpp>
 #include <boost/asio/post.hpp>
+#include <boost/asio/thread_pool.hpp>
+#include <boost/pending/disjoint_sets.hpp>
 
 incubator::incubator(const config &c)
 {
@@ -233,17 +236,15 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 {
 	config cfg = cfg1;
 
+	// setting up names
 	char name[10240];
 	sprintf(name, "instance.%d.0", instance);
 	cb.gid = name;
-	if(merge_intersection == true) cb.parent = false;
-	else cb.parent = true;
 
 	for(int j = 0; j < cb.children.size(); j++)
 	{
 		sprintf(name, "instance.%d.%d", instance, j + 1);
 		cb.children[j].gid = name;
-		cb.children[j].parent = false;
 	}
 
 	int z = 0;
@@ -251,17 +252,39 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	vector<transcript> vt;
 
 	set<int32_t> ps = cb.get_reliable_splices(min_supporting_samples, 99999);
-	/*
-	set<int32_t> sb = cb.get_reliable_start_boundaries(min_supporting_samples, 99999);
-	set<int32_t> tb = cb.get_reliable_end_boundaries(min_supporting_samples, 99999);
-	set<int32_t> aj = cb.get_reliable_adjacencies(min_supporting_samples, min_splicing_count);
-	set<PI32> rs = cb.get_reliable_junctions(min_supporting_samples, min_splicing_count);
-	*/
 
 	splice_graph gx;
 	hyper_set hx;
 	vector<PRC> ux;
 	cb.resolve(gx, hx, ux);
+
+	// collect and transform reads
+	vector<PRC> reads;
+	vector<int> index;
+	int length_low = 9999;
+	int length_high = 0;
+	for(int k = 0; k < cb.children.size(); k++)
+	{
+		combined_graph &gt = cb.children[k];
+		if(gt.sp.insertsize_low < length_low) length_low = gt.sp.insertsize_low;
+		if(gt.sp.insertsize_high > length_high) length_high = gt.sp.insertsize_high;
+		for(int j = 0; j < gt.reads.size(); j++)
+		{
+			PRC prc = gt.reads[j];
+			transform_to_paths(gx, prc);
+			reads.push_back(prc);
+			index.push_back(k);
+		}
+	}
+
+	bridger br(gx, reads);
+	br.length_low = length_low;
+	br.length_high = length_high;
+	br.resolve();
+	br.build_hyper_set(hx);
+
+	// stats bridging reads
+	br.print();
 
 	/*
 	printf("-----\n");
@@ -269,6 +292,7 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	hx.print_nodes();
 	*/
 
+	refine_splice_graph(gx);
 	keep_surviving_edges(gx, min_splicing_count);
 	hx.filter_nodes(gx);
 
@@ -303,6 +327,7 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 		hs.print_nodes();
 		*/
 
+		refine_splice_graph(gr);
 		keep_surviving_edges(gr, ps, min_splicing_count);
 		hs.filter_nodes(gr);
 

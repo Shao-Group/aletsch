@@ -331,7 +331,6 @@ int combined_graph::resolve(splice_graph &gr, hyper_set &hs, vector<PRC> &ub)
 	group_start_boundaries(gr);
 	group_end_boundaries(gr);
 	build_phasing_paths(gr, hs);
-	refine_splice_graph(gr);
 	return 0;
 }
 
@@ -612,7 +611,6 @@ int combined_graph::build_splice_graph(splice_graph &gr)
 		int c = junctions[i].second.second;
 
 		// filtering later on
-		//if(parent && c < min_supporting_samples && w < min_splicing_count - 0.01) continue;
 
 		assert(gr.rindex.find(p.first) != gr.rindex.end());
 		assert(gr.lindex.find(p.second) != gr.lindex.end());

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 
+#include "sample_profile.h"
 #include "splice_graph.h"
 #include "hyper_set.h"
 #include "rcluster.h"
@@ -32,7 +33,7 @@ public:
 	string gid;
 	string chrm;
 	char strand;
-	bool parent;
+	sample_profile sp;
 
 	vector<PPDI> regions;
 	vector<PPDI> junctions;

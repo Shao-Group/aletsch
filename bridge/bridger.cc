@@ -28,7 +28,6 @@ bridger::bridger(splice_graph &g, const vector<PRC> &v)
 {
 	dp_solution_size = 10;
 	dp_stack_size = 5;
-	length_median = 300;
 	length_low = 100;
 	length_high = 500;
 }
@@ -378,4 +377,22 @@ vector< vector<int> > bridger::trace_back(int k, const vector< vector<entry> > &
 		vv.push_back(v);
 	}
 	return vv;
+}
+
+int bridger::print()
+{
+	assert(vpr.size() == opt.size());
+	int total_reads = 0;
+	int bridged_reads = 0;
+	int bridged_clusters = 0;
+	for(int i = 0; i < vpr.size(); i++)
+	{
+		total_reads += vpr[i].first.vl.size();
+		if(opt[i].type < 0) continue;
+		bridged_reads += vpr[i].first.vl.size();
+		bridged_clusters++;
+	}
+
+	printf("bridger: clusters %d / %lu, reads %d / %d, low = %d, high = %d\n", bridged_clusters, vpr.size(), bridged_reads, total_reads, length_low, length_high);
+	return 0;
 }

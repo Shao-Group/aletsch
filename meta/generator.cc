@@ -143,7 +143,6 @@ int generator::generate(int n)
 		gh.build_hyper_set_from_unpaired_reads(paired, hs);
 
 		bridger br(bd.gr, vpr);
-		br.length_median = sp.insertsize_median;
 		br.length_low = sp.insertsize_low;
 		br.length_high = sp.insertsize_high;
 		br.resolve();
@@ -168,6 +167,7 @@ int generator::generate(int n)
 
 			string gid = "gene." + tostring(index) + "." + tostring(k);
 			combined_graph cb;
+			cb.sp = sp;
 			cb.gid = gid;
 			cb.build(grv[k], hsv[k], ubv[k]);
 
