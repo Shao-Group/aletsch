@@ -545,7 +545,14 @@ int combined_graph::build_splice_graph(splice_graph &gr)
 	gr.set_vertex_weight(0, 0);
 	gr.set_vertex_info(0, v0);
 
-	printf("start = %d\n", sb.first);
+	printf("=====\n");
+	for(int k = 0; k < children.size(); k++)
+	{
+		printf("child %d: ", k);
+		children[k].print(k);
+	}
+
+	printf("start = %d, num-combined = %d\n", sb.first, num_combined);
 
 	for(int i = 0; i < regions.size(); i++) 
 	{
