@@ -128,7 +128,9 @@ int generator::generate(int n)
 
 		bd.chrm = string(buf);
 		bd.build();
-		//bd.print(index);
+
+		printf("super-graph: \n");
+		bd.gr.print();
 
 		if(bd.gr.count_junctions() <= 0) continue;
 
@@ -164,6 +166,9 @@ int generator::generate(int n)
 		for(int k = 0; k < grv.size(); k++)
 		{
 			if(grv[k].count_junctions() <= 0) continue;
+
+			printf("child-graph: %d\n", k);
+			grv[k].print();
 
 			string gid = "gene." + tostring(index) + "." + tostring(k);
 			combined_graph cb;
