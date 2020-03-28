@@ -682,8 +682,9 @@ int combined_graph::build_phasing_paths(splice_graph &gr, hyper_set &hs, rcluste
 		if(smap.find(p1) != smap.end()) p1 = smap[p1];
 		if(tmap.find(p2) != tmap.end()) p2 = tmap[p2];
 
-		assert(gr.lindex.find(p1) != gr.lindex.end());
-		assert(gr.rindex.find(p2) != gr.rindex.end());
+		// TODO: change back to assert?
+		if(gr.lindex.find(p1) == gr.lindex.end()) continue;
+		if(gr.rindex.find(p2) == gr.rindex.end()) continue;
 
 		int a = gr.lindex[p1];
 		int b = gr.rindex[p2];
