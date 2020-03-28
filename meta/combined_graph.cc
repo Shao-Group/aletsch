@@ -668,7 +668,7 @@ int combined_graph::build_phasing_paths(splice_graph &gr, hyper_set &hs, rcluste
 {
 	vector<int> uu;
 	bool b = build_path_from_intron_coordinates(gr, rc.vv, uu);
-	assert(b == true);
+	if(b == false) return 0;	// TODO
 
 	for(int j = 0; j < rc.vl.size(); j++)
 	{
