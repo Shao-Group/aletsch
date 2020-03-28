@@ -545,6 +545,8 @@ int combined_graph::build_splice_graph(splice_graph &gr)
 	gr.set_vertex_weight(0, 0);
 	gr.set_vertex_info(0, v0);
 
+	printf("start = %d\n", sb.first);
+
 	for(int i = 0; i < regions.size(); i++) 
 	{
 		gr.add_vertex();
@@ -556,6 +558,8 @@ int combined_graph::build_splice_graph(splice_graph &gr)
 		vi.length = vi.rpos - vi.lpos;
 		gr.set_vertex_weight(i + 1, w);
 		gr.set_vertex_info(i + 1, vi);
+
+		printf("region %d: (%d, %d), w = %.2lf\n", i, regions[i].first.first, regions[i].first.second, regions[i].second.first);
 	}
 
 	gr.add_vertex();	// n
@@ -566,6 +570,8 @@ int combined_graph::build_splice_graph(splice_graph &gr)
 	gr.set_vertex_info(regions.size() + 1, vn);
 	gr.set_vertex_weight(regions.size() + 1, 0);
 
+	printf("end = %d\n", tb.first);
+
 	// build vertex index
 	gr.build_vertex_index();
 
@@ -575,6 +581,8 @@ int combined_graph::build_splice_graph(splice_graph &gr)
 		int32_t p = sbounds[i].first;
 		double w = sbounds[i].second.first;
 		int c = sbounds[i].second.second;
+
+		printf("sbound %d: %d, w = %.2lf\n", i, p, w);
 
 		assert(gr.lindex.find(p) != gr.lindex.end());
 		int k = gr.lindex[p];
