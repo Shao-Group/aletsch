@@ -35,7 +35,7 @@ bool build_path_from_mixed_coordinates(splice_graph &gr, const vector<int32_t> &
 bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv);
 
 // transform to paths from coordinates
-int transform_to_paths(splice_graph &gr, PRC &prc);
+bool transform_to_paths(splice_graph &gr, PRC &prc);
 
 // match paired-end reads
 int build_paired_reads(const vector<hit> &hits, vector<PI> &fs);

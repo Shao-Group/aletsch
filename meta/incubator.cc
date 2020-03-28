@@ -273,7 +273,8 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 		for(int j = 0; j < gt.reads.size(); j++)
 		{
 			PRC prc = gt.reads[j];
-			transform_to_paths(gx, prc);
+			bool b = transform_to_paths(gx, prc);
+			if(b == false) continue;
 			reads.push_back(prc);
 			index.push_back(k);
 		}

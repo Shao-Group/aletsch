@@ -343,16 +343,16 @@ bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv)
 	return b;
 }
 
-int transform_to_paths(splice_graph &gr, PRC &p)
+bool transform_to_paths(splice_graph &gr, PRC &p)
 {
 	vector<int> v1;
 	vector<int> v2;
 	bool b1 = build_path_from_exon_coordinates(gr, p.first.vv, v1);
 	bool b2 = build_path_from_exon_coordinates(gr, p.second.vv, v2);
-	assert(b1 && b2);
+	if(b1 == false || b2 == false) return false;
 	p.first.vv = v1;
 	p.second.vv = v2;
-	return 0;
+	return true;
 }
 
 int build_paired_reads(const vector<hit> &hits, vector<PI> &fs)
