@@ -326,10 +326,10 @@ int combined_graph::combine_end_bounds(map<int32_t, DI> &m, const combined_graph
 
 int combined_graph::resolve(splice_graph &gr, hyper_set &hs, vector<PRC> &ub)
 {
-	group_junctions();
+	//group_junctions();
 	build_splice_graph(gr);
-	group_start_boundaries(gr);
-	group_end_boundaries(gr);
+	//group_start_boundaries(gr);
+	//group_end_boundaries(gr);
 	build_phasing_paths(gr, hs);
 	return 0;
 }
