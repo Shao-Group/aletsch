@@ -65,7 +65,7 @@ int generator::resolve()
 		//ht.print();
 
 		// TODO for test
-		if(ht.tid >= 3) break;
+		//if(ht.tid >= 1) break;
 
 		//if(ht.nh >= 2 && p.qual < min_mapping_quality) continue;
 		//if(ht.nm > max_edit_distance) continue;
