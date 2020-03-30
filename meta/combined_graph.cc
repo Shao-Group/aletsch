@@ -178,6 +178,88 @@ int combined_graph::build_reads(splice_graph &gr, vector<PRC> &ub)
 	return 0;
 }
 
+int combined_graph::combine_extra_bridged_reads(const vector< vector<int32_t> > &exon_chains, const vector<int> &weights)
+{
+	assert(exon_chains.size() == weights.size());
+	if(exon_chains.size() == 0) return 0;
+	int32_t lb = get_leftmost_bound().first;
+	int32_t rb = get_rightmost_bound().first;
+
+	// index phase
+	map<vector<int32_t>, int> mm;
+	for(int k = 0; k < phase.size(); k++)
+	{
+		mm.insert(pair<vector<int32_t>, int>(phase[k].vv, k));
+	}
+
+	// create a new combined graph to be combined
+	combined_graph cb;
+	for(int k = 0; k < exon_chains.size(); k++)
+	{
+		const vector<int32_t> &vv = exon_chains[k];
+		int c = weights[k];
+		assert(vv.size() % 2 == 0);
+		if(vv.size() <= 3) continue;
+		if(vv.front() < lb) continue;
+		if(vv.back() > rb) continue;
+
+		// regions
+		for(int i = 0; i < vv.size() / 2; i++)
+		{
+			PI32 p(vv[i * 2 + 0], vv[i * 2 + 1]);
+			cb.regions.push_back(PPDI(p, DI(c, 1)));
+		}
+
+		// junctions
+		for(int i = 0; i < vv.size() / 2 - 1; i++)
+		{
+			PI32 p(vv[i * 2 + 1], vv[i * 2 + 2]);
+			cb.junctions.push_back(PPDI(p, DI(c, 1)));
+		}
+
+		// phase
+		vector<int32_t> zz(vv.begin() + 1, vv.end() - 1);
+		map<vector<int32_t>, int>::iterator tp = mm.find(zz);
+		if(tp == mm.end()) 
+		{
+			rcluster r;
+			r.vv = zz;
+			r.vl.push_back(vv.front());
+			r.vr.push_back(vv.back());
+			r.cc.push_back(c);
+			mm.insert(pair<vector<int32_t>, int>(zz, phase.size()));
+			phase.push_back(r);
+		}
+		else 
+		{
+			int k = tp->second;
+			assert(zz == phase[k].vv);
+			phase[k].vl.push_back(vv.front());
+			phase[k].vr.push_back(vv.back());
+			phase[k].cc.push_back(c);
+		}
+	}
+
+	split_interval_map imap;
+	map<PI32, DI> mj;
+
+	combine_regions(imap, *this);
+	combine_regions(imap, cb);
+	combine_junctions(mj, *this);
+	combine_junctions(mj, cb);
+
+	regions.clear();
+	for(SIMI it = imap.begin(); it != imap.end(); it++)
+	{
+		int32_t l = lower(it->first);
+		int32_t r = upper(it->first);
+		regions.push_back(PPDI(PI32(l, r), DI(it->second, 1)));
+	}
+
+	junctions.assign(mj.begin(), mj.end());
+	return 0;
+}
+
 int combined_graph::combine(const combined_graph &gt)
 {
 	if(children.size() == 0) children.push_back(*this);

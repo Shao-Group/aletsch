@@ -262,7 +262,7 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 
 	// collect and transform reads
 	vector<PRC> reads;
-	vector<int> index;
+	vector<PI> index(cb.children.size());
 	int length_low = 9999;
 	int length_high = 0;
 	for(int k = 0; k < cb.children.size(); k++)
@@ -270,14 +270,16 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 		combined_graph &gt = cb.children[k];
 		if(gt.sp.insertsize_low < length_low) length_low = gt.sp.insertsize_low;
 		if(gt.sp.insertsize_high > length_high) length_high = gt.sp.insertsize_high;
+		index[k].first = reads.size();
 		for(int j = 0; j < gt.reads.size(); j++)
 		{
 			PRC prc = gt.reads[j];
 			bool b = transform_to_paths(gx, prc);
 			if(b == false) continue;
 			reads.push_back(prc);
-			index.push_back(k);
 		}
+		index[k].second = reads.size();
+		gt.reads.clear();
 	}
 
 	bridger br(gx, reads);
@@ -319,6 +321,20 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 
 	for(int i = 0; i < cb.children.size(); i++)
 	{
+		// process unbridged reads
+		vector< vector<int32_t> > exon_chains;
+		vector<int> weights;
+		for(int k = index[i].first; k < index[i].second; k++)
+		{
+			if(br.opt[k].type < 0) continue;
+			vector<int32_t> v;
+			int c = reads[k].first.vl.size();
+			build_exon_coordinates_from_path(gx, br.opt[k].v, v);
+			exon_chains.push_back(v);
+			weights.push_back(c);
+			cb.children[i].combine_extra_bridged_reads(exon_chains, weights);
+		}
+
 		splice_graph gr;
 		hyper_set hs;
 		vector<PRC> ub;

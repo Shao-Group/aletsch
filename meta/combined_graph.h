@@ -58,6 +58,9 @@ public:
 	int build_phase(splice_graph &gr, hyper_set &hs);
 	int build_reads(splice_graph &gr, vector<PRC> &ub);
 
+	// add extra reads
+	int combine_extra_bridged_reads(const vector< vector<int32_t> > &exon_chains, const vector<int> &weights);
+
 	// combine (only splices)
 	int combine(const combined_graph &gt);
 	int get_overlapped_splice_positions(const vector<int32_t> &v) const;
