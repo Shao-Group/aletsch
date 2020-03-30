@@ -338,13 +338,15 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 		if(exon_chains.size() >= 1)
 		{
 			mylock.lock();
-			printf("weights = ( ");
-			printv(weights);
-			printf(")\n");
-			printf("== before add extra reads with %lu extra clusters ==\n", weights.size());
+			for(int k = 0; k < weights.size(); k++)
+			{
+				printf("extra phase %d: weight = %d, list = ( ", k, weights[k]);
+				printv(exon_chains[k]);
+				printf(")\n");
+			}
 			cb.children[i].print(i);
+			printf("-----\n");
 			cb.children[i].combine_extra_bridged_reads(exon_chains, weights);
-			printf("== after add extra reads ==\n");
 			cb.children[i].print(i);
 			printf("=====\n");
 			mylock.unlock();
