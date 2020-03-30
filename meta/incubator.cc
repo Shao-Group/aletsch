@@ -329,7 +329,7 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 			if(br.opt[k].type < 0) continue;
 			vector<int32_t> v;
 			int c = reads[k].first.vl.size();
-			if(c <= 1.5) continue;
+			if(c <= 5.5) continue;
 			build_exon_coordinates_from_path(gx, br.opt[k].v, v);
 			exon_chains.push_back(v);
 			weights.push_back(c);
@@ -340,15 +340,17 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 			mylock.lock();
 			for(int k = 0; k < weights.size(); k++)
 			{
-				printf("extra phase %d: weight = %d, list = ( ", k, weights[k]);
+				printf("extra read %d: weight = %d, list = ( ", k, weights[k]);
 				printv(exon_chains[k]);
 				printf(")\n");
 			}
+			/*
 			cb.children[i].print(i);
 			printf("-----\n");
 			cb.children[i].combine_extra_bridged_reads(exon_chains, weights);
 			cb.children[i].print(i);
 			printf("=====\n");
+			*/
 			mylock.unlock();
 		}
 
