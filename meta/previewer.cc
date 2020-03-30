@@ -275,14 +275,24 @@ int previewer::process(bundle_base &bb, config &cfg, map<int32_t, int> &m)
 	{
 		phase &bbp = br.opt[k];
 		if(bbp.type != 1) continue;
+		if(bbp.v.size() <= 0) continue;
 
 		rcluster &r1 = vpr[k].first;
 		rcluster &r2 = vpr[k].second;
+
+		const vertex_info &v1 = bd.gr.get_vertex_info(bbp.v.front());
+		const vertex_info &v2 = bd.gr.get_vertex_info(bbp.v.back());
+		PI32 lrange = PI32(v1.lpos, v1.rpos);
+		PI32 rrange = PI32(v2.lpos, v2.rpos);
+
 		int32_t len = bd.gr.get_total_length_of_vertices(bbp.v);
 
 		for(int j = 0; j < r1.vl.size(); j++)
 		{
-			int32_t d = len - r1.vl[j] - r2.vr[j];
+			assert(r1.vl[j] >= lrange.first);
+			assert(r2.vr[j] <= rrange.second);
+
+			int32_t d = len - (r1.vl[j] - lrange.first) - (rrange.second - r2.vr[j]);
 			cnt++;
 
 			if(m.find(d) != m.end()) m[d]++;
