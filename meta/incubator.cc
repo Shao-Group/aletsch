@@ -334,7 +334,21 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 			exon_chains.push_back(v);
 			weights.push_back(c);
 		}
-		cb.children[i].combine_extra_bridged_reads(exon_chains, weights);
+
+		if(exon_chains.size() >= 1)
+		{
+			mylock.lock();
+			printf("weights = ( ");
+			printv(weights);
+			printf(")\n");
+			printf("== before add extra reads with %lu extra clusters ==\n", weights.size());
+			cb.children[i].print(i);
+			cb.children[i].combine_extra_bridged_reads(exon_chains, weights);
+			printf("== after add extra reads ==\n");
+			cb.children[i].print(i);
+			printf("=====\n");
+			mylock.unlock();
+		}
 
 		splice_graph gr;
 		hyper_set hs;

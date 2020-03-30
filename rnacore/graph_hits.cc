@@ -33,10 +33,17 @@ int graph_hits::build_paired_reads_clusters(vector<PRC> &vpr, vector<bool> &pair
 		paired[h1] = true;
 		paired[h2] = true;
 
+		int32_t k1l = hits[h1].pos;
+		int32_t k1r = hits[h1].rpos;
+		int32_t k2l = hits[h2].pos;
+		int32_t k2r = hits[h2].rpos;
+
+		/*
 		int32_t k1l = hits[h1].pos - gr.get_vertex_info(v1.front()).lpos;
 		int32_t k1r = gr.get_vertex_info(v1.back()).rpos - hits[h1].rpos;
 		int32_t k2l = hits[h2].pos - gr.get_vertex_info(v2.front()).lpos;
 		int32_t k2r = gr.get_vertex_info(v2.back()).rpos - hits[h2].rpos;
+		*/
 
 		PVV pvv(v1, v2);
 		if(findex.find(pvv) == findex.end())

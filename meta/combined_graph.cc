@@ -160,6 +160,8 @@ int combined_graph::build_reads(splice_graph &gr, vector<PRC> &ub)
 {
 	reads.clear();
 	int n = gr.num_vertices() - 1;
+	vector<int32_t> vv1;
+	vector<int32_t> vv2;
 	for(int i = 0; i < ub.size(); i++)
 	{
 		PRC &prc = ub[i];
@@ -171,8 +173,16 @@ int combined_graph::build_reads(splice_graph &gr, vector<PRC> &ub)
 		assert(prc.second.vv.back() != n);
 
 		PRC rr = prc;
-		build_exon_coordinates_from_path(gr, prc.first.vv, rr.first.vv);
-		build_exon_coordinates_from_path(gr, prc.second.vv, rr.second.vv);
+		build_exon_coordinates_from_path(gr, prc.first.vv, vv1);
+		build_exon_coordinates_from_path(gr, prc.second.vv, vv2);
+		rr.first.vv = vv1;
+		rr.second.vv = vv2;
+		/*
+		if(vv1.size() <= 1) continue;
+		if(vv2.size() <= 1) continue;
+		rr.first.vv.assign(vv1.begin() + 1, vv1.end() - 1);
+		rr.second.vv.assign(vv2.begin() + 1, vv2.end() - 1);
+		*/
 		reads.push_back(rr);
 	}
 	return 0;

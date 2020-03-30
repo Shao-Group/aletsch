@@ -194,17 +194,31 @@ int bridger::vote(const PRC &prc, phase &bbp)
 	vector<int> bulls(r1.vl.size(), 0);
 
 	vector<int32_t> upper_length;
+	vector<PI32> lrange;
+	vector<PI32> rrange;
 	for(int e = 0; e < pn.size(); e++)
 	{
 		int32_t length = gr.get_total_length_of_vertices(pn[e]);
 		upper_length.push_back(length);
+		const vertex_info &v1 = gr.get_vertex_info(pn[e].front());
+		const vertex_info &v2 = gr.get_vertex_info(pn[e].back());
+		lrange.push_back(PI32(v1.lpos, v1.rpos));
+		rrange.push_back(PI32(v2.lpos, v2.rpos));
+
+		/*
+		printf("candidate %d: lrange = (%d, %d), rrange = (%d, %d), list = ( ", e, lrange[i].first, lrange[i].second, rrange[i].first, rrange[i].second);
+		printv(pn[e]);
+		printf(")\n");
+		*/
 	}
 
 	for(int j = 0; j < r1.vl.size(); j++)
 	{
 		for(int e = 0; e < pn.size(); e++)
 		{
-			int32_t length = upper_length[e] - r1.vl[j] - r2.vr[j];
+			assert(r1.vl[j] >= lrange[e].first);
+			assert(r2.vr[j] <= rrange[e].second);
+			int32_t length = upper_length[e] - (r1.vl[j] - lrange[e].first) - (rrange[e].second - r2.vr[j]);
 			if(length < length_low) continue;
 			if(length > length_high) continue;
 			votes[e]++;
