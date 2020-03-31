@@ -329,12 +329,14 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 			if(br.opt[k].type < 0) continue;
 			vector<int32_t> v;
 			int c = reads[k].first.vl.size();
-			if(c <= 4.5) continue;
+			if(c <= 1.5) continue;
 			build_exon_coordinates_from_path(gx, br.opt[k].v, v);
 			exon_chains.push_back(v);
 			weights.push_back(c);
 		}
+		cb.children[i].combine_extra_bridged_reads(exon_chains, weights);
 
+		/*
 		if(exon_chains.size() >= 1)
 		{
 			mylock.lock();
@@ -344,15 +346,14 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 				printv(exon_chains[k]);
 				printf(")\n");
 			}
-			/*
 			cb.children[i].print(i);
 			printf("-----\n");
 			cb.children[i].combine_extra_bridged_reads(exon_chains, weights);
 			cb.children[i].print(i);
 			printf("=====\n");
-			*/
 			mylock.unlock();
 		}
+		*/
 
 		splice_graph gr;
 		hyper_set hs;
