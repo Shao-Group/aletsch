@@ -203,16 +203,13 @@ int combined_graph::combine_extra_bridged_reads(const vector< vector<int32_t> > 
 	}
 
 	// create a new combined graph to be combined
-	//combined_graph cb;
+	combined_graph cb;
 	for(int k = 0; k < exon_chains.size(); k++)
 	{
 		const vector<int32_t> &vv = exon_chains[k];
 		int c = weights[k];
 		assert(vv.size() % 2 == 0);
 		if(vv.size() <= 1) continue;
-
-		/*
-		if(vv.size() <= 3) continue;
 		if(vv.front() < lb) continue;
 		if(vv.back() > rb) continue;
 
@@ -229,7 +226,6 @@ int combined_graph::combine_extra_bridged_reads(const vector< vector<int32_t> > 
 			PI32 p(vv[i * 2 + 1], vv[i * 2 + 2]);
 			cb.junctions.push_back(PPDI(p, DI(c, 1)));
 		}
-		*/
 
 		// phase
 		vector<int32_t> zz(vv.begin() + 1, vv.end() - 1);
@@ -254,7 +250,6 @@ int combined_graph::combine_extra_bridged_reads(const vector< vector<int32_t> > 
 		}
 	}
 
-	/*
 	split_interval_map imap;
 	map<PI32, DI> mj;
 
@@ -271,7 +266,6 @@ int combined_graph::combine_extra_bridged_reads(const vector< vector<int32_t> > 
 		regions.push_back(PPDI(PI32(l, r), DI(it->second, 1)));
 	}
 	junctions.assign(mj.begin(), mj.end());
-	*/
 
 	return 0;
 }
