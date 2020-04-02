@@ -2,8 +2,8 @@
 #define __GRAPH_HITS_H__
 
 #include "splice_graph.h"
-#include "rcluster.h"
-#include "hyper_set.h"
+#include "pereads_cluster.h"
+#include "phase_set.h"
 #include "hit.h"
 
 using namespace std;
@@ -18,8 +18,15 @@ public:
 	vector<hit> &hits;				// given hits
 
 public:
-	int build_paired_reads_clusters(vector<PRC> &prc, vector<bool> &paired);
-	int build_hyper_set_from_unpaired_reads(const vector<bool> &paired, hyper_set &hs);
+	int group_pereads(vector< vector<PI> > &vc, vector<bool> &paired);
+	int build_pereads_clusters(const vector<PI> &fs, vector<pereads_cluster> &vc);
+	int build_phase_set_from_unpaired_reads(const vector<bool> &paired, phase_set &ps);
+	vector< vector<int> > partition(vector< vector<int32_t> > &fs, int r);
 };
+
+bool compare_rank0(const vector<int32_t> &x, const vector<int32_t> &y);
+bool compare_rank1(const vector<int32_t> &x, const vector<int32_t> &y);
+bool compare_rank2(const vector<int32_t> &x, const vector<int32_t> &y);
+bool compare_rank3(const vector<int32_t> &x, const vector<int32_t> &y);
 
 #endif

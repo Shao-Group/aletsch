@@ -343,6 +343,7 @@ bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv)
 	return b;
 }
 
+/*
 bool transform_to_paths(splice_graph &gr, PRC &p)
 {
 	vector<int> v1;
@@ -354,6 +355,7 @@ bool transform_to_paths(splice_graph &gr, PRC &p)
 	p.second.vv = v2;
 	return true;
 }
+*/
 
 int build_paired_reads(const vector<hit> &hits, vector<PI> &fs)
 {

@@ -9,20 +9,17 @@
 
 using namespace std;
 
-typedef pair<vector<int>, int> PVII;
-typedef map<vector<int>, int> MVII;
+typedef pair<vector<int32_t>, int> PVII;
+typedef map<vector<int32_t>, int> MVII;
 
 class phase_set
 {
 public:
-	MVII nodes;			// hyper-edges using list-of-nodes
+	MVII pmap;			// hyper-edges using list-of-nodes
 
 public:
+	int add(const vector<int32_t> &s, int c);
 	int clear();
-	int add_node_list(const set<int> &s);
-	int add_node_list(const set<int> &s, int c);
-	int add_node_list(const vector<int> &s, int c);
-	int print();
 };
 
 #endif
