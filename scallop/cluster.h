@@ -8,7 +8,6 @@ See LICENSE for licensing.
 #define __CLUSTER_H__
 
 #include "undirected_graph.h"
-#include "bundle_base.h"
 #include "transcript.h"
 #include "config.h"
 

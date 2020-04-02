@@ -11,12 +11,8 @@ libscallop_a_CPPFLAGS = -I$(GTF_INCLUDE) -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE) -I
 libscallop_a_SOURCES = config.h config.cc \
 					   subsetsum.h subsetsum.cc \
 					   router.h router.cc \
-					   bundle_base.h bundle_base.cc \
-					   bundle.h bundle.cc \
 					   equation.h equation.cc \
-					   gtf.h gtf.cc \
 					   scallop.h scallop.cc \
 					   filter.h filter.cc \
 					   cluster.h cluster.cc \
-					   path.h path.cc \
-					   graph_revise.h graph_revise.cc
+					   path.h path.cc
