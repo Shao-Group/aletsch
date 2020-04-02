@@ -109,35 +109,6 @@ int32_t get_total_length_of_introns(const vector<int32_t> &chain)
 	return x;
 }
 
-int build_child_hyper_set(hyper_set &hyper, hyper_set &hs, map<int, int> &a2b)
-{
-	hs.clear();
-	if(a2b.size() <= 0) return 0;
-
-	for(MVII::const_iterator it = hyper.nodes.begin(); it != hyper.nodes.end(); it++)
-	{
-		vector<int> v = it->first;
-		int c = it->second;
-
-		if(v.size() <= 0) continue;
-		if(a2b.find(v.front()) == a2b.end()) continue;
-
-		// TODO: test
-		vector<int> z = get_keys(a2b);
-		printf("v = ( "); printv(v); printf(") \n");
-		printf("z = ( "); printv(z); printf(") \n");
-
-		vector<int> vv = project_vector(v, a2b);
-		printf("V = ( "); printv(vv); printf(") \n");
-
-		assert(vv.size() == v.size());
-
-		for(int i = 0; i < vv.size(); i++) vv[i]--;
-		hs.add_node_list(vv, c);
-	}
-	return 0;
-}
-
 vector<int> project_vector(const vector<int> &v, const map<int, int> &a2b)
 {
 	vector<int> vv;

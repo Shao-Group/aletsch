@@ -5,9 +5,9 @@
 #include <fstream>
 #include <algorithm>
 
-#include "graph_revise.h"
-#include "config.h"
+#include "graph_reviser.h"
 #include "undirected_graph.h"
+#include "config.h"
 
 int revise_splice_graph_full(splice_graph &gr, config *cfg)
 {

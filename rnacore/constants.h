@@ -54,4 +54,6 @@ using namespace std;
 
 const static string position_names[] = {"identical", "fall-right", "fall-left", "contained", "containing", "extend_right", "extend_left", "nested", "nesting", "conflicting"};
 
+typedef pair<int, int> PI;
+
 #endif

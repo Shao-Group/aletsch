@@ -14,8 +14,6 @@ See LICENSE for licensing.
 
 using namespace std;
 
-typedef pair<int, int> PI;
-
 class region
 {
 public:

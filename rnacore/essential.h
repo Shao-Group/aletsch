@@ -3,11 +3,9 @@
 
 #include "hit.h"
 #include "splice_graph.h"
-#include "hyper_set.h"
+#include "constants.h"
 
 using namespace std;
-
-typedef map<vector<int>, int> MVII;
 
 // map integers
 vector<int> project_vector(const vector<int> &v, const map<int, int> &m);

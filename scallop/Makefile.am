@@ -15,4 +15,5 @@ libscallop_a_SOURCES = config.h config.cc \
 					   scallop.h scallop.cc \
 					   filter.h filter.cc \
 					   cluster.h cluster.cc \
-					   path.h path.cc
+					   path.h path.cc \
+					   graph_reviser.h graph_reviser.cc
