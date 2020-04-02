@@ -13,7 +13,6 @@ See LICENSE for licensing.
 
 #include "util.h"
 #include "splice_graph.h"
-#include "hyper_graph.h"
 
 using namespace std;
 
