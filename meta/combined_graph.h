@@ -8,8 +8,8 @@
 
 #include "sample_profile.h"
 #include "splice_graph.h"
-#include "hyper_set.h"
-#include "rcluster.h"
+#include "phase_set.h"
+#include "pereads_cluster.h"
 #include "interval_map.h"
 
 using namespace std;
@@ -39,8 +39,8 @@ public:
 	vector<PPDI> junctions;
 	vector<PIDI> sbounds;
 	vector<PIDI> tbounds;
-	vector<rcluster> phase;
-	vector<PRC> reads;
+	phase_set phases;
+	vector<pereads_cluster> preads;
 	vector<int32_t> splices;
 
 	vector<combined_graph> children;
@@ -79,7 +79,7 @@ public:
 	int group_start_boundaries(splice_graph &gr);
 	int group_end_boundaries(splice_graph &gr);
 	int build_phasing_paths(splice_graph &gr, hyper_set &hs);
-	int build_phasing_paths(splice_graph &gr, hyper_set &hs, rcluster &rc);
+	int build_phasing_paths(splice_graph &gr, hyper_set &hs, pereads_cluster &rc);
 	PIDI get_leftmost_bound();
 	PIDI get_rightmost_bound();
 

@@ -1,5 +1,5 @@
-#ifndef __GRAPH_HITS_H__
-#define __GRAPH_HITS_H__
+#ifndef __GRAPH_CLUSTER_H__
+#define __GRAPH_CLUSTER_H__
 
 #include "splice_graph.h"
 #include "pereads_cluster.h"
@@ -8,10 +8,10 @@
 
 using namespace std;
 
-class graph_hits
+class graph_cluster
 {
 public:
-	graph_hits(splice_graph &gr, vector<hit> &hits);
+	graph_cluster(splice_graph &gr, vector<hit> &hits);
 
 public:
 	splice_graph &gr;				// given splice graph

@@ -4,8 +4,8 @@ Part of Scallop Transcript Assembler
 See LICENSE for licensing.
 */
 
-#ifndef __BRIDGE_H__
-#define __BRIDGE_H__
+#ifndef __JUNCTION_H__
+#define __JUNCTION_H__
 
 #include <stdint.h>
 #include <string>
@@ -16,8 +16,7 @@ class junction
 {
 public:
 	junction();
-	junction(int64_t _p);
-	junction(int64_t _p, int32_t _c);
+	junction(int32_t lpos, int32_t rpos, int c);
 	junction(const junction &p);
 
 	bool operator<(const junction &x) const;

@@ -13,24 +13,11 @@ See LICENSE for licensing.
 junction::junction()
 {}
 
-junction::junction(int64_t _p)
+junction::junction(int32_t l, int32_t r, int c)
 {
-	lpos = high32(_p);
-	rpos = low32(_p);
-	count = 0;
-	strand = '.';
-	lexon = -1;
-	rexon = -1;
-	lregion = -1;
-	rregion = -1;
-	nm = 0;
-}
-
-junction::junction(int64_t _p, int _c)
-{
-	lpos = high32(_p);
-	rpos = low32(_p);
-	count = _c;
+	lpos = l;
+	rpos = r;
+	count = c;
 	strand = '.';
 	lexon = -1;
 	rexon = -1;

@@ -12,7 +12,7 @@ combined_graph::combined_graph()
 	strand = '?';
 }
 
-int combined_graph::build(splice_graph &gr, hyper_set &hs, vector<PRC> &ub)
+int combined_graph::build(splice_graph &gr, const phase_se &p, const vector<pereads_cluster> &ub)
 {
 	chrm = gr.chrm;
 	strand = gr.strand;
@@ -22,8 +22,8 @@ int combined_graph::build(splice_graph &gr, hyper_set &hs, vector<PRC> &ub)
 	build_start_bounds(gr);
 	build_end_bounds(gr);
 	build_splices_junctions(gr);
-	build_phase(gr, hs);
-	build_reads(gr, ub);
+	phases = ps;
+	preads = ub;
 	return 0;
 }
 	
@@ -117,77 +117,7 @@ int combined_graph::build_splices_junctions(splice_graph &gr)
 	return 0;
 }
 
-int combined_graph::build_phase(splice_graph &gr, hyper_set &hs)
-{
-	phase.clear();
-	map<vector<int32_t>, int> mm;
-	for(MVII::const_iterator it = hs.nodes.begin(); it != hs.nodes.end(); it++)
-	{
-		const vector<int> &v = it->first;
-		int w = it->second;
-		int c = 1;
-
-		if(v.size() <= 0) continue;
-		vector<int32_t> vv;
-		build_exon_coordinates_from_path(gr, v, vv);
-
-		if(vv.size() <= 1) continue;
-		vector<int32_t> zz(vv.begin() + 1, vv.end() - 1);
-		map<vector<int32_t>, int>::iterator tp = mm.find(zz);
-		if(tp == mm.end()) 
-		{
-			rcluster r;
-			r.vv = zz;
-			r.vl.push_back(vv.front());
-			r.vr.push_back(vv.back());
-			r.cc.push_back(w);
-			mm.insert(pair<vector<int32_t>, int>(zz, phase.size()));
-			phase.push_back(r);
-		}
-		else 
-		{
-			int k = tp->second;
-			assert(zz == phase[k].vv);
-			phase[k].vl.push_back(vv.front());
-			phase[k].vr.push_back(vv.back());
-			phase[k].cc.push_back(w);
-		}
-	}
-	return 0;
-}
-
-int combined_graph::build_reads(splice_graph &gr, vector<PRC> &ub)
-{
-	reads.clear();
-	int n = gr.num_vertices() - 1;
-	vector<int32_t> vv1;
-	vector<int32_t> vv2;
-	for(int i = 0; i < ub.size(); i++)
-	{
-		PRC &prc = ub[i];
-		if(prc.first.vv.size() <= 0) continue;
-		if(prc.second.vv.size() <= 0) continue;
-		assert(prc.first.vv.front() != 0);
-		assert(prc.second.vv.front() != 0);
-		assert(prc.first.vv.back() != n);
-		assert(prc.second.vv.back() != n);
-
-		PRC rr = prc;
-		build_exon_coordinates_from_path(gr, prc.first.vv, vv1);
-		build_exon_coordinates_from_path(gr, prc.second.vv, vv2);
-		rr.first.vv = vv1;
-		rr.second.vv = vv2;
-		/*
-		if(vv1.size() <= 1) continue;
-		if(vv2.size() <= 1) continue;
-		rr.first.vv.assign(vv1.begin() + 1, vv1.end() - 1);
-		rr.second.vv.assign(vv2.begin() + 1, vv2.end() - 1);
-		*/
-		reads.push_back(rr);
-	}
-	return 0;
-}
-
+/* TODO TODO
 int combined_graph::combine_extra_bridged_reads(const vector< vector<int32_t> > &exon_chains, const vector<int> &weights)
 {
 	assert(exon_chains.size() == weights.size());
@@ -269,6 +199,7 @@ int combined_graph::combine_extra_bridged_reads(const vector< vector<int32_t> > 
 
 	return 0;
 }
+*/
 
 int combined_graph::combine(const combined_graph &gt)
 {
@@ -308,8 +239,8 @@ int combined_graph::combine_children()
 	map<PI32, DI> mj;
 	map<int32_t, DI> ms;
 	map<int32_t, DI> mt;
-	phase.clear();
-	reads.clear();
+	phases.clear();
+	preads.clear();
 
 	int num = 0;
 	for(int i = 0; i < children.size(); i++)
@@ -319,8 +250,6 @@ int combined_graph::combine_children()
 		combine_junctions(mj, gt);
 		combine_start_bounds(ms, gt);
 		combine_end_bounds(mt, gt);
-		//phase.insert(phase.end(), gt.phase.begin(), gt.phase.end());
-		//reads.insert(reads.end(), gt.reads.begin(), gt.reads.end());
 		num += gt.num_combined;
 	}
 	assert(num == num_combined);
@@ -417,7 +346,7 @@ int combined_graph::combine_end_bounds(map<int32_t, DI> &m, const combined_graph
 	return 0;
 }
 
-int combined_graph::resolve(splice_graph &gr, hyper_set &hs, vector<PRC> &ub)
+int combined_graph::resolve(splice_graph &gr, hyper_set &hs, vector<pereads_cluster> &ub)
 {
 	group_junctions();
 	build_splice_graph(gr);

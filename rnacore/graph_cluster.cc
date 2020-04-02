@@ -1,14 +1,14 @@
-#include "graph_hits.h"
+#include "graph_cluster.h"
 #include "essential.h"
 #include "util.h"
 
 #include <algorithm>
 
-graph_hits::graph_hits(splice_graph &g, vector<hit> &h)
+graph_cluster::graph_cluster(splice_graph &g, vector<hit> &h)
 	: gr(g), hits(h)
 {} 
 
-int graph_hits::group_pereads(vector< vector<PI> > &vc, vector<bool> &paired)
+int graph_cluster::group_pereads(vector< vector<PI> > &vc, vector<bool> &paired)
 {
 	typedef pair< vector<int>, vector<int> > PVV;
 	map<PVV, int> findex;
@@ -51,7 +51,7 @@ int graph_hits::group_pereads(vector< vector<PI> > &vc, vector<bool> &paired)
 	return 0;
 }
 
-int graph_hits::build_pereads_clusters(const vector<PI> &fs, vector<pereads_cluster> &vc)
+int graph_cluster::build_pereads_clusters(const vector<PI> &fs, vector<pereads_cluster> &vc)
 {
 	vector< vector<int32_t> > vv;
 	for(int i = 0; i < fs.size(); i++)
@@ -102,7 +102,7 @@ int graph_hits::build_pereads_clusters(const vector<PI> &fs, vector<pereads_clus
 	return 0;
 }
 
-vector< vector<int> > graph_hits::partition(vector< vector<int32_t> > &fs, int r)
+vector< vector<int> > graph_cluster::partition(vector< vector<int32_t> > &fs, int r)
 {
 	vector< vector<int> > vv;
 	if(fs.size() == 0) return vv;
@@ -138,7 +138,7 @@ vector< vector<int> > graph_hits::partition(vector< vector<int32_t> > &fs, int r
 	return vv;
 }
 
-int graph_hits::build_phase_set_from_unpaired_reads(const vector<bool> &paired, phase_set &ps)
+int graph_cluster::build_phase_set_from_unpaired_reads(const vector<bool> &paired, phase_set &ps)
 {
 	for(int i = 0; i < hits.size(); i++)
 	{
