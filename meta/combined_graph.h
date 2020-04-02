@@ -19,9 +19,6 @@ typedef pair<int32_t, int32_t> PI32;
 typedef pair<double, int> DI;
 typedef pair<int32_t, DI> PIDI;
 typedef pair<PI32, DI> PPDI;
-//typedef pair< vector<int32_t>, vector<PPDI> > PVDI;
-//typedef pair< vector<int32_t>, vector<int32_t> > PV32;
-//typedef map< vector<int32_t>, vector<int32_t> > MV32;
 
 class combined_graph
 {
@@ -39,14 +36,11 @@ public:
 	vector<PPDI> junctions;
 	vector<PIDI> sbounds;
 	vector<PIDI> tbounds;
+	vector<int32_t> splices;
 	phase_set phases;
 	vector<pereads_cluster> preads;
-	vector<int32_t> splices;
 
 	vector<combined_graph> children;
-
-	map<int32_t, int32_t> smap;
-	map<int32_t, int32_t> tmap;
 
 public:
 	// build from gr, hs, and ub

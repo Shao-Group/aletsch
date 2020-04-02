@@ -31,4 +31,7 @@ int filter_graph(splice_graph &gr, const set<int32_t> &ps, const set<int32_t> &a
 
 int refine_splice_graph(splice_graph &gr);
 
+int group_start_boundaries(splice_graph &gr, map<int32_t, int32_t> &smap, int32_t max_group_boundary_distance);
+int group_end_boundaries(splice_graph &gr, map<int32_t, int32_t> &tmap, int32_t max_group_boundary_distance);
+
 #endif
