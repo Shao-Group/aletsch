@@ -86,7 +86,9 @@ int hit::set_splices(bam1_t *b, int min_flank)
 		if(bam_cigar_oplen(cigar[k+1]) < min_flank) continue;
 
 		int32_t s = p - bam_cigar_oplen(cigar[k]);
-		spos.push_back(pack(s, p));
+		//spos.push_back(pack(s, p));
+		spos.push_back(s);
+		spos.push_back(p);
 	}
 	return 0;
 }
@@ -189,11 +191,10 @@ int hit::print() const
 			qname.c_str(), pos, rpos, mpos, flag, qual, strand, xs, ts, isize, qlen, hi);
 
 	printf(" start position (%d - )\n", pos);
-	for(int i = 0; i < spos.size(); i++)
+	for(int i = 0; i < spos.size() / 2; i++)
 	{
-		int64_t p = spos[i];
-		int32_t p1 = high32(p);
-		int32_t p2 = low32(p);
+		int32_t p1 = spos[i * 2 + 0];
+		int32_t p2 = spos[i * 2 + 1];
 		printf(" splice position (%d - %d)\n", p1, p2);
 	}
 	printf(" end position (%d - )\n", rpos);
@@ -206,11 +207,11 @@ int hit::get_aligned_intervals(vector<int64_t> &v) const
 {
 	v.clear();
 	int32_t p1 = pos;
-	for(int k = 0; k < spos.size(); k++)
+	for(int k = 0; k < spos.size() / 2; k++)
 	{
-		int32_t p2 = high32(spos[k]);
+		int32_t p2 = spos[k * 2 + 0];
 		v.push_back(pack(p1, p2));
-		p1 = low32(spos[k]);
+		p1 = spos[k * 2 + 1];
 	}
 	v.push_back(pack(p1, rpos));
 	return 0;

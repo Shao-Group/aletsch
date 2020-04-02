@@ -12,8 +12,8 @@ public:
 	pereads_cluster();
 
 public:
-	vector<int64_t> chain1;			// list of intron-chain coordinates
-	vector<int64_t> chain2;			// list of intron-chain coordinates
+	vector<int32_t> chain1;			// list of intron-chain coordinates
+	vector<int32_t> chain2;			// list of intron-chain coordinates
 	vector<int32_t> bounds;			// lpos1, rpos1, lpos2, rpos2
 	int count;						// number of such reads in this cluster
 

@@ -1,53 +1,47 @@
-/*
-Part of Scallop Transcript Assembler
-(c) 2017 by Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
-
-Part of Coral, an efficient tool to bridge mate pairs
-(c) 2018 by Mingfu Shao and The Pennsylvania State University.
-
-See LICENSE for licensing.
-*/
-
-#include "phase.h"
+#include "bridge_path.h"
 #include "util.h"
 
 #include <cassert>
 #include <cstdio>
 
-phase::phase()
+bridge_path::bridge_path()
 {
 	v.clear();
+	chain.clear();
 	type = 0;
 	score = 0;
 	count = 0;
 	stack.clear();
 }
 
-phase::~phase()
+bridge_path::~bridge_path()
 {}
 
-int phase::clear()
+int bridge_path::clear()
 {
 	type = 0;
 	v.clear();
+	chain.clear();
 	score = 0;
 	count = 0;
 	stack.clear();
 	return 0;
 }
 
-int phase::print(int index) const
+int bridge_path::print(int index) const
 {
 	if(v.size() == 0) return 0;
-	printf("phase %d: score = %.2lf, count = %d, stack = ( ", index, score, count);
+	printf("bridge_path %d: score = %.2lf, count = %d, stack = ( ", index, score, count);
 	printv(stack);
 	printf("), v = ( ");
 	printv(v);
+	printf("), chain = ( ");
+	printv(chain);
 	printf(")\n");
 	return 0;
 }
 
-bool compare_phase_vertices(const phase &p1, const phase &p2)
+bool compare_bridge_path_vertices(const bridge_path &p1, const bridge_path &p2)
 {
 	for(int k = 0; k < p1.v.size() && k < p2.v.size(); k++)
 	{
@@ -59,13 +53,13 @@ bool compare_phase_vertices(const phase &p1, const phase &p2)
 	return false;
 }
 
-bool compare_phase_score(const phase &p1, const phase &p2)
+bool compare_bridge_path_score(const bridge_path &p1, const bridge_path &p2)
 {
 	if(p1.score > p2.score) return true;
 	else return false;
 }
 
-bool compare_phase_stack(const phase &p1, const phase &p2)
+bool compare_bridge_path_stack(const bridge_path &p1, const bridge_path &p2)
 {
 	for(int k = 0; k < p1.stack.size() && k < p2.stack.size(); k++)
 	{

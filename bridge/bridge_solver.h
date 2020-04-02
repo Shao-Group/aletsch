@@ -4,13 +4,13 @@ Part of Coral
 See LICENSE for licensing.
 */
 
-#ifndef __BRIDGER_H__
-#define __BRIDGER_H__
+#ifndef __BRIDGE_SOLVER_H__
+#define __BRIDGE_SOLVER_H__
 
 #include "splice_graph.h"
-#include "rcluster.h"
+#include "phase_set.h"
 #include "pier.h"
-#include "hyper_set.h"
+#include "pereads_cluster.h"
 
 using namespace std;
 
@@ -28,18 +28,19 @@ public:
 
 bool entry_compare(const entry &x, const entry &y);
 
-class bridger
+class bridge_solver
 {
 public:
-	bridger(splice_graph &gr, const vector<PRC> &vpr);
+	bridge_solver(splice_graph &gr, const vector<pereads_cluster> &vc);
 
 public:
-	splice_graph &gr;				// given splice graph
-	const vector<PRC> &vpr;			// given paired reads clusters
+	splice_graph &gr;						// given splice graph
+	const vector<pereads_cluster> &vc;		// given paired reads clusters
 
-	vector<pier> piers;				// piers
-	map<PI, int> pindex;			// piers index
-	vector<phase> opt;				// optimal bridging paths
+	vector<PI> vpairs;						// vertices for each cluster
+	vector<pier> piers;						// piers
+	map<PI, int> pindex;					// piers index
+	vector<bridge_path> opt;				// optimal bridge path
 
 	int dp_solution_size;
 	int dp_stack_size;
@@ -50,6 +51,7 @@ public:
 	int resolve();
 	int print();
 
+	int build_bridging_vertices();
 	int build_piers();
 	int build_piers_index();
 	int nominate();
@@ -57,9 +59,9 @@ public:
 	vector<int> update_stack(const vector<int> &v, int s);
 	vector< vector<int> > trace_back(int k, const vector< vector<entry> > &table);
 	int vote();
-	int vote(const PRC &prc, phase &bbp);
-	int collect_unbridged_clusters(vector<PRC> &v);
-	int build_hyper_set(hyper_set &hs);
+	int vote(int r, bridge_path &bbp);
+	int collect_unbridged_clusters(vector<pereads_cluster> &v);
+	int build_phase_set(phase_set &ps);
 };
 
 #endif

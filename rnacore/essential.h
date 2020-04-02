@@ -24,8 +24,12 @@ bool check_valid_path(splice_graph &gr, const vector<int> &vv);
 // construct sub-splice-graph
 int build_child_splice_graph(splice_graph &root, splice_graph &gr, map<int, int> &ss);
 
+// calculate total length of intron chains
+int32_t get_total_length_of_introns(const vector<int32_t> &chain);
+
 // transform between paths and coordinates
 int build_exon_coordinates_from_path(splice_graph &gr, const vector<int> &v, vector<int32_t> &vv);
+int build_intron_coordinates_from_path(splice_graph &gr, const vector<int> &v, vector<int32_t> &vv);
 bool build_path_from_exon_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv);
 bool build_path_from_intron_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv);
 bool build_path_from_mixed_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv);

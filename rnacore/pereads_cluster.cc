@@ -19,6 +19,6 @@ int pereads_cluster::clear()
 
 int pereads_cluster::print(int index) const
 {
-	printf("pereads-cluster %d: #reads = %lu\n", index, count);
+	printf("pereads-cluster %d: #reads = %d\n", index, count);
 	return 0;
 }

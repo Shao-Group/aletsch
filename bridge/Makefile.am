@@ -7,6 +7,6 @@ RNACORE_INCLUDE = $(top_srcdir)/rnacore
 
 libbridge_a_CPPFLAGS = -I$(GTF_INCLUDE) -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE) -I$(RNACORE_INCLUDE)
 
-libbridge_a_SOURCES = phase.h phase.cc \
-					  bridger.h bridger.cc \
-					  pier.h pier.cc 
+libbridge_a_SOURCES = bridge_path.h bridge_path.cc \
+					  pier.h pier.cc \
+					  bridge_solver.h bridge_solver.cc

@@ -95,6 +95,20 @@ int build_child_splice_graph(splice_graph &root, splice_graph &gr, map<int, int>
 	return 0;
 }
 
+int32_t get_total_length_of_introns(const vector<int32_t> &chain)
+{
+	assert(chain.size() % 2 == 0);
+	int32_t x;
+	for(int k = 0; k < chain.size() / 2; k++)
+	{
+		int32_t p = chain[k * 2 + 0];
+		int32_t q = chain[k * 2 + 1];
+		assert(p < q);
+		x += q - p;
+	}
+	return x;
+}
+
 int build_child_hyper_set(hyper_set &hyper, hyper_set &hs, map<int, int> &a2b)
 {
 	hs.clear();
@@ -173,6 +187,22 @@ int build_exon_coordinates_from_path(splice_graph &gr, const vector<int> &v, vec
 	if(v.back() == n) vv.push_back(-2);
 	if(v.back() == n) vv.push_back(-2);
 
+	return 0;
+}
+
+int build_intron_coordinates_from_path(splice_graph &gr, const vector<int> &v, vector<int32_t> &vv)
+{
+	vv.clear();
+	for(int i = 0; i < v.size() - 1; i++)
+	{
+		int32_t pp = gr.get_vertex_info(v[i + 0]).rpos;
+		int32_t qq = gr.get_vertex_info(v[i + 1]).lpos;
+
+		assert(pp <= qq);
+		if(pp == qq) continue;
+		vv.push_back(pp);
+		vv.push_back(qq);
+	}
 	return 0;
 }
 

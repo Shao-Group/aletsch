@@ -61,7 +61,7 @@ public:
 	int32_t hi;								// HI aux in sam
 	int32_t nm;								// NM aux in sam
 	bool concordant;						// whether it is concordant
-	vector<int64_t> spos;					// splice positions
+	vector<int32_t> spos;					// splice positions
 
 public:
 	int set_tags(bam1_t *b);
