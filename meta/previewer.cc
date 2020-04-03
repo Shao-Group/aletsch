@@ -8,11 +8,12 @@ See LICENSE for licensing.
 #include <cassert>
 #include <sstream>
 
+#include "bundle.h"
 #include "previewer.h"
 #include "constants.h"
-#include "bridger.h"
-#include "bundle.h"
-#include "graph_hits.h"
+#include "graph_cluster.h"
+#include "graph_builder.h"
+#include "essential.h"
 
 previewer::previewer(const string &file)
 {
@@ -134,8 +135,8 @@ int previewer::infer_insertsize(config &cfg, sample_profile &sp)
 	//printf("preview insertsize for file %s\n", input_file.c_str());
 	open_file();
 
-	bundle_base bb1;
-	bundle_base bb2;
+	bundle bb1;
+	bundle bb2;
 	bb1.strand = '+';
 	bb2.strand = '-';
 	map<int32_t, int> m;
@@ -221,22 +222,6 @@ int previewer::infer_insertsize(config &cfg, sample_profile &sp)
 	sp.insertsize_ave = sp.insertsize_ave * 1.0 / n;
 	sp.insertsize_std = sqrt((sx2 - n * sp.insertsize_ave * sp.insertsize_ave) * 1.0 / n);
 
-	/*
-	sp.insertsize_profile.assign(sp.insertsize_high, 1);
-	n = sp.insertsize_high;
-	for(map<int32_t, int>::iterator it = m.begin(); it != m.end(); it++)
-	{
-		if(it->first >= sp.insertsize_high) continue;
-		sp.insertsize_profile[it->first] += it->second;
-		n += it->second;
-	}
-
-	for(int i = 0; i < sp.insertsize_profile.size(); i++)
-	{
-		sp.insertsize_profile[i] = sp.insertsize_profile[i] * 1.0 / n;
-	}
-	*/
-
 	printf("preview (%s) insertsize: sampled reads = %d, isize = %.2lf +/- %.2lf, median = %d, low = %d, high = %d\n", 
 				input_file.c_str(), total, sp.insertsize_ave, sp.insertsize_std, sp.insertsize_median, sp.insertsize_low, sp.insertsize_high);
 
@@ -244,61 +229,46 @@ int previewer::infer_insertsize(config &cfg, sample_profile &sp)
 	return 0;
 }
 
-int previewer::process(bundle_base &bb, config &cfg, map<int32_t, int> &m)
+int previewer::process(bundle &bd, config &cfg, map<int32_t, int> &m)
 {
-	if(bb.hits.size() < cfg.min_num_hits_in_bundle) return 0;
-	if(bb.hits.size() > 20000) return 0;
-	if(bb.tid < 0) return 0;
+	if(bd.hits.size() < cfg.min_num_hits_in_bundle) return 0;
+	if(bd.hits.size() > 20000) return 0;
+	if(bd.tid < 0) return 0;
 
 	char buf[1024];
-	strcpy(buf, hdr->target_name[bb.tid]);
-
-	bundle bd(bb, &cfg);
-
+	strcpy(buf, hdr->target_name[bd.tid]);
 	bd.chrm = string(buf);
-	bd.build();
-	//bd.print(index);
 
-	vector<PRC> vpr;
-	vector<bool> paired;
-	graph_hits gh(bd.gr, bb.hits);
-	gh.build_paired_reads_clusters(vpr, paired);
+	splice_graph gr;
+	graph_builder gb(bd);
+	gb.build(gr);
 
-	bridger br(bd.gr, vpr);
-	br.length_low = 0;
-	br.length_high = 9999;
-	br.vote();
+	gr.build_vertex_index();
+
+	vector<pereads_cluster> vc;
+	phase_set ps;
+	graph_cluster gc(gr, bd.hits, 2);
+	gc.resolve(vc, ps);
 
 	int cnt = 0;
-	assert(br.opt.size() == vpr.size());
-	for(int k = 0; k < br.opt.size(); k++)
+	for(int k = 0; k < vc.size(); k++)
 	{
-		phase &bbp = br.opt[k];
-		if(bbp.type != 1) continue;
-		if(bbp.v.size() <= 0) continue;
+		pereads_cluster &pc = vc[k];
+		int32_t p1 = pc.bounds[1] - 1;
+		int32_t p2 = pc.bounds[2] - 0;
+		int k1 = gr.locate_vertex(p1);
+		int k2 = gr.locate_vertex(p2);
+		if(k1 < 0 || k2 < 0 || k1 < k2) continue;
 
-		rcluster &r1 = vpr[k].first;
-		rcluster &r2 = vpr[k].second;
+		int32_t length1 = get_total_length_of_introns(pc.chain1);
+		int32_t length2 = get_total_length_of_introns(pc.chain2);
+		int32_t d = pc.bounds[3] - pc.bounds[0] - length1 - length2;
 
-		const vertex_info &v1 = bd.gr.get_vertex_info(bbp.v.front());
-		const vertex_info &v2 = bd.gr.get_vertex_info(bbp.v.back());
-		PI32 lrange = PI32(v1.lpos, v1.rpos);
-		PI32 rrange = PI32(v2.lpos, v2.rpos);
+		cnt++;
 
-		int32_t len = bd.gr.get_total_length_of_vertices(bbp.v);
-
-		for(int j = 0; j < r1.vl.size(); j++)
-		{
-			assert(r1.vl[j] >= lrange.first);
-			assert(r2.vr[j] <= rrange.second);
-
-			int32_t d = len - (r1.vl[j] - lrange.first) - (rrange.second - r2.vr[j]);
-			cnt++;
-
-			if(m.find(d) != m.end()) m[d]++;
-			else m.insert(pair<int32_t, int>(d, 1));
-			if(cnt >= 1000) return cnt;
-		}
+		if(m.find(d) != m.end()) m[d]++;
+		else m.insert(pair<int32_t, int>(d, 1));
+		if(cnt >= 1000) return cnt;
 	}
 	return cnt;
 }

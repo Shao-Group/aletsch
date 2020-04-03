@@ -7,10 +7,25 @@ See LICENSE for licensing.
 #include "essential.h"
 #include "constants.h"
 #include "hyper_set.h"
-#include "hyper_graph.h"
 #include "config.h"
 #include <algorithm>
 #include <cstdio>
+
+hyper_set::hyper_set()
+{}
+
+hyper_set::hyper_set(splice_graph &gr, phase_set &ps)
+{
+	for(MVII::const_iterator it = ps.pmap.begin(); it != ps.pmap.end(); it++)
+	{
+		const vector<int32_t> &v = it->first;
+		int c = it->second;
+		vector<int> vv;
+		bool b = build_path_from_exon_coordinates(gr, v, vv);
+		if(b == false) continue;
+		add(vv, c);
+	}
+}
 
 int hyper_set::clear()
 {

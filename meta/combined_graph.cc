@@ -2,7 +2,6 @@
 #include "combined_graph.h"
 #include "config.h"
 #include "essential.h"
-#include "graph_revise.h"
 #include <sstream>
 #include <algorithm>
 
@@ -12,7 +11,7 @@ combined_graph::combined_graph()
 	strand = '?';
 }
 
-int combined_graph::build(splice_graph &gr, const phase_se &p, const vector<pereads_cluster> &ub)
+int combined_graph::build(splice_graph &gr, const phase_set &ps, const vector<pereads_cluster> &ub)
 {
 	chrm = gr.chrm;
 	strand = gr.strand;
@@ -346,59 +345,6 @@ int combined_graph::combine_end_bounds(map<int32_t, DI> &m, const combined_graph
 	return 0;
 }
 
-int combined_graph::resolve(splice_graph &gr, hyper_set &hs, vector<pereads_cluster> &ub)
-{
-	group_junctions();
-	build_splice_graph(gr);
-	group_start_boundaries(gr);
-	group_end_boundaries(gr);
-	build_phasing_paths(gr, hs);
-	return 0;
-}
-
-
-int combined_graph::group_junctions()
-{
-	set<int> fb;
-	for(int i = 0; i < junctions.size(); i++)
-	{
-		if(fb.find(i) != fb.end()) continue;
-		PPDI x = junctions[i];
-		for(int j = i + 1; j < junctions.size(); j++)
-		{
-			if(fb.find(j) != fb.end()) continue;
-			PPDI y = junctions[j];
-			double d1 = fabs(x.first.first - y.first.first);
-			double d2 = fabs(x.first.second - y.first.second);
-			if(d1 + d2 >= max_group_junction_distance) continue;
-			if(10 * x.second.first < y.second.first && x.second.second < y.second.second && x.second.second <= 2 && y.second.first <= 100)
-			{
-				fb.insert(i);
-				if(meta_verbose >= 2) printf("filter junction: (%d, %d), w = %.1lf, c = %d -> (%d, %d), w = %.1lf, c = %d\n", 
-						x.first.first, x.first.second, x.second.first, x.second.second,
-						y.first.first, y.first.second, y.second.first, y.second.second);
-			}
-			if(x.second.first > 10 * y.second.first && x.second.second > y.second.second && y.second.second <= 2 && y.second.first <= 100)
-			{
-				if(meta_verbose >= 2) printf("filter junction: (%d, %d), w = %.1lf, c = %d -> (%d, %d), w = %.1lf, c = %d\n",
-						y.first.first, y.first.second, y.second.first, y.second.second,
-						x.first.first, x.first.second, x.second.first, x.second.second);
-				fb.insert(j);
-			}
-		}
-	}
-
-	vector<PPDI> v;
-	for(int k = 0; k < junctions.size(); k++)
-	{
-		PPDI p = junctions[k];
-		if(fb.find(k) == fb.end()) v.push_back(p);
-	}
-
-	junctions = v;
-	return 0;
-}
-
 int combined_graph::build_splice_graph(splice_graph &gr)
 {
 	gr.clear();
@@ -534,93 +480,15 @@ int combined_graph::build_splice_graph(splice_graph &gr)
 	return 0;
 }
 
-int combined_graph::build_phasing_paths(splice_graph &gr, hyper_set &hs, rcluster &rc)
+int combined_graph::build_phase_set(phase_set &ps)
 {
-	vector<int> uu;
-	bool b = build_path_from_intron_coordinates(gr, rc.vv, uu);
-	if(b == false) return 0;	// TODO
-
-	for(int j = 0; j < rc.vl.size(); j++)
-	{
-		int32_t p1 = rc.vl[j];
-		int32_t p2 = rc.vr[j];
-		int w = rc.cc[j];
-
-		assert(p1 >= 0 && p2 >= 0);
-
-		// NOTE: group phasing here
-		if(smap.find(p1) != smap.end()) p1 = smap[p1];
-		if(tmap.find(p2) != tmap.end()) p2 = tmap[p2];
-
-		// TODO: change back to assert?
-		if(gr.lindex.find(p1) == gr.lindex.end()) continue;
-		if(gr.rindex.find(p2) == gr.rindex.end()) continue;
-
-		int a = gr.lindex[p1];
-		int b = gr.rindex[p2];
-
-		vector<int> vv;
-		if(uu.size() == 0)
-		{
-			for(int k = a; k <= b; k++) vv.push_back(k);
-		}
-		else
-		{
-			for(int k = a; k < uu.front(); k++) vv.push_back(k);
-			vv.insert(vv.end(), uu.begin(), uu.end());
-			for(int k = uu.back() + 1; k <= b; k++) vv.push_back(k);
-		}
-
-		for(int k = 0; k < vv.size(); k++) vv[k]--;
-		hs.add_node_list(vv, w);
-	}
-	return 0;
-}
-
-int combined_graph::build_phasing_paths(splice_graph &gr, hyper_set &hs)
-{
-	hs.clear();
-	for(int i = 0; i < phase.size(); i++)
-	{
-		build_phasing_paths(gr, hs, phase[i]);
-	}
-
+	ps = phases;
 	for(int k = 0; k < children.size(); k++)
 	{
 		combined_graph &gt = children[k];
-		for(int i = 0; i < gt.phase.size(); i++)
-		{
-			build_phasing_paths(gr, hs, gt.phase[i]);
-		}
+		ps.combine(gt.phases);
 	}
 	return 0;
-}
-
-
-
-set<int32_t> combined_graph::get_reliable_adjacencies(int samples, double weight)
-{
-	set<int32_t> s;
-	if(regions.size() <= 1) return s;
-	for(int i = 0; i < regions.size() - 1; i++)
-	{
-		int32_t p1 = regions[i + 0].first.second;
-		int32_t p2 = regions[i + 1].first.first;
-		if(p1 != p2) continue;
-
-		double w1 = regions[i + 0].second.first;
-		double w2 = regions[i + 1].second.first;
-		int c1 = regions[i + 0].second.second;
-		int c2 = regions[i + 1].second.second;
-
-		bool b = false;
-		if(w1 >= weight && w2 >= weight) b = true;
-		if(c1 >= samples && c2 >= samples) b = true;
-
-		if(b == false) continue;
-		s.insert(p1);
-	}
-	return s;
 }
 
 set<int32_t> combined_graph::get_reliable_splices(int samples, double weight)
@@ -669,113 +537,6 @@ set<int32_t> combined_graph::get_reliable_splices(int samples, double weight)
 	return s;
 }
 
-set<PI32> combined_graph::get_reliable_junctions(int samples, double weight)
-{
-	set<PI32> s;
-	for(int i = 0; i < junctions.size(); i++)
-	{
-		PI32 p = junctions[i].first;
-		double w = junctions[i].second.first;
-		int c = junctions[i].second.second;
-
-		if(c < samples && w < weight) continue;
-		s.insert(p);
-	}
-	return s;
-}
-
-set<int32_t> combined_graph::get_reliable_start_boundaries(int samples, double weight)
-{
-	map<int32_t, DI> m;
-	for(int i = 0; i < sbounds.size(); i++)
-	{
-		int32_t p = sbounds[i].first;
-		int32_t q = p;
-		if(smap.find(p) != smap.end()) q = smap[p];
-		double w = sbounds[i].second.first;
-		int c = sbounds[i].second.second;
-
-		if(m.find(q) == m.end())
-		{
-			DI di(w, c);
-			m.insert(pair<int32_t, DI>(q, di));
-		}
-		else
-		{
-			m[q].first += w;
-			m[q].second += c;
-		}
-	}
-
-	set<int32_t> s;
-	for(map<int32_t, DI>::iterator it = m.begin(); it != m.end(); it++)
-	{
-		int32_t p = it->first;
-		double w = it->second.first;
-		int c = it->second.second;
-		if(w < weight && c < samples) continue;
-		s.insert(p);
-	}
-
-	set<int32_t> ss;
-	for(int i = 0; i < sbounds.size(); i++)
-	{
-		int32_t p = sbounds[i].first;
-		int32_t q = p;
-		if(smap.find(p) != smap.end()) q = smap[p];
-		if(s.find(q) == s.end()) continue;
-		ss.insert(p);
-	}
-
-	return ss;
-}
-
-set<int32_t> combined_graph::get_reliable_end_boundaries(int samples, double weight)
-{
-	map<int32_t, DI> m;
-	for(int i = 0; i < tbounds.size(); i++)
-	{
-		int32_t p = tbounds[i].first;
-		int32_t q = p;
-		if(tmap.find(p) != tmap.end()) q = tmap[p];
-		double w = tbounds[i].second.first;
-		int c = tbounds[i].second.second;
-
-		if(m.find(q) == m.end())
-		{
-			DI di(w, c);
-			m.insert(pair<int32_t, DI>(q, di));
-		}
-		else
-		{
-			m[q].first += w;
-			m[q].second += c;
-		}
-	}
-
-	set<int32_t> s;
-	for(map<int32_t, DI>::iterator it = m.begin(); it != m.end(); it++)
-	{
-		int32_t p = it->first;
-		double w = it->second.first;
-		int c = it->second.second;
-		if(w < weight && c < samples) continue;
-		s.insert(p);
-	}
-
-	set<int32_t> ss;
-	for(int i = 0; i < tbounds.size(); i++)
-	{
-		int32_t p = tbounds[i].first;
-		int32_t q = p;
-		if(tmap.find(p) != tmap.end()) q = tmap[p];
-		if(s.find(q) == s.end()) continue;
-		ss.insert(p);
-	}
-
-	return ss;
-}
-
 int combined_graph::clear()
 {
 	num_combined = 0;
@@ -787,21 +548,15 @@ int combined_graph::clear()
 	junctions.clear();
 	sbounds.clear();
 	tbounds.clear();
-	phase.clear();
-	reads.clear();
-	smap.clear();
-	tmap.clear();
+	phases.clear();
+	preads.clear();
 	return 0;
 }
 
 int combined_graph::print(int index)
 {
 	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phasing-phase = %lu\n", 
-			index, num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), phase.size());
-
-	//printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phase = %lu, #reads = %lu\n", 
-	//		index, num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), phase.size(), reads.size());
-
+			index, num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), phases.pmap.size());
 
 	for(int i = 0; i < regions.size(); i++)
 	{
@@ -827,17 +582,7 @@ int combined_graph::print(int index)
 		DI d = tbounds[i].second;
 		printf("tbound %d: %d, w = %.2lf, c = %d\n", i, p, d.first, d.second);
 	}
-	for(int i = 0; i < phase.size(); i++)
-	{
-		rcluster &r = phase[i];
-		printf("path %d: vv = ( ", i);
-		printv(r.vv);
-		printf(")\n");
-		for(int k = 0; k < r.vl.size(); k++)
-		{
-			printf(" bounds = (%d, %d), w = %d, c = 1\n", r.vl[k], r.vr[k], r.cc[k]);
-		}
-	}
+	phases.print();
 	return 0;
 }
 

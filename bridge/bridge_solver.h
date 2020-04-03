@@ -48,9 +48,10 @@ public:
 	int32_t length_high;
 
 public:
-	int resolve();
+	int resolve(vector<pereads_cluster> &ub, phase_set &ps);
 	int print();
 
+private:
 	int build_bridging_vertices();
 	int build_piers();
 	int build_piers_index();

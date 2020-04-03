@@ -37,12 +37,14 @@ bridge_solver::bridge_solver(splice_graph &g, const vector<pereads_cluster> &v)
 	}
 }
 
-int bridge_solver::resolve()
+int bridge_solver::resolve() //(vector<pereads_cluster> &ub, phase_set &ps)
 {
 	build_bridging_vertices();
 	build_piers();
 	nominate();
 	vote();
+	//collect_unbridged_clusters(ub);
+	//build_phase_set(ps);
 	return 0;
 }
 
@@ -239,41 +241,46 @@ int bridge_solver::build_phase_set(phase_set &ps)
 	assert(opt.size() == vc.size());
 	for(int i = 0; i < vc.size(); i++)
 	{
-		const pereads_cluster &pc = vc[i];
-		int v0 = gr.locate_vertex(pc.bounds[0] - 0);
-		int v3 = gr.locate_vertex(pc.bounds[3] - 1);
-		if(v0 < 0 || v3 < 0) continue;
+		build_phase_set(vc[i], opt[i], ps);
+	}
+	return 0;
+}
 
-		int32_t p0 = gr.get_vertex_info(v0).lpos;
-		int32_t p3 = gr.get_vertex_info(v3).rpos;
+int build_phase_from_bridge_path(splice_graph &gr, const pereads_cluster &pc, const bridge_path &bbp, phase_set &ps)
+{
+	int v0 = gr.locate_vertex(pc.bounds[0] - 0);
+	int v3 = gr.locate_vertex(pc.bounds[3] - 1);
+	if(v0 < 0 || v3 < 0) return 0;
 
-		if(opt[i].type >= 0)
-		{
-			vector<int32_t> v;
-			v.push_back(p0);
-			v.insert(v.end(), pc.chain1.begin(), pc.chain1.end());
-			v.insert(v.end(), opt[i].chain.begin(), opt[i].chain.end());
-			v.insert(v.end(), pc.chain2.begin(), pc.chain2.end());
-			v.push_back(p3);
-			ps.add(v, pc.count);
-		}
-		else
-		{
-			int32_t p1 = gr.get_vertex_info(vpairs[i].first).rpos;
-			int32_t p2 = gr.get_vertex_info(vpairs[i].second).lpos;
+	int32_t p0 = gr.get_vertex_info(v0).lpos;
+	int32_t p3 = gr.get_vertex_info(v3).rpos;
 
-			vector<int32_t> v1;
-			v1.push_back(p0);
-			v1.insert(v1.end(), pc.chain1.begin(), pc.chain1.end());
-			v1.push_back(p1);
-			ps.add(v1, pc.count);
+	if(bbp.type >= 0)
+	{
+		vector<int32_t> v;
+		v.push_back(p0);
+		v.insert(v.end(), pc.chain1.begin(), pc.chain1.end());
+		v.insert(v.end(), bbp.chain.begin(), bbp.chain.end());
+		v.insert(v.end(), pc.chain2.begin(), pc.chain2.end());
+		v.push_back(p3);
+		ps.add(v, pc.count);
+	}
+	else
+	{
+		int32_t p1 = gr.get_vertex_info(vpairs[i].first).rpos;
+		int32_t p2 = gr.get_vertex_info(vpairs[i].second).lpos;
 
-			vector<int32_t> v2;
-			v2.push_back(p2);
-			v2.insert(v1.end(), pc.chain2.begin(), pc.chain2.end());
-			v2.push_back(p3);
-			ps.add(v2, pc.count);
-		}
+		vector<int32_t> v1;
+		v1.push_back(p0);
+		v1.insert(v1.end(), pc.chain1.begin(), pc.chain1.end());
+		v1.push_back(p1);
+		ps.add(v1, pc.count);
+
+		vector<int32_t> v2;
+		v2.push_back(p2);
+		v2.insert(v1.end(), pc.chain2.begin(), pc.chain2.end());
+		v2.push_back(p3);
+		ps.add(v2, pc.count);
 	}
 	return 0;
 }

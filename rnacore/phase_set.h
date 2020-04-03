@@ -19,7 +19,10 @@ public:
 
 public:
 	int add(const vector<int32_t> &s, int c);
+	int combine(const phase_set &ps);
+	int project_boundaries(const map<int32_t, int32_t> &smap, const map<int32_t, int32_t> &tmap);
 	int clear();
+	int print();
 };
 
 #endif

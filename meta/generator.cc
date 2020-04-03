@@ -1,9 +1,3 @@
-/*
-Part of Scallop Transcript Assembler
-(c) 2017 by  Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
-See LICENSE for licensing.
-*/
-
 #include <cstdio>
 #include <cassert>
 #include <sstream>
@@ -11,14 +5,12 @@ See LICENSE for licensing.
 
 #include "constants.h"
 #include "scallop/config.h"
-#include "gtf.h"
-#include "genome.h"
 #include "bundle.h"
 #include "generator.h"
-#include "scallop.h"
 #include "previewer.h"
-#include "bridger.h"
-#include "graph_hits.h"
+#include "bridge_solver.h"
+#include "graph_builder.h"
+#include "graph_cluster.h"
 #include "essential.h"
 
 generator::generator(vector<combined_graph> &v, const config &c)
@@ -35,7 +27,6 @@ generator::generator(vector<combined_graph> &v, const config &c)
 	index = 0;
 	qlen = 0;
 	qcnt = 0;
-	//grout.open(gfile.c_str());
 }
 
 generator::~generator()
@@ -43,7 +34,6 @@ generator::~generator()
     bam_destroy1(b1t);
     bam_hdr_destroy(hdr);
     sam_close(sfn);
-	//grout.close();
 }
 
 int generator::resolve()
@@ -62,7 +52,6 @@ int generator::resolve()
 		ht.set_splices(b1t, cfg.min_flank_length);
 		ht.set_tags(b1t);
 		ht.set_strand(cfg.library_type);
-		//ht.print();
 
 		// TODO for test
 		//if(ht.tid >= 1) break;
@@ -114,48 +103,39 @@ int generator::generate(int n)
 
 	for(int i = 0; i < pool.size(); i++)
 	{
-		bundle_base &bb = pool[i];
-
-		//printf("bundle %d has %lu reads\n", i, bb.hits.size());
-
+		bundle &bb = pool[i];
 		if(bb.hits.size() < cfg.min_num_hits_in_bundle) continue;
 		if(bb.tid < 0) continue;
 
 		char buf[1024];
 		strcpy(buf, hdr->target_name[bb.tid]);
+		bb.chrm = string(buf);
 
-		bundle bd(bb, &cfg);
+		splice_graph gr;
+		graph_builder gb(bb);
+		gb.build(gr);
 
-		bd.chrm = string(buf);
-		bd.build();
+		if(gr.count_junctions() <= 0) continue;
 
-		if(bd.gr.count_junctions() <= 0) continue;
+		gr.build_vertex_index();
 
-		bd.gr.build_vertex_index();
+		vector<pereads_cluster> vc;
+		phase_set ps;
+		graph_cluster gc(gr, bb.hits, 10);			// TODO parameter
+		gc.resolve(vc, ps);
 
-		hyper_set hs;
-		vector<PRC> vpr;
-		vector<bool> paired;
-
-		graph_hits gh(bd.gr, bb.hits);
-		gh.build_paired_reads_clusters(vpr, paired);
-		gh.build_hyper_set_from_unpaired_reads(paired, hs);
-
-		bridger br(bd.gr, vpr);
-		br.length_low = sp.insertsize_low;
-		br.length_high = sp.insertsize_high;
-		br.resolve();
-		br.build_hyper_set(hs);
-
-		vector<PRC> ub;
-		br.collect_unbridged_clusters(ub);
+		vector<pereads_cluster> ub;
+		bridge_solver bs(gr, vc);
+		bs.length_low = sp.insertsize_low;
+		bs.length_high = sp.insertsize_high;
+		bs.resolve(ub, ps);
 
 		//for(int k = 0; k < ub.size(); k++) ub[k].print(k);
 
 		vector<splice_graph> grv;
-		vector<hyper_set> hsv;
-		vector< vector<PRC> > ubv;
-		partition(bd.gr, hs, ub, grv, hsv, ubv);
+		vector<phase_set> hsv;
+		vector< vector<pereads_cluster> > ubv;
+		partition(gr, ps, ub, grv, hsv, ubv);
 		
 		assert(grv.size() == hsv.size());
 		assert(grv.size() == ubv.size());
@@ -186,7 +166,7 @@ int generator::generate(int n)
 	return 0;
 }
 
-int generator::partition(splice_graph &gr, hyper_set &hs, const vector<PRC> &ub, vector<splice_graph> &grv, vector<hyper_set> &hsv, vector< vector<PRC> > &ubv)
+int generator::partition(splice_graph &gr, phase_set &ps, const vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &psv, vector< vector<pereads_cluster> > &ubv)
 {
 	int n = gr.num_vertices();
 
@@ -208,33 +188,33 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<PRC> &ub,
 		ds.union_set(s, t);
 	}
 
-	// group with hyper_set
-	// do not use it
+	// group with phase_set, do not use
 	/*
-	for(MVII::const_iterator it = hs.nodes.begin(); it != hs.nodes.end(); it++)
+	for(MVII::const_iterator it = ps.pmap.begin(); it != ps.pmap.end(); it++)
 	{
 		const vector<int> &v = it->first;
-		if(v.size() <= 1) continue;
-		// here just verify all vertices in a phase are valid paths
-		int p = ds.find_set(v[0]);
-		for(int i = 1; i < v.size(); i++)
-		{
-			int q = ds.find_set(v[i]);
-			if(p == q) continue;
-			ds.link(p, q);
-			p = ds.find_set(v[0]);
-		}
+		assert(v.size() % == 0);
+		assert(v.size() >= 2);
+		
+		assert(gr.lindex.find(v.front()) != gr.lindex.end());
+		assert(gr.rindex.find(v.back()) != gr.rindex.end());
+		int kl = gr.lindex[v.front()];
+		int kr = gr.rindex[v.back()];
+		ds.union_set(kl, kr);
 	}
 	*/
 
 	// group with unbridged pairs
+	vector<int> ubi(ub.size(), -1);
 	for(int i = 0; i < ub.size(); i++)
 	{
-		if(ub[i].first.vv.size() <= 0) continue;
-		if(ub[i].second.vv.size() <= 0) continue;
-		int x = ub[i].first.vv.back();
-		int y = ub[i].second.vv.front();
+		int32_t p1 = ub[i].bounds[1] - 1;
+		int32_t p2 = ub[i].bounds[2] - 0;
+		int x = gr.locate_vertex(p1);
+		int y = gr.locate_vertex(p2);
+		if(x < 0 || y < 0) continue;
 		ds.union_set(x, y);
+		ubi[i] = ds.find_set(x);
 	}
 
 	// create connected components
@@ -271,70 +251,31 @@ int generator::partition(splice_graph &gr, hyper_set &hs, const vector<PRC> &ub,
 		build_child_splice_graph(gr, grv[k], vm[k]);
 	}
 
-	hsv.resize(vv.size());
-	for(MVII::const_iterator it = hs.nodes.begin(); it != hs.nodes.end(); it++)
+	psv.resize(vv.size());
+	for(MVII::const_iterator it = ps.pmap.begin(); it != ps.pmap.end(); it++)
 	{
-		vector<int> v = it->first;
-		int c = it->second;
-		if(v.size() <= 0) continue;
-		int p = ds.find_set(v[0]);
+		const vector<int> &v = it->first;
+		assert(v.size() % 2 == 0);
+		if(v.size() <= 1) continue;
+		
+		assert(gr.lindex.find(v.front()) != gr.lindex.end());
+		assert(gr.rindex.find(v.back()) != gr.rindex.end());
+		int j = gr.lindex[v.front()];
+		int p = ds.find_set(j);
 		assert(m.find(p) != m.end());
 		int k = m[p];
 		assert(k >= 0 && k < vv.size());
-		vector<int> vv = project_vector(v, vm[k]);
-		//assert(vv.size() == v.size());
-		if(vv.size() != v.size()) continue;
-		for(int i = 0; i < vv.size(); i++) vv[i]--;
-		hsv[k].add_node_list(vv, c);
+		psv[k].add(v, it->second);
 	}
 
 	ubv.resize(vv.size());
 	for(int i = 0; i < ub.size(); i++)
 	{
-		if(ub[i].first.vv.size() <= 0) continue;
-		if(ub[i].second.vv.size() <= 0) continue;
-		int x = ub[i].first.vv.back();
-		int y = ub[i].second.vv.front();
-		int p = ds.find_set(x);
-		assert(p == ds.find_set(y));
-		assert(m.find(p) != m.end());
-		int k = m[p];
+		int k = ubi[i];
+		if(k < 0) continue;
 		assert(k >= 0 && k < vv.size());
-
-		PRC prc = ub[i];
-		prc.first.vv = project_vector(prc.first.vv, vm[k]);
-		prc.second.vv = project_vector(prc.second.vv, vm[k]);
-		//assert(fc.v1.size() == ub[i].v1.size());
-		//assert(fc.v2.size() == ub[i].v2.size());
-		if(prc.first.vv.size() != ub[i].first.vv.size()) continue;
-		if(prc.second.vv.size() != ub[i].second.vv.size()) continue;
-		ubv[k].push_back(prc);
+		ubv[k].push_back(ub[i]);
 	}
 
-	return 0;
-}
-
-int generator::write_graph(splice_graph &gr, hyper_set &hs)
-{
-	gr.write(grout);
-
-	for(MVII::const_iterator it = hs.nodes.begin(); it != hs.nodes.end(); it++)
-	{
-		const vector<int> &v = it->first;
-		int c = it->second;
-		gr.write(grout, v, c, "phase");
-	}
-
-	scallop sc(gr, hs, &cfg);
-	sc.preassemble();
-
-	for(int i = 0; i < sc.paths.size(); i++)
-	{
-		const vector<int> &v = sc.paths[i].v;
-		double w = sc.paths[i].abd;
-		gr.write(grout, v, w, "path");
-	}
-
-	grout << endl;
 	return 0;
 }

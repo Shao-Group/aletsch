@@ -4,9 +4,8 @@
 #include "cluster.h"
 #include "meta_config.h"
 #include "scallop.h"
-#include "hyper_graph.h"
-#include "graph_revise.h"
-#include "bridger.h"
+#include "graph_reviser.h"
+#include "bridge_solver.h"
 #include "essential.h"
 
 #include <fstream>
@@ -254,42 +253,31 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	set<int32_t> ps = cb.get_reliable_splices(min_supporting_samples, 99999);
 
 	splice_graph gx;
-	hyper_set hx;
-	vector<PRC> ux;
-	cb.resolve(gx, hx, ux);
+	phase_set px;
+	cb.build_splice_graph(gx);
+	cb.build_phase_set(px);
 
-	gx.build_vertex_index();
-
-	// collect and transform reads
-	vector<PRC> reads;
+	vector<pereads_cluster> preads;
 	vector<PI> index(cb.children.size());
-	int length_low = 9999;
+	int length_low = 999;
 	int length_high = 0;
 	for(int k = 0; k < cb.children.size(); k++)
 	{
 		combined_graph &gt = cb.children[k];
 		if(gt.sp.insertsize_low < length_low) length_low = gt.sp.insertsize_low;
 		if(gt.sp.insertsize_high > length_high) length_high = gt.sp.insertsize_high;
-		index[k].first = reads.size();
-		for(int j = 0; j < gt.reads.size(); j++)
-		{
-			PRC prc = gt.reads[j];
-			bool b = transform_to_paths(gx, prc);
-			if(b == false) continue;
-			reads.push_back(prc);
-		}
-		index[k].second = reads.size();
-		gt.reads.clear();
+		index[k].first = preads.size();
+		preads.insert(preads.end(), gt.preads.begin(), gt.preads.end());
+		index[k].second = preads.size();
+		gt.preads.clear();
 	}
 
-	bridger br(gx, reads);
+	bridge_solver br(gx, preads);
 	br.length_low = length_low;
 	br.length_high = length_high;
 	br.resolve();
-	br.build_hyper_set(hx);
-
-	// stats bridging reads
-	br.print();
+	br.build_phase_set(px);
+	//br.print();
 
 	/*
 	printf("-----\n");
@@ -297,9 +285,15 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	hx.print_nodes();
 	*/
 
+	map<int32_t, int32_t> smap, tmap;
+	group_start_boundaries(gx, smap, max_group_boundary_distance);
+	group_end_boundaries(gx, tmap, max_group_boundary_distance);
+	px.project_boundaries(smap, tmap);
+
 	refine_splice_graph(gx);
 	keep_surviving_edges(gx, min_splicing_count);
-	hx.filter_nodes(gx);
+
+	hyper_set hx(gx, px);
 
 	gx.gid = cb.gid;
 	cfg.algo = "single";
@@ -322,19 +316,14 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	for(int i = 0; i < cb.children.size(); i++)
 	{
 		// process unbridged reads
-		vector< vector<int32_t> > exon_chains;
-		vector<int> weights;
+		phase_set pps;
 		for(int k = index[i].first; k < index[i].second; k++)
 		{
 			if(br.opt[k].type < 0) continue;
-			vector<int32_t> v;
-			int c = reads[k].first.vl.size();
-			if(c <= 1.5) continue;
-			build_exon_coordinates_from_path(gx, br.opt[k].v, v);
-			exon_chains.push_back(v);
-			weights.push_back(c);
+			// TODO add junction to this child with br.opt[k]
+			build_phase_from_bridge_path(gx, preads[k], br.opt[k], pps);
 		}
-		cb.children[i].combine_extra_bridged_reads(exon_chains, weights);
+		cb.children[i].combine_extra_phase_set(pps);
 
 		/*
 		if(exon_chains.size() >= 1)
@@ -356,10 +345,10 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 		*/
 
 		splice_graph gr;
-		hyper_set hs;
-		vector<PRC> ub;
+		phase_set ps;
 		cb.children[i].resolve(gr, hs, ub);
 
+		hyper_set hs;
 		/*
 		printf("-----\n");
 		gr.print();
@@ -445,4 +434,3 @@ bool query_transcript(const map< size_t, vector<transcript> > &mt, const transcr
 
 	return false;
 }
-

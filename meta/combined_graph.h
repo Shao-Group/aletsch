@@ -44,16 +44,14 @@ public:
 
 public:
 	// build from gr, hs, and ub
-	int build(splice_graph &gr, hyper_set &hs, vector<PRC> &ub);
+	int build(splice_graph &gr, const phase_set &ps, const vector<pereads_cluster> &ub);
 	int build_regions(splice_graph &gr);
 	int build_start_bounds(splice_graph &gr);
 	int build_end_bounds(splice_graph &gr);
 	int build_splices_junctions(splice_graph &gr);
-	int build_phase(splice_graph &gr, hyper_set &hs);
-	int build_reads(splice_graph &gr, vector<PRC> &ub);
 
 	// add extra reads
-	int combine_extra_bridged_reads(const vector< vector<int32_t> > &exon_chains, const vector<int> &weights);
+	//int combine_extra_bridged_reads(const vector< vector<int32_t> > &exon_chains, const vector<int> &weights);
 
 	// combine (only splices)
 	int combine(const combined_graph &gt);
@@ -67,22 +65,13 @@ public:
 	int combine_end_bounds(map<int32_t, DI> &m, const combined_graph &gt);
 
 	// recover splice graph and phasing paths
-	int resolve(splice_graph &gr, hyper_set &hs, vector<PRC> &ub);
-	int group_junctions();
 	int build_splice_graph(splice_graph &gr);
-	int group_start_boundaries(splice_graph &gr);
-	int group_end_boundaries(splice_graph &gr);
-	int build_phasing_paths(splice_graph &gr, hyper_set &hs);
-	int build_phasing_paths(splice_graph &gr, hyper_set &hs, pereads_cluster &rc);
+	int build_phase_set(phase_set &ps);
 	PIDI get_leftmost_bound();
 	PIDI get_rightmost_bound();
 
 	// get reliable elements
-	set<PI32> get_reliable_junctions(int samples, double weight);
 	set<int32_t> get_reliable_splices(int samples, double weight);
-	set<int32_t> get_reliable_adjacencies(int samples, double weight);
-	set<int32_t> get_reliable_start_boundaries(int samples, double weight);
-	set<int32_t> get_reliable_end_boundaries(int samples, double weight);
 
 	// mics
 	int print(int index);

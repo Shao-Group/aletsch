@@ -11,16 +11,24 @@ using namespace std;
 class graph_cluster
 {
 public:
-	graph_cluster(splice_graph &gr, vector<hit> &hits);
+	graph_cluster(splice_graph &gr, vector<hit> &hits, int max_gap);
 
 public:
 	splice_graph &gr;				// given splice graph
 	vector<hit> &hits;				// given hits
 
+private:
+	vector<bool> paired;			// whether hits are paired
+	vector< vector<PI> > groups;
+	int max_partition_gap;
+
 public:
-	int group_pereads(vector< vector<PI> > &vc, vector<bool> &paired);
+	int resolve(vector<pereads_cluster> &vc, phase_set &ps);
+
+private:
+	int group_pereads();
 	int build_pereads_clusters(const vector<PI> &fs, vector<pereads_cluster> &vc);
-	int build_phase_set_from_unpaired_reads(const vector<bool> &paired, phase_set &ps);
+	int build_phase_set_from_unpaired_reads(phase_set &ps);
 	vector< vector<int> > partition(vector< vector<int32_t> > &fs, int r);
 };
 

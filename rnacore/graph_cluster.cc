@@ -4,16 +4,29 @@
 
 #include <algorithm>
 
-graph_cluster::graph_cluster(splice_graph &g, vector<hit> &h)
-	: gr(g), hits(h)
+graph_cluster::graph_cluster(splice_graph &g, vector<hit> &h, int max_gap)
+	: gr(g), hits(h), max_partition_gap(max_gap)
 {} 
 
-int graph_cluster::group_pereads(vector< vector<PI> > &vc, vector<bool> &paired)
+int graph_cluster::resolve(vector<pereads_cluster> &vc, phase_set &ps)
+{
+	group_pereads();
+
+	for(int k = 0; k < groups.size(); k++)
+	{
+		build_pereads_clusters(groups[k], vc);
+	}
+	
+	build_phase_set_from_unpaired_reads(ps);
+	return 0;
+}
+
+int graph_cluster::group_pereads()
 {
 	typedef pair< vector<int>, vector<int> > PVV;
 	map<PVV, int> findex;
 
-	vc.clear();
+	groups.clear();
 	paired.clear();
 
 	vector<PI> fs;
@@ -38,13 +51,13 @@ int graph_cluster::group_pereads(vector< vector<PI> > &vc, vector<bool> &paired)
 		{
 			vector<PI> v;
 			v.push_back(fs[i]);
-			findex.insert(pair<PVV, int>(pvv, vc.size()));
-			vc.push_back(v);
+			findex.insert(pair<PVV, int>(pvv, groups.size()));
+			groups.push_back(v);
 		}
 		else
 		{
 			int k = findex[pvv];
-			vc[k].push_back(fs[i]);
+			groups[k].push_back(fs[i]);
 		}
 	}
 
@@ -70,7 +83,6 @@ int graph_cluster::build_pereads_clusters(const vector<PI> &fs, vector<pereads_c
 
 	vector< vector<int> > zz = partition(vv, 0);
 
-	vc.clear();
 	for(int i = 0; i < zz.size(); i++)
 	{
 		if(zz[i].size() == 0) continue;
@@ -97,6 +109,8 @@ int graph_cluster::build_pereads_clusters(const vector<PI> &fs, vector<pereads_c
 		pc.bounds[1] /= pc.count;
 		pc.bounds[2] /= pc.count; 
 		pc.bounds[3] /= pc.count;
+
+		vc.push_back(pc);
 	}
 
 	return 0;
@@ -120,8 +134,6 @@ vector< vector<int> > graph_cluster::partition(vector< vector<int32_t> > &fs, in
 	if(r == 2) sort(fs.begin(), fs.end(), compare_rank2);	
 	if(r == 3) sort(fs.begin(), fs.end(), compare_rank3);	
 
-	int32_t max_partition_gap = 20;
-
 	int pre = 0;
 	for(int k = 1; k <= fs.size(); k++)
 	{
@@ -138,7 +150,7 @@ vector< vector<int> > graph_cluster::partition(vector< vector<int32_t> > &fs, in
 	return vv;
 }
 
-int graph_cluster::build_phase_set_from_unpaired_reads(const vector<bool> &paired, phase_set &ps)
+int graph_cluster::build_phase_set_from_unpaired_reads(phase_set &ps)
 {
 	for(int i = 0; i < hits.size(); i++)
 	{

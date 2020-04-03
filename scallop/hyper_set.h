@@ -13,6 +13,7 @@ See LICENSE for licensing.
 
 #include "util.h"
 #include "splice_graph.h"
+#include "phase_set.h"
 
 using namespace std;
 
@@ -26,6 +27,10 @@ typedef pair< pair<int, int>, int> PPII;
 
 class hyper_set
 {
+public:
+	hyper_set();
+	hyper_set(splice_graph &gr, const phase_set &ps);
+
 public:
 	MVII nodes;			// hyper-edges using list-of-nodes
 	VVI edges;			// hyper-edges using list-of-edges

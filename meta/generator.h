@@ -9,13 +9,13 @@ See LICENSE for licensing.
 
 #include <fstream>
 #include <string>
-#include "bundle_base.h"
+#include "bundle.h"
 #include "splice_graph.h"
-#include "hyper_set.h"
-#include "rcluster.h"
+#include "phase_set.h"
+#include "pereads_cluster.h"
 #include "combined_graph.h"
-#include "scallop/config.h"
 #include "sample_profile.h"
+#include "scallop/config.h"
 
 using namespace std;
 
@@ -31,11 +31,10 @@ private:
 	samFile *sfn;
 	bam_hdr_t *hdr;
 	bam1_t *b1t;
-	bundle_base bb1;		// +
-	bundle_base bb2;		// -
-	vector<bundle_base> pool;
+	bundle bb1;		// +
+	bundle bb2;		// -
+	vector<bundle> pool;
 
-	ofstream grout;
 	vector<combined_graph> &vcb;
 
 	int index;
@@ -47,8 +46,7 @@ public:
 
 private:
 	int generate(int n);
-	int partition(splice_graph &gr, hyper_set &hs, const vector<PRC> &ub, vector<splice_graph> &grv, vector<hyper_set> &hsv, vector< vector<PRC> > &ubv);
-	int write_graph(splice_graph &gr, hyper_set &hs);
+	int partition(splice_graph &gr, phase_set &hs, const vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &hsv, vector< vector<pereads_cluster> > &ubv);
 };
 
 #endif
