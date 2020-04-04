@@ -105,9 +105,19 @@ int incubator::assemble()
 		for(int k = 0; k < groups[i].gvv.size(); k++)
 		{
 			const vector<int> &v = groups[i].gvv[k];
-			vector<combined_graph*> gv;
-			for(int j = 0; j < v.size(); j++) gv.push_back(&(groups[i].gset[v[j]]));
-			boost::asio::post(pool, [this, &gv, instance, &mylock]{ assemble_single(gv, instance, this->trsts, mylock, this->cfg); });
+			if(v.size() == 0) continue;
+
+			if(v.size() == 1)
+			{
+				combined_graph &cb = groups[i].gset[v[0]];
+				boost::asio::post(pool, [this, &cb, instance, &mylock]{ assemble_single(cb, instance, this->trsts, mylock, this->cfg); });
+			}
+			else
+			{
+				vector<combined_graph*> gv;
+				for(int j = 0; j < v.size(); j++) gv.push_back(&(groups[i].gset[v[j]]));
+				boost::asio::post(pool, [this, &gv, instance, &mylock]{ assemble_single(gv, instance, this->trsts, mylock, this->cfg); });
+			}
 			instance++;
 		}
 	}
@@ -230,6 +240,54 @@ int generate_single(const string &file, vector<combined_group> &gv, mutex &myloc
 
 	time_t mytime = time(NULL);
 	printf("finish processing individual sample %s, %s", file.c_str(), ctime(&mytime));
+	return 0;
+}
+
+int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg1)
+{
+	config cfg = cfg1;
+	vector<transcript> vt;
+
+	// setting up names
+	char name[10240];
+	sprintf(name, "instance.%d.0", instance);
+	cb.gid = name;
+
+	// rebuild splice graph
+	splice_graph gx;
+	cb.build_splice_graph(gx);
+
+	// refine splice graph
+	refine_splice_graph(gx);
+	keep_surviving_edges(gx, min_splicing_count);
+
+	// construct hyper-set
+	hyper_set hx(gx, cb.ps);
+
+	// assemble 
+	gx.gid = cb.gid;
+	cfg.algo = "single";
+	scallop sx(gx, hx, &cfg);
+	sx.assemble();
+
+	for(int k = 0; k < sx.trsts.size(); k++)
+	{
+		transcript &t = sx.trsts[k];
+		t.RPKM = 0;
+		if(t.exons.size() <= 1) continue;
+		vt.push_back(t);
+	}
+
+	printf("assemble combined-graph %s, 0 children, %lu assembled transcripts\n", cb.gid.c_str(), vt.size());
+
+	if(vt.size() <= 0) return 0;
+
+	mylock.lock();
+	for(int k = 0; k < vt.size(); k++)
+	{
+		index_transcript(trsts, vt[k]);
+	}
+	mylock.unlock();
 	return 0;
 }
 
@@ -363,15 +421,14 @@ int assemble_single(vector<combined_graph*> &gv, int instance, map< size_t, vect
 
 	printf("assemble combined-graph %s, %lu children, %lu assembled transcripts\n", cb.gid.c_str(), gv.size(), vt.size());
 
-	if(vt.size() >= 1)
+	if(vt.size() <= 0) return 0;
+
+	mylock.lock();
+	for(int k = 0; k < vt.size(); k++)
 	{
-		mylock.lock();
-		for(int k = 0; k < vt.size(); k++)
-		{
-			index_transcript(trsts, vt[k]);
-		}
-		mylock.unlock();
+		index_transcript(trsts, vt[k]);
 	}
+	mylock.unlock();
 
 	return 0;
 }
