@@ -98,7 +98,7 @@ int build_child_splice_graph(splice_graph &root, splice_graph &gr, map<int, int>
 int32_t get_total_length_of_introns(const vector<int32_t> &chain)
 {
 	assert(chain.size() % 2 == 0);
-	int32_t x;
+	int32_t x = 0;
 	for(int k = 0; k < chain.size() / 2; k++)
 	{
 		int32_t p = chain[k * 2 + 0];
@@ -416,13 +416,15 @@ int build_paired_reads(const vector<hit> &hits, vector<PI> &fs)
 	return 0;
 }
 
-int compare_phasing_paths(const vector<int> &ref, const vector<int> &qry)
+template<typename T>
+int compare_phasing_paths(const vector<T> &ref, const vector<T> &qry)
 {
 	if(ref.back() < qry.front()) return FALL_RIGHT;
 	if(ref.front() > qry.back()) return FALL_LEFT;
 
-	vector<int>::const_iterator r1 = lower_bound(ref.begin(), ref.end(), qry.front());
-	vector<int>::const_iterator q1 = lower_bound(qry.begin(), qry.end(), ref.front());
+	typedef typename vector<T>::const_iterator VCI;
+	VCI r1 = lower_bound(ref.begin(), ref.end(), qry.front());
+	VCI q1 = lower_bound(qry.begin(), qry.end(), ref.front());
 	assert(r1 != ref.end());
 	assert(q1 != qry.end());
 
@@ -430,8 +432,8 @@ int compare_phasing_paths(const vector<int> &ref, const vector<int> &qry)
 	int kq1 = q1 - qry.begin();
 	assert(kr1 == 0 || kq1 == 0);
 
-	vector<int>::const_iterator q2 = lower_bound(qry.begin(), qry.end(), ref.back());
-	vector<int>::const_iterator r2 = lower_bound(ref.begin(), ref.end(), qry.back());
+	VCI q2 = lower_bound(qry.begin(), qry.end(), ref.back());
+	VCI r2 = lower_bound(ref.begin(), ref.end(), qry.back());
 	assert(r2 != ref.end() || q2 != qry.end());
 
 	int kr2 = r2 - ref.begin();
@@ -472,8 +474,11 @@ int compare_phasing_paths(const vector<int> &ref, const vector<int> &qry)
 	return CONFLICTING;
 }
 
-bool merge_phasing_paths(const vector<int> &ref, const vector<int> &qry, vector<int> &merged)
+template<typename T>
+bool merge_phasing_paths(const vector<T> &ref, const vector<T> &qry, vector<T> &merged)
 {
+	typedef typename vector<T>::const_iterator VCI;
+
 	merged.clear();
 	int t = compare_phasing_paths(ref, qry);
 
@@ -487,14 +492,14 @@ bool merge_phasing_paths(const vector<int> &ref, const vector<int> &qry, vector<
 	if(t == NESTING) merged = qry;
 	if(t == EXTEND_LEFT)
 	{
-		vector<int>::const_iterator q1 = lower_bound(qry.begin(), qry.end(), ref.front());
+		VCI q1 = lower_bound(qry.begin(), qry.end(), ref.front());
 		assert(*q1 == ref.front());
 		merged.insert(merged.end(), qry.begin(), q1);
 		merged.insert(merged.end(), ref.begin(), ref.end());
 	}
 	if(t == EXTEND_RIGHT)
 	{
-		vector<int>::const_iterator q2 = lower_bound(qry.begin(), qry.end(), ref.back());
+		VCI q2 = lower_bound(qry.begin(), qry.end(), ref.back());
 		assert(*q2 == ref.back());
 		merged.insert(merged.end(), ref.begin(), ref.end());
 		merged.insert(merged.end(), q2 + 1, qry.end());
@@ -519,4 +524,65 @@ bool identical(const vector<int> &x, int x1, int x2, const vector<int> &y, int y
 	}
 
 	return true;
+}
+
+bool merge_intron_chains(const vector<int32_t> &x, const vector<int32_t> &y, vector<int32_t> &xy)
+{
+	xy.clear();
+	if(x.size() == 0)
+	{
+		xy = y;
+		return true;
+	}
+
+	if(y.size() == 0)
+	{
+		xy = x;
+		return true;
+	}
+
+	if(x.back() < y.front())
+	{
+		xy = x;
+		xy.insert(xy.end(), y.begin(), y.end());
+		return true;
+	}
+
+	typedef vector<int32_t>::const_iterator VCI;
+
+	xy.clear();
+	int t = compare_phasing_paths<int32_t>(x, y);
+
+	if(t == CONFLICTING) return false;
+	if(t == IDENTICAL) xy = x;
+	if(t == FALL_LEFT) return false;
+	assert(t != FALL_RIGHT);
+	if(t == CONTAINED) xy = x;
+	if(t == CONTAINING) xy = y;
+	if(t == NESTED) return false;
+	if(t == NESTING) return false;
+	if(t == EXTEND_LEFT)
+	{
+		VCI q1 = lower_bound(y.begin(), y.end(), x.front());
+		assert(*q1 == x.front());
+		xy.insert(xy.end(), y.begin(), q1);
+		xy.insert(xy.end(), x.begin(), x.end());
+	}
+	if(t == EXTEND_RIGHT)
+	{
+		VCI q2 = lower_bound(y.begin(), y.end(), x.back());
+		assert(*q2 == x.back());
+		xy.insert(xy.end(), x.begin(), x.end());
+		xy.insert(xy.end(), q2 + 1, y.end());
+	}
+
+	int d = x.size() + y.size() - xy.size();
+	if(d % 2 != 0) return false;
+	else return true;
+}
+
+bool consistent_intron_chains(const vector<int32_t> &x, const vector<int32_t> &y)
+{
+	vector<int32_t> v;
+	return merge_intron_chains(x, y, v);
 }

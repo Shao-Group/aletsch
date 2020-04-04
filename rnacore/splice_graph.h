@@ -111,6 +111,8 @@ public:
 	int build_vertex_index();
 	int locate_vertex(int32_t p, int a, int b);
 	int locate_vertex(int32_t p);
+	int locate_lbound(int32_t p);
+	int locate_rbound(int32_t p);
 	int32_t get_total_length_of_vertices(const vector<int>& v) const;
 	
 

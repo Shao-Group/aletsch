@@ -30,6 +30,7 @@ int graph_cluster::group_pereads()
 
 	vector<PI> fs;
 	build_paired_reads(hits, fs);
+	paired.resize(hits.size(), false);
 
 	for(int i = 0; i < fs.size(); i++)
 	{
@@ -99,20 +100,29 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 		int h1 = fs[zz[i][0]].first;
 		int h2 = fs[zz[i][0]].second;
 
-		pereads_cluster pc;
-		pc.chain1 = hits[h1].spos;
-		pc.chain2 = hits[h2].spos;
-		pc.count = zz[i].size();
+		bool b = consistent_intron_chains(hits[h1].spos, hits[h2].spos);
+		if(b == false) continue;
 
-		for(int k = 1; k < zz[i].size(); k++)
+		pereads_cluster pc;
+		pc.count = 0;
+		for(int k = 0; k < zz[i].size(); k++)
 		{
 			h1 = fs[zz[i][k]].first;
 			h2 = fs[zz[i][k]].second;
+			if(hits[h1].rpos > hits[h2].rpos) continue;
+			if(hits[h1].pos > hits[h2].pos) continue;
+
+			pc.chain1 = hits[h1].spos;
+			pc.chain2 = hits[h2].spos;
+			pc.count++;
+
 			pc.bounds[0] += hits[h1].pos;
 			pc.bounds[1] += hits[h1].rpos;
 			pc.bounds[2] += hits[h2].pos;
 			pc.bounds[3] += hits[h2].rpos;
 		}
+
+		if(pc.count <= 0) continue;
 
 		pc.bounds[0] /= pc.count; 
 		pc.bounds[1] /= pc.count;

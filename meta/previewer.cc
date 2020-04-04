@@ -73,7 +73,7 @@ int previewer::infer_library_type(config &cfg, sample_profile &sx)
 		total++;
 
 		hit ht(b1t);
-		ht.set_splices(b1t, cfg.min_flank_length);
+		ht.set_splices(b1t);
 		ht.set_tags(b1t);
 
 		if((ht.flag & 0x1) >= 1) paired ++;
@@ -153,7 +153,7 @@ int previewer::infer_insertsize(config &cfg, sample_profile &sp)
 		if(p.n_cigar < 1) continue;												// should never happen
 
 		hit ht(b1t);
-		ht.set_splices(b1t, cfg.min_flank_length);
+		ht.set_splices(b1t);
 		ht.set_tags(b1t);
 		ht.set_strand(cfg.library_type);
 
@@ -253,15 +253,19 @@ int previewer::process(bundle &bd, config &cfg, map<int32_t, int> &m)
 	for(int k = 0; k < vc.size(); k++)
 	{
 		pereads_cluster &pc = vc[k];
-		int32_t p1 = pc.bounds[1] - 1;
-		int32_t p2 = pc.bounds[2] - 0;
-		int k1 = gr.locate_vertex(p1);
-		int k2 = gr.locate_vertex(p2);
+		int32_t p1 = pc.extend[1];
+		int32_t p2 = pc.extend[2];
+		int k1 = gr.locate_rbound(p1);
+		int k2 = gr.locate_lbound(p2);
+
 		if(k1 < 0 || k2 < 0 || k1 < k2) continue;
 
-		int32_t length1 = get_total_length_of_introns(pc.chain1);
-		int32_t length2 = get_total_length_of_introns(pc.chain2);
-		int32_t d = pc.bounds[3] - pc.bounds[0] - length1 - length2;
+		vector<int32_t> chain;
+		bool b = merge_intron_chains(pc.chain1, pc.chain2, chain);
+		assert(b == true);
+
+		int32_t length = get_total_length_of_introns(chain);
+		int32_t d = pc.bounds[3] - pc.bounds[0] - length;
 
 		cnt++;
 

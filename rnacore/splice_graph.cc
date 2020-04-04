@@ -1051,6 +1051,18 @@ int splice_graph::build_vertex_index()
 	return 0;
 }
 
+int splice_graph::locate_lbound(int32_t p)
+{
+	if(lindex.find(p) == lindex.end()) return -1;
+	else return lindex[p];
+}
+
+int splice_graph::locate_rbound(int32_t p)
+{
+	if(rindex.find(p) == rindex.end()) return -1;
+	else return rindex[p];
+}
+
 int splice_graph::locate_vertex(int32_t p)
 {
 	return locate_vertex(p, 0, num_vertices());

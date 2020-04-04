@@ -65,7 +65,7 @@ public:
 
 public:
 	int set_tags(bam1_t *b);
-	int set_splices(bam1_t *b, int min_flank);
+	int set_splices(bam1_t *b);
 	int set_strand(int lib_type);
 	int set_concordance();
 	int print() const;

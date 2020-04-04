@@ -49,7 +49,7 @@ int generator::resolve()
 		if(p.n_cigar < 1) continue;												// should never happen
 
 		hit ht(b1t);
-		ht.set_splices(b1t, cfg.min_flank_length);
+		ht.set_splices(b1t);
 		ht.set_tags(b1t);
 		ht.set_strand(cfg.library_type);
 
@@ -278,8 +278,8 @@ int generator::partition(splice_graph &gr, phase_set &ps, const vector<pereads_c
 	for(int i = 0; i < ub.size(); i++)
 	{
 		int x = gr.rindex[ub[i].extend[1]];
-		int k = ds.find_set(x);
-		if(k < 0) continue;
+		int p = ds.find_set(x);
+		int k = m[p];
 		assert(k >= 0 && k < vv.size());
 		ubv[k].push_back(ub[i]);
 	}

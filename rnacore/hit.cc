@@ -63,7 +63,7 @@ hit::hit(bam1_t *b)
 	qlen = (int32_t)bam_cigar2qlen(n_cigar, bam_get_cigar(b));
 }
 
-int hit::set_splices(bam1_t *b, int min_flank)
+int hit::set_splices(bam1_t *b)
 {
 	uint32_t *cigar = bam_get_cigar(b);
 
@@ -80,10 +80,10 @@ int hit::set_splices(bam1_t *b, int min_flank)
 
 		if(k == 0 || k == n_cigar - 1) continue;
 		if(bam_cigar_op(cigar[k]) != BAM_CREF_SKIP) continue;
-		if(bam_cigar_op(cigar[k-1]) != BAM_CMATCH) continue;
-		if(bam_cigar_op(cigar[k+1]) != BAM_CMATCH) continue;
-		if(bam_cigar_oplen(cigar[k-1]) < min_flank) continue;
-		if(bam_cigar_oplen(cigar[k+1]) < min_flank) continue;
+		//if(bam_cigar_op(cigar[k-1]) != BAM_CMATCH) continue;
+		//if(bam_cigar_op(cigar[k+1]) != BAM_CMATCH) continue;
+		////if(bam_cigar_oplen(cigar[k-1]) < min_flank) continue;
+		////if(bam_cigar_oplen(cigar[k+1]) < min_flank) continue;
 
 		int32_t s = p - bam_cigar_oplen(cigar[k]);
 		//spos.push_back(pack(s, p));
