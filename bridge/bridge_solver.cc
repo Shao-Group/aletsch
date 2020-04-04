@@ -35,17 +35,10 @@ bridge_solver::bridge_solver(splice_graph &g, const vector<pereads_cluster> &v)
 		assert(gr.rindex.size() == 0);
 		gr.build_vertex_index();
 	}
-}
-
-int bridge_solver::resolve() //(vector<pereads_cluster> &ub, phase_set &ps)
-{
 	build_bridging_vertices();
 	build_piers();
 	nominate();
 	vote();
-	//collect_unbridged_clusters(ub);
-	//build_phase_set(ps);
-	return 0;
 }
 
 int bridge_solver::build_bridging_vertices()
@@ -241,19 +234,15 @@ int bridge_solver::build_phase_set(phase_set &ps)
 	assert(opt.size() == vc.size());
 	for(int i = 0; i < vc.size(); i++)
 	{
-		build_phase_set(vc[i], opt[i], ps);
+		add_phases_from_bridge_path(vc[i], opt[i], ps);
 	}
 	return 0;
 }
 
-int build_phase_from_bridge_path(splice_graph &gr, const pereads_cluster &pc, const bridge_path &bbp, phase_set &ps)
+int add_phases_from_bridge_path(const pereads_cluster &pc, const bridge_path &bbp, phase_set &ps)
 {
-	int v0 = gr.locate_vertex(pc.bounds[0] - 0);
-	int v3 = gr.locate_vertex(pc.bounds[3] - 1);
-	if(v0 < 0 || v3 < 0) return 0;
-
-	int32_t p0 = gr.get_vertex_info(v0).lpos;
-	int32_t p3 = gr.get_vertex_info(v3).rpos;
+	int32_t p0 = pc.extend[0];
+	int32_t p3 = pc.extend[3];
 
 	if(bbp.type >= 0)
 	{
@@ -267,8 +256,8 @@ int build_phase_from_bridge_path(splice_graph &gr, const pereads_cluster &pc, co
 	}
 	else
 	{
-		int32_t p1 = gr.get_vertex_info(vpairs[i].first).rpos;
-		int32_t p2 = gr.get_vertex_info(vpairs[i].second).lpos;
+		int32_t p1 = pc.extend[1];
+		int32_t p2 = pc.extend[2];
 
 		vector<int32_t> v1;
 		v1.push_back(p0);

@@ -12,6 +12,7 @@ See LICENSE for licensing.
 #include "util.h"
 #include <stdint.h>
 #include <map>
+#include <set>
 #include <sstream>
 
 using namespace std;
@@ -55,5 +56,12 @@ using namespace std;
 const static string position_names[] = {"identical", "fall-right", "fall-left", "contained", "containing", "extend_right", "extend_left", "nested", "nesting", "conflicting"};
 
 typedef pair<int, int> PI;
+typedef pair<double, int> DI;
+typedef pair<int32_t, int32_t> PI32;
+typedef pair<int32_t, DI> PIDI;
+typedef pair<PI32, DI> PPDI;
+typedef pair<int32_t, set<int> > PISI;
+typedef map<int, double> MID;
+typedef map<int32_t, set<int> > MISI;
 
 #endif

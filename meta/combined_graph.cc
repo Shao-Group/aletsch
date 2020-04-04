@@ -33,11 +33,10 @@ int combined_graph::build_regions(splice_graph &gr)
 	for(int i = 1; i < n; i++)
 	{
 		if(gr.degree(i) == 0) continue;
-		double weight = gr.get_vertex_weight(i);
+		double w = gr.get_vertex_weight(i);
 		vertex_info vi = gr.get_vertex_info(i);
 		PI32 p(vi.lpos, vi.rpos);
-		DI d(weight, 1);
-		regions.push_back(PPDI(p, d));
+		regions.push_back(PPDI(p, DI(w, 1)));
 	}
 	return 0;
 }
@@ -53,11 +52,9 @@ int combined_graph::build_start_bounds(splice_graph &gr)
 		int t = (*it)->target();
 		assert(s == 0 && t > s);
 		if(t == n) continue;
-		double w = gr.get_edge_weight(*it);
 		int32_t p = gr.get_vertex_info(t).lpos;
-		int c = 1;
-
-		PIDI pi(p, DI(w, c));
+		double w = gr.get_edge_weight(*it);
+		PIDI pi(p, DI(w, 1));
 		sbounds.push_back(pi);
 	}
 	return 0;
@@ -75,11 +72,9 @@ int combined_graph::build_end_bounds(splice_graph &gr)
 		assert(t == n);
 		assert(s < t);
 		if(s == 0) continue;
-		double w = gr.get_edge_weight(*it);
 		int32_t p = gr.get_vertex_info(s).rpos;
-		int c = 1;
-
-		PIDI pi(p, DI(w, c));
+		double w = gr.get_edge_weight(*it);
+		PIDI pi(p, DI(w, 1));
 		tbounds.push_back(pi);
 	}
 	return 0;
@@ -106,8 +101,7 @@ int combined_graph::build_splices_junctions(splice_graph &gr)
 		if(p1 >= p2) continue;
 
 		PI32 p(p1, p2);
-		DI d(w, c);
-		junctions.push_back(PPDI(p, d));
+		junctions.push_back(PPDI(p, DI(w, 1)));
 		sp.insert(p1);
 		sp.insert(p2);
 	}
@@ -198,7 +192,6 @@ int combined_graph::combine_extra_bridged_reads(const vector< vector<int32_t> > 
 
 	return 0;
 }
-*/
 
 int combined_graph::combine(const combined_graph &gt)
 {
@@ -222,6 +215,7 @@ int combined_graph::combine(const combined_graph &gt)
 
 	return 0;
 }
+*/
 
 int combined_graph::get_overlapped_splice_positions(const vector<int32_t> &v) const
 {
@@ -230,6 +224,7 @@ int combined_graph::get_overlapped_splice_positions(const vector<int32_t> &v) co
 	return it - vv.begin();
 }
 
+/*
 int combined_graph::combine_children()
 {
 	if(children.size() == 0) return 0;
@@ -267,24 +262,25 @@ int combined_graph::combine_children()
 
 	return 0;
 }
+*/
 
-int combined_graph::combine_regions(split_interval_map &imap, const combined_graph &gt)
+int combined_graph::combine_regions(split_interval_double_map &imap) const
 {
-	for(int i = 0; i < gt.regions.size(); i++)
+	for(int i = 0; i < regions.size(); i++)
 	{
-		PI32 p = gt.regions[i].first;
-		int w = (int)(gt.regions[i].second.first);
+		PI32 p = regions[i].first;
+		double w = regions[i].second.first;
 		imap += make_pair(ROI(p.first, p.second), w);
 	}
 	return 0;
 }
 
-int combined_graph::combine_junctions(map<PI32, DI> &m, const combined_graph &gt)
+int combined_graph::combine_junctions(map<PI32, DI> &m) const
 {
-	for(int i = 0; i < gt.junctions.size(); i++)
+	for(int i = 0; i < junctions.size(); i++)
 	{
-		PI32 p = gt.junctions[i].first;
-		DI d = gt.junctions[i].second;
+		PI32 p = junctions[i].first;
+		DI d = junctions[i].second;
 
 		map<PI32, DI>::iterator x = m.find(p);
 
@@ -301,12 +297,12 @@ int combined_graph::combine_junctions(map<PI32, DI> &m, const combined_graph &gt
 	return 0;
 }
 
-int combined_graph::combine_start_bounds(map<int32_t, DI> &m, const combined_graph &gt)
+int combined_graph::combine_start_bounds(map<int32_t, DI> &m) const
 {
-	for(int i = 0; i < gt.sbounds.size(); i++)
+	for(int i = 0; i < sbounds.size(); i++)
 	{
-		int32_t p = gt.sbounds[i].first;
-		DI d = gt.sbounds[i].second;
+		int32_t p = sbounds[i].first;
+		DI d = sbounds[i].second;
 
 		map<int32_t, DI>::iterator x = m.find(p);
 
@@ -323,12 +319,12 @@ int combined_graph::combine_start_bounds(map<int32_t, DI> &m, const combined_gra
 	return 0;
 }
 
-int combined_graph::combine_end_bounds(map<int32_t, DI> &m, const combined_graph &gt)
+int combined_graph::combine_end_bounds(map<int32_t, DI> &m) const
 {
-	for(int i = 0; i < gt.tbounds.size(); i++)
+	for(int i = 0; i < tbounds.size(); i++)
 	{
-		int32_t p = gt.tbounds[i].first;
-		DI d = gt.tbounds[i].second;
+		int32_t p = tbounds[i].first;
+		DI d = tbounds[i].second;
 
 		map<int32_t, DI>::iterator x = m.find(p);
 
@@ -427,8 +423,6 @@ int combined_graph::build_splice_graph(splice_graph &gr)
 		double w = junctions[i].second.first;
 		int c = junctions[i].second.second;
 
-		// filtering later on
-
 		assert(gr.rindex.find(p.first) != gr.rindex.end());
 		assert(gr.lindex.find(p.second) != gr.lindex.end());
 		int s = gr.rindex[p.first];
@@ -476,17 +470,6 @@ int combined_graph::build_splice_graph(splice_graph &gr)
 		ei.count = c;
 		gr.set_edge_info(e, ei);
 		gr.set_edge_weight(e, w);
-	}
-	return 0;
-}
-
-int combined_graph::build_phase_set(phase_set &ps)
-{
-	ps = phases;
-	for(int k = 0; k < children.size(); k++)
-	{
-		combined_graph &gt = children[k];
-		ps.combine(gt.phases);
 	}
 	return 0;
 }

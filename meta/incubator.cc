@@ -102,10 +102,11 @@ int incubator::assemble()
 	int instance = 0;
 	for(int i = 0; i < groups.size(); i++)
 	{
-		for(int k = 0; k < groups[i].mset.size(); k++)
+		for(int k = 0; k < groups[i].clusters.size(); k++)
 		{
-			combined_graph &cb = groups[i].mset[k];
-			boost::asio::post(pool, [&cb, this, instance, &mylock]{ assemble_single(cb, instance, this->trsts, mylock, this->cfg); });
+			vector<combined_graph> &gset = groups[i].gset;
+			set<int> &cluster = groups[i].clusters[k];
+			boost::asio::post(pool, [&gset, &cluster, instance, &mylock]{ assemble_single(gset, cluster, instance, this->trsts, mylock, this->cfg); });
 			instance++;
 		}
 	}
@@ -231,7 +232,7 @@ int generate_single(const string &file, vector<combined_group> &gv, mutex &myloc
 	return 0;
 }
 
-int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg1)
+int assemble_single(const vector<combined_graph> &gset, const set<int> &cluster, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg1)
 {
 	config cfg = cfg1;
 
@@ -252,11 +253,13 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 
 	set<int32_t> ps = cb.get_reliable_splices(min_supporting_samples, 99999);
 
+	// rebuild splice graph and phasing paths
 	splice_graph gx;
 	phase_set px;
 	cb.build_splice_graph(gx);
 	cb.build_phase_set(px);
 
+	// collect and bridge all unbridged pairs
 	vector<pereads_cluster> preads;
 	vector<PI> index(cb.children.size());
 	int length_low = 999;
@@ -275,16 +278,9 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	bridge_solver br(gx, preads);
 	br.length_low = length_low;
 	br.length_high = length_high;
-	br.resolve();
 	br.build_phase_set(px);
-	//br.print();
 
-	/*
-	printf("-----\n");
-	gx.print();
-	hx.print_nodes();
-	*/
-
+	// refine splice graph and phasing paths
 	map<int32_t, int32_t> smap, tmap;
 	group_start_boundaries(gx, smap, max_group_boundary_distance);
 	group_end_boundaries(gx, tmap, max_group_boundary_distance);
@@ -293,8 +289,10 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	refine_splice_graph(gx);
 	keep_surviving_edges(gx, min_splicing_count);
 
+	// construct hyper-set
 	hyper_set hx(gx, px);
 
+	// assemble parent graph
 	gx.gid = cb.gid;
 	cfg.algo = "single";
 	scallop sx(gx, hx, &cfg);
@@ -320,6 +318,7 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 		for(int k = index[i].first; k < index[i].second; k++)
 		{
 			if(br.opt[k].type < 0) continue;
+			add_phase_from_bridge_path(preads[k], br.opt[k], pps);
 			// TODO add junction to this child with br.opt[k]
 			build_phase_from_bridge_path(gx, preads[k], br.opt[k], pps);
 		}

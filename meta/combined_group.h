@@ -4,12 +4,6 @@
 #include "combined_graph.h"
 #include <mutex>
 
-typedef map< int32_t, set<int> > MISI;
-typedef pair< int32_t, set<int> > PISI;
-typedef pair<int, int> PI;
-typedef pair<PI, double> PPID;
-typedef map<int, double> MID;
-
 class combined_group
 {
 public:
@@ -17,7 +11,7 @@ public:
 
 public:
 	vector<combined_graph> gset;		// given graphs
-	vector<combined_graph> mset;		// merged graphs
+	vector< set<int> > clusters;		// merged graphs
 	string chrm;
 	char strand;
 

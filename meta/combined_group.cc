@@ -144,47 +144,33 @@ int combined_group::combine_graphs()
 		csize[q] = sum;
 	}
 
-	vector<combined_graph> cc(gset.size());
-	vector<int> pp(gset.size(), -1);
+	map<int, int> mm;
+	clusters.clear();
 	for(int i = 0; i < gset.size(); i++)
 	{
 		int p = ds.find_set(i);
-		pp[i] = p;
-		if(p == i) cc[i] = gset[i];
-	}
-
-	for(int i = 0; i < gset.size(); i++)
-	{
-		if(pp[i] == i) continue;
-		int p = pp[i];
-		cc[p].combine(gset[i]);
-		gset[i].clear();
-	}
-
-	mset.clear();
-	for(int i = 0; i < gset.size(); i++)
-	{
-		if(i == pp[i])
+		if(mm.find(p) == mm.end())
 		{
-			mset.push_back(cc[i]);
+			set<int> s;
+			s.insert(i);
+			mm.insert(pair<int, int>(p, clusters.size()));
+			clusters.push_back(s);
+		}
+		else
+		{
+			int k = mm[p];
+			clusters[k].insert(i);
 		}
 	}
-
-	for(int i = 0; i < mset.size(); i++)
-	{
-		mset[i].combine_children();
-	}
-
-	gset.clear();
 	return 0;
 }
 
 int combined_group::stats()
 {
 	map<int, int> m;
-	for(int k = 0; k < mset.size(); k++)
+	for(int k = 0; k < clusters.size(); k++)
 	{
-		int n = mset[k].num_combined;
+		int n = clusters[k].size();
 		if(m.find(n) == m.end()) m.insert(pair<int, int>(n, 1));
 		else m[n]++;
 	}

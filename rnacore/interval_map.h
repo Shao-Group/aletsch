@@ -30,6 +30,11 @@ typedef icl::split_interval_map<int32_t, int32_t, icl::partial_absorber, less, i
 typedef split_interval_map::const_iterator SIMI;
 typedef pair<SIMI, SIMI> PSIMI;
 
+// split interval map
+typedef icl::split_interval_map<int32_t, double, icl::partial_absorber, less, icl::inplace_plus, icl::inter_section, ROI> split_interval_double_map;
+typedef split_interval_double_map::const_iterator SIMD;
+typedef pair<SIMD, SIMD> PSIMD;
+
 // join interval map with associated sets
 typedef icl::interval_map<int32_t, SI> interval_set_map;
 typedef interval_set_map::const_iterator ISMI;

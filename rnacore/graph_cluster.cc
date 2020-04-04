@@ -6,18 +6,16 @@
 
 graph_cluster::graph_cluster(splice_graph &g, vector<hit> &h, int max_gap)
 	: gr(g), hits(h), max_partition_gap(max_gap)
-{} 
-
-int graph_cluster::resolve(vector<pereads_cluster> &vc, phase_set &ps)
 {
 	group_pereads();
+} 
 
+int graph_cluster::build_pereads_clusters(vector<pereads_cluster> &vc)
+{
 	for(int k = 0; k < groups.size(); k++)
 	{
-		build_pereads_clusters(groups[k], vc);
+		build_pereads_clusters(k, vc);
 	}
-	
-	build_phase_set_from_unpaired_reads(ps);
 	return 0;
 }
 
@@ -26,6 +24,7 @@ int graph_cluster::group_pereads()
 	typedef pair< vector<int>, vector<int> > PVV;
 	map<PVV, int> findex;
 
+	extend.clear();
 	groups.clear();
 	paired.clear();
 
@@ -42,6 +41,7 @@ int graph_cluster::group_pereads()
 		bool b2 = align_hit_to_splice_graph(hits[h2], gr, v2);
 
 		if(b1 == false || b2 == false)  continue;
+		if(v1.size() == 0 || v2.size() == 0) continue;
 
 		paired[h1] = true;
 		paired[h2] = true;
@@ -52,7 +52,15 @@ int graph_cluster::group_pereads()
 			vector<PI> v;
 			v.push_back(fs[i]);
 			findex.insert(pair<PVV, int>(pvv, groups.size()));
+			int32_t p1 = gr.get_vertex_info(v1.front()).lpos;
+			int32_t p2 = gr.get_vertex_info(v1.back()).rpos;
+			int32_t p3 = gr.get_vertex_info(v2.front()).lpos;
+			int32_t p4 = gr.get_vertex_info(v2.back()).rpos;
 			groups.push_back(v);
+			extend.push_back(p1);
+			extend.push_back(p2);
+			extend.push_back(p3);
+			extend.push_back(p4);
 		}
 		else
 		{
@@ -64,8 +72,9 @@ int graph_cluster::group_pereads()
 	return 0;
 }
 
-int graph_cluster::build_pereads_clusters(const vector<PI> &fs, vector<pereads_cluster> &vc)
+int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 {
+	const vector<PI> &fs = groups[g];
 	vector< vector<int32_t> > vv;
 	for(int i = 0; i < fs.size(); i++)
 	{
@@ -109,6 +118,10 @@ int graph_cluster::build_pereads_clusters(const vector<PI> &fs, vector<pereads_c
 		pc.bounds[1] /= pc.count;
 		pc.bounds[2] /= pc.count; 
 		pc.bounds[3] /= pc.count;
+		pc.extend[0] = extend[g * 4 + 0];
+		pc.extend[1] = extend[g * 4 + 1];
+		pc.extend[2] = extend[g * 4 + 2];
+		pc.extend[3] = extend[g * 4 + 3];
 
 		vc.push_back(pc);
 	}

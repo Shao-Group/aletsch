@@ -122,13 +122,16 @@ int generator::generate(int n)
 		vector<pereads_cluster> vc;
 		phase_set ps;
 		graph_cluster gc(gr, bb.hits, 10);			// TODO parameter
-		gc.resolve(vc, ps);
+		gc.build_pereads_clusters(vc);
+		gc.build_phase_set_from_unpaired_reads(ps);
 
-		vector<pereads_cluster> ub;
 		bridge_solver bs(gr, vc);
 		bs.length_low = sp.insertsize_low;
 		bs.length_high = sp.insertsize_high;
-		bs.resolve(ub, ps);
+		bs.build_phase_set(ps);
+
+		vector<pereads_cluster> ub;
+		bs.collect_unbridged_clusters(ub);
 
 		//for(int k = 0; k < ub.size(); k++) ub[k].print(k);
 
@@ -205,16 +208,19 @@ int generator::partition(splice_graph &gr, phase_set &ps, const vector<pereads_c
 	*/
 
 	// group with unbridged pairs
-	vector<int> ubi(ub.size(), -1);
 	for(int i = 0; i < ub.size(); i++)
 	{
+		/*
 		int32_t p1 = ub[i].bounds[1] - 1;
 		int32_t p2 = ub[i].bounds[2] - 0;
 		int x = gr.locate_vertex(p1);
 		int y = gr.locate_vertex(p2);
-		if(x < 0 || y < 0) continue;
+		*/
+		assert(gr.rindex.find(ub[i].extend[1]) != gr.rindex.end());
+		assert(gr.lindex.find(ub[i].extend[2]) != gr.lindex.end());
+		int x = gr.rindex[ub[i].extend[1]];
+		int y = gr.lindex[ub[i].extend[2]];
 		ds.union_set(x, y);
-		ubi[i] = ds.find_set(x);
 	}
 
 	// create connected components
@@ -271,7 +277,8 @@ int generator::partition(splice_graph &gr, phase_set &ps, const vector<pereads_c
 	ubv.resize(vv.size());
 	for(int i = 0; i < ub.size(); i++)
 	{
-		int k = ubi[i];
+		int x = gr.rindex[ub[i].extend[1]];
+		int k = ds.find_set(x);
 		if(k < 0) continue;
 		assert(k >= 0 && k < vv.size());
 		ubv[k].push_back(ub[i]);

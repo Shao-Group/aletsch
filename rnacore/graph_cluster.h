@@ -18,17 +18,18 @@ public:
 	vector<hit> &hits;				// given hits
 
 private:
-	vector<bool> paired;			// whether hits are paired
+	vector<bool> paired;			
+	vector<int32_t> extend;
 	vector< vector<PI> > groups;
 	int max_partition_gap;
 
 public:
-	int resolve(vector<pereads_cluster> &vc, phase_set &ps);
+	int build_pereads_clusters(vector<pereads_cluster> &vc);
+	int build_phase_set_from_unpaired_reads(phase_set &ps);
 
 private:
 	int group_pereads();
-	int build_pereads_clusters(const vector<PI> &fs, vector<pereads_cluster> &vc);
-	int build_phase_set_from_unpaired_reads(phase_set &ps);
+	int build_pereads_clusters(int g, vector<pereads_cluster> &vc);
 	vector< vector<int> > partition(vector< vector<int32_t> > &fs, int r);
 };
 

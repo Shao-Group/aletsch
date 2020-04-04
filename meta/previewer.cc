@@ -246,9 +246,8 @@ int previewer::process(bundle &bd, config &cfg, map<int32_t, int> &m)
 	gr.build_vertex_index();
 
 	vector<pereads_cluster> vc;
-	phase_set ps;
 	graph_cluster gc(gr, bd.hits, 2);
-	gc.resolve(vc, ps);
+	gc.build_pereads_clusters(vc);
 
 	int cnt = 0;
 	for(int k = 0; k < vc.size(); k++)

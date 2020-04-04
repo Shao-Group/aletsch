@@ -48,8 +48,9 @@ public:
 	int32_t length_high;
 
 public:
-	int resolve(vector<pereads_cluster> &ub, phase_set &ps);
 	int print();
+	int build_phase_set(phase_set &ps);
+	int collect_unbridged_clusters(vector<pereads_cluster> &v);
 
 private:
 	int build_bridging_vertices();
@@ -61,8 +62,8 @@ private:
 	vector< vector<int> > trace_back(int k, const vector< vector<entry> > &table);
 	int vote();
 	int vote(int r, bridge_path &bbp);
-	int collect_unbridged_clusters(vector<pereads_cluster> &v);
-	int build_phase_set(phase_set &ps);
 };
+
+int add_phases_from_bridge_path(const pereads_cluster &pc, const bridge_path &bbp, phase_set &ps);
 
 #endif
