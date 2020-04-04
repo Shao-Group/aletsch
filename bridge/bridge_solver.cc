@@ -267,8 +267,9 @@ int add_phases_from_bridge_path(const pereads_cluster &pc, const bridge_path &bb
 
 		vector<int32_t> v2;
 		v2.push_back(p2);
-		v2.insert(v1.end(), pc.chain2.begin(), pc.chain2.end());
+		v2.insert(v2.end(), pc.chain2.begin(), pc.chain2.end());
 		v2.push_back(p3);
+
 		ps.add(v2, pc.count);
 	}
 	return 0;
