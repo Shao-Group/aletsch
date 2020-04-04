@@ -2,6 +2,7 @@
 #include "combined_graph.h"
 #include "config.h"
 #include "essential.h"
+#include "bridge_solver.h"
 #include <sstream>
 #include <algorithm>
 
@@ -11,7 +12,7 @@ combined_graph::combined_graph()
 	strand = '?';
 }
 
-int combined_graph::build(splice_graph &gr, const phase_set &ps, const vector<pereads_cluster> &ub)
+int combined_graph::build(splice_graph &gr, const phase_set &p, const vector<pereads_cluster> &ub)
 {
 	chrm = gr.chrm;
 	strand = gr.strand;
@@ -21,8 +22,8 @@ int combined_graph::build(splice_graph &gr, const phase_set &ps, const vector<pe
 	build_start_bounds(gr);
 	build_end_bounds(gr);
 	build_splices_junctions(gr);
-	phases = ps;
-	preads = ub;
+	ps = p;
+	vc = ub;
 	return 0;
 }
 	
@@ -110,113 +111,6 @@ int combined_graph::build_splices_junctions(splice_graph &gr)
 	return 0;
 }
 
-/* TODO TODO
-int combined_graph::combine_extra_bridged_reads(const vector< vector<int32_t> > &exon_chains, const vector<int> &weights)
-{
-	assert(exon_chains.size() == weights.size());
-	if(exon_chains.size() == 0) return 0;
-	int32_t lb = get_leftmost_bound().first;
-	int32_t rb = get_rightmost_bound().first;
-
-	// index phase
-	map<vector<int32_t>, int> mm;
-	for(int k = 0; k < phase.size(); k++)
-	{
-		mm.insert(pair<vector<int32_t>, int>(phase[k].vv, k));
-	}
-
-	// create a new combined graph to be combined
-	combined_graph cb;
-	for(int k = 0; k < exon_chains.size(); k++)
-	{
-		const vector<int32_t> &vv = exon_chains[k];
-		int c = weights[k];
-		assert(vv.size() % 2 == 0);
-		if(vv.size() <= 1) continue;
-		if(vv.front() < lb) continue;
-		if(vv.back() > rb) continue;
-
-		// regions
-		for(int i = 0; i < vv.size() / 2; i++)
-		{
-			PI32 p(vv[i * 2 + 0], vv[i * 2 + 1]);
-			cb.regions.push_back(PPDI(p, DI(c, 1)));
-		}
-
-		// junctions
-		for(int i = 0; i < vv.size() / 2 - 1; i++)
-		{
-			PI32 p(vv[i * 2 + 1], vv[i * 2 + 2]);
-			cb.junctions.push_back(PPDI(p, DI(c, 1)));
-		}
-
-		// phase
-		vector<int32_t> zz(vv.begin() + 1, vv.end() - 1);
-		map<vector<int32_t>, int>::iterator tp = mm.find(zz);
-		if(tp == mm.end()) 
-		{
-			rcluster r;
-			r.vv = zz;
-			r.vl.push_back(vv.front());
-			r.vr.push_back(vv.back());
-			r.cc.push_back(c);
-			mm.insert(pair<vector<int32_t>, int>(zz, phase.size()));
-			phase.push_back(r);
-		}
-		else 
-		{
-			int k = tp->second;
-			assert(zz == phase[k].vv);
-			phase[k].vl.push_back(vv.front());
-			phase[k].vr.push_back(vv.back());
-			phase[k].cc.push_back(c);
-		}
-	}
-
-	split_interval_map imap;
-	map<PI32, DI> mj;
-
-	combine_regions(imap, *this);
-	combine_regions(imap, cb);
-	combine_junctions(mj, *this);
-	combine_junctions(mj, cb);
-
-	regions.clear();
-	for(SIMI it = imap.begin(); it != imap.end(); it++)
-	{
-		int32_t l = lower(it->first);
-		int32_t r = upper(it->first);
-		regions.push_back(PPDI(PI32(l, r), DI(it->second, 1)));
-	}
-	junctions.assign(mj.begin(), mj.end());
-
-	return 0;
-}
-
-int combined_graph::combine(const combined_graph &gt)
-{
-	if(children.size() == 0) children.push_back(*this);
-
-	if(gt.children.size() == 0) children.push_back(gt);
-	else children.insert(children.end(), gt.children.begin(), gt.children.end());
-
-	if(chrm == "") chrm = gt.chrm;
-	if(strand == '?') strand = gt.strand;
-	assert(gt.chrm == chrm);
-	assert(gt.strand == strand);
-
-	num_combined += gt.num_combined;
-
-	// combine splices
-	vector<int32_t> vv(gt.splices.size() + splices.size(), 0);
-	vector<int32_t>::iterator it = set_union(gt.splices.begin(), gt.splices.end(), splices.begin(), splices.end(), vv.begin());
-	vv.resize(it - vv.begin());
-	splices = vv;
-
-	return 0;
-}
-*/
-
 int combined_graph::get_overlapped_splice_positions(const vector<int32_t> &v) const
 {
 	vector<int32_t> vv(v.size(), 0);
@@ -224,32 +118,28 @@ int combined_graph::get_overlapped_splice_positions(const vector<int32_t> &v) co
 	return it - vv.begin();
 }
 
-/*
-int combined_graph::combine_children()
+int combined_graph::combine(vector<combined_graph*> &gv)
 {
-	if(children.size() == 0) return 0;
-
-	split_interval_map imap;
+	split_interval_double_map imap;
 	map<PI32, DI> mj;
 	map<int32_t, DI> ms;
 	map<int32_t, DI> mt;
-	phases.clear();
-	preads.clear();
+	ps.clear();
 
-	int num = 0;
-	for(int i = 0; i < children.size(); i++)
+	num_combined = 0;
+	for(int i = 0; i < gv.size(); i++)
 	{
-		combined_graph &gt = children[i];
-		combine_regions(imap, gt);
-		combine_junctions(mj, gt);
-		combine_start_bounds(ms, gt);
-		combine_end_bounds(mt, gt);
-		num += gt.num_combined;
+		combined_graph *gt = gv[i];
+		gt->combine_regions(imap);
+		gt->combine_junctions(mj);
+		gt->combine_start_bounds(ms);
+		gt->combine_end_bounds(mt);
+		ps.combine(gt->ps);
+		num_combined += gt->num_combined;
 	}
-	assert(num == num_combined);
 
 	regions.clear();
-	for(SIMI it = imap.begin(); it != imap.end(); it++)
+	for(SIMD it = imap.begin(); it != imap.end(); it++)
 	{
 		int32_t l = lower(it->first);
 		int32_t r = upper(it->first);
@@ -262,7 +152,6 @@ int combined_graph::combine_children()
 
 	return 0;
 }
-*/
 
 int combined_graph::combine_regions(split_interval_double_map &imap) const
 {
@@ -337,6 +226,81 @@ int combined_graph::combine_end_bounds(map<int32_t, DI> &m) const
 			x->second.first += d.first;
 			x->second.second += d.second;
 		}
+	}
+	return 0;
+}
+
+int combined_graph::append(const pereads_cluster &pc, const bridge_path &bbp)
+{
+	append_regions(pc, bbp);
+	append_junctions(pc, bbp);
+	add_phases_from_bridge_path(pc, bbp, ps);
+	return 0;
+}
+
+int combined_graph::append_regions(const pereads_cluster &pc, const bridge_path &bbp)
+{
+	int32_t p1, p2;
+	if(bbp.chain.size() == 0)
+	{
+		p1 = pc.extend[1];
+		p2 = pc.extend[2];
+		if(p1 >= p2) return 0;
+		PPDI pi(PI32(p1, p2), DI(pc.count, 1));
+		regions.push_back(pi);
+		return 0;
+	}
+
+	// append first region
+	p1 = pc.extend[1];
+	p2 = bbp.chain[0];
+	if(p1 < p2)
+	{
+		PPDI pi(PI32(p1, p2), DI(pc.count, 1));
+		regions.push_back(pi);
+	}
+	else
+	{
+		PPDI pi(PI32(p2, p1), DI(0.1, 1));
+		regions.push_back(pi);
+	}
+
+	// append middle regions
+	for(int i = 0; i < bbp.chain.size() / 2 - 1; i++)
+	{
+		p1 = bbp.chain[i * 2 + 1];
+		p2 = bbp.chain[i * 2 + 2];
+		assert(p1 < p2);
+		PPDI pi(PI32(p1, p2), DI(pc.count, 1));
+		regions.push_back(pi);
+	}
+
+	// append last region
+	p1 = bbp.chain.back();
+	p2 = pc.extend[2];
+	if(p1 < p2)
+	{
+		PPDI pi(PI32(p1, p2), DI(pc.count, 1));
+		regions.push_back(pi);
+	}
+	else
+	{
+		PPDI pi(PI32(p2, p1), DI(0.1, 1));
+		regions.push_back(pi);
+	}
+	return 0;
+}
+
+int combined_graph::append_junctions(const pereads_cluster &pc, const bridge_path &bbp)
+{
+	// append middle regions
+	for(int i = 0; i < bbp.chain.size() / 2; i++)
+	{
+		int32_t p1 = bbp.chain[i * 2 + 0];
+		int32_t p2 = bbp.chain[i * 2 + 1];
+		assert(p1 < p2);
+		PPDI pi(PI32(p1, p2), DI(pc.count, 1));
+		junctions.push_back(pi);
 	}
 	return 0;
 }
@@ -531,15 +495,15 @@ int combined_graph::clear()
 	junctions.clear();
 	sbounds.clear();
 	tbounds.clear();
-	phases.clear();
-	preads.clear();
+	ps.clear();
+	vc.clear();
 	return 0;
 }
 
 int combined_graph::print(int index)
 {
 	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phasing-phase = %lu\n", 
-			index, num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), phases.pmap.size());
+			index, num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), ps.pmap.size());
 
 	for(int i = 0; i < regions.size(); i++)
 	{
@@ -565,7 +529,7 @@ int combined_graph::print(int index)
 		DI d = tbounds[i].second;
 		printf("tbound %d: %d, w = %.2lf, c = %d\n", i, p, d.first, d.second);
 	}
-	phases.print();
+	ps.print();
 	return 0;
 }
 

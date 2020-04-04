@@ -102,11 +102,12 @@ int incubator::assemble()
 	int instance = 0;
 	for(int i = 0; i < groups.size(); i++)
 	{
-		for(int k = 0; k < groups[i].clusters.size(); k++)
+		for(int k = 0; k < groups[i].gvv.size(); k++)
 		{
-			vector<combined_graph> &gset = groups[i].gset;
-			set<int> &cluster = groups[i].clusters[k];
-			boost::asio::post(pool, [&gset, &cluster, instance, &mylock]{ assemble_single(gset, cluster, instance, this->trsts, mylock, this->cfg); });
+			const vector<int> &v = groups[i].gvv[k];
+			vector<combined_graph*> gv;
+			for(int j = 0; j < v.size(); j++) gv.push_back(&(groups[i].gset[v[j]]));
+			boost::asio::post(pool, [this, &gv, instance, &mylock]{ assemble_single(gv, instance, this->trsts, mylock, this->cfg); });
 			instance++;
 		}
 	}
@@ -192,7 +193,7 @@ int incubator::print_groups()
 {
 	for(int k = 0; k < groups.size(); k++)
 	{
-		printf("group %d (chrm = %s, strand = %c) contains %lu graphs (%lu merged graphs)\n", k, groups[k].chrm.c_str(), groups[k].strand, groups[k].gset.size(), groups[k].mset.size());
+		printf("group %d (chrm = %s, strand = %c) contains %lu graphs (%lu merged graphs)\n", k, groups[k].chrm.c_str(), groups[k].strand, groups[k].gset.size(), groups[k].gvv.size());
 	}
 	return 0;
 }
@@ -232,50 +233,55 @@ int generate_single(const string &file, vector<combined_group> &gv, mutex &myloc
 	return 0;
 }
 
-int assemble_single(const vector<combined_graph> &gset, const set<int> &cluster, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg1)
+int assemble_single(vector<combined_graph*> &gv, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg1)
 {
+	assert(gv.size() >= 2);
+
 	config cfg = cfg1;
+
+	// assembled transcripts and index
+	int z = 0;
+	map< size_t, vector<transcript> > mt;
+	vector<transcript> vt;
+
+	// construct combined graph
+	combined_graph cb;
+	cb.combine(gv);
 
 	// setting up names
 	char name[10240];
 	sprintf(name, "instance.%d.0", instance);
 	cb.gid = name;
-
-	for(int j = 0; j < cb.children.size(); j++)
+	for(int j = 0; j < gv.size(); j++)
 	{
 		sprintf(name, "instance.%d.%d", instance, j + 1);
-		cb.children[j].gid = name;
+		gv[j]->gid = name;
 	}
 
-	int z = 0;
-	map< size_t, vector<transcript> > mt;
-	vector<transcript> vt;
+	set<int32_t> rs = cb.get_reliable_splices(min_supporting_samples, 99999);
 
-	set<int32_t> ps = cb.get_reliable_splices(min_supporting_samples, 99999);
-
-	// rebuild splice graph and phasing paths
+	// rebuild splice graph
 	splice_graph gx;
-	phase_set px;
 	cb.build_splice_graph(gx);
-	cb.build_phase_set(px);
+	phase_set px = cb.ps;
 
 	// collect and bridge all unbridged pairs
-	vector<pereads_cluster> preads;
-	vector<PI> index(cb.children.size());
+	vector<pereads_cluster> vc;
+	vector<PI> index(gv.size());
 	int length_low = 999;
 	int length_high = 0;
-	for(int k = 0; k < cb.children.size(); k++)
+	for(int k = 0; k < gv.size(); k++)
 	{
-		combined_graph &gt = cb.children[k];
+		combined_graph &gt = *(gv[k]);
 		if(gt.sp.insertsize_low < length_low) length_low = gt.sp.insertsize_low;
 		if(gt.sp.insertsize_high > length_high) length_high = gt.sp.insertsize_high;
-		index[k].first = preads.size();
-		preads.insert(preads.end(), gt.preads.begin(), gt.preads.end());
-		index[k].second = preads.size();
-		gt.preads.clear();
+		index[k].first = vc.size();
+		vc.insert(vc.end(), gt.vc.begin(), gt.vc.end());
+		index[k].second = vc.size();
+		gt.vc.clear();
 	}
 
-	bridge_solver br(gx, preads);
+	bridge_solver br(gx, vc);
 	br.length_low = length_low;
 	br.length_high = length_high;
 	br.build_phase_set(px);
@@ -292,7 +298,7 @@ int assemble_single(const vector<combined_graph> &gset, const set<int> &cluster,
 	// construct hyper-set
 	hyper_set hx(gx, px);
 
-	// assemble parent graph
+	// assemble combined graph
 	gx.gid = cb.gid;
 	cfg.algo = "single";
 	scallop sx(gx, hx, &cfg);
@@ -305,60 +311,35 @@ int assemble_single(const vector<combined_graph> &gset, const set<int> &cluster,
 		if(t.exons.size() <= 1) continue;
 		z++;
 		index_transcript(mt, t);
-		if(merge_intersection == false || cb.children.size() == 0)
-		{
-			vt.push_back(t);
-		}
+		if(merge_intersection == false) vt.push_back(t);
 	}
 
-	for(int i = 0; i < cb.children.size(); i++)
+	for(int i = 0; i < gv.size(); i++)
 	{
 		// process unbridged reads
-		phase_set pps;
+		combined_graph g1;		// create virtual combined graph
 		for(int k = index[i].first; k < index[i].second; k++)
 		{
 			if(br.opt[k].type < 0) continue;
-			add_phase_from_bridge_path(preads[k], br.opt[k], pps);
-			// TODO add junction to this child with br.opt[k]
-			build_phase_from_bridge_path(gx, preads[k], br.opt[k], pps);
+			g1.append(vc[k], br.opt[k]);
 		}
-		cb.children[i].combine_extra_phase_set(pps);
 
-		/*
-		if(exon_chains.size() >= 1)
-		{
-			mylock.lock();
-			for(int k = 0; k < weights.size(); k++)
-			{
-				printf("extra read %d: weight = %d, list = ( ", k, weights[k]);
-				printv(exon_chains[k]);
-				printf(")\n");
-			}
-			cb.children[i].print(i);
-			printf("-----\n");
-			cb.children[i].combine_extra_bridged_reads(exon_chains, weights);
-			cb.children[i].print(i);
-			printf("=====\n");
-			mylock.unlock();
-		}
-		*/
+		vector<combined_graph*> gv1;
+		gv1.push_back(&g1);
+		gv1.push_back(gv[i]);
+
+		combined_graph cb1;
+		cb1.combine(gv1);
 
 		splice_graph gr;
-		phase_set ps;
-		cb.children[i].resolve(gr, hs, ub);
-
-		hyper_set hs;
-		/*
-		printf("-----\n");
-		gr.print();
-		hs.print_nodes();
-		*/
+		cb1.build_splice_graph(gr);
 
 		refine_splice_graph(gr);
-		keep_surviving_edges(gr, ps, min_splicing_count);
-		hs.filter_nodes(gr);
+		keep_surviving_edges(gr, rs, min_splicing_count);
 
-		gr.gid = cb.children[i].gid;
+		gr.gid = gv[i]->gid;
+
+		hyper_set hs(gr, cb1.ps);
 
 		cfg.algo = "single";
 		scallop sc(gr, hs, &cfg);
@@ -376,14 +357,11 @@ int assemble_single(const vector<combined_graph> &gset, const set<int> &cluster,
 			bool b = query_transcript(mt, t);
 			if(b == false) index_transcript(mt, t);
 			if(b == true) z2++;
-			if(b || merge_intersection == false)
-			{
-				vt.push_back(t);
-			}
+			if(b || merge_intersection == false) vt.push_back(t);
 		}
 	}
 
-	printf("assemble combined-graph %s, %lu children, %lu assembled transcripts\n", cb.gid.c_str(), cb.children.size(), vt.size());
+	printf("assemble combined-graph %s, %lu children, %lu assembled transcripts\n", cb.gid.c_str(), gv.size(), vt.size());
 
 	if(vt.size() >= 1)
 	{

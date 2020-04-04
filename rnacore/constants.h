@@ -60,6 +60,7 @@ typedef pair<double, int> DI;
 typedef pair<int32_t, int32_t> PI32;
 typedef pair<int32_t, DI> PIDI;
 typedef pair<PI32, DI> PPDI;
+typedef pair<PI, double> PPID;
 typedef pair<int32_t, set<int> > PISI;
 typedef map<int, double> MID;
 typedef map<int32_t, set<int> > MISI;

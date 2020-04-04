@@ -415,3 +415,108 @@ int build_paired_reads(const vector<hit> &hits, vector<PI> &fs)
 	//printf("total hits = %lu, total fragments = %lu\n", hits.size(), fragments.size());
 	return 0;
 }
+
+int compare_phasing_paths(const vector<int> &ref, const vector<int> &qry)
+{
+	if(ref.back() < qry.front()) return FALL_RIGHT;
+	if(ref.front() > qry.back()) return FALL_LEFT;
+
+	vector<int>::const_iterator r1 = lower_bound(ref.begin(), ref.end(), qry.front());
+	vector<int>::const_iterator q1 = lower_bound(qry.begin(), qry.end(), ref.front());
+	assert(r1 != ref.end());
+	assert(q1 != qry.end());
+
+	int kr1 = r1 - ref.begin();
+	int kq1 = q1 - qry.begin();
+	assert(kr1 == 0 || kq1 == 0);
+
+	vector<int>::const_iterator q2 = lower_bound(qry.begin(), qry.end(), ref.back());
+	vector<int>::const_iterator r2 = lower_bound(ref.begin(), ref.end(), qry.back());
+	assert(r2 != ref.end() || q2 != qry.end());
+
+	int kr2 = r2 - ref.begin();
+	int kq2 = q2 - qry.begin();
+
+	if(*q1 == ref.front() || *r1 == qry.front())
+	{
+		if(r2 != ref.end() && q2 != qry.end())
+		{
+			assert(ref.back() == qry.back());
+			assert(kr2 == ref.size() - 1);
+			assert(kq2 == qry.size() - 1);
+			bool b = identical(ref, kr1, kr2, qry, kq1, kq2);
+			if(b == false) return CONFLICTING;
+			if(b == true && kr1 == 0 && kq1 == 0) return IDENTICAL;
+			if(b == true && kr1 >= 1 && kq1 == 0) return CONTAINED;
+			if(b == true && kr1 == 0 && kq1 >= 1) return CONTAINING;
+			assert(false);
+		}
+		else if(r2 != ref.end() && q2 == qry.end())
+		{
+			bool b = identical(ref, kr1, kr2, qry, kq1, qry.size() - 1);
+			if(b == false) return CONFLICTING;
+			if(b == true && kq1 == 0) return CONTAINED;
+			if(b == true && kq1 >= 1) return EXTEND_LEFT;
+			assert(false);
+		}
+		else if(r2 == ref.end() && q2 != qry.end())
+		{
+			bool b = identical(ref, kr1, ref.size() - 1, qry, kq1, kq2);
+			if(b == false) return CONFLICTING;
+			if(b == true && kr1 == 0) return CONTAINING;
+			if(b == true && kr1 >= 1) return EXTEND_RIGHT;
+		}
+	}
+	else if(*r1 > qry.front() && r2 == r1 && *r2 > qry.back()) return NESTED;
+	else if(*q1 > ref.front() && q2 == q1 && *q2 > ref.back()) return NESTING;
+	return CONFLICTING;
+}
+
+bool merge_phasing_paths(const vector<int> &ref, const vector<int> &qry, vector<int> &merged)
+{
+	merged.clear();
+	int t = compare_phasing_paths(ref, qry);
+
+	if(t == CONFLICTING) return false;
+	if(t == IDENTICAL) merged = ref;
+	if(t == FALL_RIGHT) return false;
+	if(t == FALL_LEFT) return false;
+	if(t == CONTAINED) merged = ref;
+	if(t == CONTAINING) merged = qry;
+	if(t == NESTED) merged = ref;
+	if(t == NESTING) merged = qry;
+	if(t == EXTEND_LEFT)
+	{
+		vector<int>::const_iterator q1 = lower_bound(qry.begin(), qry.end(), ref.front());
+		assert(*q1 == ref.front());
+		merged.insert(merged.end(), qry.begin(), q1);
+		merged.insert(merged.end(), ref.begin(), ref.end());
+	}
+	if(t == EXTEND_RIGHT)
+	{
+		vector<int>::const_iterator q2 = lower_bound(qry.begin(), qry.end(), ref.back());
+		assert(*q2 == ref.back());
+		merged.insert(merged.end(), ref.begin(), ref.end());
+		merged.insert(merged.end(), q2 + 1, qry.end());
+	}
+	return true;
+}
+
+bool identical(const vector<int> &x, int x1, int x2, const vector<int> &y, int y1, int y2)
+{
+	assert(x1 >= 0 && x1 < x.size());
+	assert(x2 >= 0 && x2 < x.size());
+	assert(y1 >= 0 && y1 < y.size());
+	assert(y2 >= 0 && y2 < y.size());
+
+	if(x[x1] != y[y1]) return false;
+	if(x[x2] != y[y2]) return false;
+	if(x2 - x1 != y2 - y1) return false;
+
+	for(int kx = x1, ky = y1; kx <= x2 && ky <= y2; kx++, ky++)
+	{
+		if(x[kx] != y[ky]) return false;
+	}
+
+	return true;
+}

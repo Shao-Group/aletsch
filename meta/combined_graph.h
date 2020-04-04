@@ -10,6 +10,7 @@
 #include "splice_graph.h"
 #include "phase_set.h"
 #include "pereads_cluster.h"
+#include "bridge_path.h"
 #include "interval_map.h"
 #include "constants.h"
 
@@ -32,8 +33,8 @@ public:
 	vector<PIDI> sbounds;
 	vector<PIDI> tbounds;
 	vector<int32_t> splices;
-	phase_set phases;
-	vector<pereads_cluster> preads;
+	phase_set ps;
+	vector<pereads_cluster> vc;
 
 public:
 	// build from gr, hs, and ub
@@ -43,17 +44,20 @@ public:
 	int build_end_bounds(splice_graph &gr);
 	int build_splices_junctions(splice_graph &gr);
 
-	//int combine_extra_bridged_reads(const vector< vector<int32_t> > &exon_chains, const vector<int> &weights);
-	//int combine(const combined_graph &gt);
-
+	// compare combined graphs with splices
 	int get_overlapped_splice_positions(const vector<int32_t> &v) const;
 
 	// combine children
-	int combine();
+	int combine(vector<combined_graph*> &gv);
 	int combine_regions(split_interval_double_map &imap) const;
 	int combine_junctions(map<PI32, DI> &m) const;
 	int combine_start_bounds(map<int32_t, DI> &m) const;
 	int combine_end_bounds(map<int32_t, DI> &m) const;
+
+	// append elements to combined graph
+	int append(const pereads_cluster &pc, const bridge_path &bbp);
+	int append_regions(const pereads_cluster &pc, const bridge_path &bbp);
+	int append_junctions(const pereads_cluster &pc, const bridge_path &bbp);
 
 	// recover splice graph and phasing paths
 	int build_splice_graph(splice_graph &gr);

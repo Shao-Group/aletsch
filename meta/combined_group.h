@@ -2,6 +2,7 @@
 #define __COMBINED_GROUP_H__
 
 #include "combined_graph.h"
+#include "constants.h"
 #include <mutex>
 
 class combined_group
@@ -11,7 +12,7 @@ public:
 
 public:
 	vector<combined_graph> gset;		// given graphs
-	vector< set<int> > clusters;		// merged graphs
+	vector< vector<int> > gvv;		// merged graphs
 	string chrm;
 	char strand;
 

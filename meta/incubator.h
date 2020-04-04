@@ -37,7 +37,7 @@ public:
 };
 
 int generate_single(const string &file, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &g2g, const config &cfg);
-int assemble_single(const vector<combined_graph> &gset, const set<int> &cluster, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg);
+int assemble_single(vector<combined_graph*> &gv, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg);
 int index_transcript(map< size_t, vector<transcript> > &mt, const transcript &t);
 bool query_transcript(const map< size_t, vector<transcript> > &mt, const transcript &t);
 

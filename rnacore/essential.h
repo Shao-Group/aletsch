@@ -41,4 +41,10 @@ bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv);
 // match paired-end reads
 int build_paired_reads(const vector<hit> &hits, vector<PI> &fs);
 
+// compare phasing paths
+int compare_phasing_paths(const vector<int> &ref, const vector<int> &qry);
+bool merge_phasing_paths(const vector<int> &ref, const vector<int> &qry, vector<int> &merged);
+bool identical(const vector<int> &x, int x1, int x2, const vector<int> &y, int y1, int y2);
+
+
 #endif

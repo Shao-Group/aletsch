@@ -60,7 +60,6 @@ public:
 	int merge(const hyper_set &hx);
 	int merge_node_list(const vector<int> &s, int c);
 	int extend(const hyper_set &hx);
-	int augment(const hyper_set &hx);
 
 public:
 	int replace(int x, int e);

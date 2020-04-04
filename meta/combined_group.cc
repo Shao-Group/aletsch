@@ -110,7 +110,7 @@ int combined_group::combine_graphs()
 		csize[i] = gset[i].num_combined;
 	}
 
-	// disjoint map, maintain clusters
+	// disjoint map, maintain gvv
 	vector<int> rank(gset.size(), -1);
 	vector<int> parent(gset.size(), -1);
 
@@ -145,21 +145,21 @@ int combined_group::combine_graphs()
 	}
 
 	map<int, int> mm;
-	clusters.clear();
+	gvv.clear();
 	for(int i = 0; i < gset.size(); i++)
 	{
 		int p = ds.find_set(i);
 		if(mm.find(p) == mm.end())
 		{
-			set<int> s;
-			s.insert(i);
-			mm.insert(pair<int, int>(p, clusters.size()));
-			clusters.push_back(s);
+			vector<int> gv;
+			gv.push_back(i);
+			mm.insert(pair<int, int>(p, gvv.size()));
+			gvv.push_back(gv);
 		}
 		else
 		{
 			int k = mm[p];
-			clusters[k].insert(i);
+			gvv[k].push_back(i);
 		}
 	}
 	return 0;
@@ -168,9 +168,9 @@ int combined_group::combine_graphs()
 int combined_group::stats()
 {
 	map<int, int> m;
-	for(int k = 0; k < clusters.size(); k++)
+	for(int k = 0; k < gvv.size(); k++)
 	{
-		int n = clusters[k].size();
+		int n = gvv[k].size();
 		if(m.find(n) == m.end()) m.insert(pair<int, int>(n, 1));
 		else m[n]++;
 	}

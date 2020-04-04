@@ -14,7 +14,7 @@ See LICENSE for licensing.
 hyper_set::hyper_set()
 {}
 
-hyper_set::hyper_set(splice_graph &gr, phase_set &ps)
+hyper_set::hyper_set(splice_graph &gr, const phase_set &ps)
 {
 	for(MVII::const_iterator it = ps.pmap.begin(); it != ps.pmap.end(); it++)
 	{
@@ -23,7 +23,7 @@ hyper_set::hyper_set(splice_graph &gr, phase_set &ps)
 		vector<int> vv;
 		bool b = build_path_from_exon_coordinates(gr, v, vv);
 		if(b == false) continue;
-		add(vv, c);
+		add_node_list(vv, c);
 	}
 }
 
@@ -105,48 +105,6 @@ int hyper_set::compare(const hyper_set &hx)
 			printf(")\n");
 		}
 	}
-	return 0;
-}
-
-int hyper_set::augment(const hyper_set &hx)
-{	
-	hyper_graph hg(nodes);
-	hg.keep_maximal_nodes();
-	hg.build_overlap_index();
-
-	/*
-	printf("-----\n");
-	hg.print_nodes();
-	hg.print_index();
-	*/
-
-	int added = 0;
-	for(MVII::const_iterator it = hx.nodes.begin(); it != hx.nodes.end(); it++)
-	{
-		const vector<int> &v = it->first;
-		int c = it->second;
-		int s = hg.align_path(v);
-		if(s <= 1) continue;
-		if(c <= 2) continue;
-
-		if(nodes.find(v) == nodes.end()) 
-		{
-			added++;
-			PVII p(v, c);
-			nodes.insert(p);
-
-			/*
-			printf("add path, span = %d, count = %d, list = ( ", s, c);
-			printv(v);
-			printf(")\n");
-			*/
-		}
-	}
-
-	printf("summary of augment: hs = %lu, hx = %lu, added = %d\n", nodes.size(), hx.nodes.size(), added);
-	/*
-	printf("=====\n");
-	*/
 	return 0;
 }
 
