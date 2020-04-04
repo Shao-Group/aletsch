@@ -37,6 +37,9 @@ public:
 	vector<pereads_cluster> vc;
 
 public:
+	// copy gid etc from cb
+	int copy_meta_information(const combined_graph &cb);
+
 	// build from gr, hs, and ub
 	int build(splice_graph &gr, const phase_set &ps, const vector<pereads_cluster> &ub);
 	int build_regions(splice_graph &gr);

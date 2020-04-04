@@ -12,6 +12,15 @@ combined_graph::combined_graph()
 	strand = '?';
 }
 
+int combined_graph::copy_meta_information(const combined_graph &cb)
+{
+	gid = cb.gid;
+	chrm = cb.chrm;
+	strand = cb.strand;
+	sp = cb.sp;
+	return 0;
+}
+
 int combined_graph::build(splice_graph &gr, const phase_set &p, const vector<pereads_cluster> &ub)
 {
 	chrm = gr.chrm;

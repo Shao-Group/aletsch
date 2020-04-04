@@ -114,9 +114,11 @@ int incubator::assemble()
 			}
 			else
 			{
+				assert(v.size() >= 2);
 				vector<combined_graph*> gv;
 				for(int j = 0; j < v.size(); j++) gv.push_back(&(groups[i].gset[v[j]]));
-				boost::asio::post(pool, [this, &gv, instance, &mylock]{ assemble_single(gv, instance, this->trsts, mylock, this->cfg); });
+				assert(gv.size() >= 2);
+				boost::asio::post(pool, [this, gv, instance, &mylock]{ assemble_cluster(gv, instance, this->trsts, mylock, this->cfg); });
 			}
 			instance++;
 		}
@@ -291,7 +293,7 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	return 0;
 }
 
-int assemble_single(vector<combined_graph*> &gv, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg1)
+int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg1)
 {
 	assert(gv.size() >= 2);
 
@@ -372,6 +374,7 @@ int assemble_single(vector<combined_graph*> &gv, int instance, map< size_t, vect
 		if(merge_intersection == false) vt.push_back(t);
 	}
 
+	// process each individual graph
 	for(int i = 0; i < gv.size(); i++)
 	{
 		// process unbridged reads
@@ -387,6 +390,7 @@ int assemble_single(vector<combined_graph*> &gv, int instance, map< size_t, vect
 		gv1.push_back(gv[i]);
 
 		combined_graph cb1;
+		cb1.copy_meta_information(*(gv[i]));
 		cb1.combine(gv1);
 
 		splice_graph gr;
