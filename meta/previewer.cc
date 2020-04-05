@@ -267,6 +267,9 @@ int previewer::process(bundle &bd, config &cfg, map<int32_t, int> &m)
 		int32_t length = get_total_length_of_introns(chain);
 		int32_t d = pc.bounds[3] - pc.bounds[0] - length;
 
+		//pc.print(k);
+		//printf("d = %d, length = %d\n", d, length);
+
 		cnt++;
 
 		if(m.find(d) != m.end()) m[d]++;

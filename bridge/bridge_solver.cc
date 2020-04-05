@@ -48,7 +48,7 @@ int bridge_solver::build_bridging_vertices()
 	{
 		const pereads_cluster &pc = vc[i];
 		int v1 = gr.locate_vertex(pc.bounds[1] - 1);
-		int v2 = gr.locate_vertex(pc.bounds[1] - 0);
+		int v2 = gr.locate_vertex(pc.bounds[2] - 0);
 		vpairs.push_back(PI(v1, v2));
 	}
 	return 0;
@@ -167,42 +167,51 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 	// construct candidate bridging paths
 	int type = 0;
 	vector< vector<int32_t> > chains;
+	vector< vector<int32_t> > wholes;
 	vector<int> scores;
 	if(ss >= tt)
 	{
-		vector<int32_t> v;
-		if(pc.chain1.size() == 0 || pc.chain2.size() == 0 || pc.chain1.back() < pc.chain2.front())
-		{
-			type = 1;
-			chains.push_back(v);
-			scores.push_back(10);
-		}
+		vector<int32_t> c;
+		vector<int32_t> w;
+		bool b = merge_intron_chains(pc.chain1, pc.chain2, w);
+		assert(b == true);
+		type = 1;
+		chains.push_back(c);
+		wholes.push_back(w);
+		scores.push_back(10);
 	}
 	else if(pindex.find(PI(ss, tt)) != pindex.end())
 	{
 		type = 2;
-		assert(pindex.find(PI(ss, tt)) != pindex.end());
+		if(pc.chain1.size() >= 1 && pc.chain2.size() >= 1) assert(pc.chain1.back() < pc.chain2.front());
 		int k = pindex[PI(ss, tt)];
 		vector<bridge_path> &pb = piers[k].bridges;
 		for(int e = 0; e < pb.size(); e++)
 		{
+			vector<int32_t> w = pc.chain1;
+			w.insert(w.end(), pb[e].chain.begin(), pb[e].chain.end());
+			w.insert(w.end(), pc.chain2.begin(), pc.chain2.end());
+			wholes.push_back(w);
 			chains.push_back(pb[e].chain);
 			scores.push_back(pb[e].score);
 		}
 	}
 
+	assert(wholes.size() == chains.size());
 	if(chains.size() == 0) return 0;
 
 	int be = -1;
-	int32_t length1 = get_total_length_of_introns(pc.chain1);
-	int32_t length2 = get_total_length_of_introns(pc.chain2);
 	for(int e = 0; e < chains.size(); e++)
 	{
+		assert(check_increasing<int32_t>(wholes[e]));
+		assert(check_increasing<int32_t>(chains[e]));
+		if(wholes[e].size() >= 1) assert(wholes[e].front() > pc.bounds[0]);
+		if(wholes[e].size() >= 1) assert(wholes[e].back() < pc.bounds[3]);
 		if(pc.chain1.size() > 0 && chains[e].size() > 0) assert(pc.chain1.back() < chains[e].front());
 		if(pc.chain2.size() > 0 && chains[e].size() > 0) assert(pc.chain2.front() > chains[e].back());
 
-		int32_t length3 = get_total_length_of_introns(chains[e]);
-		int32_t length = pc.bounds[3] - pc.bounds[0] - length1 - length2 - length3;
+		int32_t intron = get_total_length_of_introns(wholes[e]);
+		int32_t length = pc.bounds[3] - pc.bounds[0] - intron;
 		if(length < length_low) continue;
 		if(length > length_high) continue;
 		be = e;
@@ -214,6 +223,7 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 	bbp.type = type;
 	bbp.score = scores[be];
 	bbp.chain = chains[be];
+	bbp.whole = wholes[be];
 
 	return 0;
 }
@@ -234,8 +244,47 @@ int bridge_solver::build_phase_set(phase_set &ps)
 	assert(opt.size() == vc.size());
 	for(int i = 0; i < vc.size(); i++)
 	{
-		add_phases_from_bridge_path(vc[i], opt[i], ps);
+		if(opt[i].type >= 0) add_phases_from_bridged_pereads_cluster(vc[i], opt[i], ps);
+		else add_phases_from_unbridged_pereads_cluster(vc[i], ps);
 	}
+	return 0;
+}
+
+int add_phases_from_bridged_pereads_cluster(const pereads_cluster &pc, const bridge_path &bbp, phase_set &ps)
+{
+	assert(bbp.type >= 0);
+	int32_t p0 = pc.extend[0];
+	int32_t p3 = pc.extend[3];
+	vector<int32_t> v;
+	v.push_back(p0);
+	v.insert(v.end(), bbp.whole.begin(), bbp.whole.end());
+	v.push_back(p3);
+	assert(check_increasing<int32_t>(v));
+	ps.add(v, pc.count);
+	return 0;
+}
+
+		
+int add_phases_from_unbridged_pereads_cluster(const pereads_cluster &pc, phase_set &ps)
+{
+	int32_t p0 = pc.extend[0];
+	int32_t p1 = pc.extend[1];
+	int32_t p2 = pc.extend[2];
+	int32_t p3 = pc.extend[3];
+
+	vector<int32_t> v1;
+	v1.push_back(p0);
+	v1.insert(v1.end(), pc.chain1.begin(), pc.chain1.end());
+	v1.push_back(p1);
+	assert(check_increasing<int32_t>(v1));
+	ps.add(v1, pc.count);
+
+	vector<int32_t> v2;
+	v2.push_back(p2);
+	v2.insert(v2.end(), pc.chain2.begin(), pc.chain2.end());
+	v2.push_back(p3);
+	assert(check_increasing<int32_t>(v2));
+	ps.add(v2, pc.count);
 	return 0;
 }
 

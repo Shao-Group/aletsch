@@ -105,6 +105,7 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 
 		pereads_cluster pc;
 		pc.count = 0;
+		vector<int32_t> bounds(4, 0);
 		for(int k = 0; k < zz[i].size(); k++)
 		{
 			h1 = fs[zz[i][k]].first;
@@ -114,26 +115,61 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 
 			pc.chain1 = hits[h1].spos;
 			pc.chain2 = hits[h2].spos;
-			pc.count++;
 
-			pc.bounds[0] += hits[h1].pos;
-			pc.bounds[1] += hits[h1].rpos;
-			pc.bounds[2] += hits[h2].pos;
-			pc.bounds[3] += hits[h2].rpos;
+			bounds[0] = hits[h1].pos;
+			bounds[1] = hits[h1].rpos;
+			bounds[2] = hits[h2].pos;
+			bounds[3] = hits[h2].rpos;
+			break;
+		}
+
+		for(int k = 0; k < zz[i].size(); k++)
+		{
+			h1 = fs[zz[i][k]].first;
+			h2 = fs[zz[i][k]].second;
+			if(hits[h1].rpos > hits[h2].rpos) continue;
+			if(hits[h1].pos > hits[h2].pos) continue;
+
+			pc.bounds[0] += hits[h1].pos  - bounds[0];
+			pc.bounds[1] += hits[h1].rpos - bounds[1];
+			pc.bounds[2] += hits[h2].pos  - bounds[2];
+			pc.bounds[3] += hits[h2].rpos - bounds[3];
+			pc.count++;
 		}
 
 		if(pc.count <= 0) continue;
 
-		pc.bounds[0] /= pc.count; 
-		pc.bounds[1] /= pc.count;
-		pc.bounds[2] /= pc.count; 
-		pc.bounds[3] /= pc.count;
+		pc.bounds[0] = pc.bounds[0] / pc.count + bounds[0];  
+		pc.bounds[1] = pc.bounds[1] / pc.count + bounds[1];
+		pc.bounds[2] = pc.bounds[2] / pc.count + bounds[2]; 
+		pc.bounds[3] = pc.bounds[3] / pc.count + bounds[3];
 		pc.extend[0] = extend[g * 4 + 0];
 		pc.extend[1] = extend[g * 4 + 1];
 		pc.extend[2] = extend[g * 4 + 2];
 		pc.extend[3] = extend[g * 4 + 3];
 
 		vc.push_back(pc);
+
+		/*
+		if(pc.bounds[0] == 31579218)
+		{
+			pc.print(999);
+			for(int k = 0; k < zz[i].size(); k++)
+			{
+				printf("element %d: ", zz[i][k]);
+				printv(vv[zz[i][k]]);
+				printf("\n");
+
+				h1 = fs[zz[i][k]].first;
+				h2 = fs[zz[i][k]].second;
+				if(hits[h1].rpos > hits[h2].rpos) continue;
+				if(hits[h1].pos > hits[h2].pos) continue;
+				hits[h1].print();
+				hits[h2].print();
+			}
+			printf("\n");
+		}
+		*/
 	}
 
 	return 0;
@@ -160,6 +196,7 @@ vector< vector<int> > graph_cluster::partition(vector< vector<int32_t> > &fs, in
 	int pre = 0;
 	for(int k = 1; k <= fs.size(); k++)
 	{
+		if(k < fs.size()) assert(fs[k][r] >= fs[k - 1][r]);
 		if(k < fs.size() && fs[k][r] - fs[k - 1][r] <= max_partition_gap) continue;
 
 		vector< vector<int32_t> > fs1;

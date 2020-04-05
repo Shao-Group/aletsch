@@ -241,9 +241,10 @@ int combined_graph::combine_end_bounds(map<int32_t, DI> &m) const
 
 int combined_graph::append(const pereads_cluster &pc, const bridge_path &bbp)
 {
+	assert(bbp.type >= 0);
 	append_regions(pc, bbp);
 	append_junctions(pc, bbp);
-	add_phases_from_bridge_path(pc, bbp, ps);
+	add_phases_from_bridged_pereads_cluster(pc, bbp, ps);
 	return 0;
 }
 

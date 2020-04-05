@@ -64,6 +64,7 @@ private:
 	int vote(int r, bridge_path &bbp);
 };
 
-int add_phases_from_bridge_path(const pereads_cluster &pc, const bridge_path &bbp, phase_set &ps);
+int add_phases_from_bridged_pereads_cluster(const pereads_cluster &pc, const bridge_path &bbp, phase_set &ps);
+int add_phases_from_unbridged_pereads_cluster(const pereads_cluster &pc, phase_set &ps);
 
 #endif

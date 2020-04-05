@@ -8,6 +8,7 @@ bridge_path::bridge_path()
 {
 	v.clear();
 	chain.clear();
+	whole.clear();
 	type = 0;
 	score = 0;
 	count = 0;
@@ -22,6 +23,7 @@ int bridge_path::clear()
 	type = 0;
 	v.clear();
 	chain.clear();
+	whole.clear();
 	score = 0;
 	count = 0;
 	stack.clear();
@@ -37,6 +39,8 @@ int bridge_path::print(int index) const
 	printv(v);
 	printf("), chain = ( ");
 	printv(chain);
+	printf("), whole = ( ");
+	printv(whole);
 	printf(")\n");
 	return 0;
 }

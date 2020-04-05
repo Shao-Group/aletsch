@@ -52,4 +52,15 @@ bool identical(const vector<int> &x, int x1, int x2, const vector<int> &y, int y
 bool merge_intron_chains(const vector<int32_t> &x, const vector<int32_t> &y, vector<int32_t> &xy);
 bool consistent_intron_chains(const vector<int32_t> &x, const vector<int32_t> &y);
 
+template<typename T>
+bool check_increasing(const vector<T> &x)
+{
+	if(x.size() <= 1) return true;
+	for(int k = 0; k < x.size() - 1; k++)
+	{
+		if(x[k] >= x[k + 1]) return false;
+	}
+	return true;
+}
+
 #endif

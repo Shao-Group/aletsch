@@ -16,6 +16,7 @@ public:
 	int type;
 	vector<int> v;
 	vector<int32_t> chain;
+	vector<int32_t> whole;
 	double score;
 	vector<int> stack;
 	int count;
