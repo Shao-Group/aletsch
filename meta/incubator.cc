@@ -262,7 +262,7 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 
 	// refine splice graph
 	refine_splice_graph(gx);
-	keep_surviving_edges(gx, min_splicing_count);
+	//keep_surviving_edges(gx, min_splicing_count);
 
 	// construct hyper-set
 	hyper_set hx(gx, cb.ps);
@@ -356,7 +356,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 	px.project_boundaries(smap, tmap);
 
 	refine_splice_graph(gx);
-	keep_surviving_edges(gx, min_splicing_count);
+	//keep_surviving_edges(gx, min_splicing_count);
 
 	// construct hyper-set
 	hyper_set hx(gx, px);
@@ -410,7 +410,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 		gr.build_vertex_index();
 
 		refine_splice_graph(gr);
-		keep_surviving_edges(gr, rs, min_splicing_count);
+		//keep_surviving_edges(gr, rs, min_splicing_count);
 
 		gr.gid = gv[i]->gid;
 
