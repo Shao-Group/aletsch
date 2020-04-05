@@ -403,8 +403,9 @@ int combined_graph::build_splice_graph(splice_graph &gr)
 		double w = junctions[i].second.first;
 		int c = junctions[i].second.second;
 
-		assert(gr.rindex.find(p.first) != gr.rindex.end());
-		assert(gr.lindex.find(p.second) != gr.lindex.end());
+		// TODO, should be asserted
+		if(gr.rindex.find(p.first) == gr.rindex.end()) continue;
+		if(gr.lindex.find(p.second) == gr.lindex.end()) continue;
 		int s = gr.rindex[p.first];
 		int t = gr.lindex[p.second];
 		edge_descriptor e = gr.add_edge(s, t);

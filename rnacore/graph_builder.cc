@@ -188,6 +188,17 @@ int graph_builder::link_partial_exons()
 		MPI::iterator li = rm.find(b.lpos);
 		MPI::iterator ri = lm.find(b.rpos);
 
+		if(ri == lm.end() || li == rm.end())
+		{
+			// print for testing
+			printf("TEST: ");
+			b.print("A", 999);
+			for(int k = 0; k < regions.size(); k++) regions[k].print(k);
+			for(int k = 0; k < pexons.size(); k++) pexons[k].print(k);
+			for(int k = 0; k < junctions.size(); k++) junctions[k].print("X", k);
+			printf("\n");
+		}
+
 		assert(li != rm.end());
 		assert(ri != lm.end());
 
