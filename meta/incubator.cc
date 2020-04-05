@@ -355,11 +355,12 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 	group_end_boundaries(gx, tmap, max_group_boundary_distance);
 	px.project_boundaries(smap, tmap);
 
-	refine_splice_graph(gx);
+	revise_splice_graph_full(gx, &cfg);
 	keep_surviving_edges(gx, min_splicing_count);
 
 	// construct hyper-set
 	hyper_set hx(gx, px);
+	hx.filter_nodes(gx);
 
 	/*
 	printf("---- parent\n");
@@ -408,12 +409,13 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 		cb1.build_splice_graph(gr);
 		gr.build_vertex_index();
 
-		refine_splice_graph(gr);
+		revise_splice_graph_full(gr, &cfg);
 		keep_surviving_edges(gr, rs, min_splicing_count);
 
 		gr.gid = gv[i]->gid;
 
 		hyper_set hs(gr, cb1.ps);
+		hs.filter_nodes(gr);
 
 		/*
 		printf("---- child %d\n", i);
