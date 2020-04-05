@@ -266,7 +266,7 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 
 	// construct hyper-set
 	hyper_set hx(gx, cb.ps);
-	//hx.filter_nodes(gx);
+	hx.filter_nodes(gx);
 
 	// assemble 
 	gx.gid = cb.gid;
@@ -361,6 +361,13 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 	// construct hyper-set
 	hyper_set hx(gx, px);
 
+	/*
+	printf("---- parent\n");
+	gx.print();
+	hx.print_nodes();
+	printf("====\n");
+	*/
+
 	// assemble combined graph
 	gx.gid = cb.gid;
 	cfg.algo = "single";
@@ -374,6 +381,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 		if(t.exons.size() <= 1) continue;
 		z++;
 		index_transcript(mt, t);
+		//t.write(cout);
 		if(merge_intersection == false) vt.push_back(t);
 	}
 
@@ -393,8 +401,8 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 		gv1.push_back(gv[i]);
 
 		combined_graph cb1;
-		cb1.copy_meta_information(*(gv[i]));
 		cb1.combine(gv1);
+		cb1.copy_meta_information(*(gv[i]));
 
 		splice_graph gr;
 		cb1.build_splice_graph(gr);
@@ -407,6 +415,13 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 
 		hyper_set hs(gr, cb1.ps);
 
+		/*
+		printf("---- child %d\n", i);
+		gr.print();
+		hs.print_nodes();
+		printf("====\n");
+		*/
+
 		cfg.algo = "single";
 		scallop sc(gr, hs, &cfg);
 		sc.assemble();
@@ -418,7 +433,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 			transcript &t = sc.trsts[k];
 			t.RPKM = 0;
 			if(t.exons.size() <= 1) continue;
-
+			//t.write(cout);
 			z1++;
 			bool b = query_transcript(mt, t);
 			if(b == false) index_transcript(mt, t);

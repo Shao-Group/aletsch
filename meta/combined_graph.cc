@@ -129,13 +129,19 @@ int combined_graph::get_overlapped_splice_positions(const vector<int32_t> &v) co
 
 int combined_graph::combine(vector<combined_graph*> &gv)
 {
+	if(gv.size() == 0) return 0;
+
+	chrm = gv[0]->chrm;
+	strand = gv[0]->strand;
+	sp = gv[0]->sp;
+	num_combined = 0;
+
 	split_interval_double_map imap;
 	map<PI32, DI> mj;
 	map<int32_t, DI> ms;
 	map<int32_t, DI> mt;
 	ps.clear();
 
-	num_combined = 0;
 	for(int i = 0; i < gv.size(); i++)
 	{
 		combined_graph *gt = gv[i];
