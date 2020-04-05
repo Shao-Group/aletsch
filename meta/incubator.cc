@@ -355,7 +355,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 	group_end_boundaries(gx, tmap, max_group_boundary_distance);
 	px.project_boundaries(smap, tmap);
 
-	revise_splice_graph_full(gx, &cfg);
+	refine_splice_graph(gx);
 	keep_surviving_edges(gx, min_splicing_count);
 
 	// construct hyper-set
@@ -409,7 +409,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 		cb1.build_splice_graph(gr);
 		gr.build_vertex_index();
 
-		revise_splice_graph_full(gr, &cfg);
+		refine_splice_graph(gr);
 		keep_surviving_edges(gr, rs, min_splicing_count);
 
 		gr.gid = gv[i]->gid;
