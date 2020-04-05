@@ -114,10 +114,9 @@ int generator::generate(int n)
 		splice_graph gr;
 		graph_builder gb(bb);
 		gb.build(gr);
+		gr.build_vertex_index();
 
 		if(gr.count_junctions() <= 0) continue;
-
-		gr.build_vertex_index();
 
 		vector<pereads_cluster> vc;
 		phase_set ps;
@@ -129,6 +128,7 @@ int generator::generate(int n)
 		bs.length_low = sp.insertsize_low;
 		bs.length_high = sp.insertsize_high;
 		bs.build_phase_set(ps);
+		//bs.print();
 
 		vector<pereads_cluster> ub;
 		bs.collect_unbridged_clusters(ub);
@@ -160,8 +160,6 @@ int generator::generate(int n)
 
 			vcb.push_back(cb);
 		}
-
-		//printf("\n");
 
 		index++;
 	}

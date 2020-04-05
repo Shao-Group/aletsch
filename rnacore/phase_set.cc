@@ -21,7 +21,7 @@ int phase_set::print()
 	{
 		const vector<int32_t> &v = it->first;
 		int c = it->second;
-		printf("phase: count = %c, exons = ( ", c);
+		printf("phase: count = %d, exons = ( ", c);
 		printv(v);
 		printf("\n");
 	}

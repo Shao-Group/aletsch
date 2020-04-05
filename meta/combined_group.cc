@@ -182,6 +182,22 @@ int combined_group::stats()
 	return 0;
 }
 
+int combined_group::print()
+{
+	for(int k = 0; k < gvv.size(); k++)
+	{
+		printf("combined-graph with %lu children: ", gvv[k].size());
+		for(int i = 0; i < gvv[k].size(); i++)
+		{
+			int g = gvv[k][i];
+			printf("%s, ", gset[g].gid.c_str());
+		}
+		printf("\n");
+	}
+	printf("\n");
+}
+
+
 bool compare_graph_similarity(const PPID &x, const PPID &y)
 {
 	return x.second > y.second;

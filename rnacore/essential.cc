@@ -180,7 +180,6 @@ int build_intron_coordinates_from_path(splice_graph &gr, const vector<int> &v, v
 bool build_path_from_exon_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv)
 {
 	// assume v encodes exon-chain coordinates
-	// assume that lindex and rindex are available in gr
 	vv.clear();
 	assert(v.size() % 2 == 0);
 	if(v.size() <= 0) return true;
@@ -218,7 +217,6 @@ bool build_path_from_exon_coordinates(splice_graph &gr, const vector<int32_t> &v
 bool build_path_from_intron_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv)
 {
 	// assume v encodes intron chain coordinates
-	// assume that lindex and rindex are available in gr
 	vv.clear();
 	assert(v.size() % 2 == 0);
 	if(v.size() <= 0) return true;
@@ -257,8 +255,6 @@ bool build_path_from_intron_coordinates(splice_graph &gr, const vector<int32_t> 
 bool build_path_from_mixed_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv)
 {
 	// assume v[1..n-1] encodes intron-chain coordinates
-	// assume that lindex and rindex are available in gr
-
 	vv.clear();
 	assert(v.size() % 2 == 0);
 	if(v.size() <= 0) return true;
@@ -314,7 +310,6 @@ bool check_valid_path(splice_graph &gr, const vector<int> &vv)
 
 bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv)
 {
-	// make sure that lindex and rindex are available in gr
 	vv.clear();
 	vector<int64_t> v;
 	h.get_aligned_intervals(v);

@@ -206,6 +206,7 @@ int incubator::print_groups()
 	for(int k = 0; k < groups.size(); k++)
 	{
 		printf("group %d (chrm = %s, strand = %c) contains %lu graphs (%lu merged graphs)\n", k, groups[k].chrm.c_str(), groups[k].strand, groups[k].gset.size(), groups[k].gvv.size());
+		//groups[k].print();
 	}
 	return 0;
 }
@@ -265,6 +266,7 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 
 	// construct hyper-set
 	hyper_set hx(gx, cb.ps);
+	//hx.filter_nodes(gx);
 
 	// assemble 
 	gx.gid = cb.gid;
@@ -324,6 +326,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 	splice_graph gx;
 	cb.build_splice_graph(gx);
 	phase_set px = cb.ps;
+	gx.build_vertex_index();
 
 	// collect and bridge all unbridged pairs
 	vector<pereads_cluster> vc;
@@ -395,6 +398,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 
 		splice_graph gr;
 		cb1.build_splice_graph(gr);
+		gr.build_vertex_index();
 
 		refine_splice_graph(gr);
 		keep_surviving_edges(gr, rs, min_splicing_count);

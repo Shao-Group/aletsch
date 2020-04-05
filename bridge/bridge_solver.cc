@@ -30,11 +30,6 @@ bridge_solver::bridge_solver(splice_graph &g, const vector<pereads_cluster> &v)
 	dp_stack_size = 5;
 	length_low = 100;
 	length_high = 500;
-	if(gr.lindex.size() == 0) 
-	{
-		assert(gr.rindex.size() == 0);
-		gr.build_vertex_index();
-	}
 	build_bridging_vertices();
 	build_piers();
 	nominate();

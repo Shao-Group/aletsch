@@ -23,6 +23,7 @@ hyper_set::hyper_set(splice_graph &gr, const phase_set &ps)
 		vector<int> vv;
 		bool b = build_path_from_exon_coordinates(gr, v, vv);
 		if(b == false) continue;
+		for(int k = 0; k < vv.size(); k++) vv[k]--;
 		add_node_list(vv, c);
 	}
 }

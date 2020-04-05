@@ -512,8 +512,8 @@ int combined_graph::clear()
 
 int combined_graph::print(int index)
 {
-	printf("combined-graph %d: #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phasing-phase = %lu\n", 
-			index, num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), ps.pmap.size());
+	printf("combined-graph %d: gid = %s, #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phasing-phase = %lu\n", 
+			index, gid.c_str(), num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), ps.pmap.size());
 
 	for(int i = 0; i < regions.size(); i++)
 	{
