@@ -11,6 +11,7 @@
 #include "bridge_solver.h"
 #include "graph_builder.h"
 #include "graph_cluster.h"
+#include "graph_reviser.h"
 #include "essential.h"
 
 generator::generator(vector<combined_graph> &v, const config &c)
@@ -115,6 +116,8 @@ int generator::generate(int n)
 		graph_builder gb(bb);
 		gb.build(gr);
 		gr.build_vertex_index();
+
+		revise_splice_graph_full(gr, &cfg);
 
 		if(gr.count_junctions() <= 0) continue;
 
