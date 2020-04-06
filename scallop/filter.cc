@@ -8,7 +8,7 @@ See LICENSE for licensing.
 #include <cassert>
 #include <algorithm>
 
-filter::filter(const vector<transcript> &v, config *c)
+filter::filter(const vector<transcript> &v, parameters *c)
 	:trs(v), cfg(c)
 {}
 

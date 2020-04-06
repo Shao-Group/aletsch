@@ -5,7 +5,7 @@ See LICENSE for licensing.
 */
 
 #include "subsetsum.h"
-#include "config.h"
+#include "parameters.h"
 #include <cstdio>
 #include <cmath>
 #include <climits>

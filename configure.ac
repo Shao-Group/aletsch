@@ -68,10 +68,9 @@ AC_TYPE_UINT32_T
 # Checks for library functions.
 
 AC_CONFIG_FILES([Makefile
-				 lib/Makefile
-				 lib/util/Makefile
-				 lib/gtf/Makefile
-				 lib/graph/Makefile
+				 util/Makefile
+				 gtf/Makefile
+				 graph/Makefile
 				 rnacore/Makefile
 				 scallop/Makefile
 				 bridge/Makefile

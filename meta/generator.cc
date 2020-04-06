@@ -4,7 +4,7 @@
 #include "boost/pending/disjoint_sets.hpp"
 
 #include "constants.h"
-#include "scallop/config.h"
+#include "parameters.h"
 #include "bundle.h"
 #include "generator.h"
 #include "previewer.h"
@@ -14,15 +14,14 @@
 #include "graph_reviser.h"
 #include "essential.h"
 
-generator::generator(vector<combined_graph> &v, const config &c)
+generator::generator(const string &bamfile, vector<combined_graph> &v, parameters &c)
 	: vcb(v), cfg(c)
 {
-	previewer pre(cfg.input_file);
-	pre.infer_library_type(cfg, sp);
-	cfg.library_type = sp.library_type;
-	pre.infer_insertsize(cfg, sp);
+	previewer pre(bamfile, cfg, sp);
+	pre.infer_library_type();
+	pre.infer_insertsize();
 
-    sfn = sam_open(cfg.input_file.c_str(), "r");
+    sfn = sam_open(bamfile.c_str(), "r");
     hdr = sam_hdr_read(sfn);
     b1t = bam_init1();
 	index = 0;
@@ -52,7 +51,7 @@ int generator::resolve()
 		hit ht(b1t);
 		ht.set_splices(b1t);
 		ht.set_tags(b1t);
-		ht.set_strand(cfg.library_type);
+		ht.set_strand(sp.library_type);
 
 		// TODO for test
 		//if(ht.tid >= 1) break;
@@ -80,15 +79,15 @@ int generator::resolve()
 
 		// add hit
 		if(cfg.uniquely_mapped_only == true && ht.nh != 1) continue;
-		if(cfg.library_type != UNSTRANDED && ht.strand == '+' && ht.xs == '-') continue;
-		if(cfg.library_type != UNSTRANDED && ht.strand == '-' && ht.xs == '+') continue;
-		if(cfg.library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
-		if(cfg.library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit_intervals(ht, b1t);
-		if(cfg.library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit_intervals(ht, b1t);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bb1.add_hit_intervals(ht, b1t);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit_intervals(ht, b1t);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit_intervals(ht, b1t);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit_intervals(ht, b1t);
+		if(sp.library_type != UNSTRANDED && ht.strand == '+' && ht.xs == '-') continue;
+		if(sp.library_type != UNSTRANDED && ht.strand == '-' && ht.xs == '+') continue;
+		if(sp.library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
+		if(sp.library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit_intervals(ht, b1t);
+		if(sp.library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb1.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit_intervals(ht, b1t);
 	}
 
 	pool.push_back(bb1);

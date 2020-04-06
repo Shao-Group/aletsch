@@ -1,10 +1,7 @@
 noinst_LIBRARIES = libgraph.a
 
-#libgraph_a_CPPFLAGS = -std=c++11
-
-UTILDIR = $(top_srcdir)/lib/util
+UTILDIR = $(top_srcdir)/util
 libgraph_a_CPPFLAGS = -I$(UTILDIR)
-
 
 libgraph_a_SOURCES = graph_base.cc graph_base.h \
 					 directed_graph.cc directed_graph.h \

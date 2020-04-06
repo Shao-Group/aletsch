@@ -2,10 +2,11 @@
 #include <sstream>
 #include <fstream>
 #include "combined_group.h"
-#include "meta_config.h"
+#include "parameters.h"
 #include "boost/pending/disjoint_sets.hpp"
 
-combined_group::combined_group(string c, char s)
+combined_group::combined_group(string c, char s, const parameters &f)
+	: cfg(f)
 {
 	chrm = c;
 	strand = s;
@@ -81,7 +82,7 @@ int combined_group::build_similarity()
 				// TODO parameters
 				bool b = true;
 				if(c <= 1.50) b = false;
-				if(r < merge_threshold) b = false;
+				if(r < cfg.merge_threshold) b = false;
 
 				//printf("b = %c, r = %.3lf, c = %d, size1 = %lu, size2 = %lu\n", b ? 'T' : 'F', r, c, gset[i].splices.size(), gset[j].splices.size());
 
@@ -130,8 +131,8 @@ int combined_group::combine_graphs()
 		int py = ds.find_set(y);
 
 		if(px == py) continue;
-		if(csize[px] >= max_combined) continue;
-		if(csize[py] >= max_combined) continue;
+		if(csize[px] >= cfg.max_combined) continue;
+		if(csize[py] >= cfg.max_combined) continue;
 
 		int sum = csize[px] + csize[py]; 
 
@@ -195,8 +196,8 @@ int combined_group::print()
 		printf("\n");
 	}
 	printf("\n");
+	return 0;
 }
-
 
 bool compare_graph_similarity(const PPID &x, const PPID &y)
 {

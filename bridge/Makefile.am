@@ -1,11 +1,11 @@
 noinst_LIBRARIES = libbridge.a
 
-GTF_INCLUDE = $(top_srcdir)/lib/gtf
-UTIL_INCLUDE = $(top_srcdir)/lib/util
-GRAPH_INCLUDE = $(top_srcdir)/lib/graph
+GTF_INCLUDE = $(top_srcdir)/gtf
+UTIL_INCLUDE = $(top_srcdir)/util
+GRAPH_INCLUDE = $(top_srcdir)/graph
 RNACORE_INCLUDE = $(top_srcdir)/rnacore
 
-libbridge_a_CPPFLAGS = -I$(GTF_INCLUDE) -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE) -I$(RNACORE_INCLUDE)
+libbridge_a_CPPFLAGS = -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE) -I$(RNACORE_INCLUDE) -I$(GTF_INCLUDE)
 
 libbridge_a_SOURCES = bridge_path.h bridge_path.cc \
 					  pier.h pier.cc \

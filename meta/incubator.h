@@ -6,7 +6,7 @@
 #include "combined_graph.h"
 #include "combined_group.h"
 #include "transcript.h"
-#include "scallop/config.h"
+#include "parameters.h"
 #include <mutex>
 
 typedef map< int32_t, set<int> > MISI;
@@ -16,10 +16,10 @@ typedef pair<int, int> PI;
 class incubator
 {
 public:
-	incubator(const config &c);
+	incubator(const parameters &c);
 
 public:
-	config cfg;									// config for scallop
+	parameters cfg;									// parameters for scallop
 	vector<combined_group> groups;				// graph groups
 	vector< map<string, int> > g2g;				// group map
 	map< size_t, vector<transcript> > trsts;	// assembled transcripts
@@ -36,9 +36,9 @@ public:
 	int print_groups();
 };
 
-int generate_single(const string &file, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &g2g, const config &cfg);
-int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg);
-int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg);
+int generate_single(const string &file, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &g2g, const parameters &cfg);
+int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const parameters &cfg);
+int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const parameters &cfg);
 int index_transcript(map< size_t, vector<transcript> > &mt, const transcript &t);
 bool query_transcript(const map< size_t, vector<transcript> > &mt, const transcript &t);
 

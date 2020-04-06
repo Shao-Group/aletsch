@@ -1,15 +1,15 @@
 #ifndef __GRAPH_REVISE_H__
 #define __GRAPH_REVISE_H__
 
-#include "config.h"
+#include "parameters.h"
 #include "splice_graph.h"
 
 using namespace std;
 
 typedef pair<int32_t, int32_t> PI32;
 
-int revise_splice_graph(splice_graph &gr, config *cfg);
-int revise_splice_graph_full(splice_graph &gr, config *cfg);
+int revise_splice_graph(splice_graph &gr, parameters *cfg);
+int revise_splice_graph_full(splice_graph &gr, parameters *cfg);
 
 VE compute_maximal_edges(splice_graph &gr);
 bool extend_boundaries(splice_graph &gr);

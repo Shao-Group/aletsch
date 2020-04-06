@@ -6,7 +6,7 @@ See LICENSE for licensing.
 
 #include "constants.h"
 #include "router.h"
-#include "config.h"
+#include "parameters.h"
 #include "util.h"
 #include "subsetsum.h"
 

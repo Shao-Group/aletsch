@@ -15,18 +15,18 @@ See LICENSE for licensing.
 #include "pereads_cluster.h"
 #include "combined_graph.h"
 #include "sample_profile.h"
-#include "scallop/config.h"
+#include "parameters.h"
 
 using namespace std;
 
 class generator
 {
 public:
-	generator(vector<combined_graph> &cbv, const config &c);
+	generator(const string &bamfile, vector<combined_graph> &cbv, parameters &c);
 	~generator();
 
 private:
-	config cfg;
+	parameters &cfg;
 	sample_profile sp;
 	samFile *sfn;
 	bam_hdr_t *hdr;

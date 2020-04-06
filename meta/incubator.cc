@@ -2,7 +2,7 @@
 #include "generator.h"
 #include "filter.h"
 #include "cluster.h"
-#include "meta_config.h"
+#include "parameters.h"
 #include "scallop.h"
 #include "graph_reviser.h"
 #include "bridge_solver.h"
@@ -18,7 +18,7 @@
 #include <boost/asio/thread_pool.hpp>
 #include <boost/pending/disjoint_sets.hpp>
 
-incubator::incubator(const config &c)
+incubator::incubator(const parameters &c)
 {
 	cfg = c;
 	g2g.resize(3);
@@ -48,15 +48,15 @@ int incubator::resolve()
 
 int incubator::generate()
 {
-	ifstream fin(input_bam_list.c_str());
+	ifstream fin(cfg.input_bam_list.c_str());
 	if(fin.fail())
 	{
-		printf("cannot open input-bam-list-file %s\n", input_bam_list.c_str());
+		printf("cannot open input-bam-list-file %s\n", cfg.input_bam_list.c_str());
 		exit(0);
 	}
 
 	mutex mylock;								// lock for trsts
-	boost::asio::thread_pool pool(max_threads); // thread pool
+	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
 
 	char line[102400];
 	while(fin.getline(line, 10240, '\n'))
@@ -78,7 +78,7 @@ int incubator::generate()
 
 int incubator::merge()
 {
-	boost::asio::thread_pool pool(max_threads); // thread pool
+	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
 
 	for(int k = 0; k < groups.size(); k++)
 	{
@@ -96,7 +96,7 @@ int incubator::merge()
 
 int incubator::assemble()
 {
-	boost::asio::thread_pool pool(max_threads); // thread pool
+	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
 	mutex mylock;								// lock for trsts
 
 	int instance = 0;
@@ -133,14 +133,14 @@ int incubator::assemble()
 
 int incubator::postprocess()
 {
-	ofstream fout(output_gtf_file.c_str());
+	ofstream fout(cfg.output_gtf_file.c_str());
 	if(fout.fail())
 	{
-		printf("cannot open output-get-file %s\n", output_gtf_file.c_str());
+		printf("cannot open output-get-file %s\n", cfg.output_gtf_file.c_str());
 		exit(0);
 	}
 
-	boost::asio::thread_pool pool(max_threads); // thread pool
+	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
 	mutex mylock;								// lock for trsts
 
 	typedef map<size_t, vector<transcript> >::iterator MIT;
@@ -211,12 +211,11 @@ int incubator::print_groups()
 	return 0;
 }
 
-int generate_single(const string &file, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &m, const config &cfg)
+int generate_single(const string &file, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &m, const parameters &cfg)
 {	
 	vector<combined_graph> v;
-	config c = cfg;
-	c.input_file = file;
-	generator gt(v, c);
+	parameters c = cfg;
+	generator gt(file, v, c);
 	gt.resolve();
 
 	mylock.lock();
@@ -229,7 +228,7 @@ int generate_single(const string &file, vector<combined_group> &gv, mutex &myloc
 		if(c == '-') s = 2;
 		if(m[s].find(chrm) == m[s].end())
 		{
-			combined_group gp(chrm, c);
+			combined_group gp(chrm, c, cfg);
 			gp.add_graph(v[k]);
 			m[s].insert(pair<string, int>(chrm, gv.size()));
 			gv.push_back(gp);
@@ -246,9 +245,9 @@ int generate_single(const string &file, vector<combined_group> &gv, mutex &myloc
 	return 0;
 }
 
-int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg1)
+int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const parameters &cfg1)
 {
-	config cfg = cfg1;
+	parameters cfg = cfg1;
 	vector<transcript> vt;
 
 	// setting up names
@@ -262,7 +261,7 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 
 	// refine splice graph
 	refine_splice_graph(gx);
-	//keep_surviving_edges(gx, min_splicing_count);
+	//keep_surviving_edges(gx, cfg.min_splicing_count);
 
 	// construct hyper-set
 	hyper_set hx(gx, cb.ps);
@@ -295,11 +294,11 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	return 0;
 }
 
-int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const config &cfg1)
+int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const parameters &cfg1)
 {
 	assert(gv.size() >= 2);
 
-	config cfg = cfg1;
+	parameters cfg = cfg1;
 
 	// assembled transcripts and index
 	int z = 0;
@@ -320,7 +319,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 		gv[j]->gid = name;
 	}
 
-	set<int32_t> rs = cb.get_reliable_splices(min_supporting_samples, 99999);
+	set<int32_t> rs = cb.get_reliable_splices(cfg.min_supporting_samples, 99999);
 
 	// rebuild splice graph
 	splice_graph gx;
@@ -351,12 +350,12 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 
 	// refine splice graph and phasing paths
 	map<int32_t, int32_t> smap, tmap;
-	group_start_boundaries(gx, smap, max_group_boundary_distance);
-	group_end_boundaries(gx, tmap, max_group_boundary_distance);
+	group_start_boundaries(gx, smap, cfg.max_group_boundary_distance);
+	group_end_boundaries(gx, tmap, cfg.max_group_boundary_distance);
 	px.project_boundaries(smap, tmap);
 
 	refine_splice_graph(gx);
-	//keep_surviving_edges(gx, min_splicing_count);
+	//keep_surviving_edges(gx, cfg.min_splicing_count);
 
 	// construct hyper-set
 	hyper_set hx(gx, px);
@@ -383,7 +382,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 		z++;
 		index_transcript(mt, t);
 		//t.write(cout);
-		if(merge_intersection == false) vt.push_back(t);
+		if(cfg.merge_intersection == false) vt.push_back(t);
 	}
 
 	// process each individual graph
@@ -410,7 +409,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 		gr.build_vertex_index();
 
 		refine_splice_graph(gr);
-		//keep_surviving_edges(gr, rs, min_splicing_count);
+		//keep_surviving_edges(gr, rs, cfg.min_splicing_count);
 
 		gr.gid = gv[i]->gid;
 
@@ -440,7 +439,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 			bool b = query_transcript(mt, t);
 			if(b == false) index_transcript(mt, t);
 			if(b == true) z2++;
-			if(b || merge_intersection == false) vt.push_back(t);
+			if(b || cfg.merge_intersection == false) vt.push_back(t);
 		}
 	}
 

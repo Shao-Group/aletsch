@@ -4,8 +4,7 @@ Part of Scallop Transcript Assembler
 See LICENSE for licensing.
 */
 
-#include "config.h"
-#include "constants.h"
+#include "parameters.h"
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -15,8 +14,19 @@ See LICENSE for licensing.
 
 using namespace std;
 
-config::config()
+parameters::parameters()
 {
+	// meta
+	min_supporting_samples = 2;			// 2
+	min_splicing_count = 5;
+	min_phasing_count = 1;
+	max_group_boundary_distance = 10000;
+	max_group_junction_distance = 100;
+	merge_intersection = true;
+	max_threads = 10;
+	max_combined = 100;
+	merge_threshold = 0.5;
+
 	// for bam file and reads
 	min_flank_length = 3;
 	max_num_cigar = 1000;
@@ -26,7 +36,6 @@ config::config()
 	min_mapping_quality = 1;
 	use_second_alignment = false;
 	uniquely_mapped_only = false;
-	library_type = EMPTY;
 	min_splice_boundary_hits = 1;
 	
 	// for clustering
@@ -86,51 +95,33 @@ config::config()
 	output_tex_files = false;
 	fixed_gene_name = "";
 	batch_bundle_size = 100;
-	version = "v0.10.4";
+
+	version = "0.1.1";
 	verbose = 1;
+
+	input_bam_list = "";
+	output_gtf_file = "";
 }
 
-int config::parse_arguments(int argc, const char ** argv)
+int parameters::parse_arguments(int argc, const char ** argv)
 {
 	for(int i = 1; i < argc; i++)
 	{
-		// necessary ones
-		/*
 		if(string(argv[i]) == "-i")
 		{
-			input_file = string(argv[i + 1]);
+			input_bam_list = string(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "-o")
 		{
-			output_file = string(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "-g")
-		{
-			graph_file = string(argv[i + 1]);
-			i++;
-		}
-
-		// internal use
-		else if(string(argv[i]) == "-a")
-		{
-			algo = string(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "-g")
-		{
-			fixed_gene_name = string(argv[i + 1]);
+			output_gtf_file = string(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "-t")
 		{
-			output_tex_files = true;
+			max_threads = atoi(argv[i + 1]);
+			i++;
 		}
-		*/
-
-		/*
-		// user specified
 		else if(string(argv[i]) == "--version")
 		{
 			printf("%s\n", version.c_str());
@@ -144,7 +135,42 @@ int config::parse_arguments(int argc, const char ** argv)
 			print_logo();
 			exit(0);
 		}
-		*/
+		else if(string(argv[i]) == "--merge_threshold")
+		{
+			merge_threshold = atof(argv[i + 1]);
+			i++;
+		}
+
+		else if(string(argv[i]) == "--merge_intersection")
+		{
+			merge_intersection = true;
+		}
+		else if(string(argv[i]) == "--verbose")
+		{
+			verbose = atoi(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "--max_threads")
+		{
+			max_threads = atoi(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "--min_supporting_samples")
+		{
+			min_supporting_samples = atoi(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "--min_splicing_count")
+		{
+			min_splicing_count = atoi(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "--min_phasing_count")
+		{
+			min_phasing_count = atoi(argv[i + 1]);
+			i++;
+		}
+
 		if(string(argv[i]) == "--min_flank_length")
 		{
 			min_flank_length = atoi(argv[i + 1]);
@@ -315,15 +341,6 @@ int config::parse_arguments(int argc, const char ** argv)
 			max_decompose_error_ratio[6] = atof(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "--library_type")
-		{
-			string s(argv[i + 1]);
-			if(s == "empty") library_type = EMPTY;
-			if(s == "unstranded") library_type = UNSTRANDED;
-			if(s == "first") library_type = FR_FIRST;
-			if(s == "second") library_type = FR_SECOND;
-			i++;
-		}
 		else if(string(argv[i]) == "--use_second_alignment")
 		{
 			string s(argv[i + 1]);
@@ -358,7 +375,7 @@ int config::parse_arguments(int argc, const char ** argv)
 	return 0;
 }
 
-int config::print_command_line(int argc, const char ** argv)
+int parameters::print_command_line(int argc, const char ** argv)
 {
 	printf("command line: ");
 	for(int i = 0; i < argc; i++)
@@ -369,7 +386,7 @@ int config::print_command_line(int argc, const char ** argv)
 	return 0;
 }
 
-int config::print_logo()
+int parameters::print_logo()
 {
 	printf("      ___           ___           ___                                       ___           ___    \n");
 	printf("     /  /\\         /  /\\         /  /\\                                     /  /\\         /  /\\   \n");
@@ -387,32 +404,35 @@ int config::print_logo()
 	return 0;
 }
 
-int config::print_help()
+int parameters::print_help()
 {
 	printf("\n");
-	printf("Usage: scallop -i <bam-file> -o <gtf-file> [options]\n");
+	printf("Usage: meta-scallop -i <input-bam-list> -o <output.gtf> [options]\n");
 	printf("\n");
 	printf("Options:\n");
-	printf(" %-42s  %s\n", "--help",  "print usage of Scallop and exit");
-	printf(" %-42s  %s\n", "--version",  "print current version of Scallop and exit");
-	printf(" %-42s  %s\n", "--verbose <0, 1, 2>",  "0: quiet; 1: one line for each graph; 2: with details, default: 1");
-	printf(" %-42s  %s\n", "--library_type <first, second, unstranded>",  "library type of the sample, default: unstranded");
+	printf(" %-42s  %s\n", "--help",  "print usage of meta-scallop and exit");
+	printf(" %-42s  %s\n", "--version",  "print current version of meta-scallop and exit");
+	printf(" %-42s  %s\n", "-t/--max_threads <integer>",  "number of threads, default 10");
+	printf(" %-42s  %s\n", "--max_combined <integer>",  "the maximized number of splice graphs that will be combined, default: 100");
+	printf(" %-42s  %s\n", "--merge_threshold <float>",  "the minimized similarity for two graphs to be combined, default: 0.5");
+	printf(" %-42s  %s\n", "--min_supporting_samples <integer>",  "the minimized number of samples needed to support a splicing site, default: 2");
+	printf(" %-42s  %s\n", "--min_splicing_count <integer>",  "the minimized coverage needed to support a splicing site, default: 5");
+	printf(" %-42s  %s\n", "--min_splice_bundary_hits <integer>",  "the minimum number of spliced reads required to support a junction, default: 1");
 	printf(" %-42s  %s\n", "--min_transcript_coverage <float>",  "minimum coverage required for a multi-exon transcript, default: 1.01");
 	printf(" %-42s  %s\n", "--min_single_exon_coverage <float>",  "minimum coverage required for a single-exon transcript, default: 20");
 	printf(" %-42s  %s\n", "--min_transcript_length_increase <integer>",  "default: 50");
 	printf(" %-42s  %s\n", "--min_transcript_length_base <integer>",  "default: 150, minimum length of a transcript would be");
 	printf(" %-42s  %s\n", "",  "--min_transcript_length_base + --min_transcript_length_increase * num-of-exons");
 	printf(" %-42s  %s\n", "--min_mapping_quality <integer>",  "ignore reads with mapping quality less than this value, default: 1");
-	printf(" %-42s  %s\n", "--max_num_cigar <integer>",  "ignore reads with CIGAR size larger than this value, default: 7");
+	printf(" %-42s  %s\n", "--max_num_cigar <integer>",  "ignore reads with CIGAR size larger than this value, default: 1000");
 	printf(" %-42s  %s\n", "--min_bundle_gap <integer>",  "minimum distances required to start a new bundle, default: 50");
 	printf(" %-42s  %s\n", "--min_num_hits_in_bundle <integer>",  "minimum number of reads required in a bundle, default: 20");
 	printf(" %-42s  %s\n", "--min_flank_length <integer>",  "minimum match length in each side for a spliced read, default: 3");
-	printf(" %-42s  %s\n", "--min_splice_bundary_hits <integer>",  "minimum number of spliced reads required for a junction, default: 1");
 	return 0;
 }
 
-int config::print_copyright()
+int parameters::print_copyright()
 {
-	printf("Scallop %s (c) 2017 Mingfu Shao, Carl Kingsford, and Carnegie Mellon University\n", version.c_str());
+	printf("meta-scallop %s (c) 2020 Mingfu Shao, The Pennsylvania State University\n", version.c_str());
 	return 0;
 }

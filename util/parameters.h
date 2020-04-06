@@ -4,8 +4,8 @@ Part of Scallop Transcript Assembler
 See LICENSE for licensing.
 */
 
-#ifndef __CONFIG_H__
-#define __CONFIG_H__
+#ifndef __PARAMETERS_H__
+#define __PARAMETERS_H__
 
 #include "util.h"
 #include <stdint.h>
@@ -14,12 +14,23 @@ See LICENSE for licensing.
 
 using namespace std;
 
-class config
+class parameters
 {
 public:
-	config();
+	parameters();
 
 public:
+	// meta
+	int min_supporting_samples;
+	int min_splicing_count;
+	int min_phasing_count;
+	int32_t max_group_boundary_distance;
+	double max_group_junction_distance;
+	bool merge_intersection;
+	int max_threads;
+	int max_combined;
+	double merge_threshold;
+
 	// for bam file and reads
 	int min_flank_length;
 	int max_num_cigar;
@@ -37,7 +48,6 @@ public:
 	int max_preview_spliced_reads;
 	int min_preview_spliced_reads;
 	double preview_infer_ratio;
-	bool merge_intersection;
 
 	// for identifying subgraphs
 	int32_t min_subregion_gap;
@@ -80,11 +90,12 @@ public:
 	bool output_tex_files;
 	string fixed_gene_name;
 	int max_num_bundles;
-	int library_type;
 	int min_gtf_transcripts_num;
 	int batch_bundle_size;
 	int verbose;
 	string version;
+	string input_bam_list;
+	string output_gtf_file;
 
 public:
 	int print_command_line(int argc, const char ** argv);

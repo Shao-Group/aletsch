@@ -15,7 +15,8 @@ See LICENSE for licensing.
 #include "graph_builder.h"
 #include "essential.h"
 
-previewer::previewer(const string &file)
+previewer::previewer(const string &file, parameters &c, sample_profile &s)
+	: cfg(c), sp(s)
 {
 	input_file = file;
 	max_preview_reads = 2000000;
@@ -44,7 +45,7 @@ int previewer::close_file()
 	return 0;
 }
 
-int previewer::infer_library_type(config &cfg, sample_profile &sx)
+int previewer::infer_library_type()
 {
 	open_file();
 
@@ -54,13 +55,13 @@ int previewer::infer_library_type(config &cfg, sample_profile &sx)
 
 	int first = 0;
 	int second = 0;
-	vector<int> sp1;
-	vector<int> sp2;
+	vector<int> spn1;
+	vector<int> spn2;
 
     while(sam_read1(sfn, hdr, b1t) >= 0)
 	{
 		if(total >= max_preview_reads) break;
-		if(sp1.size() >= max_preview_spliced_reads && sp2.size() >= max_preview_spliced_reads) break;
+		if(spn1.size() >= max_preview_spliced_reads && spn2.size() >= max_preview_spliced_reads) break;
 
 		bam1_core_t &p = b1t->core;
 
@@ -80,8 +81,8 @@ int previewer::infer_library_type(config &cfg, sample_profile &sx)
 		if((ht.flag & 0x1) <= 0) single ++;
 
 		if(ht.xs == '.') continue;
-		if(ht.xs == '+' && sp1.size() >= max_preview_spliced_reads) continue;
-		if(ht.xs == '-' && sp2.size() >= max_preview_spliced_reads) continue;
+		if(ht.xs == '+' && spn1.size() >= max_preview_spliced_reads) continue;
+		if(ht.xs == '-' && spn2.size() >= max_preview_spliced_reads) continue;
 
 		// predicted strand
 		char xs = '.';
@@ -96,20 +97,20 @@ int previewer::infer_library_type(config &cfg, sample_profile &sx)
 		if((ht.flag & 0x1) <= 0 && (ht.flag & 0x10) <= 0) xs = '-';
 		if((ht.flag & 0x1) <= 0 && (ht.flag & 0x10) >= 1) xs = '+';
 
-		if(xs == '+' && xs == ht.xs) sp1.push_back(1);
-		if(xs == '-' && xs == ht.xs) sp2.push_back(1);
-		if(xs == '+' && xs != ht.xs) sp1.push_back(2);
-		if(xs == '-' && xs != ht.xs) sp2.push_back(2);
+		if(xs == '+' && xs == ht.xs) spn1.push_back(1);
+		if(xs == '-' && xs == ht.xs) spn2.push_back(1);
+		if(xs == '+' && xs != ht.xs) spn1.push_back(2);
+		if(xs == '-' && xs != ht.xs) spn2.push_back(2);
 	}
 
-	int sp = sp1.size() < sp2.size() ? sp1.size() : sp2.size();
+	int spn = spn1.size() < spn2.size() ? spn1.size() : spn2.size();
 
-	for(int k = 0; k < sp; k++)
+	for(int k = 0; k < spn; k++)
 	{
-		if(sp1[k] == 1) first++;
-		if(sp2[k] == 1) first++;
-		if(sp1[k] == 2) second++;
-		if(sp2[k] == 2) second++;
+		if(spn1[k] == 1) first++;
+		if(spn2[k] == 1) first++;
+		if(spn1[k] == 2) second++;
+		if(spn2[k] == 2) second++;
 	}
 
 	vector<string> vv;
@@ -119,18 +120,18 @@ int previewer::infer_library_type(config &cfg, sample_profile &sx)
 	vv.push_back("second");
 
 	int s1 = UNSTRANDED;
-	if(sp >= min_preview_spliced_reads && first > preview_infer_ratio * 2.0 * sp) s1 = FR_FIRST;
-	if(sp >= min_preview_spliced_reads && second > preview_infer_ratio * 2.0 * sp) s1 = FR_SECOND;
+	if(spn >= min_preview_spliced_reads && first > preview_infer_ratio * 2.0 * spn) s1 = FR_FIRST;
+	if(spn >= min_preview_spliced_reads && second > preview_infer_ratio * 2.0 * spn) s1 = FR_SECOND;
 
 	printf("infer-library-type (%s): reads = %d, single = %d, paired = %d, spliced = %d, first = %d, second = %d, inferred = %s\n",
-			input_file.c_str(), total, single, paired, sp, first, second, vv[s1 + 1].c_str());
+			input_file.c_str(), total, single, paired, spn, first, second, vv[s1 + 1].c_str());
 
-	sx.library_type = s1;
+	sp.library_type = s1;
 	close_file();
 	return 0;
 }
 
-int previewer::infer_insertsize(config &cfg, sample_profile &sp)
+int previewer::infer_insertsize()
 {
 	//printf("preview insertsize for file %s\n", input_file.c_str());
 	open_file();
@@ -155,18 +156,18 @@ int previewer::infer_insertsize(config &cfg, sample_profile &sp)
 		hit ht(b1t);
 		ht.set_splices(b1t);
 		ht.set_tags(b1t);
-		ht.set_strand(cfg.library_type);
+		ht.set_strand(sp.library_type);
 
 		// truncate
 		if(ht.tid != bb1.tid || ht.pos > bb1.rpos + cfg.min_bundle_gap)
 		{
-			cnt += process(bb1, cfg, m);
+			cnt += process(bb1, m);
 			bb1.clear();
 			bb1.strand = '+';
 		}
 		if(ht.tid != bb2.tid || ht.pos > bb2.rpos + cfg.min_bundle_gap)
 		{
-			cnt += process(bb2, cfg, m);
+			cnt += process(bb2, m);
 			bb2.clear();
 			bb2.strand = '-';
 		}
@@ -175,15 +176,15 @@ int previewer::infer_insertsize(config &cfg, sample_profile &sp)
 
 		// add hit
 		if(cfg.uniquely_mapped_only == true && ht.nh != 1) continue;
-		if(cfg.library_type != UNSTRANDED && ht.strand == '+' && ht.xs == '-') continue;
-		if(cfg.library_type != UNSTRANDED && ht.strand == '-' && ht.xs == '+') continue;
-		if(cfg.library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
-		if(cfg.library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit_intervals(ht, b1t);
-		if(cfg.library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit_intervals(ht, b1t);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bb1.add_hit_intervals(ht, b1t);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit_intervals(ht, b1t);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit_intervals(ht, b1t);
-		if(cfg.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit_intervals(ht, b1t);
+		if(sp.library_type != UNSTRANDED && ht.strand == '+' && ht.xs == '-') continue;
+		if(sp.library_type != UNSTRANDED && ht.strand == '-' && ht.xs == '+') continue;
+		if(sp.library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
+		if(sp.library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit_intervals(ht, b1t);
+		if(sp.library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb1.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit_intervals(ht, b1t);
 	}
 
 	int total = 0;
@@ -229,7 +230,7 @@ int previewer::infer_insertsize(config &cfg, sample_profile &sp)
 	return 0;
 }
 
-int previewer::process(bundle &bd, config &cfg, map<int32_t, int> &m)
+int previewer::process(bundle &bd, map<int32_t, int> &m)
 {
 	if(bd.hits.size() < cfg.min_num_hits_in_bundle) return 0;
 	if(bd.hits.size() > 20000) return 0;

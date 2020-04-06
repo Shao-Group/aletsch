@@ -8,15 +8,15 @@ See LICENSE for licensing.
 #define __FILTER_H__
 
 #include "gene.h"
-#include "config.h"
+#include "parameters.h"
 
 class filter
 {
 public:
-	filter(const vector<transcript> &v, config *c);
+	filter(const vector<transcript> &v, parameters *c);
 
 public:
-	config *cfg;
+	parameters *cfg;
 	vector<transcript> trs;
 
 public:

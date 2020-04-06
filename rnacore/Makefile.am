@@ -1,11 +1,10 @@
 noinst_LIBRARIES = librnacore.a
 
-GTF_INCLUDE = $(top_srcdir)/lib/gtf
-UTIL_INCLUDE = $(top_srcdir)/lib/util
-GRAPH_INCLUDE = $(top_srcdir)/lib/graph
+UTIL_INCLUDE = $(top_srcdir)/util
+GRAPH_INCLUDE = $(top_srcdir)/graph
+GTF_INCLUDE = $(top_srcdir)/gtf
 
-#rnacore_CPPFLAGS = -std=c++11 -I$(GTF_INCLUDE) -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE)
-librnacore_a_CPPFLAGS = -I$(GTF_INCLUDE) -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE)
+librnacore_a_CPPFLAGS = -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE) -I$(GTF_INCLUDE)
 
 librnacore_a_SOURCES = splice_graph.h splice_graph.cc \
 					   vertex_info.h vertex_info.cc \
@@ -20,5 +19,4 @@ librnacore_a_SOURCES = splice_graph.h splice_graph.cc \
 					   phase_set.h phase_set.cc \
 					   bundle.h bundle.cc \
 					   graph_builder.h graph_builder.cc \
-					   graph_cluster.h graph_cluster.cc \
-					   constants.h constants.cc
+					   graph_cluster.h graph_cluster.cc

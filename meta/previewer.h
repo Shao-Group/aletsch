@@ -7,7 +7,7 @@ See LICENSE for licensing.
 #ifndef __PREVIEWER_H__
 #define __PREVIEWER_H__
 
-#include "scallop/config.h"
+#include "parameters.h"
 #include "hit.h"
 #include "bundle.h"
 #include "sample_profile.h"
@@ -21,11 +21,13 @@ using namespace std;
 class previewer
 {
 public:
-	previewer(const string &file);
+	previewer(const string &file, parameters &cfg, sample_profile &sp);
 	~previewer();
 
 private:
 	string input_file;
+	parameters &cfg;
+	sample_profile &sp;
 	samFile *sfn;
 	bam_hdr_t *hdr;
 	bam1_t *b1t;
@@ -38,9 +40,9 @@ private:
 public:
 	int open_file();
 	int close_file();
-	int infer_library_type(config &cfg, sample_profile &sp);
-	int infer_insertsize(config &cfg, sample_profile &sp);
-	int process(bundle &bb, config &cfg, map<int32_t, int> &m);
+	int infer_library_type();
+	int infer_insertsize();
+	int process(bundle &bb, map<int32_t, int> &m);
 };
 
 #endif

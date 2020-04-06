@@ -14,7 +14,7 @@ See LICENSE for licensing.
 #include <cfloat>
 #include <algorithm>
 
-scallop::scallop(const splice_graph &g, const hyper_set &h1, config *c)
+scallop::scallop(const splice_graph &g, const hyper_set &h1, parameters *c)
 	: gr(g), hs(h1), cfg(c)
 {
 	round = 0;
@@ -29,7 +29,7 @@ scallop::scallop(const splice_graph &g, const hyper_set &h1, config *c)
 	init_nonzeroset();
 }
 
-scallop::scallop(const splice_graph &g, const hyper_set &h1, const hyper_set &h2, config *c)
+scallop::scallop(const splice_graph &g, const hyper_set &h1, const hyper_set &h2, parameters *c)
 	: gr(g), hs(h1), hx(h2), cfg(c)
 {
 	round = 0;

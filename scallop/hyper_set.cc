@@ -7,7 +7,7 @@ See LICENSE for licensing.
 #include "essential.h"
 #include "constants.h"
 #include "hyper_set.h"
-#include "config.h"
+#include "parameters.h"
 #include <algorithm>
 #include <cstdio>
 

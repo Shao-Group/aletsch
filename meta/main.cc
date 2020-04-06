@@ -13,31 +13,28 @@ See LICENSE for licensing.
 #include <cassert>
 #include <sstream>
 
-#include "scallop/config.h"
-#include "meta_config.h"
+#include "parameters.h"
 #include "incubator.h"
 
 using namespace std;
 
 int main(int argc, const char **argv)
 {
-	srand(time(0));
+	srand(time(0));	// TODO
+	parameters cfg;
 
 	if(argc == 1)
 	{
-		print_meta_copyright();
-		print_meta_help();
+		cfg.print_copyright();
+		cfg.print_help();
 		printf("\n");
-		print_meta_logo();
+		cfg.print_logo();
 		return 0;
 	}
 
-
-	config cfg;
 	cfg.parse_arguments(argc, argv);
-	parse_meta_arguments(argc, argv);
-
 	cfg.print_command_line(argc, argv);
+
 	incubator icbt(cfg);
 	icbt.resolve();
 

@@ -12,7 +12,7 @@ See LICENSE for licensing.
 #include "equation.h"
 #include "router.h"
 #include "path.h"
-#include "config.h"
+#include "parameters.h"
 
 typedef map<edge_descriptor, double> MED;
 typedef map<edge_descriptor, int> MEI;
@@ -30,8 +30,8 @@ typedef map<int, int> MI;
 class scallop
 {
 public:
-	scallop(const splice_graph &gr, const hyper_set &hs, config *c);
-	scallop(const splice_graph &gr, const hyper_set &hs, const hyper_set &hx, config *c);
+	scallop(const splice_graph &gr, const hyper_set &hs, parameters *c);
+	scallop(const splice_graph &gr, const hyper_set &hs, const hyper_set &hx, parameters *c);
 	virtual ~scallop();
 
 public:
@@ -39,7 +39,7 @@ public:
 	int preassemble();
 
 public:
-	config *cfg;						// config
+	parameters *cfg;						// parameters
 	splice_graph gr;					// splice graph
 	MEI e2i;							// edge map, from edge to index
 	VE i2e;								// edge map, from index to edge

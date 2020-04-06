@@ -8,7 +8,7 @@ See LICENSE for licensing.
 #include <cassert>
 #include <algorithm>
 
-cluster::cluster(const vector<transcript> &v, config *c)
+cluster::cluster(const vector<transcript> &v, parameters *c)
 	:trs(v), cfg(c)
 {
 }

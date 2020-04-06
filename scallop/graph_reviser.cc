@@ -7,10 +7,10 @@
 
 #include "graph_reviser.h"
 #include "undirected_graph.h"
-#include "config.h"
+#include "parameters.h"
 #include "essential.h"
 
-int revise_splice_graph_full(splice_graph &gr, config *cfg)
+int revise_splice_graph_full(splice_graph &gr, parameters *cfg)
 {
 	refine_splice_graph(gr);
 
@@ -50,7 +50,7 @@ int revise_splice_graph_full(splice_graph &gr, config *cfg)
 	return 0;
 }
 
-int revise_splice_graph(splice_graph &gr, config *cfg)
+int revise_splice_graph(splice_graph &gr, parameters *cfg)
 {
 	refine_splice_graph(gr);
 

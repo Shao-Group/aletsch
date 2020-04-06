@@ -1,3 +1,3 @@
 AUTOMAKE_OPTIONS = foreign
 EXTRA_DIST = LICENSE
-SUBDIRS = lib rnacore scallop bridge meta
+SUBDIRS = rnacore scallop bridge meta graph gtf util

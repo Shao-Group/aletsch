@@ -1,6 +1,7 @@
 #ifndef __COMBINED_GROUP_H__
 #define __COMBINED_GROUP_H__
 
+#include "parameters.h"
 #include "combined_graph.h"
 #include "constants.h"
 #include <mutex>
@@ -8,9 +9,10 @@
 class combined_group
 {
 public:
-	combined_group(string c, char s);
+	combined_group(string c, char s, const parameters &cfg);
 
 public:
+	const parameters &cfg;
 	vector<combined_graph> gset;		// given graphs
 	vector< vector<int> > gvv;		// merged graphs
 	string chrm;
