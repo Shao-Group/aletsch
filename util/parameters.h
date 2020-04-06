@@ -62,9 +62,8 @@ public:
 	double min_subregion_overlap;
 	int32_t min_subregion_length;
 
-	// for subsetsum and router
-
-	// for revising splice graph
+	// for revising splice graph and phasing paths
+	int min_confident_phasing_path_weight;
 	int32_t max_group_boundary_distance;
 	double max_intron_contamination_coverage;
 	double min_surviving_edge_weight;

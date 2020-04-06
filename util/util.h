@@ -17,6 +17,8 @@ See LICENSE for licensing.
 #include <cmath>
 #include <cstdlib>
 
+#include "constants.h"
+
 using namespace std;
 
 // macros: using int64_t for two int32_t
@@ -170,7 +172,7 @@ vector<K> get_keys(const map<K, V> &m)
 }
 
 template<typename T>
-bool check_increasing(const vector<T> &x)
+bool check_increasing_sequence(const vector<T> &x)
 {
 	if(x.size() <= 1) return true;
 	for(int k = 0; k < x.size() - 1; k++)
@@ -180,6 +182,155 @@ bool check_increasing(const vector<T> &x)
 	return true;
 }
 
+bool check_identical(const vector<int> &x, int x1, int x2, const vector<int> &y, int y1, int y2);
+
+// compare phasing paths / intron chains
+template<typename T>
+int compare_two_sorted_sequences(const vector<T> &ref, const vector<T> &qry)
+{
+	assert(ref.size() >= 1);
+	assert(qry.size() >= 1);
+	if(ref.back() < qry.front()) return FALL_RIGHT;
+	if(ref.front() > qry.back()) return FALL_LEFT;
+
+	typedef typename vector<T>::const_iterator VCI;
+	VCI r1 = lower_bound(ref.begin(), ref.end(), qry.front());
+	VCI q1 = lower_bound(qry.begin(), qry.end(), ref.front());
+	assert(r1 != ref.end());
+	assert(q1 != qry.end());
+
+	int kr1 = r1 - ref.begin();
+	int kq1 = q1 - qry.begin();
+	assert(kr1 == 0 || kq1 == 0);
+
+	VCI q2 = lower_bound(qry.begin(), qry.end(), ref.back());
+	VCI r2 = lower_bound(ref.begin(), ref.end(), qry.back());
+	assert(r2 != ref.end() || q2 != qry.end());
+
+	int kr2 = r2 - ref.begin();
+	int kq2 = q2 - qry.begin();
+
+	if(*q1 == ref.front() || *r1 == qry.front())
+	{
+		if(r2 != ref.end() && q2 != qry.end())
+		{
+			assert(ref.back() == qry.back());
+			assert(kr2 == ref.size() - 1);
+			assert(kq2 == qry.size() - 1);
+			bool b = check_identical(ref, kr1, kr2, qry, kq1, kq2);
+			if(b == false) return CONFLICTING;
+			if(b == true && kr1 == 0 && kq1 == 0) return IDENTICAL;
+			if(b == true && kr1 >= 1 && kq1 == 0) return CONTAINED;
+			if(b == true && kr1 == 0 && kq1 >= 1) return CONTAINING;
+			assert(false);
+		}
+		else if(r2 != ref.end() && q2 == qry.end())
+		{
+			bool b = check_identical(ref, kr1, kr2, qry, kq1, qry.size() - 1);
+			if(b == false) return CONFLICTING;
+			if(b == true && kq1 == 0) return CONTAINED;
+			if(b == true && kq1 >= 1) return EXTEND_LEFT;
+			assert(false);
+		}
+		else if(r2 == ref.end() && q2 != qry.end())
+		{
+			bool b = check_identical(ref, kr1, ref.size() - 1, qry, kq1, kq2);
+			if(b == false) return CONFLICTING;
+			if(b == true && kr1 == 0) return CONTAINING;
+			if(b == true && kr1 >= 1) return EXTEND_RIGHT;
+		}
+	}
+	else if(*r1 > qry.front() && r2 == r1 && *r2 > qry.back()) return NESTED;
+	else if(*q1 > ref.front() && q2 == q1 && *q2 > ref.back()) return NESTING;
+	return CONFLICTING;
+}
+
+template<typename T>
+bool merge_two_sorted_sequences(const vector<T> &ref, const vector<T> &qry, vector<T> &merged)
+{
+	merged.clear();
+	if(ref.size() == 0) merged = qry;
+	if(ref.size() == 0) return true;
+	if(qry.size() == 0) merged = ref;
+	if(qry.size() == 0) return true;
+
+	typedef typename vector<T>::const_iterator VCI;
+
+	merged.clear();
+	int t = compare_two_sorted_sequences<int32_t>(ref, qry);
+
+	if(t == CONFLICTING) return false;
+	if(t == NESTED) return false;
+	if(t == NESTING) return false;
+
+	if(t == IDENTICAL) merged = ref;
+	if(t == CONTAINED) merged = ref;
+	if(t == CONTAINING) merged = qry;
+
+	if(t == FALL_RIGHT) 
+	{
+		assert(ref.back() < qry.front());
+		merged = ref;
+		merged.insert(merged.end(), qry.begin(), qry.end());
+	}
+	if(t == FALL_LEFT) 
+	{
+		assert(qry.back() < ref.front());
+		merged = qry;
+		merged.insert(merged.end(), ref.begin(), ref.end());
+	}
+	if(t == EXTEND_LEFT)
+	{
+		VCI q1 = lower_bound(qry.begin(), qry.end(), ref.front());
+		assert(*q1 == ref.front());
+		merged.insert(merged.end(), qry.begin(), q1);
+		merged.insert(merged.end(), ref.begin(), ref.end());
+	}
+	if(t == EXTEND_RIGHT)
+	{
+		VCI q2 = lower_bound(qry.begin(), qry.end(), ref.back());
+		assert(*q2 == ref.back());
+		merged.insert(merged.end(), ref.begin(), ref.end());
+		merged.insert(merged.end(), q2 + 1, qry.end());
+	}
+	return true;
+}
+
+template<typename T>
+bool overlap_two_sorted_sequences(const vector<T> &ref, const vector<T> &qry, vector<T> &overlap)
+{
+	overlap.clear();
+	if(ref.size() == 0 || qry.size() == 0) return true;
+
+	typedef typename vector<T>::const_iterator VCI;
+
+	overlap.clear();
+	int t = compare_two_sorted_sequences<int32_t>(ref, qry);
+
+	if(t == CONFLICTING) return false;
+	if(t == NESTED) return false;
+	if(t == NESTING) return false;
+	if(t == FALL_RIGHT) return false;
+	if(t == FALL_LEFT) return false;
+
+	if(t == IDENTICAL) overlap = ref;
+	if(t == CONTAINED) overlap = qry;
+	if(t == CONTAINING) overlap = ref;
+
+	if(t == EXTEND_LEFT)
+	{
+		VCI q1 = lower_bound(qry.begin(), qry.end(), ref.front());
+		assert(*q1 == ref.front());
+		overlap.insert(overlap.end(), q1, qry.end());
+	}
+	if(t == EXTEND_RIGHT)
+	{
+		VCI q2 = lower_bound(qry.begin(), qry.end(), ref.back());
+		assert(*q2 == ref.back());
+		overlap.insert(overlap.end(), qry.begin(), q2 + 1);
+	}
+	return true;
+}
 
 vector<int> get_random_permutation(int n);
 size_t string_hash(const std::string& str);

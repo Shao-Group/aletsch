@@ -39,9 +39,7 @@ public:
 
 public:
 	int clear();
-	int add_node_list(const set<int> &s);
-	int add_node_list(const set<int> &s, int c);
-	int add_node_list(const vector<int> &s, int c);
+	int add_node_list(const vector<int> &s, int c, int o = 1);
 	int build(directed_graph &gr, MEI &e2i);
 	int build_edges(directed_graph &gr, MEI &e2i);
 	int build_index();
@@ -60,6 +58,8 @@ public:
 	int merge(const hyper_set &hx);
 	int merge_node_list(const vector<int> &s, int c);
 	int extend(const hyper_set &hx);
+
+	int build_confident_nodes(int min_count);
 
 public:
 	int replace(int x, int e);

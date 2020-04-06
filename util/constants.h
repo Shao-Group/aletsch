@@ -9,7 +9,6 @@ See LICENSE for licensing.
 #ifndef __CONSTANTS_H__
 #define __CONSTANTS_H__
 
-#include "util.h"
 #include <stdint.h>
 #include <map>
 #include <set>

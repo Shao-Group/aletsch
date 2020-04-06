@@ -196,8 +196,8 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 	int be = -1;
 	for(int e = 0; e < chains.size(); e++)
 	{
-		assert(check_increasing<int32_t>(wholes[e]));
-		assert(check_increasing<int32_t>(chains[e]));
+		assert(check_increasing_sequence<int32_t>(wholes[e]));
+		assert(check_increasing_sequence<int32_t>(chains[e]));
 		if(wholes[e].size() >= 1) assert(wholes[e].front() > pc.bounds[0]);
 		if(wholes[e].size() >= 1) assert(wholes[e].back() < pc.bounds[3]);
 		if(pc.chain1.size() > 0 && chains[e].size() > 0) assert(pc.chain1.back() < chains[e].front());
@@ -252,7 +252,7 @@ int add_phases_from_bridged_pereads_cluster(const pereads_cluster &pc, const bri
 	v.push_back(p0);
 	v.insert(v.end(), bbp.whole.begin(), bbp.whole.end());
 	v.push_back(p3);
-	assert(check_increasing<int32_t>(v));
+	assert(check_increasing_sequence<int32_t>(v));
 	ps.add(v, pc.count);
 	return 0;
 }
@@ -269,14 +269,14 @@ int add_phases_from_unbridged_pereads_cluster(const pereads_cluster &pc, phase_s
 	v1.push_back(p0);
 	v1.insert(v1.end(), pc.chain1.begin(), pc.chain1.end());
 	v1.push_back(p1);
-	assert(check_increasing<int32_t>(v1));
+	assert(check_increasing_sequence<int32_t>(v1));
 	ps.add(v1, pc.count);
 
 	vector<int32_t> v2;
 	v2.push_back(p2);
 	v2.insert(v2.end(), pc.chain2.begin(), pc.chain2.end());
 	v2.push_back(p3);
-	assert(check_increasing<int32_t>(v2));
+	assert(check_increasing_sequence<int32_t>(v2));
 	ps.add(v2, pc.count);
 	return 0;
 }

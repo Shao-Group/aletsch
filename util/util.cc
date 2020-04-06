@@ -85,4 +85,21 @@ vector<int> project_vector(const vector<int> &v, const map<int, int> &a2b)
 	return vv;
 }
 
+bool check_identical(const vector<int> &x, int x1, int x2, const vector<int> &y, int y1, int y2)
+{
+	assert(x1 >= 0 && x1 < x.size());
+	assert(x2 >= 0 && x2 < x.size());
+	assert(y1 >= 0 && y1 < y.size());
+	assert(y2 >= 0 && y2 < y.size());
 
+	if(x[x1] != y[y1]) return false;
+	if(x[x2] != y[y2]) return false;
+	if(x2 - x1 != y2 - y1) return false;
+
+	for(int kx = x1, ky = y1; kx <= x2 && ky <= y2; kx++, ky++)
+	{
+		if(x[kx] != y[ky]) return false;
+	}
+
+	return true;
+}

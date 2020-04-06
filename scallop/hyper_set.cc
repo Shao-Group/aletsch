@@ -37,24 +37,80 @@ int hyper_set::clear()
 	return 0;
 }
 
-int hyper_set::add_node_list(const set<int> &s)
-{
-	return add_node_list(s, 1);
-}
-
-int hyper_set::add_node_list(const set<int> &s, int c)
-{
-	vector<int> v(s.begin(), s.end());
-	return add_node_list(v, c);
-}
-
-int hyper_set::add_node_list(const vector<int> &s, int c)
+int hyper_set::add_node_list(const vector<int> &s, int c, int o)
 {
 	vector<int> v = s;
 	sort(v.begin(), v.end());
-	for(int i = 0; i < v.size(); i++) v[i]++;
+	for(int i = 0; i < v.size(); i++) v[i] += o;
 	if(nodes.find(v) == nodes.end()) nodes.insert(PVII(v, c));
 	else nodes[v] += c;
+	return 0;
+}
+
+int hyper_set::build_confident_nodes(int min_count)
+{
+	vector< vector<int> > vv1;
+	vector< vector<int> > vv2;
+	vector<int> cc1;
+	vector<int> cc2;
+	for(MVII::iterator it = nodes.begin(); it != nodes.end(); it++)
+	{
+		int c = it->second;
+		if(c >= min_count) 
+		{
+			vv1.push_back(it->first);
+			cc1.push_back(it->second);
+		}
+		else
+		{
+			vv2.push_back(it->first);
+			cc2.push_back(it->second);
+		}
+	}
+
+	map< vector<int>, set<int> > mvs;
+	for(int i = 0; i < vv2.size(); i++)
+	{
+		for(int j = i + 1; j < vv2.size(); j++)
+		{
+			vector<int> v;
+			bool b = overlap_two_sorted_sequences(vv2[i], vv2[j], v);
+			if(b == false) continue;
+			if(mvs.find(v) == mvs.end())
+			{
+				set<int> s;
+				s.insert(i);
+				s.insert(j);
+				mvs.insert(pair<vector<int>, set<int> >(v, s));
+			}
+			else
+			{
+				mvs[v].insert(i);
+				mvs[v].insert(j);
+			}
+		}
+	}
+
+	for(map< vector<int>, set<int> >::iterator it = mvs.begin(); it != mvs.end(); it++)
+	{
+		const vector<int> &v = it->first;
+		set<int> &s = it->second;
+		int c = 0;
+		for(set<int>::iterator si = s.begin(); si != s.end(); si++)
+		{
+			c += cc2[*si];
+		}
+		if(c < min_count) continue;
+
+		vv1.push_back(v);
+		cc1.push_back(c);
+	}
+
+	nodes.clear();
+	for(int i = 0; i < vv1.size(); i++)
+	{
+		add_node_list(vv1[i], cc1[i], 0);	
+	}
 	return 0;
 }
 
@@ -65,7 +121,7 @@ int hyper_set::merge_node_list(const vector<int> &s, int c)
 	bool useful = false;
 	for(MVII::iterator it = nodes.begin(); it != nodes.end(); it++)
 	{
-		int z = compare_phasing_paths(it->first, v);
+		int z = compare_two_sorted_sequences(it->first, v);
 		if(z == 0) return 0;
 		if(z == 1) continue;
 		if(z == 2) continue;
@@ -98,7 +154,7 @@ int hyper_set::compare(const hyper_set &hx)
 		for(MVII::const_iterator ti = hx.nodes.begin(); ti != hx.nodes.end(); ti++)
 		{
 			const vector<int> &y = ti->first;
-			int z = compare_phasing_paths(x, y);
+			int z = compare_two_sorted_sequences(x, y);
 			printf("compare z = %d, label = %s: ( ", z, position_names[z].c_str());
 			printv(x);
 			printf(") vs ( ");
@@ -123,7 +179,7 @@ int hyper_set::extend(const hyper_set &hx)
 		cxx[i].assign(vx.size(), -1);
 		for(int j = 0; j < vx.size(); j++)
 		{
-			cxx[i][j] = compare_phasing_paths(vx[i].first, vx[j].first);
+			cxx[i][j] = compare_two_sorted_sequences(vx[i].first, vx[j].first);
 		}
 	}
 
@@ -133,7 +189,7 @@ int hyper_set::extend(const hyper_set &hx)
 		cxy[i].assign(vy.size(), -1);
 		for(int j = 0; j < vy.size(); j++)
 		{
-			cxy[i][j] = compare_phasing_paths(vx[i].first, vy[j].first);
+			cxy[i][j] = compare_two_sorted_sequences(vx[i].first, vy[j].first);
 		}
 	}
 
@@ -356,7 +412,7 @@ int hyper_set::filter()
 				assert(u.front() == s);
 				if(j == i) continue;
 				if(v.size() - a < u.size()) continue;
-				bool b = identical(v, a, a + u.size() - 1, u, 0, u.size() - 1);
+				bool b = check_identical(v, a, a + u.size() - 1, u, 0, u.size() - 1);
 				if(b == false) continue;
 
 				bb[j] = true;

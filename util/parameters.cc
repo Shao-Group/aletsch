@@ -58,7 +58,8 @@ parameters::parameters()
 	min_subregion_overlap = 1.5;
 	min_subregion_length = 15;
 	
-	// for revising splice graph
+	// for revising splice graph and phasing paths
+	min_confident_phasing_path_weight = 2;
 	max_group_boundary_distance = 10000;
 	max_intron_contamination_coverage = 2.0;
 	min_surviving_edge_weight = 1.5;
