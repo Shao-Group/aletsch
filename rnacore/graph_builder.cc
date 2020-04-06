@@ -62,7 +62,6 @@ int graph_builder::build_junctions()
 	for(it = m.begin(); it != m.end(); it++)
 	{
 		vector<int> &v = it->second;
-		//if(v.size() < cfg->min_splice_boundary_bd.hits) continue; TODO
 
 		int32_t p1 = it->first.first;
 		int32_t p2 = it->first.second;

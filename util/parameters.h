@@ -25,7 +25,6 @@ public:
 	int min_splicing_count;
 	int min_phasing_count;
 	int32_t max_group_boundary_distance;
-	double max_group_junction_distance;
 	bool merge_intersection;
 	int max_threads;
 	int max_combined;
@@ -34,13 +33,11 @@ public:
 	// for bam file and reads
 	int min_flank_length;
 	int max_num_cigar;
-	int max_edit_distance;
 	int32_t min_bundle_gap;
 	int min_num_hits_in_bundle;
 	uint32_t min_mapping_quality;
 	bool uniquely_mapped_only;
 	bool use_second_alignment;
-	int min_splice_boundary_hits;
 
 	// for preview
 	bool preview_only;
@@ -60,25 +57,17 @@ public:
 
 	// for subsetsum and router
 	int max_dp_table_size;
-	int min_router_count;
 
 	// for splice graph
 	double max_intron_contamination_coverage;
 	double min_surviving_edge_weight;
 	double max_decompose_error_ratio[7];
-	double min_transcript_numreads;
 	double min_transcript_coverage;
 	double min_single_exon_coverage;
-	double min_transcript_coverage_ratio; 
 	int min_transcript_length_base;
 	int min_transcript_length_increase;
 	int min_exon_length;
 	int max_num_exons;
-
-	// for simulation
-	int simulation_num_vertices;
-	int simulation_num_edges;
-	int simulation_max_edge_weight;
 
 	// input and output
 	string algo;
@@ -87,15 +76,11 @@ public:
 	string output_file;
 
 	// for controling
-	bool output_tex_files;
-	string fixed_gene_name;
-	int max_num_bundles;
-	int min_gtf_transcripts_num;
-	int batch_bundle_size;
-	int verbose;
-	string version;
 	string input_bam_list;
 	string output_gtf_file;
+	int verbose;
+	string version;
+	int batch_bundle_size;
 
 public:
 	int print_command_line(int argc, const char ** argv);

@@ -18,8 +18,7 @@ scallop::scallop(const splice_graph &g, const hyper_set &h1, parameters *c)
 	: gr(g), hs(h1), cfg(c)
 {
 	round = 0;
-	if(cfg->output_tex_files == true) gr.draw(gr.gid + "." + tostring(round++) + ".tex");
-
+	//gr.draw(gr.gid + "." + tostring(round++) + ".tex");
 	gr.get_edge_indices(i2e, e2i);
 	//add_pseudo_hyper_edges();
 	hs.build(gr, e2i);
@@ -33,7 +32,7 @@ scallop::scallop(const splice_graph &g, const hyper_set &h1, const hyper_set &h2
 	: gr(g), hs(h1), hx(h2), cfg(c)
 {
 	round = 0;
-	if(cfg->output_tex_files == true) gr.draw(gr.gid + "." + tostring(round++) + ".tex");
+	//gr.draw(gr.gid + "." + tostring(round++) + ".tex");
 
 	gr.get_edge_indices(i2e, e2i);
 	//add_pseudo_hyper_edges();

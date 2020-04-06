@@ -16,12 +16,11 @@ using namespace std;
 
 parameters::parameters()
 {
-	// meta
-	min_supporting_samples = 2;			// 2
+	// for meta-assembly
+	min_supporting_samples = 2;	
 	min_splicing_count = 5;
 	min_phasing_count = 1;
 	max_group_boundary_distance = 10000;
-	max_group_junction_distance = 100;
 	merge_intersection = true;
 	max_threads = 10;
 	max_combined = 100;
@@ -30,15 +29,13 @@ parameters::parameters()
 	// for bam file and reads
 	min_flank_length = 3;
 	max_num_cigar = 1000;
-	max_edit_distance = 10;
 	min_bundle_gap = 50;
 	min_num_hits_in_bundle = 20;
 	min_mapping_quality = 1;
 	use_second_alignment = false;
 	uniquely_mapped_only = false;
-	min_splice_boundary_hits = 1;
 	
-	// for clustering
+	// for clustering assembled transcripts
 	max_cluster_boundary_distance = 10000;
 	max_cluster_intron_distance = 5;
 	min_cluster_single_exon_ratio = 0.8;
@@ -68,9 +65,7 @@ parameters::parameters()
 	
 	// for selecting paths
 	min_transcript_coverage = 1.01;
-	min_transcript_coverage_ratio = 0.005;
 	min_single_exon_coverage = 20;
-	min_transcript_numreads = 20;
 	min_transcript_length_base = 150;
 	min_transcript_length_increase = 50;
 	min_exon_length = 20;
@@ -78,29 +73,14 @@ parameters::parameters()
 	
 	// for subsetsum and router
 	max_dp_table_size = 10000;
-	min_router_count = 1;
-	
-	// for simulation
-	simulation_num_vertices = 0;
-	simulation_num_edges = 0;
-	simulation_max_edge_weight = 0;
-	
-	// input and output
-	algo = "scallop";
-	input_file = "";
-	graph_file = "";
-	output_file = "";
 	
 	// for controling
-	output_tex_files = false;
-	fixed_gene_name = "";
-	batch_bundle_size = 100;
-
-	version = "0.1.1";
-	verbose = 1;
-
 	input_bam_list = "";
 	output_gtf_file = "";
+	batch_bundle_size = 100;
+	algo = "meta-scallop";
+	version = "0.1.1";
+	verbose = 1;
 }
 
 int parameters::parse_arguments(int argc, const char ** argv)
@@ -181,11 +161,6 @@ int parameters::parse_arguments(int argc, const char ** argv)
 			max_num_cigar = atoi(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "--max_edit_distance")
-		{
-			max_edit_distance = atoi(argv[i + 1]);
-			i++;
-		}
 		else if(string(argv[i]) == "--min_bundle_gap")
 		{
 			min_bundle_gap = atoi(argv[i + 1]);
@@ -199,11 +174,6 @@ int parameters::parse_arguments(int argc, const char ** argv)
 		else if(string(argv[i]) == "--min_mapping_quality")
 		{
 			min_mapping_quality = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_splice_boundary_hits")
-		{
-			min_splice_boundary_hits = atoi(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "--max_preview_spliced_reads")
@@ -261,19 +231,9 @@ int parameters::parse_arguments(int argc, const char ** argv)
 			i++;
 			if(fabs(min_transcript_coverage - 1.0) < 0.01) min_transcript_coverage = 1.01;
 		}
-		else if(string(argv[i]) == "--min_transcript_coverage_ratio")
-		{
-			min_transcript_coverage_ratio = atof(argv[i + 1]);
-			i++;
-		}
 		else if(string(argv[i]) == "--min_single_exon_coverage")
 		{
 			min_single_exon_coverage = atof(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_transcript_numreads")
-		{
-			min_transcript_numreads = atof(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "--min_transcript_length_base")
@@ -299,11 +259,6 @@ int parameters::parse_arguments(int argc, const char ** argv)
 		else if(string(argv[i]) == "--max_dp_table_size")
 		{
 			max_dp_table_size = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_router_count")
-		{
-			min_router_count = atoi(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "--max_decompose_error_ratio0")
