@@ -196,10 +196,10 @@ int graph_builder::link_partial_exons()
 			for(int k = 0; k < junctions.size(); k++) junctions[k].print("X", k);
 			printf("\n");
 		}
+		*/
 
 		assert(li != rm.end());
 		assert(ri != lm.end());
-		*/
 
 		if(li != rm.end() && ri != lm.end())
 		{

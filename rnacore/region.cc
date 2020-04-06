@@ -106,11 +106,19 @@ int region::build_partial_exons()
 {
 	pexons.clear();
 
-	if(jmap.size() == 0) return 0;
-
 	//printf("size = %lu, size2 = %lu, [%d, %d), [%d, %d)\n", jmap.size(), distance(jmap.begin(), jmap.end()), lower(jmap.begin()->first), upper(jmap.begin()->first), lpos, rpos);
 
-	if(lower(jmap.begin()->first) == lpos && upper(jmap.begin()->first) == rpos)
+	assert(lpos < rpos);
+	if(jmap.size() == 0 && rpos == lpos + 1 && (ltype == END_BOUNDARY || rtype == START_BOUNDARY))
+	{
+		partial_exon pe(lpos, rpos, ltype, rtype);
+		pe.ave = 1.0;
+		pe.dev = 1.0;
+		pexons.push_back(pe);
+		return 0;
+	}
+
+	if(jmap.size() >= 1 && lower(jmap.begin()->first) == lpos && upper(jmap.begin()->first) == rpos)
 	{
 		partial_exon pe(lpos, rpos, ltype, rtype);
 		evaluate_rectangle(*mmap, pe.lpos, pe.rpos, pe.ave, pe.dev);
@@ -118,7 +126,6 @@ int region::build_partial_exons()
 		return 0;
 	}
 
-	/*
 	if(ltype == RIGHT_SPLICE && jmap.find(ROI(lpos, lpos + 1)) == jmap.end())
 	{
 		partial_exon pe(lpos, lpos + 1, ltype, END_BOUNDARY);
@@ -126,7 +133,6 @@ int region::build_partial_exons()
 		pe.dev = 1.0;
 		pexons.push_back(pe);
 	}
-	*/
 
 	for(JIMI it = jmap.begin(); it != jmap.end(); it++)
 	{
@@ -151,7 +157,6 @@ int region::build_partial_exons()
 		pexons.push_back(pe);
 	}
 
-	/*
 	if(rtype == LEFT_SPLICE && jmap.find(ROI(rpos - 1, rpos)) == jmap.end())
 	{
 		partial_exon pe(rpos - 1, rpos, START_BOUNDARY, rtype);
@@ -159,7 +164,6 @@ int region::build_partial_exons()
 		pe.dev = 1.0;
 		pexons.push_back(pe);
 	}
-	*/
 
 	return 0;
 }
