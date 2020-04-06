@@ -19,7 +19,7 @@ public:
 	incubator(const parameters &c);
 
 public:
-	parameters cfg;									// parameters for scallop
+	const parameters &cfg;						// parameters for scallop
 	vector<combined_group> groups;				// graph groups
 	vector< map<string, int> > g2g;				// group map
 	map< size_t, vector<transcript> > trsts;	// assembled transcripts

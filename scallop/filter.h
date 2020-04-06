@@ -13,10 +13,10 @@ See LICENSE for licensing.
 class filter
 {
 public:
-	filter(const vector<transcript> &v, parameters *c);
+	filter(const vector<transcript> &v, const parameters &c);
 
 public:
-	parameters *cfg;
+	const parameters &cfg;
 	vector<transcript> trs;
 
 public:

@@ -8,8 +8,8 @@ using namespace std;
 
 typedef pair<int32_t, int32_t> PI32;
 
-int revise_splice_graph(splice_graph &gr, parameters *cfg);
-int revise_splice_graph_full(splice_graph &gr, parameters *cfg);
+int revise_splice_graph(splice_graph &gr, const parameters &cfg);
+int revise_splice_graph_full(splice_graph &gr, const parameters &cfg);
 
 VE compute_maximal_edges(splice_graph &gr);
 bool extend_boundaries(splice_graph &gr);

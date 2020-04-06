@@ -23,11 +23,9 @@ bool entry_compare(const entry &x, const entry &y)
 	else return false;
 }
 
-bridge_solver::bridge_solver(splice_graph &g, const vector<pereads_cluster> &v)
-	: gr(g), vc(v)
+bridge_solver::bridge_solver(splice_graph &g, const vector<pereads_cluster> &v, const parameters &c)
+	: gr(g), vc(v), cfg(c)
 {
-	dp_solution_size = 10;
-	dp_stack_size = 5;
 	length_low = 100;
 	length_high = 500;
 	build_bridging_vertices();
@@ -329,7 +327,7 @@ int bridge_solver::dynamic_programming(int k1, int k2, vector< vector<entry> > &
 	table.resize(n);
 
 	table[k1].resize(1);
-	table[k1][0].stack.assign(dp_stack_size, 999999);
+	table[k1][0].stack.assign(cfg.bridge_dp_stack_size, 999999);
 	table[k1][0].length = gr.get_vertex_info(k1).rpos - gr.get_vertex_info(k1).lpos;
 	table[k1][0].trace1 = -1;
 	table[k1][0].trace2 = -1;
@@ -359,7 +357,7 @@ int bridge_solver::dynamic_programming(int k1, int k2, vector< vector<entry> > &
 		}
 
 		sort(v.begin(), v.end(), entry_compare);
-		if(v.size() > dp_solution_size) v.resize(dp_solution_size);
+		if(v.size() > cfg.bridge_dp_solution_size) v.resize(cfg.bridge_dp_solution_size);
 		table[k] = v;
 	}
 	return 0;

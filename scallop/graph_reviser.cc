@@ -10,7 +10,7 @@
 #include "parameters.h"
 #include "essential.h"
 
-int revise_splice_graph_full(splice_graph &gr, parameters *cfg)
+int revise_splice_graph_full(splice_graph &gr, const parameters &cfg)
 {
 	refine_splice_graph(gr);
 
@@ -27,7 +27,7 @@ int revise_splice_graph_full(splice_graph &gr, parameters *cfg)
 		b = remove_inner_boundaries(gr);
 		if(b == true) continue;
 
-		b = remove_small_exons(gr, cfg->min_exon_length);
+		b = remove_small_exons(gr, cfg.min_exon_length);
 		if(b == true) refine_splice_graph(gr);
 		if(b == true) continue;
 
@@ -35,11 +35,11 @@ int revise_splice_graph_full(splice_graph &gr, parameters *cfg)
 		if(b == true) refine_splice_graph(gr);
 		if(b == true) continue;
 
-		b = keep_surviving_edges(gr, cfg->min_surviving_edge_weight);
+		b = keep_surviving_edges(gr, cfg.min_surviving_edge_weight);
 		if(b == true) refine_splice_graph(gr);
 		if(b == true) continue;
 
-		b = remove_intron_contamination(gr, cfg->max_intron_contamination_coverage);
+		b = remove_intron_contamination(gr, cfg.max_intron_contamination_coverage);
 		if(b == true) continue;
 
 		break;
@@ -50,7 +50,7 @@ int revise_splice_graph_full(splice_graph &gr, parameters *cfg)
 	return 0;
 }
 
-int revise_splice_graph(splice_graph &gr, parameters *cfg)
+int revise_splice_graph(splice_graph &gr, const parameters &cfg)
 {
 	refine_splice_graph(gr);
 
@@ -58,7 +58,7 @@ int revise_splice_graph(splice_graph &gr, parameters *cfg)
 	{
 		bool b = false;
 
-		b = keep_surviving_edges(gr, cfg->min_surviving_edge_weight);
+		b = keep_surviving_edges(gr, cfg.min_surviving_edge_weight);
 		if(b == true) refine_splice_graph(gr);
 		if(b == true) continue;
 

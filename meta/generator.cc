@@ -14,7 +14,7 @@
 #include "graph_reviser.h"
 #include "essential.h"
 
-generator::generator(const string &bamfile, vector<combined_graph> &v, parameters &c)
+generator::generator(const string &bamfile, vector<combined_graph> &v, const parameters &c)
 	: vcb(v), cfg(c)
 {
 	previewer pre(bamfile, cfg, sp);
@@ -113,7 +113,7 @@ int generator::generate(int n)
 		gb.build(gr);
 		gr.build_vertex_index();
 
-		revise_splice_graph_full(gr, &cfg);
+		revise_splice_graph_full(gr, cfg);
 
 		if(gr.count_junctions() <= 0) continue;
 
@@ -123,7 +123,7 @@ int generator::generate(int n)
 		gc.build_pereads_clusters(vc);
 		gc.build_phase_set_from_unpaired_reads(ps);
 
-		bridge_solver bs(gr, vc);
+		bridge_solver bs(gr, vc, cfg);
 		bs.length_low = sp.insertsize_low;
 		bs.length_high = sp.insertsize_high;
 		bs.build_phase_set(ps);

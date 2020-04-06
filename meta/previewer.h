@@ -21,12 +21,12 @@ using namespace std;
 class previewer
 {
 public:
-	previewer(const string &file, parameters &cfg, sample_profile &sp);
+	previewer(const string &file, const parameters &cfg, sample_profile &sp);
 	~previewer();
 
 private:
 	string input_file;
-	parameters &cfg;
+	const parameters &cfg;
 	sample_profile &sp;
 	samFile *sfn;
 	bam_hdr_t *hdr;

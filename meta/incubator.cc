@@ -19,8 +19,8 @@
 #include <boost/pending/disjoint_sets.hpp>
 
 incubator::incubator(const parameters &c)
+	: cfg(c)
 {
-	cfg = c;
 	g2g.resize(3);
 }
 
@@ -169,10 +169,10 @@ int incubator::postprocess()
 					for(MIT x = m1; x != m2; x++)
 					{
 						vector<transcript> &v = x->second;
-						cluster cs(v, &(this->cfg));
+						cluster cs(v, this->cfg);
 						cs.solve();
 
-						filter ft(cs.cct, &(this->cfg));
+						filter ft(cs.cct, this->cfg);
 						ft.join_single_exon_transcripts();
 						ft.filter_length_coverage();
 
@@ -343,7 +343,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 		gt.vc.clear();
 	}
 
-	bridge_solver br(gx, vc);
+	bridge_solver br(gx, vc, cfg);
 	br.length_low = length_low;
 	br.length_high = length_high;
 	br.build_phase_set(px);

@@ -20,17 +20,27 @@ public:
 	parameters();
 
 public:
-	// meta
+	// for controling
+	string input_bam_list;
+	string output_gtf_file;
+	int verbose;
+	string algo;
+	string version;
+	int max_threads;
+
+	// for meta-assembly
 	int min_supporting_samples;
 	int min_splicing_count;
 	int min_phasing_count;
-	int32_t max_group_boundary_distance;
 	bool merge_intersection;
-	int max_threads;
 	int max_combined;
 	double merge_threshold;
 
-	// for bam file and reads
+	// for bridging paired-end reads
+	int bridge_dp_solution_size;
+	int bridge_dp_stack_size;
+
+	// for loading bam file and reads
 	int min_flank_length;
 	int max_num_cigar;
 	int32_t min_bundle_gap;
@@ -38,9 +48,9 @@ public:
 	uint32_t min_mapping_quality;
 	bool uniquely_mapped_only;
 	bool use_second_alignment;
+	int batch_bundle_size;
 
 	// for preview
-	bool preview_only;
 	int max_preview_reads;
 	int max_preview_spliced_reads;
 	int min_preview_spliced_reads;
@@ -50,18 +60,19 @@ public:
 	int32_t min_subregion_gap;
 	double min_subregion_overlap;
 	int32_t min_subregion_length;
-	int min_subregion_ladders;
-	int32_t max_cluster_boundary_distance;
-	int32_t max_cluster_intron_distance;
-	double min_cluster_single_exon_ratio;
 
 	// for subsetsum and router
-	int max_dp_table_size;
 
-	// for splice graph
+	// for revising splice graph
+	int32_t max_group_boundary_distance;
 	double max_intron_contamination_coverage;
 	double min_surviving_edge_weight;
+
+	// for decomposing splice graph
 	double max_decompose_error_ratio[7];
+	int max_dp_table_size;
+
+	// for filtering paths
 	double min_transcript_coverage;
 	double min_single_exon_coverage;
 	int min_transcript_length_base;
@@ -69,18 +80,10 @@ public:
 	int min_exon_length;
 	int max_num_exons;
 
-	// input and output
-	string algo;
-	string input_file;
-	string graph_file;
-	string output_file;
-
-	// for controling
-	string input_bam_list;
-	string output_gtf_file;
-	int verbose;
-	string version;
-	int batch_bundle_size;
+	// for clustering assembled transcripts
+	int32_t max_cluster_boundary_distance;
+	int32_t max_cluster_intron_distance;
+	double min_cluster_single_exon_ratio;
 
 public:
 	int print_command_line(int argc, const char ** argv);

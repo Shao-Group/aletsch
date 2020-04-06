@@ -22,11 +22,11 @@ using namespace std;
 class generator
 {
 public:
-	generator(const string &bamfile, vector<combined_graph> &cbv, parameters &c);
+	generator(const string &bamfile, vector<combined_graph> &cbv, const parameters &c);
 	~generator();
 
 private:
-	parameters &cfg;
+	const parameters &cfg;
 	sample_profile sp;
 	samFile *sfn;
 	bam_hdr_t *hdr;

@@ -17,10 +17,10 @@ typedef pair< int, vector<int> > PIV;
 class cluster
 {
 public:
-	cluster(const vector<transcript> &v, parameters *c);
+	cluster(const vector<transcript> &v, const parameters &c);
 
 public:
-	parameters *cfg;
+	const parameters &cfg;
 	MIV miv;
 	undirected_graph gr;
 

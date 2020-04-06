@@ -11,6 +11,7 @@ See LICENSE for licensing.
 #include "phase_set.h"
 #include "pier.h"
 #include "pereads_cluster.h"
+#include "parameters.h"
 
 using namespace std;
 
@@ -31,19 +32,18 @@ bool entry_compare(const entry &x, const entry &y);
 class bridge_solver
 {
 public:
-	bridge_solver(splice_graph &gr, const vector<pereads_cluster> &vc);
+	bridge_solver(splice_graph &gr, const vector<pereads_cluster> &vc, const parameters &cfg);
 
 public:
 	splice_graph &gr;						// given splice graph
 	const vector<pereads_cluster> &vc;		// given paired reads clusters
+	const parameters &cfg;
 
 	vector<PI> vpairs;						// vertices for each cluster
 	vector<pier> piers;						// piers
 	map<PI, int> pindex;					// piers index
 	vector<bridge_path> opt;				// optimal bridge path
 
-	int dp_solution_size;
-	int dp_stack_size;
 	int32_t length_low;
 	int32_t length_high;
 

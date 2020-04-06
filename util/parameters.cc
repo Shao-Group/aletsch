@@ -16,17 +16,27 @@ using namespace std;
 
 parameters::parameters()
 {
+	// for controling
+	input_bam_list = "";
+	output_gtf_file = "";
+	verbose = 1;
+	algo = "meta-scallop";
+	version = "0.1.1";
+	max_threads = 10;
+
 	// for meta-assembly
 	min_supporting_samples = 2;	
 	min_splicing_count = 5;
 	min_phasing_count = 1;
-	max_group_boundary_distance = 10000;
 	merge_intersection = true;
-	max_threads = 10;
 	max_combined = 100;
 	merge_threshold = 0.5;
 
-	// for bam file and reads
+	// for bridging paired-end reads
+	bridge_dp_solution_size = 10;
+	bridge_dp_stack_size = 5;
+
+	// for loading bam file and reads
 	min_flank_length = 3;
 	max_num_cigar = 1000;
 	min_bundle_gap = 50;
@@ -34,27 +44,25 @@ parameters::parameters()
 	min_mapping_quality = 1;
 	use_second_alignment = false;
 	uniquely_mapped_only = false;
-	
-	// for clustering assembled transcripts
-	max_cluster_boundary_distance = 10000;
-	max_cluster_intron_distance = 5;
-	min_cluster_single_exon_ratio = 0.8;
+	batch_bundle_size = 100;
 	
 	// for preview
 	max_preview_reads = 2000000;
 	max_preview_spliced_reads = 50000;
 	min_preview_spliced_reads = 10000;
 	preview_infer_ratio = 0.8;
-	preview_only = false;
 	
 	// for identifying subgraphs
 	min_subregion_gap = 3;
 	min_subregion_overlap = 1.5;
 	min_subregion_length = 15;
 	
-	// for revising/decomposing splice graph
+	// for revising splice graph
+	max_group_boundary_distance = 10000;
 	max_intron_contamination_coverage = 2.0;
 	min_surviving_edge_weight = 1.5;
+
+	// for decomposing splice graph
 	max_decompose_error_ratio[0] = 0.33;
 	max_decompose_error_ratio[1] = 0.05;
 	max_decompose_error_ratio[2] = 0.00;
@@ -62,25 +70,20 @@ parameters::parameters()
 	max_decompose_error_ratio[4] = 0.30;
 	max_decompose_error_ratio[5] = 0.00;
 	max_decompose_error_ratio[6] = 1.10;
+	max_dp_table_size = 10000;
 	
-	// for selecting paths
+	// for filtering paths
 	min_transcript_coverage = 1.01;
 	min_single_exon_coverage = 20;
 	min_transcript_length_base = 150;
 	min_transcript_length_increase = 50;
 	min_exon_length = 20;
 	max_num_exons = 10000;
-	
-	// for subsetsum and router
-	max_dp_table_size = 10000;
-	
-	// for controling
-	input_bam_list = "";
-	output_gtf_file = "";
-	batch_bundle_size = 100;
-	algo = "meta-scallop";
-	version = "0.1.1";
-	verbose = 1;
+
+	// for clustering assembled transcripts
+	max_cluster_boundary_distance = 10000;
+	max_cluster_intron_distance = 5;
+	min_cluster_single_exon_ratio = 0.8;
 }
 
 int parameters::parse_arguments(int argc, const char ** argv)
@@ -115,25 +118,19 @@ int parameters::parse_arguments(int argc, const char ** argv)
 			print_logo();
 			exit(0);
 		}
-		else if(string(argv[i]) == "--merge_threshold")
-		{
-			merge_threshold = atof(argv[i + 1]);
-			i++;
-		}
-
-		else if(string(argv[i]) == "--merge_intersection")
-		{
-			merge_intersection = true;
-		}
 		else if(string(argv[i]) == "--verbose")
 		{
 			verbose = atoi(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "--max_threads")
+		else if(string(argv[i]) == "--merge_threshold")
 		{
-			max_threads = atoi(argv[i + 1]);
+			merge_threshold = atof(argv[i + 1]);
 			i++;
+		}
+		else if(string(argv[i]) == "--merge_intersection")
+		{
+			merge_intersection = true;
 		}
 		else if(string(argv[i]) == "--min_supporting_samples")
 		{
@@ -145,13 +142,22 @@ int parameters::parse_arguments(int argc, const char ** argv)
 			min_splicing_count = atoi(argv[i + 1]);
 			i++;
 		}
+		else if(string(argv[i]) == "--bridge_dp_solution_size")
+		{
+			bridge_dp_solution_size = atoi(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "--bridge_dp_stack_size")
+		{
+			bridge_dp_stack_size = atoi(argv[i + 1]);
+			i++;
+		}
 		else if(string(argv[i]) == "--min_phasing_count")
 		{
 			min_phasing_count = atoi(argv[i + 1]);
 			i++;
 		}
-
-		if(string(argv[i]) == "--min_flank_length")
+		else if(string(argv[i]) == "--min_flank_length")
 		{
 			min_flank_length = atoi(argv[i + 1]);
 			i++;
@@ -185,10 +191,6 @@ int parameters::parse_arguments(int argc, const char ** argv)
 		{
 			min_preview_spliced_reads = atoi(argv[i + 1]);
 			i++;
-		}
-		else if(string(argv[i]) == "--preview")
-		{
-			preview_only = true;
 		}
 		else if(string(argv[i]) == "--max_preview_reads")
 		{

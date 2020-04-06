@@ -1,8 +1,8 @@
+#include "bridge_solver.h"
 #include "parameters.h"
 #include "combined_graph.h"
 #include "config.h"
 #include "essential.h"
-#include "bridge_solver.h"
 #include <sstream>
 #include <algorithm>
 

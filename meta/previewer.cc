@@ -15,7 +15,7 @@ See LICENSE for licensing.
 #include "graph_builder.h"
 #include "essential.h"
 
-previewer::previewer(const string &file, parameters &c, sample_profile &s)
+previewer::previewer(const string &file, const parameters &c, sample_profile &s)
 	: cfg(c), sp(s)
 {
 	input_file = file;
