@@ -6,6 +6,7 @@
 
 #include "constants.h"
 #include "graph_builder.h"
+#include "graph_reviser.h"
 #include "region.h"
 #include "util.h"
 #include "undirected_graph.h"
@@ -21,7 +22,7 @@ int graph_builder::build(splice_graph &gr)
 	build_partial_exons();
 	link_partial_exons();
 	build_splice_graph(gr);
-
+	refine_splice_graph(gr);
 	return 0;
 }
 
@@ -184,6 +185,7 @@ int graph_builder::link_partial_exons()
 		MPI::iterator li = rm.find(b.lpos);
 		MPI::iterator ri = lm.find(b.rpos);
 
+		/*
 		if(ri == lm.end() || li == rm.end())
 		{
 			// print for testing
@@ -197,6 +199,7 @@ int graph_builder::link_partial_exons()
 
 		assert(li != rm.end());
 		assert(ri != lm.end());
+		*/
 
 		if(li != rm.end() && ri != lm.end())
 		{

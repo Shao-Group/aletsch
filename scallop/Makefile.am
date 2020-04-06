@@ -14,5 +14,4 @@ libscallop_a_SOURCES = subsetsum.h subsetsum.cc \
 					   filter.h filter.cc \
 					   cluster.h cluster.cc \
 					   path.h path.cc \
-					   hyper_set.h hyper_set.cc \
-					   graph_reviser.h graph_reviser.cc
+					   hyper_set.h hyper_set.cc
