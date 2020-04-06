@@ -84,7 +84,7 @@ int combined_group::build_similarity()
 				if(c <= 1.50) b = false;
 				if(r < cfg.merge_threshold) b = false;
 
-				//printf("b = %c, r = %.3lf, c = %d, size1 = %lu, size2 = %lu\n", b ? 'T' : 'F', r, c, gset[i].splices.size(), gset[j].splices.size());
+				//printf("graph-similarity: b = %c, r = %.3lf, c = %d, size1 = %lu, size2 = %lu\n", b ? 'T' : 'F', r, c, gset[i].splices.size(), gset[j].splices.size());
 
 				if(b == true)
 				{
