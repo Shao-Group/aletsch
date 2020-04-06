@@ -143,6 +143,11 @@ int parameters::parse_arguments(int argc, const char ** argv)
 			min_splicing_count = atoi(argv[i + 1]);
 			i++;
 		}
+		else if(string(argv[i]) == "--max_combined")
+		{
+			max_combined = atoi(argv[i + 1]);
+			i++;
+		}
 		else if(string(argv[i]) == "--bridge_dp_solution_size")
 		{
 			bridge_dp_solution_size = atoi(argv[i + 1]);
