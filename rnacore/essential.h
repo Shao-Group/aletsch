@@ -7,12 +7,6 @@
 
 using namespace std;
 
-// map integers
-vector<int> project_vector(const vector<int> &v, const map<int, int> &m);
-
-// transform a set to a map
-int transform_vertex_set_map(const set<int> &s, map<int, int> &m);
-
 // determine whether a->b is continuous in graph
 bool check_continuous_vertices(splice_graph &gr, int x, int y);
 
@@ -41,7 +35,7 @@ bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv);
 // match paired-end reads
 int build_paired_reads(const vector<hit> &hits, vector<PI> &fs);
 
-// compare phasing paths
+// compare phasing paths / intron chains
 template<typename T>
 int compare_phasing_paths(const vector<T> &ref, const vector<T> &qry);
 
@@ -51,16 +45,5 @@ bool merge_phasing_paths(const vector<T> &ref, const vector<T> &qry, vector<T> &
 bool identical(const vector<int> &x, int x1, int x2, const vector<int> &y, int y1, int y2);
 bool merge_intron_chains(const vector<int32_t> &x, const vector<int32_t> &y, vector<int32_t> &xy);
 bool consistent_intron_chains(const vector<int32_t> &x, const vector<int32_t> &y);
-
-template<typename T>
-bool check_increasing(const vector<T> &x)
-{
-	if(x.size() <= 1) return true;
-	for(int k = 0; k < x.size() - 1; k++)
-	{
-		if(x[k] >= x[k + 1]) return false;
-	}
-	return true;
-}
 
 #endif

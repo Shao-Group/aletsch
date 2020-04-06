@@ -57,3 +57,31 @@ vector<string> split_string(const string& str, const string& delim)
     while (pos < str.length() && prev < str.length());
     return tokens;
 }
+
+int transform_vertex_set_map(const set<int> &s, map<int, int> &m)
+{
+	m.clear();
+	if(s.size() <= 0) return 0;
+
+	vector<int> vv(s.begin(), s.end());
+	sort(vv.begin(), vv.end());
+	for(int i = 0; i < vv.size(); i++)
+	{
+		m.insert(pair<int, int>(vv[i], i + 1));
+	}
+	return 0;
+}
+
+vector<int> project_vector(const vector<int> &v, const map<int, int> &a2b)
+{
+	vector<int> vv;
+	for(int k = 0; k < v.size(); k++)
+	{
+		map<int, int>::const_iterator it = a2b.find(v[k]);
+		if(it == a2b.end()) break;
+		vv.push_back(it->second);
+	}
+	return vv;
+}
+
+

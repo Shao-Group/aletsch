@@ -4,20 +4,6 @@
 
 #include <algorithm>
 
-int transform_vertex_set_map(const set<int> &s, map<int, int> &m)
-{
-	m.clear();
-	if(s.size() <= 0) return 0;
-
-	vector<int> vv(s.begin(), s.end());
-	sort(vv.begin(), vv.end());
-	for(int i = 0; i < vv.size(); i++)
-	{
-		m.insert(pair<int, int>(vv[i], i + 1));
-	}
-	return 0;
-}
-
 int build_child_splice_graph(splice_graph &root, splice_graph &gr, map<int, int> &a2b)
 {
 	gr.clear();
@@ -107,18 +93,6 @@ int32_t get_total_length_of_introns(const vector<int32_t> &chain)
 		x += q - p;
 	}
 	return x;
-}
-
-vector<int> project_vector(const vector<int> &v, const map<int, int> &a2b)
-{
-	vector<int> vv;
-	for(int k = 0; k < v.size(); k++)
-	{
-		map<int, int>::const_iterator it = a2b.find(v[k]);
-		if(it == a2b.end()) break;
-		vv.push_back(it->second);
-	}
-	return vv;
 }
 
 int build_exon_coordinates_from_path(splice_graph &gr, const vector<int> &v, vector<int32_t> &vv)

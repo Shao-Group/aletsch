@@ -9,6 +9,7 @@ See LICENSE for licensing.
 
 #include <stdint.h>
 #include <map>
+#include <set>
 #include <sstream>
 #include <cassert>
 #include <vector>
@@ -168,9 +169,23 @@ vector<K> get_keys(const map<K, V> &m)
 	return v;
 }
 
+template<typename T>
+bool check_increasing(const vector<T> &x)
+{
+	if(x.size() <= 1) return true;
+	for(int k = 0; k < x.size() - 1; k++)
+	{
+		if(x[k] >= x[k + 1]) return false;
+	}
+	return true;
+}
+
+
 vector<int> get_random_permutation(int n);
 size_t string_hash(const std::string& str);
 size_t vector_hash(const vector<int32_t> &str);
 vector<string> split_string(const string& str, const string& delim);
+vector<int> project_vector(const vector<int> &v, const map<int, int> &m);
+int transform_vertex_set_map(const set<int> &s, map<int, int> &m);
 
 #endif
