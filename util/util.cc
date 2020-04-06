@@ -5,6 +5,7 @@ See LICENSE for licensing.
 */
 
 #include "util.h"
+#include <algorithm>
 
 vector<int> get_random_permutation(int n)
 {
