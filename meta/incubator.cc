@@ -55,8 +55,8 @@ int incubator::generate()
 		exit(0);
 	}
 
-	mutex mylock;								// lock for trsts
 	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
+	mutex mylock;									// lock for trsts
 
 	char line[102400];
 	while(fin.getline(line, 10240, '\n'))
@@ -97,7 +97,7 @@ int incubator::merge()
 int incubator::assemble()
 {
 	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
-	mutex mylock;								// lock for trsts
+	mutex mylock;									// lock for trsts
 
 	int instance = 0;
 	for(int i = 0; i < groups.size(); i++)
@@ -141,7 +141,7 @@ int incubator::postprocess()
 	}
 
 	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
-	mutex mylock;								// lock for trsts
+	mutex mylock;									// lock for trsts
 
 	typedef map<size_t, vector<transcript> >::iterator MIT;
 	int index = 0;
