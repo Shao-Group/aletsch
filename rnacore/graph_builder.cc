@@ -10,8 +10,8 @@
 #include "util.h"
 #include "undirected_graph.h"
 
-graph_builder::graph_builder(bundle &b)
-	: bd(b)
+graph_builder::graph_builder(bundle &b, const parameters &c)
+	: bd(b), cfg(c)
 {}
 
 int graph_builder::build(splice_graph &gr)
@@ -21,7 +21,6 @@ int graph_builder::build(splice_graph &gr)
 	build_partial_exons();
 	link_partial_exons();
 	build_splice_graph(gr);
-	//revise_splice_graph_full(gr, cfg);
 
 	return 0;
 }
@@ -145,9 +144,7 @@ int graph_builder::build_regions()
 		if(ltype == LEFT_RIGHT_SPLICE) ltype = RIGHT_SPLICE;
 		if(rtype == LEFT_RIGHT_SPLICE) rtype = LEFT_SPLICE;
 
-		// TODO parameter
-		//regions.push_back(region(l, r, ltype, rtype, &mmap, &imap, cfg->min_subregion_gap, cfg->min_subregion_length, cfg->min_subregion_overlap));
-		regions.push_back(region(l, r, ltype, rtype, &(bd.mmap), &(bd.imap), 3, 15, 1.5));
+		regions.push_back(region(l, r, ltype, rtype, &(bd.mmap), &(bd.imap), cfg.min_subregion_gap, cfg.min_subregion_length, cfg.min_subregion_overlap));
 	}
 
 	return 0;

@@ -5,6 +5,7 @@
 #include "region.h"
 #include "partial_exon.h"
 #include "splice_graph.h"
+#include "parameters.h"
 #include "bundle.h"
 
 using namespace std;
@@ -12,9 +13,10 @@ using namespace std;
 class graph_builder
 {
 public:
-	graph_builder(bundle &bd);
+	graph_builder(bundle &bd, const parameters &cfg);
 
 public:
+	const parameters &cfg;			// parameters
 	bundle &bd;						// given hits
 	vector<junction> junctions;		// splice junctions
 	vector<region> regions;			// regions

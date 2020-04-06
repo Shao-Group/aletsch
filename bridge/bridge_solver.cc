@@ -23,11 +23,11 @@ bool entry_compare(const entry &x, const entry &y)
 	else return false;
 }
 
-bridge_solver::bridge_solver(splice_graph &g, const vector<pereads_cluster> &v, const parameters &c)
+bridge_solver::bridge_solver(splice_graph &g, const vector<pereads_cluster> &v, const parameters &c, int32_t low, int32_t high)
 	: gr(g), vc(v), cfg(c)
 {
-	length_low = 100;
-	length_high = 500;
+	length_low = low;
+	length_high = high;
 	build_bridging_vertices();
 	build_piers();
 	nominate();

@@ -241,7 +241,7 @@ int previewer::process(bundle &bd, map<int32_t, int> &m)
 	bd.chrm = string(buf);
 
 	splice_graph gr;
-	graph_builder gb(bd);
+	graph_builder gb(bd, cfg);
 	gb.build(gr);
 
 	gr.build_vertex_index();

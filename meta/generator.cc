@@ -109,7 +109,7 @@ int generator::generate(int n)
 		bb.chrm = string(buf);
 
 		splice_graph gr;
-		graph_builder gb(bb);
+		graph_builder gb(bb, cfg);
 		gb.build(gr);
 		gr.build_vertex_index();
 
@@ -119,13 +119,11 @@ int generator::generate(int n)
 
 		vector<pereads_cluster> vc;
 		phase_set ps;
-		graph_cluster gc(gr, bb.hits, 10);			// TODO parameter
+		graph_cluster gc(gr, bb.hits, cfg.max_reads_partition_gap);
 		gc.build_pereads_clusters(vc);
 		gc.build_phase_set_from_unpaired_reads(ps);
 
-		bridge_solver bs(gr, vc, cfg);
-		bs.length_low = sp.insertsize_low;
-		bs.length_high = sp.insertsize_high;
+		bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
 		bs.build_phase_set(ps);
 		//bs.print();
 

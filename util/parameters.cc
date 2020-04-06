@@ -45,6 +45,7 @@ parameters::parameters()
 	use_second_alignment = false;
 	uniquely_mapped_only = false;
 	batch_bundle_size = 100;
+	max_reads_partition_gap = 10;
 	
 	// for preview
 	max_preview_reads = 2000000;
@@ -155,6 +156,11 @@ int parameters::parse_arguments(int argc, const char ** argv)
 		else if(string(argv[i]) == "--min_phasing_count")
 		{
 			min_phasing_count = atoi(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "--max_reads_partition_gap")
+		{
+			max_reads_partition_gap = atoi(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "--min_flank_length")

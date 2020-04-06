@@ -343,9 +343,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 		gt.vc.clear();
 	}
 
-	bridge_solver br(gx, vc, cfg);
-	br.length_low = length_low;
-	br.length_high = length_high;
+	bridge_solver br(gx, vc, cfg, length_low, length_high);
 	br.build_phase_set(px);
 
 	// refine splice graph and phasing paths

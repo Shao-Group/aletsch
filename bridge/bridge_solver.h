@@ -32,7 +32,7 @@ bool entry_compare(const entry &x, const entry &y);
 class bridge_solver
 {
 public:
-	bridge_solver(splice_graph &gr, const vector<pereads_cluster> &vc, const parameters &cfg);
+	bridge_solver(splice_graph &gr, const vector<pereads_cluster> &vc, const parameters &cfg, int low, int high);
 
 public:
 	splice_graph &gr;						// given splice graph

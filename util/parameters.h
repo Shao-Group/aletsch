@@ -49,6 +49,7 @@ public:
 	bool uniquely_mapped_only;
 	bool use_second_alignment;
 	int batch_bundle_size;
+	int32_t max_reads_partition_gap;
 
 	// for preview
 	int max_preview_reads;
