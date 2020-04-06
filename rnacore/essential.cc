@@ -179,6 +179,18 @@ bool build_path_from_exon_coordinates(splice_graph &gr, const vector<int32_t> &v
 	{
 		int a = pp[k].first;
 		int b = pp[k].second;
+
+		if(a > b)
+		{
+			printf("TEST: a = %d, b = %d\n", a, b);
+			gr.print();
+			printf("v = ");
+			printv(v);
+			printf("\n list = ");
+			for(int i = 0; i < n; i++) printf("(%d, %d), ", pp[i].first, pp[i].second);
+			printf("\n");
+		}
+			
 		assert(a <= b);
 		if(check_continuous_vertices(gr, a, b) == false) return false;
 		for(int j = a; j <= b; j++) vv.push_back(j);
@@ -300,20 +312,6 @@ bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv)
 	bool b = build_path_from_mixed_coordinates(gr, u, vv);
 	return b;
 }
-
-/*
-bool transform_to_paths(splice_graph &gr, PRC &p)
-{
-	vector<int> v1;
-	vector<int> v2;
-	bool b1 = build_path_from_exon_coordinates(gr, p.first.vv, v1);
-	bool b2 = build_path_from_exon_coordinates(gr, p.second.vv, v2);
-	if(b1 == false || b2 == false) return false;
-	p.first.vv = v1;
-	p.second.vv = v2;
-	return true;
-}
-*/
 
 int build_paired_reads(const vector<hit> &hits, vector<PI> &fs)
 {
