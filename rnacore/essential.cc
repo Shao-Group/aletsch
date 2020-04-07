@@ -189,6 +189,7 @@ bool build_path_from_exon_coordinates(splice_graph &gr, const vector<int32_t> &v
 			printf("\n list = ");
 			for(int i = 0; i < n; i++) printf("(%d, %d), ", pp[i].first, pp[i].second);
 			printf("\n");
+			fflush(stdout);
 		}
 
 		if(a > b) return false;
