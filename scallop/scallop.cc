@@ -21,7 +21,7 @@ scallop::scallop(const splice_graph &g, const hyper_set &h1, parameters *c)
 	//gr.draw(gr.gid + "." + tostring(round++) + ".tex");
 	gr.get_edge_indices(i2e, e2i);
 	//add_pseudo_hyper_edges();
-	hs.build_confident_nodes(cfg->min_confident_phasing_path_weight);
+	//hs.build_confident_nodes(cfg->min_confident_phasing_path_weight);
 	hs.build(gr, e2i);
 	init_super_edges();
 	init_vertex_map();
@@ -37,8 +37,8 @@ scallop::scallop(const splice_graph &g, const hyper_set &h1, const hyper_set &h2
 
 	gr.get_edge_indices(i2e, e2i);
 	//add_pseudo_hyper_edges();
-	hs.build_confident_nodes(cfg->min_confident_phasing_path_weight);
-	hx.build_confident_nodes(cfg->min_confident_phasing_path_weight);
+	//hs.build_confident_nodes(cfg->min_confident_phasing_path_weight);
+	//hx.build_confident_nodes(cfg->min_confident_phasing_path_weight);
 	hs.build(gr, e2i);
 	hx.build(gr, e2i);
 	init_super_edges();

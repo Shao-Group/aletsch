@@ -190,8 +190,10 @@ bool build_path_from_exon_coordinates(splice_graph &gr, const vector<int32_t> &v
 			for(int i = 0; i < n; i++) printf("(%d, %d), ", pp[i].first, pp[i].second);
 			printf("\n");
 		}
-			
-		assert(a <= b);
+
+		if(a > b) return false;
+		//assert(a <= b);
+
 		if(check_continuous_vertices(gr, a, b) == false) return false;
 		for(int j = a; j <= b; j++) vv.push_back(j);
 	}
