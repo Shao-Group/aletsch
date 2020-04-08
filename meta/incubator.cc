@@ -229,13 +229,13 @@ int generate_single(const string &file, vector<combined_group> &gv, mutex &myloc
 		if(m[s].find(chrm) == m[s].end())
 		{
 			combined_group gp(chrm, c, cfg);
-			gp.add_graph(v[k]);
+			gp.add_graph(std::move(v[k]));
 			m[s].insert(pair<string, int>(chrm, gv.size()));
 			gv.push_back(gp);
 		}
 		else
 		{
-			gv[m[s][chrm]].add_graph(v[k]);
+			gv[m[s][chrm]].add_graph(std::move(v[k]));
 		}
 	}
 	mylock.unlock();
