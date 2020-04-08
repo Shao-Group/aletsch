@@ -23,7 +23,7 @@ bool entry_compare(const entry &x, const entry &y)
 	else return false;
 }
 
-bridge_solver::bridge_solver(splice_graph &g, const vector<pereads_cluster> &v, const parameters &c, int32_t low, int32_t high)
+bridge_solver::bridge_solver(splice_graph &g, vector<pereads_cluster> &v, const parameters &c, int32_t low, int32_t high)
 	: gr(g), vc(v), cfg(c)
 {
 	length_low = low;
@@ -227,7 +227,7 @@ int bridge_solver::collect_unbridged_clusters(vector<pereads_cluster> &v)
 	for(int i = 0; i < opt.size(); i++)
 	{
 		if(opt[i].type >= 0) continue;
-		v.push_back(vc[i]);
+		v.push_back(std::move(vc[i]));
 	}
 	return 0;
 }
