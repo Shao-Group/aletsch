@@ -154,7 +154,7 @@ int generator::generate(bundle &bb)
 	return 0;
 }
 
-int generator::partition(splice_graph &gr, phase_set &ps, const vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &psv, vector< vector<pereads_cluster> > &ubv)
+int generator::partition(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &psv, vector< vector<pereads_cluster> > &ubv)
 {
 	int n = gr.num_vertices();
 
@@ -266,7 +266,7 @@ int generator::partition(splice_graph &gr, phase_set &ps, const vector<pereads_c
 		int p = ds.find_set(x);
 		int k = m[p];
 		assert(k >= 0 && k < vv.size());
-		ubv[k].push_back(ub[i]);
+		ubv[k].push_back(std::move(ub[i]));
 	}
 
 	return 0;

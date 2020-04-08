@@ -45,7 +45,7 @@ public:
 
 private:
 	int generate(bundle &bb);
-	int partition(splice_graph &gr, phase_set &hs, const vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &hsv, vector< vector<pereads_cluster> > &ubv);
+	int partition(splice_graph &gr, phase_set &hs, vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &hsv, vector< vector<pereads_cluster> > &ubv);
 };
 
 #endif

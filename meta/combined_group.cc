@@ -25,6 +25,8 @@ int combined_group::resolve()
 	build_similarity();
 	combine_graphs();
 	stats();
+	mis.clear();
+	vpid.clear();
 	return 0;
 }
 
