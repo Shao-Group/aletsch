@@ -231,7 +231,7 @@ int generate_single(const string &file, vector<combined_group> &gv, mutex &myloc
 			combined_group gp(chrm, c, cfg);
 			gp.add_graph(std::move(v[k]));
 			m[s].insert(pair<string, int>(chrm, gv.size()));
-			gv.push_back(gp);
+			gv.push_back(std::move(gp));
 		}
 		else
 		{

@@ -33,7 +33,6 @@ private:
 	bam1_t *b1t;
 	bundle bb1;		// +
 	bundle bb2;		// -
-	vector<bundle> pool;
 
 	vector<combined_graph> &vcb;
 
@@ -45,7 +44,7 @@ public:
 	int resolve();
 
 private:
-	int generate(int n);
+	int generate(bundle &bb);
 	int partition(splice_graph &gr, phase_set &hs, const vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &hsv, vector< vector<pereads_cluster> > &ubv);
 };
 

@@ -62,105 +62,95 @@ int generator::resolve()
 		// truncate
 		if(ht.tid != bb1.tid || ht.pos > bb1.rpos + cfg.min_bundle_gap)
 		{
-			pool.push_back(bb1);
+			generate(bb1);
 			bb1.clear();
 		}
 		if(ht.tid != bb2.tid || ht.pos > bb2.rpos + cfg.min_bundle_gap)
 		{
-			pool.push_back(bb2);
+			generate(bb2);
 			bb2.clear();
 		}
-
-		// generate
-		generate(cfg.batch_bundle_size);
 
 		// add hit
 		if(cfg.uniquely_mapped_only == true && ht.nh != 1) continue;
 		if(sp.library_type != UNSTRANDED && ht.strand == '+' && ht.xs == '-') continue;
 		if(sp.library_type != UNSTRANDED && ht.strand == '-' && ht.xs == '+') continue;
 		if(sp.library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
+
 		if(sp.library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit_intervals(ht, b1t);
 		if(sp.library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit_intervals(ht, b1t);
-		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb1.add_hit_intervals(ht, b1t);
-		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit_intervals(ht, b1t);
 		if(sp.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit_intervals(ht, b1t);
 		if(sp.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb1.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit_intervals(ht, b1t);
 	}
 
-	pool.push_back(bb1);
-	pool.push_back(bb2);
-	generate(0);
+	generate(bb1);
+	generate(bb2);
 
 	return 0;
 }
 
-int generator::generate(int n)
+int generator::generate(bundle &bb)
 {
-	if(pool.size() < n) return 0;
+	if(bb.hits.size() < cfg.min_num_hits_in_bundle) return 0;
+	if(bb.tid < 0) return 0;
 
-	for(int i = 0; i < pool.size(); i++)
+	char buf[1024];
+	strcpy(buf, hdr->target_name[bb.tid]);
+	bb.chrm = string(buf);
+
+	splice_graph gr;
+	graph_builder gb(bb, cfg);
+	gb.build(gr);
+	gr.build_vertex_index();
+
+	revise_splice_graph_full(gr, cfg);
+
+	if(gr.count_junctions() <= 0) return 0;
+
+	vector<pereads_cluster> vc;
+	phase_set ps;
+	graph_cluster gc(gr, bb.hits, cfg.max_reads_partition_gap);
+	gc.build_pereads_clusters(vc);
+	gc.build_phase_set_from_unpaired_reads(ps);
+
+	bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
+	bs.build_phase_set(ps);
+	//bs.print();
+
+	vector<pereads_cluster> ub;
+	bs.collect_unbridged_clusters(ub);
+
+	//for(int k = 0; k < ub.size(); k++) ub[k].print(k);
+
+	vector<splice_graph> grv;
+	vector<phase_set> hsv;
+	vector< vector<pereads_cluster> > ubv;
+	partition(gr, ps, ub, grv, hsv, ubv);
+
+	assert(grv.size() == hsv.size());
+	assert(grv.size() == ubv.size());
+
+	for(int k = 0; k < grv.size(); k++)
 	{
-		bundle &bb = pool[i];
-		if(bb.hits.size() < cfg.min_num_hits_in_bundle) continue;
-		if(bb.tid < 0) continue;
+		if(grv[k].count_junctions() <= 0) continue;
 
-		char buf[1024];
-		strcpy(buf, hdr->target_name[bb.tid]);
-		bb.chrm = string(buf);
+		string gid = "gene." + tostring(index) + "." + tostring(k);
+		combined_graph cb;
+		cb.sp = sp;
+		cb.gid = gid;
+		cb.build(grv[k], hsv[k], ubv[k]);
 
-		splice_graph gr;
-		graph_builder gb(bb, cfg);
-		gb.build(gr);
-		gr.build_vertex_index();
+		/*
+		   cb.print(k);	// TODO
+		   printf("\n");
+		 */
 
-		revise_splice_graph_full(gr, cfg);
-
-		if(gr.count_junctions() <= 0) continue;
-
-		vector<pereads_cluster> vc;
-		phase_set ps;
-		graph_cluster gc(gr, bb.hits, cfg.max_reads_partition_gap);
-		gc.build_pereads_clusters(vc);
-		gc.build_phase_set_from_unpaired_reads(ps);
-
-		bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
-		bs.build_phase_set(ps);
-		//bs.print();
-
-		vector<pereads_cluster> ub;
-		bs.collect_unbridged_clusters(ub);
-
-		//for(int k = 0; k < ub.size(); k++) ub[k].print(k);
-
-		vector<splice_graph> grv;
-		vector<phase_set> hsv;
-		vector< vector<pereads_cluster> > ubv;
-		partition(gr, ps, ub, grv, hsv, ubv);
-		
-		assert(grv.size() == hsv.size());
-		assert(grv.size() == ubv.size());
-
-		for(int k = 0; k < grv.size(); k++)
-		{
-			if(grv[k].count_junctions() <= 0) continue;
-
-			string gid = "gene." + tostring(index) + "." + tostring(k);
-			combined_graph cb;
-			cb.sp = sp;
-			cb.gid = gid;
-			cb.build(grv[k], hsv[k], ubv[k]);
-
-			/*
-			cb.print(k);	// TODO
-			printf("\n");
-			*/
-
-			vcb.push_back(cb);
-		}
-
-		index++;
+		vcb.push_back(std::move(cb));
 	}
-	pool.clear();
+
+	index++;
 	return 0;
 }
 
