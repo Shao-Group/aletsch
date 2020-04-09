@@ -120,7 +120,7 @@ int generator::generate(bundle &bb)
 	//bs.print();
 
 	vector<pereads_cluster> ub;
-	bs.collect_unbridged_clusters(ub);
+	//bs.collect_unbridged_clusters(ub); TODO; for testing
 
 	//for(int k = 0; k < ub.size(); k++) ub[k].print(k);
 

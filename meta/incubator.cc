@@ -36,7 +36,7 @@ int incubator::resolve()
 	merge();
 
 	// test the time / memory up to 2nd step
-	return 0;
+	//return 0;
 
 	mytime = time(NULL);
 	printf("Step 3: assemble merged splice graphs, %s\n", ctime(&mytime));
