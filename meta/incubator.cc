@@ -224,6 +224,8 @@ int generate_single(const string &file, vector<combined_group> &gv, mutex &myloc
 	mylock.lock();
 	for(int k = 0; k < v.size(); k++)
 	{
+		v[k].print(k);
+
 		string chrm = v[k].chrm;
 		char c = v[k].strand;
 		int s = 0;

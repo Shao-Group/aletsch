@@ -519,9 +519,19 @@ int combined_graph::clear()
 
 int combined_graph::print(int index)
 {
-	printf("combined-graph %d: gid = %s, #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phasing-phase = %lu\n", 
-			index, gid.c_str(), num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), ps.pmap.size());
+	int pereads = 0;
+	for(int i = 0; i < vc.size(); i++)
+	{
+		pereads += vc[i].chain1.size();
+		pereads += vc[i].chain2.size();
+		pereads += vc[i].bounds.size();
+		pereads += vc[i].extend.size();
+	}
 
+	printf("combined-graph %d: gid = %s, #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phases = %lu, #pereads = %lu / %d\n", 
+			index, gid.c_str(), num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), ps.pmap.size(), vc.size(), pereads);
+
+	return 0;
 	for(int i = 0; i < regions.size(); i++)
 	{
 		PI32 p = regions[i].first;
