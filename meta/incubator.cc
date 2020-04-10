@@ -121,7 +121,6 @@ int incubator::assemble()
 				assert(v.size() >= 2);
 				vector<combined_graph*> gv;
 				for(int j = 0; j < v.size(); j++) gv.push_back(&(groups[i].gset[v[j]]));
-				assert(gv.size() >= 2);
 				boost::asio::post(pool, [this, gv, instance, &mylock]{ assemble_cluster(gv, instance, this->trsts, mylock, this->cfg); });
 			}
 			instance++;
@@ -251,32 +250,28 @@ int generate_single(const string &file, vector<combined_group> &gv, mutex &myloc
 	return 0;
 }
 
-int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const parameters &cfg1)
+int assemble_single(combined_graph &cb, vector<transcript> &vt, const parameters &cfg, bool group_boundary)
 {
-	parameters cfg = cfg1;
-	vector<transcript> vt;
-
-	// setting up names
-	char name[10240];
-	sprintf(name, "instance.%d.0", instance);
-	cb.gid = name;
-
 	// rebuild splice graph
 	splice_graph gx;
 	cb.build_splice_graph(gx);
-
-	// refine splice graph
 	refine_splice_graph(gx);
-	//keep_surviving_edges(gx, cfg.min_splicing_count);
 
-	// construct hyper-set
-	hyper_set hx(gx, cb.ps);
+	phase_set px = cb.ps;
+	if(group_boundary == true)
+	{
+		map<int32_t, int32_t> smap, tmap;
+		group_start_boundaries(gx, smap, cfg.max_group_boundary_distance);
+		group_end_boundaries(gx, tmap, cfg.max_group_boundary_distance);
+		px.project_boundaries(smap, tmap);
+	}
+
+	hyper_set hx(gx, px);
 	hx.filter_nodes(gx);
 
 	// assemble 
 	gx.gid = cb.gid;
-	cfg.algo = "single";
-	scallop sx(gx, hx, &cfg);
+	scallop sx(gx, hx, cfg);
 	sx.assemble();
 
 	for(int k = 0; k < sx.trsts.size(); k++)
@@ -287,16 +282,32 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 		vt.push_back(t);
 	}
 
-	printf("assemble combined-graph %s, 0 children, %lu assembled transcripts\n", cb.gid.c_str(), vt.size());
+	printf("assemble combined-graph %s, %lu assembled transcripts\n", cb.gid.c_str(), vt.size());
+	return 0;
+}
 
-	if(vt.size() <= 0) return 0;
+int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vector<transcript> &vt, const parameters &cfg)
+{
+	assert(gv.size() >= 2);
+	combined_graph cb;
+	cb.combine(gv);
+	cb.copy_meta_information(*(gv[0]));
+	cb.set_gid(instance, subindex);
+	assemble_single(cb, vt, cfg, true);
+	return 0;
+}
+
+int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const parameters &cfg)
+{
+	cb.set_gid(instance, 0);
+	vector<transcript> vt;
+	assemble_single(cb, vt, cfg, false);
 
 	mylock.lock();
-	for(int k = 0; k < vt.size(); k++)
-	{
-		index_transcript(trsts, vt[k]);
-	}
+	for(int k = 0; k < vt.size(); k++) index_transcript(trsts, vt[k]);
 	mylock.unlock();
+
+	cb.clear();
 	return 0;
 }
 
@@ -305,66 +316,59 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 	assert(gv.size() >= 2);
 
 	int subindex = 0;
-	vector<transcript> vt;
-	assemble_cluster(gv, instance, subindex++, vt, cfg);
+	resolve_cluster(gv, cfg);
 
-	/*
+	// transcripts from individual graphs
+	vector<transcript> vt1;
 	for(int i = 0; i < gv.size(); i++)
 	{
-		for(int j = i + 1; j < gv.size(); j++)
-		{
-			vector<combined_graph*> gv1;
-			gv1.push_back(gv[i]);
-			gv1.push_back(gv[j]);
-			assemble_cluster(gv1, instance, subindex++, vt, cfg);
-		}
+		combined_graph &cb = *(gv[i]);
+		cb.set_gid(instance, subindex++);
+		assemble_single(cb, vt1, cfg, false);
 	}
-	*/
+
+	// transcripts from pairwise partitions
+	vector<transcript> vt2;
+	for(int i = 0; i < gv.size() / 2; i++)
+	{
+		vector<combined_graph*> gv1;
+		gv1.push_back(gv[i * 2 + 0]);
+		gv1.push_back(gv[i * 2 + 1]);
+		assemble_cluster(gv1, instance, subindex++, vt2, cfg);
+	}
+	if(gv.size() % 2 == 1)
+	{
+		combined_graph &cb = *(gv.back());
+		cb.set_gid(instance, subindex++);
+		assemble_single(cb, vt2, cfg, false);
+	}
+
+	vector<transcript> vv1;
+	vector<transcript> vv2;
+	get_duplicate_transcripts(vt1, vv1);
+	get_duplicate_transcripts(vt2, vv2);
 
 	mylock.lock();
-	for(int k = 0; k < vt.size(); k++)
-	{
-		index_transcript(trsts, vt[k]);
-	}
+	for(int k = 0; k < vv1.size(); k++) index_transcript(trsts, vv1[k]);
+	for(int k = 0; k < vv2.size(); k++) index_transcript(trsts, vv2[k]);
 	mylock.unlock();
 
-	for(int i = 0; i > gv.size(); i++)
-	{
-		gv[i]->clear();
-	}
-
+	for(int i = 0; i > gv.size(); i++) gv[i]->clear();
 	return 0;
 }
 
-int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vector<transcript> &vt, const parameters &cfg1)
+int resolve_cluster(vector<combined_graph*> gv, const parameters &cfg)
 {
-	assert(gv.size() >= 2);
-
-	parameters cfg = cfg1;
-
-	// assembled transcripts and index
-	map< size_t, vector<transcript> > mt;
+	if(gv.size() <= 1) return 0;
 
 	// construct combined graph
 	combined_graph cb;
+	cb.copy_meta_information(*(gv[0]));
 	cb.combine(gv);
-
-	// setting up names
-	char name[10240];
-	sprintf(name, "instance.%d.%d.0", instance, subindex);
-	cb.gid = name;
-	for(int j = 0; j < gv.size(); j++)
-	{
-		sprintf(name, "instance.%d.%d.%d", instance, subindex, j + 1);
-		gv[j]->gid = name;
-	}
-
-	//set<int32_t> rs = cb.get_reliable_splices(cfg.min_supporting_samples, 99999);
 
 	// rebuild splice graph
 	splice_graph gx;
 	cb.build_splice_graph(gx);
-	phase_set px = cb.ps;
 	gx.build_vertex_index();
 
 	// collect and bridge all unbridged pairs
@@ -378,112 +382,36 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vec
 		if(gt.sp.insertsize_low < length_low) length_low = gt.sp.insertsize_low;
 		if(gt.sp.insertsize_high > length_high) length_high = gt.sp.insertsize_high;
 		index[k].first = vc.size();
-		for(int i = 0; i < gt.vc.size(); i++) vc.push_back(gt.vc[i]);
-		//vc.insert(vc.end(), gt.vc.begin(), gt.vc.end());
+		vc.insert(vc.end(), gt.vc.begin(), gt.vc.end());
 		index[k].second = vc.size();
-		//gt.vc.clear();
 	}
 
 	bridge_solver br(gx, vc, cfg, length_low, length_high);
-	br.build_phase_set(px);
+	br.build_phase_set(cb.ps);
 
-	// refine splice graph and phasing paths
-	map<int32_t, int32_t> smap, tmap;
-	group_start_boundaries(gx, smap, cfg.max_group_boundary_distance);
-	group_end_boundaries(gx, tmap, cfg.max_group_boundary_distance);
-	px.project_boundaries(smap, tmap);
-
-	refine_splice_graph(gx);
-	//keep_surviving_edges(gx, cfg.min_splicing_count);
-
-	// construct hyper-set
-	hyper_set hx(gx, px);
-	hx.filter_nodes(gx);
-
-	/*
-	printf("---- parent\n");
-	gx.print();
-	hx.print_nodes();
-	printf("====\n");
-	*/
-
-	// assemble combined graph
-	gx.gid = cb.gid;
-	cfg.algo = "single";
-	scallop sx(gx, hx, &cfg);
-	sx.assemble();
-
-	int assembled = 0;
-	/* TODO; ignore combined transcripts
-	for(int k = 0; k < sx.trsts.size(); k++)
-	{
-		transcript &t = sx.trsts[k];
-		t.RPKM = 0;
-		if(t.exons.size() <= 1) continue;
-		index_transcript(mt, t);
-	}
-	*/
-
-	// process each individual graph
+	// resolve individual graphs
 	for(int i = 0; i < gv.size(); i++)
 	{
-		// process unbridged reads
-		combined_graph g1;		
+		combined_graph g1;
 		for(int k = index[i].first; k < index[i].second; k++)
 		{
 			if(br.opt[k].type < 0) continue;
 			g1.append(vc[k], br.opt[k]);
 		}
-
-		vector<combined_graph*> gv1;
-		gv1.push_back(&g1);
-		gv1.push_back(gv[i]);
-
-		combined_graph cb1;
-		cb1.combine(gv1);
-		cb1.copy_meta_information(*(gv[i]));
-
-		splice_graph gr;
-		cb1.build_splice_graph(gr);
-		gr.build_vertex_index();
-
-		refine_splice_graph(gr);
-		//keep_surviving_edges(gr, rs, cfg.min_splicing_count);
-
-		gr.gid = gv[i]->gid;
-
-		hyper_set hs(gr, cb1.ps);
-		hs.filter_nodes(gr);
-
-		/*
-		printf("---- child %d\n", i);
-		gr.print();
-		hs.print_nodes();
-		printf("====\n");
-		*/
-
-		cfg.algo = "single";
-		scallop sc(gr, hs, &cfg);
-		sc.assemble();
-
-		for(int k = 0; k < sc.trsts.size(); k++)
-		{
-			transcript &t = sc.trsts[k];
-			t.RPKM = 0;
-			if(t.exons.size() <= 1) continue;
-			//t.write(cout);
-			bool b = query_transcript(mt, t);
-			if(b == false) index_transcript(mt, t);
-
-			if(b == true || t.coverage >= cfg.standalone_coverage)
-			{
-				vt.push_back(t);
-				assembled++;
-			}
-		}
+		gv[i]->combine(&g1);
 	}
+	return 0;
+}
 
-	printf("assemble combined-graph %s, instance = %d, subindex %d, %lu children, %d assembled transcripts\n", cb.gid.c_str(), instance, subindex, gv.size(), assembled);
+int get_duplicate_transcripts(const vector<transcript> &v, vector<transcript> &vv)
+{
+	map< size_t, vector<transcript> > mt;
+	for(int i = 0; i < v.size(); i++)
+	{
+		bool b = query_transcript(mt, v[i]);
+		if(b == true) vv.push_back(v[i]);
+		else index_transcript(mt, v[i]);
+	}
 	return 0;
 }
 

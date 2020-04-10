@@ -39,6 +39,7 @@ public:
 public:
 	// copy gid etc from cb
 	int copy_meta_information(const combined_graph &cb);
+	int set_gid(int instance, int subindex);
 
 	// build from gr, hs, and ub
 	int build(splice_graph &gr, const phase_set &ps, const vector<pereads_cluster> &ub);
@@ -51,6 +52,7 @@ public:
 	int get_overlapped_splice_positions(const vector<int32_t> &v) const;
 
 	// combine children
+	int combine(combined_graph *cb);
 	int combine(vector<combined_graph*> &gv);
 	int combine_regions(split_interval_double_map &imap) const;
 	int combine_junctions(map<PI32, DI> &m) const;

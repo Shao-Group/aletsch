@@ -30,8 +30,8 @@ typedef map<int, int> MI;
 class scallop
 {
 public:
-	scallop(const splice_graph &gr, const hyper_set &hs, parameters *c);
-	scallop(const splice_graph &gr, const hyper_set &hs, const hyper_set &hx, parameters *c);
+	scallop(const splice_graph &gr, const hyper_set &hs, const parameters &c);
+	scallop(const splice_graph &gr, const hyper_set &hs, const hyper_set &hx, const parameters &c);
 	virtual ~scallop();
 
 public:
@@ -39,7 +39,7 @@ public:
 	int preassemble();
 
 public:
-	parameters *cfg;						// parameters
+	const parameters &cfg;				// parameters
 	splice_graph gr;					// splice graph
 	MEI e2i;							// edge map, from edge to index
 	VE i2e;								// edge map, from index to edge

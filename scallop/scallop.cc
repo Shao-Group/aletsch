@@ -14,14 +14,14 @@ See LICENSE for licensing.
 #include <cfloat>
 #include <algorithm>
 
-scallop::scallop(const splice_graph &g, const hyper_set &h1, parameters *c)
+scallop::scallop(const splice_graph &g, const hyper_set &h1, const parameters &c)
 	: gr(g), hs(h1), cfg(c)
 {
 	round = 0;
 	//gr.draw(gr.gid + "." + tostring(round++) + ".tex");
 	gr.get_edge_indices(i2e, e2i);
 	//add_pseudo_hyper_edges();
-	//hs.build_confident_nodes(cfg->min_confident_phasing_path_weight);
+	//hs.build_confident_nodes(cfg.min_confident_phasing_path_weight);
 	hs.build(gr, e2i);
 	init_super_edges();
 	init_vertex_map();
@@ -29,7 +29,7 @@ scallop::scallop(const splice_graph &g, const hyper_set &h1, parameters *c)
 	init_nonzeroset();
 }
 
-scallop::scallop(const splice_graph &g, const hyper_set &h1, const hyper_set &h2, parameters *c)
+scallop::scallop(const splice_graph &g, const hyper_set &h1, const hyper_set &h2, const parameters &c)
 	: gr(g), hs(h1), hx(h2), cfg(c)
 {
 	round = 0;
@@ -37,8 +37,8 @@ scallop::scallop(const splice_graph &g, const hyper_set &h1, const hyper_set &h2
 
 	gr.get_edge_indices(i2e, e2i);
 	//add_pseudo_hyper_edges();
-	//hs.build_confident_nodes(cfg->min_confident_phasing_path_weight);
-	//hx.build_confident_nodes(cfg->min_confident_phasing_path_weight);
+	//hs.build_confident_nodes(cfg.min_confident_phasing_path_weight);
+	//hx.build_confident_nodes(cfg.min_confident_phasing_path_weight);
 	hs.build(gr, e2i);
 	hx.build(gr, e2i);
 	init_super_edges();
@@ -54,13 +54,13 @@ scallop::~scallop()
 int scallop::assemble()
 {
 	int c = classify();
-	if(cfg->verbose >= 2) printf("process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
+	if(cfg.verbose >= 2) printf("process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
 
-	//resolve_negligible_edges(false, cfg->max_decompose_error_ratio[NEGLIGIBLE_EDGE]);
+	//resolve_negligible_edges(false, cfg.max_decompose_error_ratio[NEGLIGIBLE_EDGE]);
 
 	while(true)
 	{	
-		if(gr.num_vertices() > cfg->max_num_exons) break;
+		if(gr.num_vertices() > cfg.max_num_exons) break;
 
 		/*
 		printf("---------\n");
@@ -79,25 +79,25 @@ int scallop::assemble()
 
 		bool b = false;
 
-		b = resolve_trivial_vertex_fast(cfg->max_decompose_error_ratio[TRIVIAL_VERTEX]);
+		b = resolve_trivial_vertex_fast(cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 		if(b == true) continue;
 
-		b = resolve_trivial_vertex(1, cfg->max_decompose_error_ratio[TRIVIAL_VERTEX]);
+		b = resolve_trivial_vertex(1, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 		if(b == true) continue;
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, 1, 0.01);
 		if(b == true) continue;
 
-		b = resolve_smallest_edges(cfg->max_decompose_error_ratio[SMALLEST_EDGE]);
+		b = resolve_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
 		if(b == true) continue;
 
-		b = resolve_negligible_edges(true, cfg->max_decompose_error_ratio[NEGLIGIBLE_EDGE]);
+		b = resolve_negligible_edges(true, cfg.max_decompose_error_ratio[NEGLIGIBLE_EDGE]);
 		if(b == true) continue;
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_MULTIPLE, 1, 0.01);
 		if(b == true) continue;
 
-		b = resolve_splittable_vertex(SPLITTABLE_HYPER, 1, cfg->max_decompose_error_ratio[SPLITTABLE_HYPER]);
+		b = resolve_splittable_vertex(SPLITTABLE_HYPER, 1, cfg.max_decompose_error_ratio[SPLITTABLE_HYPER]);
 		if(b == true) continue;
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, 0.05);
@@ -106,10 +106,10 @@ int scallop::assemble()
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_MULTIPLE, INT_MAX, 0.05);
 		if(b == true) continue;
 
-		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, cfg->max_decompose_error_ratio[UNSPLITTABLE_SINGLE]);
+		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, cfg.max_decompose_error_ratio[UNSPLITTABLE_SINGLE]);
 		if(b == true) continue;
 
-		if(cfg->algo == "single")
+		if(cfg.algo == "single")
 		{
 			b = resolve_hyper_edge(2);
 			if(b == true) continue;
@@ -118,7 +118,7 @@ int scallop::assemble()
 			if(b == true) continue;
 		}
 
-		if(cfg->algo == "global")
+		if(cfg.algo == "global")
 		{
 			b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, DBL_MAX);
 			if(b == true) continue;
@@ -135,7 +135,7 @@ int scallop::assemble()
 
 		//summarize_vertices();
 
-		b = resolve_trivial_vertex(2, cfg->max_decompose_error_ratio[TRIVIAL_VERTEX]);
+		b = resolve_trivial_vertex(2, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 		if(b == true) continue;
 
 		break;
@@ -147,7 +147,7 @@ int scallop::assemble()
 
 	output_transcripts();
 
-	if(cfg->verbose >= 2) 
+	if(cfg.verbose >= 2) 
 	{
 		for(int i = 0; i < paths.size(); i++) paths[i].print(i);
 		printf("finish assemble bundle %s\n\n", gr.gid.c_str());
@@ -159,35 +159,35 @@ int scallop::assemble()
 int scallop::preassemble()
 {
 	int c = classify();
-	if(cfg->verbose >= 1) printf("process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
+	if(cfg.verbose >= 1) printf("process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
 
-	//resolve_negligible_edges(false, cfg->max_decompose_error_ratio[NEGLIGIBLE_EDGE]);
+	//resolve_negligible_edges(false, cfg.max_decompose_error_ratio[NEGLIGIBLE_EDGE]);
 
 	while(true)
 	{	
-		if(gr.num_vertices() > cfg->max_num_exons) break;
+		if(gr.num_vertices() > cfg.max_num_exons) break;
 
 		bool b = false;
 
-		b = resolve_trivial_vertex_fast(cfg->max_decompose_error_ratio[TRIVIAL_VERTEX]);
+		b = resolve_trivial_vertex_fast(cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 		if(b == true) continue;
 
-		b = resolve_trivial_vertex(1, cfg->max_decompose_error_ratio[TRIVIAL_VERTEX]);
+		b = resolve_trivial_vertex(1, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 		if(b == true) continue;
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, 1, 0.01);
 		if(b == true) continue;
 
-		b = resolve_smallest_edges(cfg->max_decompose_error_ratio[SMALLEST_EDGE]);
+		b = resolve_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
 		if(b == true) continue;
 
-		b = resolve_negligible_edges(true, cfg->max_decompose_error_ratio[NEGLIGIBLE_EDGE]);
+		b = resolve_negligible_edges(true, cfg.max_decompose_error_ratio[NEGLIGIBLE_EDGE]);
 		if(b == true) continue;
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_MULTIPLE, 1, 0.01);
 		if(b == true) continue;
 
-		b = resolve_splittable_vertex(SPLITTABLE_HYPER, 1, cfg->max_decompose_error_ratio[SPLITTABLE_HYPER]);
+		b = resolve_splittable_vertex(SPLITTABLE_HYPER, 1, cfg.max_decompose_error_ratio[SPLITTABLE_HYPER]);
 		if(b == true) continue;
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, 0.05);
@@ -196,7 +196,7 @@ int scallop::preassemble()
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_MULTIPLE, INT_MAX, 0.05);
 		if(b == true) continue;
 
-		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, cfg->max_decompose_error_ratio[UNSPLITTABLE_SINGLE]);
+		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, cfg.max_decompose_error_ratio[UNSPLITTABLE_SINGLE]);
 		if(b == true) continue;
 
 		break;
@@ -245,7 +245,7 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 		if(r < 0.01)
 		{
 			double w = gr.get_edge_weight(i2e[e]);
-			if(cfg->verbose >= 2) printf("resolve small edge, edge = %d, weight = %.2lf, ratio = %.2lf, vertex = (%d, %d), degree = (%d, %d)\n", 
+			if(cfg.verbose >= 2) printf("resolve small edge, edge = %d, weight = %.2lf, ratio = %.2lf, vertex = (%d, %d), degree = (%d, %d)\n", 
 					e, w, r, s, t, gr.out_degree(s), gr.in_degree(t));
 
 			remove_edge(e);
@@ -268,7 +268,7 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 	double sw = gr.get_edge_weight(i2e[se]);
 	int s = i2e[se]->source();
 	int t = i2e[se]->target();
-	if(cfg->verbose >= 2) printf("resolve small edge, edge = %d, weight = %.2lf, ratio = %.2lf, vertex = (%d, %d), degree = (%d, %d)\n", 
+	if(cfg.verbose >= 2) printf("resolve small edge, edge = %d, weight = %.2lf, ratio = %.2lf, vertex = (%d, %d), degree = (%d, %d)\n", 
 			se, sw, ratio, s, t, gr.out_degree(s), gr.in_degree(t));
 
 	remove_edge(se);
@@ -304,7 +304,7 @@ bool scallop::resolve_negligible_edges(bool extend, double max_ratio)
 			double w = gr.get_edge_weight(e);
 			if(w > max_ratio * ww1) continue;
 			if(extend && hs.right_extend(e2i[e])) continue;
-			if(cfg->verbose >= 2) printf("resolve in-negligible edge, degree = (%d, %d), vertex = %d, weight = %.3lf / %.3lf\n", gr.in_degree(i), gr.out_degree(i), i, w, ww1);
+			if(cfg.verbose >= 2) printf("resolve in-negligible edge, degree = (%d, %d), vertex = %d, weight = %.3lf / %.3lf\n", gr.in_degree(i), gr.out_degree(i), i, w, ww1);
 			s.insert(e2i[e]);
 		}
 		for(pei = gr.out_edges(i), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
@@ -313,7 +313,7 @@ bool scallop::resolve_negligible_edges(bool extend, double max_ratio)
 			double w = gr.get_edge_weight(e);
 			if(w > max_ratio * ww2) continue;
 			if(extend && hs.left_extend(e2i[e])) continue;
-			if(cfg->verbose >= 2) printf("resolve out-negligible edge, degree = (%d, %d), vertex = %d, weight = %.3lf / %.3lf\n", gr.in_degree(i), gr.out_degree(i), i, w, ww1);
+			if(cfg.verbose >= 2) printf("resolve out-negligible edge, degree = (%d, %d), vertex = %d, weight = %.3lf / %.3lf\n", gr.in_degree(i), gr.out_degree(i), i, w, ww1);
 			s.insert(e2i[e]);
 		}
 
@@ -374,7 +374,7 @@ bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 
 	if(root == -1) return false;
 
-	if(cfg->verbose >= 2) printf("resolve splittable vertex, type = %d, degree = %d, vertex = %d, ratio = %.2lf, degree = (%d, %d)\n", 
+	if(cfg.verbose >= 2) printf("resolve splittable vertex, type = %d, degree = %d, vertex = %d, ratio = %.2lf, degree = (%d, %d)\n", 
 			type, degree, root, ratio, gr.in_degree(root), gr.out_degree(root));
 
 	split_vertex(root, eqns[0].s, eqns[0].t);
@@ -414,7 +414,7 @@ bool scallop::resolve_unsplittable_vertex(int type, int degree, double max_ratio
 
 		if(rt.ratio < 0.01)
 		{
-			if(cfg->verbose >= 2) printf("resolve unsplittable vertex, type = %d, degree = %d, vertex = %d, ratio = %.3lf, degree = (%d, %d)\n",
+			if(cfg.verbose >= 2) printf("resolve unsplittable vertex, type = %d, degree = %d, vertex = %d, ratio = %.3lf, degree = (%d, %d)\n",
 					type, degree, i, rt.ratio, gr.in_degree(i), gr.out_degree(i));
 			decompose_vertex_extend(i, rt.pe2w);
 			flag = true;
@@ -431,7 +431,7 @@ bool scallop::resolve_unsplittable_vertex(int type, int degree, double max_ratio
 	if(flag == true) return true;
 	if(root == -1) return false;
 
-	if(cfg->verbose >= 2) printf("resolve unsplittable vertex, type = %d, degree = %d, vertex = %d, ratio = %.3lf, degree = (%d, %d)\n",
+	if(cfg.verbose >= 2) printf("resolve unsplittable vertex, type = %d, degree = %d, vertex = %d, ratio = %.3lf, degree = (%d, %d)\n",
 			type, degree, root, ratio, gr.in_degree(root), gr.out_degree(root));
 
 	decompose_vertex_extend(root, pe2w);
@@ -475,7 +475,7 @@ bool scallop::resolve_hyper_edge(int fsize)
 	if(v1.size() == 0 || v2.size() == 0) return false;
 	assert(v1.size() == 1 || v2.size() == 1);
 
-	if(cfg->verbose >= 2) printf("resolve hyper edge, fsize = %d, vertex = %d, degree = (%d, %d), hyper edge = (%lu, %lu)\n",
+	if(cfg.verbose >= 2) printf("resolve hyper edge, fsize = %d, vertex = %d, degree = (%d, %d), hyper edge = (%lu, %lu)\n",
 			fsize, root, gr.in_degree(root), gr.out_degree(root), v1.size(), v2.size());
 
 	balance_vertex(root);
@@ -557,7 +557,7 @@ bool scallop::resolve_trivial_vertex(int type, double jump_ratio)
 
 		if(r < 1.02)
 		{
-			if(cfg->verbose >= 2) printf("resolve trivial vertex %d, type = %d, ratio = %.2lf, degree = (%d, %d)\n", i, type, 
+			if(cfg.verbose >= 2) printf("resolve trivial vertex %d, type = %d, ratio = %.2lf, degree = (%d, %d)\n", i, type, 
 					r, gr.in_degree(i), gr.out_degree(i));
 
 			decompose_trivial_vertex(i);
@@ -577,7 +577,7 @@ bool scallop::resolve_trivial_vertex(int type, double jump_ratio)
 	if(flag == true) return true;
 	if(root == -1) return false;
 
-	if(cfg->verbose >= 2) printf("resolve trivial vertex %d, type = %d, ratio = %.2lf, degree = (%d, %d)\n", root, type, 
+	if(cfg.verbose >= 2) printf("resolve trivial vertex %d, type = %d, ratio = %.2lf, degree = (%d, %d)\n", root, type, 
 			ratio, gr.in_degree(root), gr.out_degree(root));
 
 	decompose_trivial_vertex(root);
@@ -610,7 +610,7 @@ bool scallop::resolve_single_trivial_vertex_fast(int i, double jump_ratio)
 	double r = compute_balance_ratio(i);
 	if(r >= jump_ratio) return false;
 
-	if(cfg->verbose >= 2) printf("resolve trivial vertex fast, vertex = %d, ratio = %.2lf, degree = (%d, %d)\n",
+	if(cfg.verbose >= 2) printf("resolve trivial vertex fast, vertex = %d, ratio = %.2lf, degree = (%d, %d)\n",
 			i, r, gr.in_degree(i), gr.out_degree(i));
 
 	decompose_trivial_vertex(i);
@@ -972,12 +972,12 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 	for(map<int, int>::iterator it = ev1.begin(); it != ev1.end(); it++)
 	{
 		int k = it->second;
-		resolve_single_trivial_vertex_fast(k, cfg->max_decompose_error_ratio[TRIVIAL_VERTEX]);
+		resolve_single_trivial_vertex_fast(k, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 	}
 	for(map<int, int>::iterator it = ev2.begin(); it != ev2.end(); it++)
 	{
 		int k = it->second;
-		resolve_single_trivial_vertex_fast(k, cfg->max_decompose_error_ratio[TRIVIAL_VERTEX]);
+		resolve_single_trivial_vertex_fast(k, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 	}
 
 	return 0;
@@ -1654,14 +1654,14 @@ int scallop::greedy_decompose()
 	{
 		VE v;
 		double w = gr.compute_maximum_path_w(v);
-		if(w <= cfg->min_transcript_coverage) break;
+		if(w <= cfg.min_transcript_coverage) break;
 
 		int e = split_merge_path(v, w);
 		collect_path(e);
 		cnt++;
 	}
 	int n2 = paths.size();
-	//if(cfg->verbose >= 2) 
+	//if(cfg.verbose >= 2) 
 	printf("greedy decomposing produces %d / %d paths\n", n2 - n1, n2);
 	return 0;
 }

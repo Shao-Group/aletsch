@@ -21,6 +21,14 @@ int combined_graph::copy_meta_information(const combined_graph &cb)
 	return 0;
 }
 
+int combined_graph::set_gid(int instance, int subindex)
+{
+	char name[10240];
+	sprintf(name, "instance.%d.%d.0", instance, subindex);
+	gid = name;
+	return 0;
+}
+
 int combined_graph::build(splice_graph &gr, const phase_set &p, const vector<pereads_cluster> &ub)
 {
 	chrm = gr.chrm;
@@ -127,20 +135,34 @@ int combined_graph::get_overlapped_splice_positions(const vector<int32_t> &v) co
 	return it - vv.begin();
 }
 
+int combined_graph::combine(combined_graph *cb)
+{
+	vector<combined_graph*> v;
+	v.push_back(cb);
+	combine(v);
+	return 0;
+}
+
 int combined_graph::combine(vector<combined_graph*> &gv)
 {
 	if(gv.size() == 0) return 0;
 
+	/*
 	chrm = gv[0]->chrm;
 	strand = gv[0]->strand;
 	sp = gv[0]->sp;
 	num_combined = 0;
+	*/
 
 	split_interval_double_map imap;
 	map<PI32, DI> mj;
 	map<int32_t, DI> ms;
 	map<int32_t, DI> mt;
-	ps.clear();
+
+	combine_regions(imap);
+	combine_junctions(mj);
+	combine_start_bounds(ms);
+	combine_end_bounds(mt);
 
 	for(int i = 0; i < gv.size(); i++)
 	{
