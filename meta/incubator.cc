@@ -255,6 +255,7 @@ int assemble_single(combined_graph &cb, vector<transcript> &vt, const parameters
 	// rebuild splice graph
 	splice_graph gx;
 	cb.build_splice_graph(gx);
+	gx.build_vertex_index();
 	refine_splice_graph(gx);
 
 	phase_set px = cb.ps;
