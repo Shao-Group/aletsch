@@ -377,6 +377,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vec
 	scallop sx(gx, hx, &cfg);
 	sx.assemble();
 
+	int assembled = 0;
 	for(int k = 0; k < sx.trsts.size(); k++)
 	{
 		transcript &t = sx.trsts[k];
@@ -385,6 +386,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vec
 		index_transcript(mt, t);
 		//t.write(cout);
 		if(cfg.merge_intersection == false) vt.push_back(t);
+		if(cfg.merge_intersection == false) assembled++;
 	}
 
 	// process each individual graph
@@ -438,10 +440,11 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vec
 			bool b = query_transcript(mt, t);
 			if(b == false) index_transcript(mt, t);
 			if(b || cfg.merge_intersection == false) vt.push_back(t);
+			if(b || cfg.merge_intersection == false) assembled++;
 		}
 	}
 
-	printf("assemble combined-graph %s, %lu children, %lu assembled transcripts\n", cb.gid.c_str(), gv.size(), vt.size());
+	printf("assemble combined-graph %s, %lu children, %lu assembled transcripts\n", cb.gid.c_str(), gv.size(), assembled);
 	return 0;
 }
 
