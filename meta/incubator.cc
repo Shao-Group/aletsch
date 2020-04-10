@@ -314,43 +314,37 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const parameters &cfg)
 {
 	assert(gv.size() >= 2);
+	vector<transcript> vv;
 
 	int subindex = 0;
 	resolve_cluster(gv, cfg);
-
-	// transcripts from individual graphs
-	vector<transcript> vt1;
-	for(int i = 0; i < gv.size(); i++)
+	for(int k = 1; k <= gv.size() / 2; k++)
 	{
-		combined_graph &cb = *(gv[i]);
-		cb.set_gid(instance, subindex++);
-		assemble_single(cb, vt1, cfg, false);
-	}
+		vector<transcript> vt;
+		for(int i = 0; i <= gv.size() / k; i++)
+		{
+			vector<combined_graph*> gv1;
+			for(int j = 0; j < k; j++)
+			{
+				if(i * k + j < gv.size()) gv1.push_back(gv[i * k + j]);
+			}
 
-	// transcripts from pairwise partitions
-	vector<transcript> vt2;
-	for(int i = 0; i < gv.size() / 2; i++)
-	{
-		vector<combined_graph*> gv1;
-		gv1.push_back(gv[i * 2 + 0]);
-		gv1.push_back(gv[i * 2 + 1]);
-		assemble_cluster(gv1, instance, subindex++, vt2, cfg);
+			if(gv1.size() == 1) 
+			{
+				combined_graph &cb = *(gv1[0]);
+				cb.set_gid(instance, subindex++);
+				assemble_single(cb, vt, cfg, false);
+			}
+			else if(gv1.size() >= 2)
+			{
+				assemble_cluster(gv1, instance, subindex++, vt, cfg);
+			}
+		}
+		get_duplicate_transcripts(vt, vv);
 	}
-	if(gv.size() % 2 == 1)
-	{
-		combined_graph &cb = *(gv.back());
-		cb.set_gid(instance, subindex++);
-		assemble_single(cb, vt2, cfg, false);
-	}
-
-	vector<transcript> vv1;
-	vector<transcript> vv2;
-	get_duplicate_transcripts(vt1, vv1);
-	get_duplicate_transcripts(vt2, vv2);
 
 	mylock.lock();
-	for(int k = 0; k < vv1.size(); k++) index_transcript(trsts, vv1[k]);
-	for(int k = 0; k < vv2.size(); k++) index_transcript(trsts, vv2[k]);
+	for(int k = 0; k < vv.size(); k++) index_transcript(trsts, vv[k]);
 	mylock.unlock();
 
 	for(int i = 0; i > gv.size(); i++) gv[i]->clear();
