@@ -42,6 +42,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const parameters &cfg);
 int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vector<transcript> &vt, const parameters &cfg);
 int assemble_single(combined_graph &cb, vector<transcript> &vt, const parameters &cfg, bool group_boundary);
+int resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, const parameters &cfg);
 int resolve_cluster(vector<combined_graph*> gv, const parameters &cfg);
 int get_duplicate_transcripts(const vector<transcript> &v, vector<transcript> &vv);
 int index_transcript(map< size_t, vector<transcript> > &mt, const transcript &t);

@@ -256,7 +256,6 @@ int assemble_single(combined_graph &cb, vector<transcript> &vt, const parameters
 	splice_graph gx;
 	cb.build_splice_graph(gx);
 	gx.build_vertex_index();
-	refine_splice_graph(gx);
 
 	phase_set px = cb.ps;
 	if(group_boundary == true)
@@ -266,6 +265,8 @@ int assemble_single(combined_graph &cb, vector<transcript> &vt, const parameters
 		group_end_boundaries(gx, tmap, cfg.max_group_boundary_distance);
 		px.project_boundaries(smap, tmap);
 	}
+
+	refine_splice_graph(gx);
 
 	hyper_set hx(gx, px);
 	hx.filter_nodes(gx);
@@ -283,7 +284,9 @@ int assemble_single(combined_graph &cb, vector<transcript> &vt, const parameters
 		vt.push_back(t);
 	}
 
-	printf("assemble combined-graph %s, %lu assembled transcripts\n", cb.gid.c_str(), vt.size());
+	printf("assemble combined-graph %s, %lu assembled transcripts: ", cb.gid.c_str(), vt.size());
+	cb.print(0);
+
 	return 0;
 }
 
@@ -318,10 +321,17 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 	vector<transcript> vv;
 
 	int subindex = 0;
-	resolve_cluster(gv, cfg);
+	vector<transcript> vt;
+
+	combined_graph cx;
+	resolve_cluster(gv, cx, cfg);
+
+	cx.set_gid(instance, subindex++);
+	assemble_single(cx, vt, cfg, true);
+
 	for(int k = 1; k <= gv.size() / 2; k++)
 	{
-		vector<transcript> vt;
+		//vector<transcript> vt;
 		for(int i = 0; i <= gv.size() / k; i++)
 		{
 			vector<combined_graph*> gv1;
@@ -341,8 +351,11 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 				assemble_cluster(gv1, instance, subindex++, vt, cfg);
 			}
 		}
-		get_duplicate_transcripts(vt, vv);
+		//get_duplicate_transcripts(vt, vv);
+		break;
 	}
+		
+	get_duplicate_transcripts(vt, vv);
 
 	mylock.lock();
 	for(int k = 0; k < vv.size(); k++) index_transcript(trsts, vv[k]);
@@ -354,10 +367,16 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 
 int resolve_cluster(vector<combined_graph*> gv, const parameters &cfg)
 {
+	combined_graph cb;
+	resolve_cluster(gv, cb, cfg);
+	return 0;
+}
+
+int resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, const parameters &cfg)
+{
 	if(gv.size() <= 1) return 0;
 
 	// construct combined graph
-	combined_graph cb;
 	cb.copy_meta_information(*(gv[0]));
 	cb.combine(gv);
 
