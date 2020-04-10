@@ -300,16 +300,14 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	return 0;
 }
 
-int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const parameters &cfg1)
+int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vector<transcript> &vt, const parameters &cfg1)
 {
 	assert(gv.size() >= 2);
 
 	parameters cfg = cfg1;
 
 	// assembled transcripts and index
-	int z = 0;
 	map< size_t, vector<transcript> > mt;
-	vector<transcript> vt;
 
 	// construct combined graph
 	combined_graph cb;
@@ -317,15 +315,15 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 
 	// setting up names
 	char name[10240];
-	sprintf(name, "instance.%d.0", instance);
+	sprintf(name, "instance.%d.%d.0", instance, subindex);
 	cb.gid = name;
 	for(int j = 0; j < gv.size(); j++)
 	{
-		sprintf(name, "instance.%d.%d", instance, j + 1);
+		sprintf(name, "instance.%d.%d.%d", instance, subindex, j + 1);
 		gv[j]->gid = name;
 	}
 
-	set<int32_t> rs = cb.get_reliable_splices(cfg.min_supporting_samples, 99999);
+	//set<int32_t> rs = cb.get_reliable_splices(cfg.min_supporting_samples, 99999);
 
 	// rebuild splice graph
 	splice_graph gx;
@@ -347,7 +345,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 		for(int i = 0; i < gt.vc.size(); i++) vc.push_back(std::move(gt.vc[i]));
 		//vc.insert(vc.end(), gt.vc.begin(), gt.vc.end());
 		index[k].second = vc.size();
-		gt.vc.clear();
+		//gt.vc.clear();
 	}
 
 	bridge_solver br(gx, vc, cfg, length_low, length_high);
@@ -384,7 +382,6 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 		transcript &t = sx.trsts[k];
 		t.RPKM = 0;
 		if(t.exons.size() <= 1) continue;
-		z++;
 		index_transcript(mt, t);
 		//t.write(cout);
 		if(cfg.merge_intersection == false) vt.push_back(t);
@@ -394,7 +391,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 	for(int i = 0; i < gv.size(); i++)
 	{
 		// process unbridged reads
-		combined_graph g1;		// create virtual combined graph
+		combined_graph g1;		
 		for(int k = index[i].first; k < index[i].second; k++)
 		{
 			if(br.opt[k].type < 0) continue;
@@ -432,25 +429,37 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 		scallop sc(gr, hs, &cfg);
 		sc.assemble();
 
-		int z1 = 0;
-		int z2 = 0;
 		for(int k = 0; k < sc.trsts.size(); k++)
 		{
 			transcript &t = sc.trsts[k];
 			t.RPKM = 0;
 			if(t.exons.size() <= 1) continue;
 			//t.write(cout);
-			z1++;
 			bool b = query_transcript(mt, t);
 			if(b == false) index_transcript(mt, t);
-			if(b == true) z2++;
 			if(b || cfg.merge_intersection == false) vt.push_back(t);
 		}
 	}
 
 	printf("assemble combined-graph %s, %lu children, %lu assembled transcripts\n", cb.gid.c_str(), gv.size(), vt.size());
+	return 0;
+}
 
-	if(vt.size() <= 0) return 0;
+int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const parameters &cfg)
+{
+	assert(gv.size() >= 2);
+	int subindex = 0;
+	vector<transcript> vt;
+	for(int i = 0; i < gv.size(); i++)
+	{
+		for(int j = i + 1; j < gv.size(); j++)
+		{
+			vector<combined_graph*> gv1;
+			gv1.push_back(gv[i]);
+			gv1.push_back(gv[j]);
+			assemble_cluster(gv1, instance, subindex++, vt, cfg);
+		}
+	}
 
 	mylock.lock();
 	for(int k = 0; k < vt.size(); k++)
