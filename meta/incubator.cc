@@ -58,7 +58,7 @@ int incubator::generate()
 		exit(0);
 	}
 
-	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
+	//boost::asio::thread_pool pool(cfg.max_threads); // thread pool
 	mutex mylock;									// lock for trsts
 
 	char line[102400];
@@ -66,10 +66,11 @@ int incubator::generate()
 	{
 		string file(line);
 		if(file.size() == 0) continue;
-		boost::asio::post(pool, [this, &mylock, file]{ generate_single(file, this->groups, mylock, this->g2g, this->cfg); });
+		//boost::asio::post(pool, [this, &mylock, file]{ generate_single(file, this->groups, mylock, this->g2g, this->cfg); });
+		generate_single(file, this->groups, mylock, this->g2g, this->cfg);
 	}
 
-	pool.join();
+	//pool.join();
 	print_groups();
 
 	time_t mytime = time(NULL);

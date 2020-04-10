@@ -2,6 +2,9 @@
 #include <cassert>
 #include <sstream>
 #include "boost/pending/disjoint_sets.hpp"
+#include <boost/asio/post.hpp>
+#include <boost/asio/thread_pool.hpp>
+#include <boost/pending/disjoint_sets.hpp>
 
 #include "constants.h"
 #include "parameters.h"
@@ -38,6 +41,13 @@ generator::~generator()
 
 int generator::resolve()
 {
+	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
+	mutex mylock;									// lock for trsts
+
+	int index = 0;
+	bundle *bb1 = new bundle();
+	bundle *bb2 = new bundle();
+
     while(sam_read1(sfn, hdr, b1t) >= 0)
 	{
 		bam1_core_t &p = b1t->core;
@@ -60,15 +70,18 @@ int generator::resolve()
 		qcnt += 1;
 
 		// truncate
-		if(ht.tid != bb1.tid || ht.pos > bb1.rpos + cfg.min_bundle_gap)
+		if(bb1->hits.size() >= 1 && (ht.tid != bb1->tid || ht.pos > bb1->rpos + cfg.min_bundle_gap))
 		{
-			generate(bb1);
-			bb1.clear();
+			boost::asio::post(pool, [this, &mylock, bb1, index]{ this->generate(bb1, mylock, index); });
+			bb1 = new bundle();
+			index++;
 		}
-		if(ht.tid != bb2.tid || ht.pos > bb2.rpos + cfg.min_bundle_gap)
+
+		if(bb2->hits.size() >= 1 && (ht.tid != bb2->tid || ht.pos > bb2->rpos + cfg.min_bundle_gap))
 		{
-			generate(bb2);
-			bb2.clear();
+			boost::asio::post(pool, [this, &mylock, bb2, index]{ this->generate(bb2, mylock, index); });
+			bb2 = new bundle();
+			index++;
 		}
 
 		// add hit
@@ -77,31 +90,36 @@ int generator::resolve()
 		if(sp.library_type != UNSTRANDED && ht.strand == '-' && ht.xs == '+') continue;
 		if(sp.library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
 
-		if(sp.library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit_intervals(ht, b1t);
-		if(sp.library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit_intervals(ht, b1t);
-		if(sp.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit_intervals(ht, b1t);
-		if(sp.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit_intervals(ht, b1t);
-		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb1.add_hit_intervals(ht, b1t);
-		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit_intervals(ht, b1t);
+		if(sp.library_type != UNSTRANDED && ht.strand == '+') bb1->add_hit_intervals(ht, b1t);
+		if(sp.library_type != UNSTRANDED && ht.strand == '-') bb2->add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '+') bb1->add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '-') bb2->add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb1->add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb2->add_hit_intervals(ht, b1t);
 	}
 
-	generate(bb1);
-	generate(bb2);
+	boost::asio::post(pool, [this, &mylock, bb1, index]{ this->generate(bb1, mylock, index); });
+	index++;
+
+	boost::asio::post(pool, [this, &mylock, bb2, index]{ this->generate(bb2, mylock, index); });
+	index++;
 
 	return 0;
 }
 
-int generator::generate(bundle &bb)
+int generator::generate(bundle *bb, mutex &mylock, int index)
 {
-	if(bb.hits.size() < cfg.min_num_hits_in_bundle) return 0;
-	if(bb.tid < 0) return 0;
+	printf("process graph %d with %lu hits\n", index, bb->hits.size());
+
+	if(bb->hits.size() < cfg.min_num_hits_in_bundle) return 0;
+	if(bb->tid < 0) return 0;
 
 	char buf[1024];
-	strcpy(buf, hdr->target_name[bb.tid]);
-	bb.chrm = string(buf);
+	strcpy(buf, hdr->target_name[bb->tid]);
+	bb->chrm = string(buf);
 
 	splice_graph gr;
-	graph_builder gb(bb, cfg);
+	graph_builder gb(*bb, cfg);
 	gb.build(gr);
 	gr.build_vertex_index();
 
@@ -111,7 +129,7 @@ int generator::generate(bundle &bb)
 
 	vector<pereads_cluster> vc;
 	phase_set ps;
-	graph_cluster gc(gr, bb.hits, cfg.max_reads_partition_gap);
+	graph_cluster gc(gr, bb->hits, cfg.max_reads_partition_gap);
 	gc.build_pereads_clusters(vc);
 	gc.build_phase_set_from_unpaired_reads(ps);
 
@@ -132,6 +150,7 @@ int generator::generate(bundle &bb)
 	assert(grv.size() == hsv.size());
 	assert(grv.size() == ubv.size());
 
+	vector<combined_graph> tmp;
 	for(int k = 0; k < grv.size(); k++)
 	{
 		if(grv[k].count_junctions() <= 0) continue;
@@ -147,10 +166,18 @@ int generator::generate(bundle &bb)
 		   printf("\n");
 		 */
 
-		vcb.push_back(std::move(cb));
+		tmp.push_back(std::move(cb));
 	}
+	bb->clear();
+	delete bb;
 
-	index++;
+	mylock.lock();
+	for(int k = 0; k < tmp.size(); k++)
+	{
+		vcb.push_back(std::move(tmp[k]));
+	}
+	mylock.unlock();
+
 	return 0;
 }
 

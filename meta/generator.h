@@ -9,6 +9,7 @@ See LICENSE for licensing.
 
 #include <fstream>
 #include <string>
+#include <mutex>
 #include "bundle.h"
 #include "splice_graph.h"
 #include "phase_set.h"
@@ -31,8 +32,6 @@ private:
 	samFile *sfn;
 	bam_hdr_t *hdr;
 	bam1_t *b1t;
-	bundle bb1;		// +
-	bundle bb2;		// -
 
 	vector<combined_graph> &vcb;
 
@@ -44,7 +43,7 @@ public:
 	int resolve();
 
 private:
-	int generate(bundle &bb);
+	int generate(bundle *bb, mutex &mylock, int index);
 	int partition(splice_graph &gr, phase_set &hs, vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &hsv, vector< vector<pereads_cluster> > &ubv);
 };
 
