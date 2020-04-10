@@ -111,8 +111,14 @@ int generator::resolve()
 
 int generator::generate(bundle *bb, mutex &mylock, int index)
 {
-	if(bb->hits.size() < cfg.min_num_hits_in_bundle) return 0;
-	if(bb->tid < 0) return 0;
+	if(bb == NULL) return 0;
+
+	if(bb->tid < 0 || bb->hits.size() < cfg.min_num_hits_in_bundle) 
+	{
+		bb->clear();
+		delete bb;
+		return 0;
+	}
 
 	char buf[1024];
 	strcpy(buf, hdr->target_name[bb->tid]);
@@ -125,7 +131,12 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 
 	revise_splice_graph_full(gr, cfg);
 
-	if(gr.count_junctions() <= 0) return 0;
+	if(gr.count_junctions() <= 0) 
+	{
+		bb->clear();
+		delete bb;
+		return 0;
+	}
 
 	vector<pereads_cluster> vc;
 	phase_set ps;
@@ -161,15 +172,11 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 		cb.gid = gid;
 		cb.build(grv[k], hsv[k], ubv[k]);
 
-		/*
-		   cb.print(k);	// TODO
-		   printf("\n");
-		 */
+		//cb.print(k);	// TODO
+		//printf("\n");
 
 		tmp.push_back(std::move(cb));
 	}
-	bb->clear();
-	delete bb;
 
 	mylock.lock();
 	for(int k = 0; k < tmp.size(); k++)
@@ -178,6 +185,8 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	}
 	mylock.unlock();
 
+	bb->clear();
+	delete bb;
 	return 0;
 }
 
