@@ -138,7 +138,7 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	//bs.print();
 
 	vector<pereads_cluster> ub;
-	bs.collect_unbridged_clusters(ub);
+	//bs.collect_unbridged_clusters(ub); TODO; for testing
 
 	//for(int k = 0; k < ub.size(); k++) ub[k].print(k);
 
