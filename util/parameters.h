@@ -32,9 +32,9 @@ public:
 	int min_supporting_samples;
 	int min_splicing_count;
 	int min_phasing_count;
-	bool merge_intersection;
 	int max_combined;
 	double merge_threshold;
+	double standalone_coverage;
 
 	// for bridging paired-end reads
 	int bridge_dp_solution_size;

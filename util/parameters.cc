@@ -28,9 +28,9 @@ parameters::parameters()
 	min_supporting_samples = 2;	
 	min_splicing_count = 5;
 	min_phasing_count = 1;
-	merge_intersection = true;
 	max_combined = 100;
 	merge_threshold = 0.5;
+	standalone_coverage = 10.0;
 
 	// for bridging paired-end reads
 	bridge_dp_solution_size = 10;
@@ -130,9 +130,10 @@ int parameters::parse_arguments(int argc, const char ** argv)
 			merge_threshold = atof(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "--merge_intersection")
+		else if(string(argv[i]) == "--standalone_coverage")
 		{
-			merge_intersection = true;
+			standalone_coverage = atof(argv[i + 1]);
+			i++;
 		}
 		else if(string(argv[i]) == "--min_supporting_samples")
 		{

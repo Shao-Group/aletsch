@@ -300,6 +300,42 @@ int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transc
 	return 0;
 }
 
+int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const parameters &cfg)
+{
+	assert(gv.size() >= 2);
+
+	int subindex = 0;
+	vector<transcript> vt;
+	assemble_cluster(gv, instance, subindex++, vt, cfg);
+
+	/*
+	for(int i = 0; i < gv.size(); i++)
+	{
+		for(int j = i + 1; j < gv.size(); j++)
+		{
+			vector<combined_graph*> gv1;
+			gv1.push_back(gv[i]);
+			gv1.push_back(gv[j]);
+			assemble_cluster(gv1, instance, subindex++, vt, cfg);
+		}
+	}
+	*/
+
+	mylock.lock();
+	for(int k = 0; k < vt.size(); k++)
+	{
+		index_transcript(trsts, vt[k]);
+	}
+	mylock.unlock();
+
+	for(int i = 0; i > gv.size(); i++)
+	{
+		gv[i]->clear();
+	}
+
+	return 0;
+}
+
 int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vector<transcript> &vt, const parameters &cfg1)
 {
 	assert(gv.size() >= 2);
@@ -384,9 +420,6 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vec
 		t.RPKM = 0;
 		if(t.exons.size() <= 1) continue;
 		index_transcript(mt, t);
-		//t.write(cout);
-		if(cfg.merge_intersection == false) vt.push_back(t);
-		if(cfg.merge_intersection == false) assembled++;
 	}
 
 	// process each individual graph
@@ -439,43 +472,16 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vec
 			//t.write(cout);
 			bool b = query_transcript(mt, t);
 			if(b == false) index_transcript(mt, t);
-			if(b || cfg.merge_intersection == false) vt.push_back(t);
-			if(b || cfg.merge_intersection == false) assembled++;
+
+			if(b == true || t.coverage >= cfg.standalone_coverage)
+			{
+				vt.push_back(t);
+				assembled++;
+			}
 		}
 	}
 
-	printf("assemble combined-graph %s, %lu children, %d assembled transcripts\n", cb.gid.c_str(), gv.size(), assembled);
-	return 0;
-}
-
-int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const parameters &cfg)
-{
-	assert(gv.size() >= 2);
-	int subindex = 0;
-	vector<transcript> vt;
-	for(int i = 0; i < gv.size(); i++)
-	{
-		for(int j = i + 1; j < gv.size(); j++)
-		{
-			vector<combined_graph*> gv1;
-			gv1.push_back(gv[i]);
-			gv1.push_back(gv[j]);
-			assemble_cluster(gv1, instance, subindex++, vt, cfg);
-		}
-	}
-
-	mylock.lock();
-	for(int k = 0; k < vt.size(); k++)
-	{
-		index_transcript(trsts, vt[k]);
-	}
-	mylock.unlock();
-
-	for(int i = 0; i > gv.size(); i++)
-	{
-		gv[i]->clear();
-	}
-
+	printf("assemble combined-graph %s, instance = %d, subindex %d, %lu children, %d assembled transcripts\n", cb.gid.c_str(), instance, subindex, gv.size(), assembled);
 	return 0;
 }
 
