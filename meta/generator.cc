@@ -41,7 +41,7 @@ generator::~generator()
 
 int generator::resolve()
 {
-	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
+	boost::asio::thread_pool pool(1);				// thread pool
 	mutex mylock;									// lock for trsts
 
 	int index = 0;
@@ -104,13 +104,13 @@ int generator::resolve()
 	boost::asio::post(pool, [this, &mylock, bb2, index]{ this->generate(bb2, mylock, index); });
 	index++;
 
+	pool.join();
+
 	return 0;
 }
 
 int generator::generate(bundle *bb, mutex &mylock, int index)
 {
-	printf("process graph %d with %lu hits\n", index, bb->hits.size());
-
 	if(bb->hits.size() < cfg.min_num_hits_in_bundle) return 0;
 	if(bb->tid < 0) return 0;
 
@@ -138,7 +138,7 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	//bs.print();
 
 	vector<pereads_cluster> ub;
-	//bs.collect_unbridged_clusters(ub); TODO; for testing
+	bs.collect_unbridged_clusters(ub); //TODO; for testing
 
 	//for(int k = 0; k < ub.size(); k++) ub[k].print(k);
 
