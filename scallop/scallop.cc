@@ -109,15 +109,6 @@ int scallop::assemble()
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, cfg.max_decompose_error_ratio[UNSPLITTABLE_SINGLE]);
 		if(b == true) continue;
 
-		if(cfg.algo == "single")
-		{
-			b = resolve_hyper_edge(2);
-			if(b == true) continue;
-
-			b = resolve_hyper_edge(1);
-			if(b == true) continue;
-		}
-
 		if(cfg.algo == "global")
 		{
 			b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, DBL_MAX);
@@ -127,6 +118,14 @@ int scallop::assemble()
 			if(b == true) continue;
 
 			b = resolve_splittable_vertex(SPLITTABLE_HYPER, INT_MAX, DBL_MAX);
+			if(b == true) continue;
+		}
+		else
+		{
+			b = resolve_hyper_edge(2);
+			if(b == true) continue;
+
+			b = resolve_hyper_edge(1);
 			if(b == true) continue;
 		}
 
