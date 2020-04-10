@@ -342,7 +342,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vec
 		if(gt.sp.insertsize_low < length_low) length_low = gt.sp.insertsize_low;
 		if(gt.sp.insertsize_high > length_high) length_high = gt.sp.insertsize_high;
 		index[k].first = vc.size();
-		for(int i = 0; i < gt.vc.size(); i++) vc.push_back(std::move(gt.vc[i]));
+		for(int i = 0; i < gt.vc.size(); i++) vc.push_back(gt.vc[i]);
 		//vc.insert(vc.end(), gt.vc.begin(), gt.vc.end());
 		index[k].second = vc.size();
 		//gt.vc.clear();
