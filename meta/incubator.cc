@@ -414,6 +414,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vec
 	sx.assemble();
 
 	int assembled = 0;
+	/* TODO; ignore combined transcripts
 	for(int k = 0; k < sx.trsts.size(); k++)
 	{
 		transcript &t = sx.trsts[k];
@@ -421,6 +422,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vec
 		if(t.exons.size() <= 1) continue;
 		index_transcript(mt, t);
 	}
+	*/
 
 	// process each individual graph
 	for(int i = 0; i < gv.size(); i++)
