@@ -444,7 +444,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vec
 		}
 	}
 
-	printf("assemble combined-graph %s, %lu children, %lu assembled transcripts\n", cb.gid.c_str(), gv.size(), assembled);
+	printf("assemble combined-graph %s, %lu children, %d assembled transcripts\n", cb.gid.c_str(), gv.size(), assembled);
 	return 0;
 }
 
