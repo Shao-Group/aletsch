@@ -38,10 +38,10 @@ public:
 
 int generate_single(const string &file, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &g2g, const parameters &cfg);
 
-int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &ts, mutex &mylock, const parameters &cfg);
 int assemble_single(combined_graph &cb, int instance, transcript_set &ts, mutex &mylock, const parameters &cfg);
-int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, transcript_set &ts, const parameters &cfg);
-int assemble_single(combined_graph &cb, transcript_set &ts, const parameters &cfg, bool group_boundary);
+int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &ts, mutex &mylock, const parameters &cfg);
+int assemble(combined_graph &cb, transcript_set &ts, const parameters &cfg, bool group_boundary);
+int assemble(vector<combined_graph*> gv, int instance, int subindex, transcript_set &ts, const parameters &cfg);
 int resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, const parameters &cfg);
 int resolve_cluster(vector<combined_graph*> gv, const parameters &cfg);
 
