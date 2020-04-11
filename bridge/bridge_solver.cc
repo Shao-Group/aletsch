@@ -37,11 +37,24 @@ bridge_solver::bridge_solver(splice_graph &g, vector<pereads_cluster> &v, const 
 int bridge_solver::build_bridging_vertices()
 {
 	vpairs.clear();
+	int n = gr.num_vertices() - 1;
 	for(int i = 0; i < vc.size(); i++)
 	{
 		const pereads_cluster &pc = vc[i];
 		int v1 = gr.locate_vertex(pc.bounds[1] - 1);
 		int v2 = gr.locate_vertex(pc.bounds[2] - 0);
+
+		// relaxing
+		if(v1 >= 0 && v2 >= 0)
+		{
+			int32_t p1 = gr.get_vertex_info(v1).lpos;
+			int32_t p2 = gr.get_vertex_info(v2).rpos;
+			assert(p1 <= pc.bounds[1]);
+			assert(p2 >= pc.bounds[2]);
+			if(v1 >= 1 && check_continuous_vertices(gr, v1 - 1, v1) && pc.bounds[1] - p1 <= 10) v1--;
+			if(v2 <  n && check_continuous_vertices(gr, v2, v2 + 1) && p2 - pc.bounds[2] <= 10) v2++;
+		}
+
 		vpairs.push_back(PI(v1, v2));
 	}
 	return 0;
