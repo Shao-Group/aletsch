@@ -45,6 +45,7 @@ int bridge_solver::build_bridging_vertices()
 		int v2 = gr.locate_vertex(pc.bounds[2] - 0);
 
 		// relaxing
+		/*
 		if(v1 >= 0 && v2 >= 0)
 		{
 			int32_t p1 = gr.get_vertex_info(v1).lpos;
@@ -54,6 +55,7 @@ int bridge_solver::build_bridging_vertices()
 			if(v1 >= 1 && check_continuous_vertices(gr, v1 - 1, v1) && pc.bounds[1] - p1 <= 10) v1--;
 			if(v2 <  n && check_continuous_vertices(gr, v2, v2 + 1) && p2 - pc.bounds[2] <= 10) v2++;
 		}
+		*/
 
 		vpairs.push_back(PI(v1, v2));
 	}
