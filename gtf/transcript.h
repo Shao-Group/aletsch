@@ -40,6 +40,7 @@ public:
 	double score;
 	char strand;
 	int frame;
+	int count;
 	double coverage;
 	double covratio;
 	double RPKM;

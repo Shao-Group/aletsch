@@ -15,6 +15,7 @@ See LICENSE for licensing.
 
 transcript::transcript()
 {
+	count = 1;
 }
 
 transcript::transcript(const item &e)

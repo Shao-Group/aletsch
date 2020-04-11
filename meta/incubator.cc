@@ -114,14 +114,14 @@ int incubator::assemble()
 			if(v.size() == 1)
 			{
 				combined_graph &cb = groups[i].gset[v[0]];
-				boost::asio::post(pool, [this, &cb, instance, &mylock]{ assemble_single(cb, instance, this->trsts, mylock, this->cfg); });
+				boost::asio::post(pool, [this, &cb, instance, &mylock]{ assemble_single(cb, instance, this->tset, mylock, this->cfg); });
 			}
 			else
 			{
 				assert(v.size() >= 2);
 				vector<combined_graph*> gv;
 				for(int j = 0; j < v.size(); j++) gv.push_back(&(groups[i].gset[v[j]]));
-				boost::asio::post(pool, [this, gv, instance, &mylock]{ assemble_cluster(gv, instance, this->trsts, mylock, this->cfg); });
+				boost::asio::post(pool, [this, gv, instance, &mylock]{ assemble_cluster(gv, instance, this->tset, mylock, this->cfg); });
 			}
 			instance++;
 		}
@@ -146,7 +146,9 @@ int incubator::postprocess()
 	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
 	mutex mylock;									// lock for trsts
 
-	typedef map<size_t, vector<transcript> >::iterator MIT;
+	typedef map<size_t, vector<transcript>>::iterator MIT;
+	auto &trsts = tset.mt;
+
 	int index = 0;
 	for(;;)
 	{
@@ -171,7 +173,7 @@ int incubator::postprocess()
 					stringstream ss;
 					for(MIT x = m1; x != m2; x++)
 					{
-						vector<transcript> &v = x->second;
+						auto &v = x->second;
 						cluster cs(v, this->cfg);
 						cs.solve();
 
@@ -250,7 +252,7 @@ int generate_single(const string &file, vector<combined_group> &gv, mutex &myloc
 	return 0;
 }
 
-int assemble_single(combined_graph &cb, vector<transcript> &vt, const parameters &cfg, bool group_boundary)
+int assemble_single(combined_graph &cb, transcript_set &vt, const parameters &cfg, bool group_boundary)
 {
 	// rebuild splice graph
 	splice_graph gx;
@@ -279,18 +281,19 @@ int assemble_single(combined_graph &cb, vector<transcript> &vt, const parameters
 	for(int k = 0; k < sx.trsts.size(); k++)
 	{
 		transcript &t = sx.trsts[k];
-		t.RPKM = 0;
 		if(t.exons.size() <= 1) continue;
-		vt.push_back(t);
+		t.RPKM = 0;
+		t.count = 1;
+		vt.add(t);
 	}
 
-	printf("assemble combined-graph %s, %lu assembled transcripts: ", cb.gid.c_str(), vt.size());
+	printf("assemble combined-graph %s, %lu assembled transcripts: ", cb.gid.c_str(), vt.mt.size());
 	cb.print(0);
 
 	return 0;
 }
 
-int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vector<transcript> &vt, const parameters &cfg)
+int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, transcript_set &vt, const parameters &cfg)
 {
 	assert(gv.size() >= 2);
 	combined_graph cb;
@@ -301,36 +304,36 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, int subindex, vec
 	return 0;
 }
 
-int assemble_single(combined_graph &cb, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const parameters &cfg)
+int assemble_single(combined_graph &cb, int instance, transcript_set &ts, mutex &mylock, const parameters &cfg)
 {
 	cb.set_gid(instance, 0);
-	vector<transcript> vt;
+	transcript_set vt;
 	assemble_single(cb, vt, cfg, false);
 
 	mylock.lock();
-	for(int k = 0; k < vt.size(); k++) index_transcript(trsts, vt[k]);
+	ts.add(vt);
 	mylock.unlock();
 
 	cb.clear();
 	return 0;
 }
 
-int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vector<transcript> > &trsts, mutex &mylock, const parameters &cfg)
+int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &ts, mutex &mylock, const parameters &cfg)
 {
 	assert(gv.size() >= 2);
-	vector<transcript> vv;
+	transcript_set tts;
 
 	int subindex = 0;
 	combined_graph cx;
 	resolve_cluster(gv, cx, cfg);
 	cx.set_gid(instance, subindex++);
 
-	vector<transcript> vt0;
+	transcript_set vt0;
 	assemble_single(cx, vt0, cfg, true);
 
 	for(int k = 1; k <= gv.size() / 2; k++)
 	{
-		vector<transcript> vt;
+		transcript_set vt;
 		if(k == 1) vt = vt0;
 
 		for(int i = 0; i <= gv.size() / k; i++)
@@ -352,13 +355,12 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 				assemble_cluster(gv1, instance, subindex++, vt, cfg);
 			}
 		}
-		get_duplicate_transcripts(vt, vv);
-
+		tts.add_duplicates(vt);
 		break;
 	}
 		
 	mylock.lock();
-	for(int k = 0; k < vv.size(); k++) index_transcript(trsts, vv[k]);
+	ts.add(tts);
 	mylock.unlock();
 
 	for(int i = 0; i > gv.size(); i++) gv[i]->clear();
@@ -415,52 +417,4 @@ int resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, const parame
 		gv[i]->combine(&g1);
 	}
 	return 0;
-}
-
-int get_duplicate_transcripts(const vector<transcript> &v, vector<transcript> &vv)
-{
-	map< size_t, vector<transcript> > mt;
-	for(int i = 0; i < v.size(); i++)
-	{
-		bool b = query_transcript(mt, v[i]);
-		if(b == true) vv.push_back(v[i]);
-		else index_transcript(mt, v[i]);
-	}
-	return 0;
-}
-
-int index_transcript(map< size_t, vector<transcript> > &mt, const transcript &t)
-{
-	//if(t.exons.size() <= 1) t.write(fout);
-	if(t.exons.size() <= 1) return 0;
-
-	size_t h = t.get_intron_chain_hashing();
-	if(mt.find(h) == mt.end())
-	{
-		vector<transcript> v;
-		v.push_back(t);
-		mt.insert(pair<size_t, vector<transcript> >(h, v));
-	}
-	else
-	{
-		mt[h].push_back(t);
-	}
-	return 0;
-}
-
-bool query_transcript(const map< size_t, vector<transcript> > &mt, const transcript &t)
-{
-	size_t h = t.get_intron_chain_hashing();
-	map< size_t, vector<transcript> >::const_iterator it = mt.find(h);
-	if(it == mt.end()) return false;
-
-	const vector<transcript> &v = it->second;
-	for(int k = 0; k < v.size(); k++)
-	{
-		if(v[k].strand != t.strand) continue;
-		bool b = v[k].intron_chain_match(t);
-		if(b == true) return true;
-	}
-
-	return false;
 }
