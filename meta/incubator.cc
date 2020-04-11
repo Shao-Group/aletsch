@@ -7,6 +7,7 @@
 #include "graph_reviser.h"
 #include "bridge_solver.h"
 #include "essential.h"
+#include "constants.h"
 
 #include <fstream>
 #include <sstream>
@@ -284,7 +285,7 @@ int assemble_single(combined_graph &cb, transcript_set &vt, const parameters &cf
 		if(t.exons.size() <= 1) continue;
 		t.RPKM = 0;
 		t.count = 1;
-		vt.add(t, 2);
+		vt.add(t, ADD_TRANSCRIPT_COVERAGE_SUM);
 	}
 
 	printf("assemble combined-graph %s, %lu assembled transcripts: ", cb.gid.c_str(), vt.mt.size());
@@ -311,7 +312,7 @@ int assemble_single(combined_graph &cb, int instance, transcript_set &ts, mutex 
 	assemble_single(cb, vt, cfg, false);
 
 	mylock.lock();
-	ts.add(vt, 2);
+	ts.add(vt, ADD_TRANSCRIPT_COVERAGE_SUM);
 	mylock.unlock();
 
 	cb.clear();
@@ -334,8 +335,6 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 	for(int k = 1; k <= gv.size() / 2; k++)
 	{
 		transcript_set vt;
-		if(k == 1) vt = vt0;
-
 		for(int i = 0; i <= gv.size() / k; i++)
 		{
 			vector<combined_graph*> gv1;
@@ -355,12 +354,12 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 				assemble_cluster(gv1, instance, subindex++, vt, cfg);
 			}
 		}
-		tts.add_duplicates(vt, 1);
-		//break;
+		if(k == 1) vt.add(vt0, ADD_TRANSCRIPT_COVERAGE_MAX);
+		tts.add(vt, 2, ADD_TRANSCRIPT_COVERAGE_MAX);
 	}
 		
 	mylock.lock();
-	ts.add(tts, 2);
+	ts.add(tts, ADD_TRANSCRIPT_COVERAGE_SUM);
 	mylock.unlock();
 
 	for(int i = 0; i > gv.size(); i++) gv[i]->clear();

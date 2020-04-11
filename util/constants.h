@@ -52,6 +52,10 @@ using namespace std;
 #define NESTING 8
 #define CONFLICTING 9
 
+// how to combine transcript
+#define ADD_TRANSCRIPT_COVERAGE_SUM 1
+#define ADD_TRANSCRIPT_COVERAGE_MAX 2
+
 const static string position_names[] = {"identical", "fall-right", "fall-left", "contained", "containing", "extend_right", "extend_left", "nested", "nesting", "conflicting"};
 
 typedef pair<int, int> PI;

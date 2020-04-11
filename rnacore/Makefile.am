@@ -4,7 +4,7 @@ UTIL_INCLUDE = $(top_srcdir)/util
 GRAPH_INCLUDE = $(top_srcdir)/graph
 GTF_INCLUDE = $(top_srcdir)/gtf
 
-librnacore_a_CPPFLAGS = -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE) -I$(GTF_INCLUDE)
+librnacore_a_CPPFLAGS = -std=c++11 -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE) -I$(GTF_INCLUDE)
 
 librnacore_a_SOURCES = splice_graph.h splice_graph.cc \
 					   vertex_info.h vertex_info.cc \
