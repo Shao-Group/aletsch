@@ -44,20 +44,34 @@ int bridge_solver::build_bridging_vertices()
 		int v1 = gr.locate_vertex(pc.bounds[1] - 1);
 		int v2 = gr.locate_vertex(pc.bounds[2] - 0);
 
-		// relaxing
-		if(v1 >= 0 && v2 >= 0)
-		{
-			int32_t p1 = gr.get_vertex_info(v1).lpos;
-			int32_t p2 = gr.get_vertex_info(v2).rpos;
-			assert(p1 <= pc.bounds[1]);
-			assert(p2 >= pc.bounds[2]);
-			if(v1 >= 1 && check_continuous_vertices(gr, v1 - 1, v1) && pc.bounds[1] - p1 <= 10) v1--;
-			if(v2 <  n && check_continuous_vertices(gr, v2, v2 + 1) && p2 - pc.bounds[2] <= 10) v2++;
-		}
-
+		if(check_left_relaxing(pc, v1)) v1--;
+		if(check_right_relaxing(pc, v2)) v2++;
 		vpairs.push_back(PI(v1, v2));
 	}
 	return 0;
+}
+
+bool bridge_solver::check_left_relaxing(const pereads_cluster &pc, int v)
+{
+	int32_t p = gr.get_vertex_info(v).lpos;
+	assert(p <= pc.bounds[1]);
+	if(v <= 1) return false;
+	if(check_continuous_vertices(gr, v - 1, v) == false) return false;
+	if(pc.bounds[1] - p > 10) return false;
+	if(pc.chain1.size() >= 1 && pc.chain1.back() >= p) return false;
+	return true;
+}
+
+bool bridge_solver::check_right_relaxing(const pereads_cluster &pc, int v)
+{
+	int32_t p = gr.get_vertex_info(v).rpos;
+	assert(p >= pc.bounds[2]);
+	int n = gr.num_vertices() - 1;
+	if(v >= n - 1) return false;
+	if(check_continuous_vertices(gr, v, v + 1) == false) return false;
+	if(p - pc.bounds[2] > 10) return false;
+	if(pc.chain2.size() >= 1 && pc.chain2.front() <= p) return false;
+	return true;
 }
 
 int bridge_solver::build_piers()

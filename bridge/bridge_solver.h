@@ -54,6 +54,8 @@ public:
 
 private:
 	int build_bridging_vertices();
+	bool check_left_relaxing(const pereads_cluster &pc, int v);
+	bool check_right_relaxing(const pereads_cluster &pc, int v);
 	int build_piers();
 	int build_piers_index();
 	int nominate();
