@@ -199,6 +199,15 @@ bool transcript::intron_chain_match(const transcript &t) const
 	return true;
 }
 
+int transcript::extend_bounds(const transcript &t)
+{
+	assert(intron_chain_match(t));
+	if(exons.size() == 0) return 0;
+	if(t.exons.front().first < exons.front().first) exons.front().first = t.exons.front().first;
+	if(t.exons.back().second > exons.back().second) exons.back().second = t.exons.back().second;
+	return 0;
+}
+
 string transcript::label() const
 {
 	char buf[10240];
