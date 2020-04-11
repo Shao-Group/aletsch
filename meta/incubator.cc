@@ -321,17 +321,16 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 	vector<transcript> vv;
 
 	int subindex = 0;
-	vector<transcript> vt;
-
 	combined_graph cx;
 	resolve_cluster(gv, cx, cfg);
-
 	cx.set_gid(instance, subindex++);
-	assemble_single(cx, vt, cfg, true);
+
+	vector<transcript> vt0;
+	assemble_single(cx, vt0, cfg, true);
 
 	for(int k = 1; k <= gv.size() / 2; k++)
 	{
-		//vector<transcript> vt;
+		vector<transcript> vt = vt0;
 		for(int i = 0; i <= gv.size() / k; i++)
 		{
 			vector<combined_graph*> gv1;
@@ -351,12 +350,9 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 				assemble_cluster(gv1, instance, subindex++, vt, cfg);
 			}
 		}
-		//get_duplicate_transcripts(vt, vv);
-		break;
+		get_duplicate_transcripts(vt, vv);
 	}
 		
-	get_duplicate_transcripts(vt, vv);
-
 	mylock.lock();
 	for(int k = 0; k < vv.size(); k++) index_transcript(trsts, vv[k]);
 	mylock.unlock();
