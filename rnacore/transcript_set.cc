@@ -70,7 +70,7 @@ int transcript_set::add(const transcript_set &ts, int mode)
 {
 	for(auto &x : ts.mt)
 	{
-		add(x.second);
+		add(x.second, mode);
 	}
 	return 0;
 }

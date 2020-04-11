@@ -284,7 +284,7 @@ int assemble_single(combined_graph &cb, transcript_set &vt, const parameters &cf
 		if(t.exons.size() <= 1) continue;
 		t.RPKM = 0;
 		t.count = 1;
-		vt.add(t);
+		vt.add(t, 2);
 	}
 
 	printf("assemble combined-graph %s, %lu assembled transcripts: ", cb.gid.c_str(), vt.mt.size());
@@ -311,7 +311,7 @@ int assemble_single(combined_graph &cb, int instance, transcript_set &ts, mutex 
 	assemble_single(cb, vt, cfg, false);
 
 	mylock.lock();
-	ts.add(vt);
+	ts.add(vt, 2);
 	mylock.unlock();
 
 	cb.clear();
@@ -355,12 +355,12 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 				assemble_cluster(gv1, instance, subindex++, vt, cfg);
 			}
 		}
-		tts.add_duplicates(vt);
+		tts.add_duplicates(vt, 1);
 		//break;
 	}
 		
 	mylock.lock();
-	ts.add(tts);
+	ts.add(tts, 2);
 	mylock.unlock();
 
 	for(int i = 0; i > gv.size(); i++) gv[i]->clear();
