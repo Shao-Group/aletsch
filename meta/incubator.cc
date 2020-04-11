@@ -438,6 +438,7 @@ int resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, const parame
 			g1.append(vc[k], br.opt[k]);
 		}
 		gv[i]->combine(&g1);
+		gv[i]->vc.clear();
 	}
 	return 0;
 }
