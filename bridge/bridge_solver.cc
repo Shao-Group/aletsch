@@ -53,6 +53,8 @@ int bridge_solver::build_bridging_vertices()
 
 bool bridge_solver::check_left_relaxing(const pereads_cluster &pc, int v)
 {
+	int n = gr.num_vertices() - 1;
+	if(v <= 0 || v >= n) return false;
 	int32_t p = gr.get_vertex_info(v).lpos;
 	assert(p <= pc.bounds[1]);
 	if(v <= 1) return false;
@@ -64,9 +66,10 @@ bool bridge_solver::check_left_relaxing(const pereads_cluster &pc, int v)
 
 bool bridge_solver::check_right_relaxing(const pereads_cluster &pc, int v)
 {
+	int n = gr.num_vertices() - 1;
+	if(v <= 0 || v >= n) return false;
 	int32_t p = gr.get_vertex_info(v).rpos;
 	assert(p >= pc.bounds[2]);
-	int n = gr.num_vertices() - 1;
 	if(v >= n - 1) return false;
 	if(check_continuous_vertices(gr, v, v + 1) == false) return false;
 	if(p - pc.bounds[2] > 10) return false;
