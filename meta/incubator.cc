@@ -353,7 +353,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 			}
 			assemble(gv1, instance, subindex++, vt, cfg);
 		}
-		vt.add(vt0, ADD_TRANSCRIPT_COVERAGE_MAX);
+		vt.add(vt0, ADD_TRANSCRIPT_COVERAGE_SUM);
 		if(k == 1) tts.add(vt, 2, ADD_TRANSCRIPT_COVERAGE_SUM);
 		else tts.add(vt, 3, ADD_TRANSCRIPT_COVERAGE_SUM);
 		break;
