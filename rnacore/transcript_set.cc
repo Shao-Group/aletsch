@@ -1,3 +1,4 @@
+#include <cassert>
 #include "transcript_set.h"
 #include "constants.h"
 
@@ -20,6 +21,7 @@ bool transcript_set::query(const transcript &t) const
 int transcript_set::add(const transcript &t, int mode)
 {
 	if(t.exons.size() <= 1) return 0;
+	assert(t.count >= 1);
 
 	size_t h = t.get_intron_chain_hashing();
 
