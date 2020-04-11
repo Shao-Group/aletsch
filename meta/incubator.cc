@@ -329,9 +329,32 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 	resolve_cluster(gv, cx, cfg);
 	cx.set_gid(instance, subindex++);
 
+	// all graphs
 	transcript_set vt0;
 	assemble_single(cx, vt0, cfg, true);
 
+	// single graph
+	transcript_set vt1;
+	for(int i = 0; i < gv.size(); i++)
+	{
+		combined_graph &cb = *(gv[i]);
+		cb.set_gid(instance, subindex++);
+		assemble_single(cb, vt1, cfg, false);
+	}
+	vt1.add(vt0, ADD_TRANSCRIPT_COVERAGE_MAX);
+	tts.add(vt1, 2, ADD_TRANSCRIPT_COVERAGE_MAX);
+
+	// half of the graphs
+	transcript_set vt2;
+	vector<combined_graph*> gv1;
+	vector<combined_graph*> gv2;
+	for(int j = 0; j < gv.size() / 2; j++) gv1.push_back(gv[j]);
+	for(int j = gv.size() / 2; j < gv.size(); j++) gv2.push_back(gv[j]);
+	assemble_cluster(gv1, instance, subindex++, vt2, cfg);
+	assemble_cluster(gv2, instance, subindex++, vt2, cfg);
+	tts.add(vt2, 2, ADD_TRANSCRIPT_COVERAGE_MAX);
+
+	/* all combinations 
 	for(int k = 1; k <= gv.size() / 2; k++)
 	{
 		transcript_set vt;
@@ -357,6 +380,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 		if(k == 1) vt.add(vt0, ADD_TRANSCRIPT_COVERAGE_MAX);
 		tts.add(vt, 2, ADD_TRANSCRIPT_COVERAGE_MAX);
 	}
+	*/
 		
 	mylock.lock();
 	ts.add(tts, ADD_TRANSCRIPT_COVERAGE_SUM);
