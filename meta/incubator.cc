@@ -353,6 +353,8 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, map< size_t, vect
 			}
 		}
 		get_duplicate_transcripts(vt, vv);
+
+		break;
 	}
 		
 	mylock.lock();
