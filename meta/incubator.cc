@@ -356,7 +356,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 			}
 		}
 		tts.add_duplicates(vt);
-		break;
+		//break;
 	}
 		
 	mylock.lock();
