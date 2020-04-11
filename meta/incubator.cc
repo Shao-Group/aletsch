@@ -343,7 +343,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 
 	for(int k = 1; k <= gv.size() / 2; k++)
 	{
-		if(k != 1 && k != gv.size() / 2) continue;
+		//if(k != 1 && k != gv.size() / 2) continue;
 		transcript_set vt;
 		if(k == 1) vt = vt0;
 		for(int i = 0; i <= gv.size() / k; i++)
