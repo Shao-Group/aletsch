@@ -42,9 +42,11 @@ int transcript_set::add(const transcript &t, int mode)
 			if(z.strand != t.strand) continue;
 			bool b = z.intron_chain_match(t);
 			if(b == false) continue;
-			if(mode == ADD_TRANSCRIPT_COVERAGE_MAX && z.coverage < t.coverage) z.coverage = t.coverage;
 			if(mode == ADD_TRANSCRIPT_COVERAGE_SUM) z.coverage += t.coverage;
-			z.extend_bounds(t);
+			if(mode == ADD_TRANSCRIPT_COVERAGE_MAX && z.coverage < t.coverage) z.coverage = t.coverage;
+			//if(mode == ADD_TRANSCRIPT_COVERAGE_MIN && z.coverage > t.coverage) z.coverage = t.coverage;
+			if(mode == ADD_TRANSCRIPT_COVERAGE_MIN) z = t;
+			//z.extend_bounds(t);
 			z.count += t.count;
 			found = true;
 			break;

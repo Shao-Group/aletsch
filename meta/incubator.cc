@@ -279,16 +279,18 @@ int assemble(combined_graph &cb, transcript_set &vt, const parameters &cfg, bool
 	scallop sx(gx, hx, cfg);
 	sx.assemble();
 
+	int z = 0;
 	for(int k = 0; k < sx.trsts.size(); k++)
 	{
 		transcript &t = sx.trsts[k];
 		if(t.exons.size() <= 1) continue;
 		t.RPKM = 0;
 		t.count = 1;
-		vt.add(t, ADD_TRANSCRIPT_COVERAGE_SUM);
+		z++;
+		vt.add(t, ADD_TRANSCRIPT_COVERAGE_MIN);
 	}
 
-	printf("assemble combined-graph %s, %lu assembled transcripts: ", cb.gid.c_str(), vt.mt.size());
+	printf("assemble combined-graph %s, %d assembled transcripts: ", cb.gid.c_str(), z);
 	cb.print(0);
 
 	return 0;
@@ -342,17 +344,21 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 	assemble(cx, vt0, cfg, true);
 
 	// sample d points from [1, n]
+	set<int> ss;
+	/*
 	int d = 4;
 	int n = (1 + gv.size()) / 2 - 1;
 	if(d > n) d = n;
-	set<int> ss;
 	ss.insert(1);
 	ss.insert(n + 1);
 	for(int i = 1; i < d; i++) ss.insert(1 + i * n / d);
+	*/
+
+	ss.insert(1);
 
 	for(auto &k: ss)
 	{
-		if(k < 1 || k > n + 1) continue;
+		//if(k < 1 || k > n + 1) continue;
 		transcript_set vt;
 		if(k == 1) vt = vt0;
 		for(int i = 0; i <= gv.size() / k; i++)
@@ -364,7 +370,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 			}
 			assemble(gv1, instance, subindex++, vt, cfg);
 		}
-		tts.add(vt, 2, ADD_TRANSCRIPT_COVERAGE_SUM);
+		tts.add(vt, 2, ADD_TRANSCRIPT_COVERAGE_MIN);
 	}
 
 	mylock.lock();
