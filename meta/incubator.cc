@@ -287,7 +287,7 @@ int assemble(combined_graph &cb, transcript_set &vt, const parameters &cfg, bool
 		t.RPKM = 0;
 		t.count = 1;
 		z++;
-		vt.add(t, ADD_TRANSCRIPT_COVERAGE_MIN);
+		vt.add(t, ADD_TRANSCRIPT_COVERAGE_SUM);
 	}
 
 	printf("assemble combined-graph %s, %d assembled transcripts: ", cb.gid.c_str(), z);
@@ -360,7 +360,6 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 	{
 		//if(k < 1 || k > n + 1) continue;
 		transcript_set vt;
-		if(k == 1) vt = vt0;
 		for(int i = 0; i <= gv.size() / k; i++)
 		{
 			vector<combined_graph*> gv1;
@@ -370,10 +369,13 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 			}
 			assemble(gv1, instance, subindex++, vt, cfg);
 		}
-		tts.add(vt, 2, ADD_TRANSCRIPT_COVERAGE_MIN);
+		if(k == 1) vt.add(vt0, ADD_TRANSCRIPT_COVERAGE_NAN);
+		tts.add(vt, 2, ADD_TRANSCRIPT_COVERAGE_NAN);
 	}
 
 	mylock.lock();
+	//printf("instance = %d, %lu predicted transcripts\n", instance, tts.get_transcripts(1).size());
+	//tts.print();
 	ts.add(tts, ADD_TRANSCRIPT_COVERAGE_SUM);
 	mylock.unlock();
 

@@ -44,10 +44,8 @@ int transcript_set::add(const transcript &t, int mode)
 			if(b == false) continue;
 			if(mode == ADD_TRANSCRIPT_COVERAGE_SUM) z.coverage += t.coverage;
 			if(mode == ADD_TRANSCRIPT_COVERAGE_MAX && z.coverage < t.coverage) z.coverage = t.coverage;
-			//if(mode == ADD_TRANSCRIPT_COVERAGE_MIN && z.coverage > t.coverage) z.coverage = t.coverage;
-			if(mode == ADD_TRANSCRIPT_COVERAGE_MIN) z = t;
-			//z.extend_bounds(t);
-			z.count += t.count;
+			if(mode == ADD_TRANSCRIPT_COVERAGE_MIN && z.coverage > t.coverage) z.coverage = t.coverage;
+			z.extend_bounds(t);
 			found = true;
 			break;
 		}
@@ -80,4 +78,11 @@ vector<transcript> transcript_set::get_transcripts(int min_count) const
 		}
 	}
 	return v;
+}
+
+int transcript_set::print()
+{
+	vector<transcript> vv = get_transcripts(1);
+	for(int i = 0; i < vv.size(); i++) vv[i].write(cout);
+	return 0;
 }
