@@ -341,9 +341,18 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 	transcript_set vt0;
 	assemble(cx, vt0, cfg, true);
 
-	for(int k = 1; k <= gv.size() / 2; k++)
+	// sample d points from [1, n]
+	int d = 4;
+	int n = (1 + gv.size()) / 2 - 1;
+	if(d > n) d = n;
+	set<int> ss;
+	ss.insert(1);
+	ss.insert(n + 1);
+	for(int i = 1; i < d; i++) ss.insert(1 + i * n / d);
+
+	for(auto &k: ss)
 	{
-		//if(k != 1 && k != gv.size() / 2) continue;
+		if(k < 1 || k > n + 1) continue;
 		transcript_set vt;
 		if(k == 1) vt = vt0;
 		for(int i = 0; i <= gv.size() / k; i++)
@@ -355,7 +364,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 			}
 			assemble(gv1, instance, subindex++, vt, cfg);
 		}
-		tts.add(vt, 3, ADD_TRANSCRIPT_COVERAGE_SUM);
+		tts.add(vt, 2, ADD_TRANSCRIPT_COVERAGE_SUM);
 	}
 
 	mylock.lock();
