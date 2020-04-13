@@ -145,7 +145,7 @@ int graph_builder::build_regions()
 		if(ltype == LEFT_RIGHT_SPLICE) ltype = RIGHT_SPLICE;
 		if(rtype == LEFT_RIGHT_SPLICE) rtype = LEFT_SPLICE;
 
-		regions.push_back(region(l, r, ltype, rtype, &(bd.mmap), &(bd.imap), cfg.min_subregion_gap, cfg.min_subregion_length, cfg.min_subregion_overlap));
+		regions.push_back(region(l, r, ltype, rtype, &(bd.mmap), &(bd.imap), cfg));
 	}
 
 	return 0;
@@ -233,12 +233,14 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 		int length = r.rpos - r.lpos;
 		assert(length >= 1);
 		gr.add_vertex();
-		gr.set_vertex_weight(i + 1, r.ave < 1.0 ? 1.0 : r.ave);
+		double w = r.ave;
+		if(w < cfg.min_guaranteed_edge_weight) w = cfg.min_guaranteed_edge_weight;
+		gr.set_vertex_weight(i + 1, w);
 		vertex_info vi;
 		vi.lpos = r.lpos;
 		vi.rpos = r.rpos;
 		vi.length = length;
-		vi.stddev = r.dev;// < 1.0 ? 1.0 : r.dev;
+		vi.stddev = r.dev;
 		gr.set_vertex_info(i + 1, vi);
 	}
 
@@ -280,7 +282,7 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 			edge_descriptor p = gr.add_edge(ss, i + 1);
 			double w = r.ave;
 			if(i >= 1 && pexons[i - 1].rpos == r.lpos) w -= pexons[i - 1].ave;
-			if(w < 1.0) w = 1.0;
+			if(w < cfg.min_guaranteed_edge_weight) w = cfg.min_guaranteed_edge_weight;
 			gr.set_edge_weight(p, w);
 			edge_info ei;
 			ei.weight = w;
@@ -292,7 +294,7 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 			edge_descriptor p = gr.add_edge(i + 1, tt);
 			double w = r.ave;
 			if(i < pexons.size() - 1 && pexons[i + 1].lpos == r.rpos) w -= pexons[i + 1].ave;
-			if(w < 1.0) w = 1.0;
+			if(w < cfg.min_guaranteed_edge_weight) w = cfg.min_guaranteed_edge_weight;
 			gr.set_edge_weight(p, w);
 			edge_info ei;
 			ei.weight = w;
@@ -318,7 +320,8 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 		//double wt = xr < yl ? xr : yl;
 
 		edge_descriptor p = gr.add_edge(i + 1, i + 2);
-		double w = (wt < 1.0) ? 1.0 : wt;
+		double w = wt;
+		if(w < cfg.min_guaranteed_edge_weight) w = cfg.min_guaranteed_edge_weight;
 		gr.set_edge_weight(p, w);
 		edge_info ei;
 		ei.weight = w;
