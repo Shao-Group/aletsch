@@ -373,8 +373,9 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 		tts.add(vt, 2, ADD_TRANSCRIPT_COVERAGE_NAN);
 	}
 
-	mylock.lock();
 	//printf("instance = %d, %lu predicted transcripts\n", instance, tts.get_transcripts(1).size());
+
+	mylock.lock();
 	//tts.print();
 	ts.add(tts, ADD_TRANSCRIPT_COVERAGE_SUM);
 	mylock.unlock();
