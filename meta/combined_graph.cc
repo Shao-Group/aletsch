@@ -554,6 +554,7 @@ int combined_graph::print(int index)
 			index, gid.c_str(), num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), ps.pmap.size(), vc.size(), pereads);
 
 	return 0;
+
 	for(int i = 0; i < regions.size(); i++)
 	{
 		PI32 p = regions[i].first;
