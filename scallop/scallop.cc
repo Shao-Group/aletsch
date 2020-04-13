@@ -353,7 +353,7 @@ bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 
 		MPII mpi = hs.get_routes(i, gr, e2i);
 		MPII mpx = hx.get_routes(i, gr, e2i);
-		router rt(i, gr, e2i, i2e, mpi, mpx);
+		router rt(i, gr, e2i, i2e, mpi, mpx, cfg);
 		rt.classify();
 
 		if(rt.type != type) continue;
@@ -402,7 +402,7 @@ bool scallop::resolve_unsplittable_vertex(int type, int degree, double max_ratio
 
 		MPII mpi = hs.get_routes(i, gr, e2i);
 		MPII mpx = hx.get_routes(i, gr, e2i);
-		router rt(i, gr, e2i, i2e, mpi, mpx);
+		router rt(i, gr, e2i, i2e, mpi, mpx, cfg);
 		rt.classify();
 
 		if(rt.type != type) continue;
@@ -508,7 +508,7 @@ bool scallop::resolve_hyper_edge(int fsize)
 		for(int j = 0; j < w2.size(); j++)
 		{
 			double w = (w1[i] < w2[j]) ? w1[i] : w2[j];
-			if(w < 1.0) continue;
+			if(w < cfg.min_guaranteed_edge_weight) continue;
 
 			flag = true;
 			int k1 = split_edge(v1[i], w);
@@ -643,7 +643,7 @@ int scallop::summarize_vertices()
 				s1.insert(p.first);
 				s2.insert(p.second);
 			}
-			router rt(i, gr, e2i, i2e, mpi, mpx);
+			router rt(i, gr, e2i, i2e, mpi, mpx, cfg);
 			rt.classify();
 			rt.build();
 			printf("summary: nontrivial vertex %d, degree = (%d, %d), hyper edges = %lu, graph degree = (%lu, %lu), type = %d, degree = %d, ratio = %.3lf\n", 
@@ -1381,10 +1381,10 @@ int scallop::balance_vertex(int v)
 	{
 		double wx = gr.get_edge_weight(*it1);
 		double wy = wx * r1;
-		if(wy < 1.0)
+		if(wy < cfg.min_guaranteed_edge_weight)
 		{
-			m1 += (1.0 - wy);
-			wy = 1.0;
+			m1 += cfg.min_guaranteed_edge_weight - wy;
+			wy = cfg.min_guaranteed_edge_weight;
 		}
 		gr.set_edge_weight(*it1, wy);
 	}
@@ -1392,10 +1392,10 @@ int scallop::balance_vertex(int v)
 	{
 		double wx = gr.get_edge_weight(*it1);
 		double wy = wx * r2;
-		if(wy < 1.0)
+		if(wy < cfg.min_guaranteed_edge_weight)
 		{
-			m2 += 1.0 - wy;
-			wy = 1.0;
+			m2 += cfg.min_guaranteed_edge_weight - wy;
+			wy = cfg.min_guaranteed_edge_weight;
 		}
 		gr.set_edge_weight(*it1, wy);
 	}

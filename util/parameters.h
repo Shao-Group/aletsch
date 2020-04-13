@@ -70,6 +70,7 @@ public:
 
 	// for decomposing splice graph
 	double max_decompose_error_ratio[7];
+	double min_guaranteed_edge_weight;
 	int max_dp_table_size;
 
 	// for filtering paths

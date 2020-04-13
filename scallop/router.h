@@ -13,6 +13,7 @@ See LICENSE for licensing.
 #include "equation.h"
 #include "undirected_graph.h"
 #include "hyper_set.h"
+#include "parameters.h"
 
 typedef pair<int, double> PID;
 typedef map<int, double> MID;
@@ -24,12 +25,13 @@ using namespace std;
 class router
 {
 public:
-	router(int r, splice_graph &g, MEI &ei, VE &ie);
-	router(int r, splice_graph &g, MEI &ei, VE &ie, const MPII &mpi);
-	router(int r, splice_graph &g, MEI &ei, VE &ie, const MPII &mpi, const MPII &mpx);
+	router(int r, splice_graph &g, MEI &ei, VE &ie, const parameters &cfg);
+	router(int r, splice_graph &g, MEI &ei, VE &ie, const MPII &mpi, const parameters &cfg);
+	router(int r, splice_graph &g, MEI &ei, VE &ie, const MPII &mpi, const MPII &mpx, const parameters &cfg);
 	router& operator=(const router &rt);
 
 public:
+	const parameters &cfg;
 	int root;					// central vertex
 	splice_graph &gr;			// reference splice graph
 	MEI &e2i;					// reference map of edge to index

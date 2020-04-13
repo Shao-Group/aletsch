@@ -24,13 +24,13 @@ See LICENSE for licensing.
 #include "CoinBuild.hpp"
 #endif
 
-router::router(int r, splice_graph &g, MEI &ei, VE &ie)
-	:root(r), gr(g), e2i(ei), i2e(ie), degree(-1), type(-1)
+router::router(int r, splice_graph &g, MEI &ei, VE &ie, const parameters &c)
+	:root(r), gr(g), e2i(ei), i2e(ie), degree(-1), type(-1), cfg(c)
 {
 }
 
-router::router(int r, splice_graph &g, MEI &ei, VE &ie, const MPII &mpi)
-	:root(r), gr(g), e2i(ei), i2e(ie), degree(-1), type(-1)
+router::router(int r, splice_graph &g, MEI &ei, VE &ie, const MPII &mpi, const parameters &c)
+	:root(r), gr(g), e2i(ei), i2e(ie), degree(-1), type(-1), cfg(c)
 {
 	routes.clear();
 	counts.clear();
@@ -41,8 +41,8 @@ router::router(int r, splice_graph &g, MEI &ei, VE &ie, const MPII &mpi)
 	}
 }
 
-router::router(int r, splice_graph &g, MEI &ei, VE &ie, const MPII &mpi, const MPII &mpx)
-	:root(r), gr(g), e2i(ei), i2e(ie), degree(-1), type(-1)
+router::router(int r, splice_graph &g, MEI &ei, VE &ie, const MPII &mpi, const MPII &mpx, const parameters &c)
+	:root(r), gr(g), e2i(ei), i2e(ie), degree(-1), type(-1), cfg(c)
 {
 	routes.clear();
 	counts.clear();
@@ -155,9 +155,14 @@ int router::build()
 		thread();
 #endif
 	}
+
+	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
+	{
+		if(it->second < cfg.min_guaranteed_edge_weight) it->second = cfg.min_guaranteed_edge_weight;
+	}
+
 	return 0;
 }
-
 
 int router::build_indices()
 {
@@ -487,11 +492,6 @@ int router::thread()
 	}
 
 	ratio = weight_remain / weight_sum;
-
-	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
-	{
-		if(it->second < 1.0) it->second = 1.0;
-	}
 	return 0;
 }
 

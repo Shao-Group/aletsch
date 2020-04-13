@@ -72,6 +72,7 @@ parameters::parameters()
 	max_decompose_error_ratio[4] = 0.30;
 	max_decompose_error_ratio[5] = 0.00;
 	max_decompose_error_ratio[6] = 1.10;
+	min_guaranteed_edge_weight = 0.001;
 	max_dp_table_size = 10000;
 	
 	// for filtering paths
