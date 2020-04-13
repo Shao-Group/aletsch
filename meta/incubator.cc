@@ -261,7 +261,7 @@ int assemble(combined_graph &cb, transcript_set &vt, const parameters &cfg, bool
 	gx.build_vertex_index();
 
 	phase_set px = cb.ps;
-	if(group_boundary == true)
+	//if(group_boundary == true)
 	{
 		map<int32_t, int32_t> smap, tmap;
 		group_start_boundaries(gx, smap, cfg.max_group_boundary_distance);
