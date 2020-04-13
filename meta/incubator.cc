@@ -101,8 +101,7 @@ int incubator::merge()
 
 int incubator::assemble()
 {
-	//boost::asio::thread_pool pool(cfg.max_threads); // thread pool
-	boost::asio::thread_pool pool(1); // thread pool
+	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
 	mutex mylock;									// lock for trsts
 
 	int instance = 0;
