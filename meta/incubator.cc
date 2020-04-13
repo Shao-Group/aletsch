@@ -101,7 +101,8 @@ int incubator::merge()
 
 int incubator::assemble()
 {
-	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
+	//boost::asio::thread_pool pool(cfg.max_threads); // thread pool
+	boost::asio::thread_pool pool(1); // thread pool
 	mutex mylock;									// lock for trsts
 
 	int instance = 0;
@@ -274,6 +275,15 @@ int assemble(combined_graph &cb, transcript_set &vt, const parameters &cfg, bool
 	hyper_set hx(gx, px);
 	hx.filter_nodes(gx);
 
+	/*
+	cb.print(0);
+	printf("==\n");
+	gx.print();
+	printf("==\n");
+	hx.print_nodes();
+	printf("==\n");
+	*/
+
 	// assemble 
 	gx.gid = cb.gid;
 	scallop sx(gx, hx, cfg);
@@ -288,10 +298,11 @@ int assemble(combined_graph &cb, transcript_set &vt, const parameters &cfg, bool
 		t.count = 1;
 		z++;
 		vt.add(t, ADD_TRANSCRIPT_COVERAGE_SUM);
+		//t.write(cout);
 	}
 
 	printf("assemble combined-graph %s, %d assembled transcripts: ", cb.gid.c_str(), z);
-	cb.print(0);
+	//cb.print(0);
 
 	return 0;
 }
@@ -360,6 +371,7 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 	{
 		//if(k < 1 || k > n + 1) continue;
 		transcript_set vt;
+		if(k == 1) vt.add(vt0, ADD_TRANSCRIPT_COVERAGE_SUM);
 		for(int i = 0; i <= gv.size() / k; i++)
 		{
 			vector<combined_graph*> gv1;
@@ -369,14 +381,18 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 			}
 			assemble(gv1, instance, subindex++, vt, cfg);
 		}
-		if(k == 1) vt.add(vt0, ADD_TRANSCRIPT_COVERAGE_NAN);
 		tts.add(vt, 2, ADD_TRANSCRIPT_COVERAGE_NAN);
 	}
 
-	//printf("instance = %d, %lu predicted transcripts\n", instance, tts.get_transcripts(1).size());
-
 	mylock.lock();
-	//tts.print();
+
+	/*
+	printf("------\n");
+	printf("instance = %d, %lu predicted transcripts\n", instance, tts.get_transcripts(1).size());
+	tts.print();
+	printf("\n");
+	*/
+
 	ts.add(tts, ADD_TRANSCRIPT_COVERAGE_SUM);
 	mylock.unlock();
 
