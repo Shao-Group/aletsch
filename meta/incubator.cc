@@ -370,7 +370,6 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 	{
 		//if(k < 1 || k > n + 1) continue;
 		transcript_set vt;
-		if(k == 1) vt.add(vt0, ADD_TRANSCRIPT_COVERAGE_SUM);
 		for(int i = 0; i <= gv.size() / k; i++)
 		{
 			vector<combined_graph*> gv1;
@@ -380,7 +379,8 @@ int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &t
 			}
 			assemble(gv1, instance, subindex++, vt, cfg);
 		}
-		tts.add(vt, 2, ADD_TRANSCRIPT_COVERAGE_NAN);
+		if(k == 1) vt.add(vt0, ADD_TRANSCRIPT_COVERAGE_NUL);
+		tts.add(vt, 2, ADD_TRANSCRIPT_NUL);
 	}
 
 	mylock.lock();

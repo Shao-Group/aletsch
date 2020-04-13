@@ -56,7 +56,8 @@ using namespace std;
 #define ADD_TRANSCRIPT_COVERAGE_SUM 1
 #define ADD_TRANSCRIPT_COVERAGE_MAX 2
 #define ADD_TRANSCRIPT_COVERAGE_MIN 3
-#define ADD_TRANSCRIPT_COVERAGE_NAN 4
+#define ADD_TRANSCRIPT_COVERAGE_NUL 4
+#define ADD_TRANSCRIPT_NUL 5
 
 const static string position_names[] = {"identical", "fall-right", "fall-left", "contained", "containing", "extend_right", "extend_left", "nested", "nesting", "conflicting"};
 
