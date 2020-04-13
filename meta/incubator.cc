@@ -301,7 +301,7 @@ int assemble(combined_graph &cb, transcript_set &vt, const parameters &cfg, bool
 		//t.write(cout);
 	}
 
-	printf("assemble combined-graph %s, %d assembled transcripts: ", cb.gid.c_str(), z);
+	printf("assemble combined-graph %s, %d assembled transcripts\n", cb.gid.c_str(), z);
 	//cb.print(0);
 
 	return 0;
