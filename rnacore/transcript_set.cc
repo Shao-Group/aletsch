@@ -18,8 +18,9 @@ bool transcript_set::query(const transcript &t) const
 	return false;
 }
 
-int transcript_set::add(const transcript &t, int mode)
+int transcript_set::add(const transcript &t1, int mode)
 {
+	transcript t = t1;
 	if(t.exons.size() <= 1) return 0;
 	assert(t.count >= 1);
 
@@ -42,6 +43,17 @@ int transcript_set::add(const transcript &t, int mode)
 			if(z.strand != t.strand) continue;
 			bool b = z.intron_chain_match(t);
 			if(b == false) continue;
+
+			if(z.strand != t.strand)
+			{
+				printf("possible wrong inference of strand: \n");
+				z.write(cout);
+				t.write(cout);
+				if(z.count <= 1) z.count++;
+				if(t.count <= 1) t.count++;
+				continue;
+			}
+
 			if(mode == ADD_TRANSCRIPT_COVERAGE_SUM) z.coverage += t.coverage;
 			if(mode == ADD_TRANSCRIPT_COVERAGE_MAX && z.coverage < t.coverage) z.coverage = t.coverage;
 			if(mode == ADD_TRANSCRIPT_COVERAGE_MIN && z.coverage > t.coverage) z.coverage = t.coverage;
