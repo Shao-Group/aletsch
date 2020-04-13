@@ -13,6 +13,7 @@
 #include "bridge_path.h"
 #include "interval_map.h"
 #include "constants.h"
+#include "parameters.h"
 
 using namespace std;
 
@@ -65,7 +66,7 @@ public:
 	int append_junctions(const pereads_cluster &pc, const bridge_path &bbp);
 
 	// recover splice graph and phasing paths
-	int build_splice_graph(splice_graph &gr);
+	int build_splice_graph(splice_graph &gr, const parameters &cfg);
 	PIDI get_leftmost_bound();
 	PIDI get_rightmost_bound();
 

@@ -257,7 +257,7 @@ int assemble(combined_graph &cb, transcript_set &vt, const parameters &cfg, bool
 {
 	// rebuild splice graph
 	splice_graph gx;
-	cb.build_splice_graph(gx);
+	cb.build_splice_graph(gx, cfg);
 	gx.build_vertex_index();
 
 	phase_set px = cb.ps;
@@ -416,7 +416,7 @@ int resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, const parame
 
 	// rebuild splice graph
 	splice_graph gx;
-	cb.build_splice_graph(gx);
+	cb.build_splice_graph(gx, cfg);
 	gx.build_vertex_index();
 
 	// collect and bridge all unbridged pairs

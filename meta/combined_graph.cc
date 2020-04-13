@@ -343,7 +343,7 @@ int combined_graph::append_junctions(const pereads_cluster &pc, const bridge_pat
 	return 0;
 }
 
-int combined_graph::build_splice_graph(splice_graph &gr)
+int combined_graph::build_splice_graph(splice_graph &gr, const parameters &cfg)
 {
 	gr.clear();
 
@@ -463,10 +463,9 @@ int combined_graph::build_splice_graph(splice_graph &gr)
 		int xd = gr.out_degree(i + 0);
 		int yd = gr.in_degree(i + 1);
 		double w = (xd < yd) ? ss.second.first : tt.second.first;
+		if(w < cfg.min_guaranteed_edge_weight) w = cfg.min_guaranteed_edge_weight;
 		int c = ss.second.second;
 		if(ss.second.second > tt.second.second) c = tt.second.second;
-
-		if(w < 1) w = 1;
 		edge_descriptor e = gr.add_edge(i + 0, i + 1);
 		edge_info ei;
 		ei.weight = w;
