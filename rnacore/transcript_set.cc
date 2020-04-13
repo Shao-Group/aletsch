@@ -40,7 +40,6 @@ int transcript_set::add(const transcript &t1, int mode)
 		for(int k = 0; k < v.size(); k++)
 		{
 			transcript &z = v[k];
-			if(z.strand != t.strand) continue;
 			bool b = z.intron_chain_match(t);
 			if(b == false) continue;
 
