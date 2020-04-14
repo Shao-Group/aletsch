@@ -77,6 +77,18 @@ int transcript_set::add(const transcript &t1, int mode)
 	return 0;
 }
 
+int transcript_set::increase_count(int count)
+{
+	for(auto &x : mt)
+	{
+		for(auto &z : x.second)
+		{
+			z.count += count;
+		}
+	}
+	return 0;
+}
+
 int transcript_set::add(const transcript_set &ts, int mode)
 {
 	for(auto &x : ts.mt)

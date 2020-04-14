@@ -196,6 +196,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	if(gv.size() == 1)
 	{
 		assemble(gv, instance, subindex, ts);
+		ts.increase_count(1);
 		store_transcripts(ts, mylock);
 		return 0;
 	}
