@@ -79,7 +79,7 @@ int transcript_set::add(const transcript &t1, int mode)
 
 int transcript_set::add(const transcript_set &ts, int mode)
 {
-	for(auto &x : mt)
+	for(auto &x : ts.mt)
 	{
 		for(auto &z : x.second)
 		{
@@ -104,7 +104,7 @@ vector<transcript> transcript_set::get_transcripts(int min_count) const
 
 int transcript_set::print() const
 {
-	printf("transcript-set: chrm = %s, strand = %c\n", chrm.c_str(), strand);
+	printf("transcript-set: chrm = %s, strand = %c, mt.size() = %lu\n", chrm.c_str(), strand, mt.size());
 	vector<transcript> vv = get_transcripts(1);
 	for(int i = 0; i < vv.size(); i++) vv[i].write(cout);
 	return 0;
