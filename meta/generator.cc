@@ -41,7 +41,7 @@ generator::~generator()
 
 int generator::resolve()
 {
-	boost::asio::thread_pool pool(1);				// thread pool
+	//boost::asio::thread_pool pool(1);				// thread pool
 	mutex mylock;									// lock for trsts
 
 	int index = 0;
@@ -73,14 +73,16 @@ int generator::resolve()
 		// truncate
 		if(bb1->hits.size() >= 1 && (ht.tid != bb1->tid || ht.pos > bb1->rpos + cfg.min_bundle_gap))
 		{
-			boost::asio::post(pool, [this, &mylock, bb1, index]{ this->generate(bb1, mylock, index); });
+			//boost::asio::post(pool, [this, &mylock, bb1, index]{ this->generate(bb1, mylock, index); });
+			this->generate(bb1, mylock, index);
 			bb1 = new bundle();
 			index++;
 		}
 
 		if(bb2->hits.size() >= 1 && (ht.tid != bb2->tid || ht.pos > bb2->rpos + cfg.min_bundle_gap))
 		{
-			boost::asio::post(pool, [this, &mylock, bb2, index]{ this->generate(bb2, mylock, index); });
+			//boost::asio::post(pool, [this, &mylock, bb2, index]{ this->generate(bb2, mylock, index); });
+			this->generate(bb2, mylock, index);
 			bb2 = new bundle();
 			index++;
 		}
@@ -99,13 +101,15 @@ int generator::resolve()
 		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb2->add_hit_intervals(ht, b1t);
 	}
 
-	boost::asio::post(pool, [this, &mylock, bb1, index]{ this->generate(bb1, mylock, index); });
+	//boost::asio::post(pool, [this, &mylock, bb1, index]{ this->generate(bb1, mylock, index); });
+	this->generate(bb1, mylock, index);
 	index++;
 
-	boost::asio::post(pool, [this, &mylock, bb2, index]{ this->generate(bb2, mylock, index); });
+	//boost::asio::post(pool, [this, &mylock, bb2, index]{ this->generate(bb2, mylock, index); });
+	this->generate(bb2, mylock, index);
 	index++;
 
-	pool.join();
+	//pool.join();
 
 	return 0;
 }
