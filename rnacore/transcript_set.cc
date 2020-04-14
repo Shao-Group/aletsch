@@ -21,7 +21,10 @@ bool transcript_set::query(const transcript &t) const
 int transcript_set::add(const transcript &t1, int mode)
 {
 	transcript t = t1;
+
 	if(t.exons.size() <= 1) return 0;
+	assert(t.strand == strand);
+	assert(t.seqname == chrm);
 	assert(t.count >= 1);
 
 	size_t h = t.get_intron_chain_hashing();
@@ -43,21 +46,25 @@ int transcript_set::add(const transcript &t1, int mode)
 			bool b = z.intron_chain_match(t);
 			if(b == false) continue;
 
-			if(z.strand != t.strand)
+			if(mode == TRANSCRIPT_COUNT_ADD_COVERAGE_ADD) 
 			{
-				printf("possible wrong inference of strand: \n");
-				z.write(cout);
-				t.write(cout);
-				if(z.count <= 1) z.count++;
-				if(t.count <= 1) t.count++;
-				continue;
+				z.count += t.count;
+				z.coverage += t.coverage;
+				z.extend_bounds(t);
 			}
 
-			if(mode == ADD_TRANSCRIPT_COVERAGE_SUM) z.coverage += t.coverage;
-			if(mode == ADD_TRANSCRIPT_COVERAGE_MAX && z.coverage < t.coverage) z.coverage = t.coverage;
-			if(mode == ADD_TRANSCRIPT_COVERAGE_MIN && z.coverage > t.coverage) z.coverage = t.coverage;
-			if(mode != ADD_TRANSCRIPT_NUL) z.extend_bounds(t);
-			if(mode != ADD_TRANSCRIPT_NUL) z.count += t.count;
+			if(mode == TRANSCRIPT_COUNT_ADD_COVERAGE_NUL) 
+			{
+				z.count += t.count;
+			}
+
+			if(mode == TRANSCRIPT_COUNT_MAX_COVERAGE_MAX)
+			{
+				if(t.count > z.count) z = t;
+				if(t.count == z.count && t.coverage > z.coverage) z.coverage = t.coverage;
+				if(t.count == z.count && t.coverage > z.coverage) z.extend_bounds(t);
+			}
+
 			found = true;
 			break;
 		}
@@ -66,16 +73,15 @@ int transcript_set::add(const transcript &t1, int mode)
 	return 0;
 }
 
-int transcript_set::add(const transcript_set &ts, int min_count, int mode)
-{
-	vector<transcript> v = ts.get_transcripts(min_count);
-	for(int i = 0; i < v.size(); i++) add(v[i], mode);
-	return 0;
-}
-
 int transcript_set::add(const transcript_set &ts, int mode)
 {
-	add(ts, 1, mode);
+	for(auto &x : mt)
+	{
+		for(auto &z : x.second)
+		{
+			add(z, mode);
+		}
+	}
 	return 0;
 }
 

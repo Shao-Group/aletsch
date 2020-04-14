@@ -36,9 +36,6 @@ int incubator::resolve()
 	printf("Step 2: merge splice graphs, %s\n", ctime(&mytime));
 	merge();
 
-	// test the time / memory up to 2nd step
-	//return 0;
-
 	mytime = time(NULL);
 	printf("Step 3: assemble merged splice graphs, %s\n", ctime(&mytime));
 	assemble();
@@ -67,8 +64,7 @@ int incubator::generate()
 	{
 		string file(line);
 		if(file.size() == 0) continue;
-		boost::asio::post(pool, [this, &mylock, file]{ generate_single(file, this->groups, mylock, this->g2g, this->cfg); });
-		//generate_single(file, this->groups, mylock, this->g2g, this->cfg);
+		boost::asio::post(pool, [this, &mylock, file]{ this->generate(file, this->groups, mylock); });
 	}
 
 	pool.join();
@@ -101,8 +97,10 @@ int incubator::merge()
 
 int incubator::assemble()
 {
-	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
-	mutex mylock;									// lock for trsts
+	init_transcript_sets();
+
+	boost::asio::thread_pool pool(cfg.max_threads);
+	mutex mylock;
 
 	int instance = 0;
 	for(int i = 0; i < groups.size(); i++)
@@ -111,19 +109,9 @@ int incubator::assemble()
 		{
 			const vector<int> &v = groups[i].gvv[k];
 			if(v.size() == 0) continue;
-
-			if(v.size() == 1)
-			{
-				combined_graph &cb = groups[i].gset[v[0]];
-				boost::asio::post(pool, [this, &cb, instance, &mylock]{ assemble_single(cb, instance, this->tset, mylock, this->cfg); });
-			}
-			else
-			{
-				assert(v.size() >= 2);
-				vector<combined_graph*> gv;
-				for(int j = 0; j < v.size(); j++) gv.push_back(&(groups[i].gset[v[j]]));
-				boost::asio::post(pool, [this, gv, instance, &mylock]{ assemble_cluster(gv, instance, this->tset, mylock, this->cfg); });
-			}
+			vector<combined_graph*> gv;
+			for(int j = 0; j < v.size(); j++) gv.push_back(&(groups[i].gset[v[j]]));
+			boost::asio::post(pool, [this, gv, instance, &mylock]{ this->assemble(gv, instance, mylock); });
 			instance++;
 		}
 	}
@@ -131,7 +119,6 @@ int incubator::assemble()
 
 	time_t mytime = time(NULL);
 	printf("finish assembling all merged graphs, %s\n", ctime(&mytime));
-
 	return 0;
 }
 
@@ -147,55 +134,10 @@ int incubator::postprocess()
 	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
 	mutex mylock;									// lock for trsts
 
-	typedef map<size_t, vector<transcript>>::iterator MIT;
-	auto &trsts = tset.mt;
-
-	int index = 0;
-	for(;;)
+	for(int i = 0; i < tss.size(); i++)
 	{
-		if(index >= trsts.size()) break;
-
-		MIT m1 = trsts.begin();
-		std::advance(m1, index);
-		MIT m2 = m1;
-		if(trsts.size() - index <= 1000) 
-		{
-			m2 = trsts.end();
-			index = trsts.size();
-		}
-		else 
-		{
-			std::advance(m2, 1000);
-			index += 1000;
-		}
-
-		boost::asio::post(pool, [m1, m2, &fout, &mylock, this]
-				{ 
-					stringstream ss;
-					for(MIT x = m1; x != m2; x++)
-					{
-						auto &v = x->second;
-						cluster cs(v, this->cfg);
-						cs.solve();
-
-						filter ft(cs.cct, this->cfg);
-						ft.join_single_exon_transcripts();
-						ft.filter_length_coverage();
-
-						for(int i = 0; i < ft.trs.size(); i++)
-						{
-							transcript &t = ft.trs[i];
-							t.RPKM = 0;
-							t.write(ss);
-						}
-					}
-					mylock.lock();
-					const string &s = ss.str();
-					fout.write(s.c_str(), s.size());
-					ss.str("");
-					mylock.unlock();
-				}
-		);
+		transcript_set &ts = tss[i];
+		boost::asio::post(pool, [this, &ts, &mylock, &fout]{ this->postprocess(ts, fout, mylock); });
 	}
 
 	pool.join();
@@ -207,17 +149,7 @@ int incubator::postprocess()
 	return 0;
 }
 
-int incubator::print_groups()
-{
-	for(int k = 0; k < groups.size(); k++)
-	{
-		printf("group %d (chrm = %s, strand = %c) contains %lu graphs (%lu merged graphs)\n", k, groups[k].chrm.c_str(), groups[k].strand, groups[k].gset.size(), groups[k].gvv.size());
-		//groups[k].print();
-	}
-	return 0;
-}
-
-int generate_single(const string &file, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &m, const parameters &cfg)
+int incubator::generate(const string &file, vector<combined_group> &gv, mutex &mylock)
 {	
 	vector<combined_graph> v;
 	parameters c = cfg;
@@ -234,16 +166,16 @@ int generate_single(const string &file, vector<combined_group> &gv, mutex &myloc
 		int s = 0;
 		if(c == '+') s = 1;
 		if(c == '-') s = 2;
-		if(m[s].find(chrm) == m[s].end())
+		if(g2g[s].find(chrm) == g2g[s].end())
 		{
 			combined_group gp(chrm, c, cfg);
 			gp.add_graph(std::move(v[k]));
-			m[s].insert(pair<string, int>(chrm, gv.size()));
+			g2g[s].insert(pair<string, int>(chrm, gv.size()));
 			gv.push_back(std::move(gp));
 		}
 		else
 		{
-			gv[m[s][chrm]].add_graph(std::move(v[k]));
+			gv[g2g[s][chrm]].add_graph(std::move(v[k]));
 		}
 	}
 	mylock.unlock();
@@ -253,7 +185,82 @@ int generate_single(const string &file, vector<combined_group> &gv, mutex &myloc
 	return 0;
 }
 
-int assemble(combined_graph &cb, transcript_set &vt, const parameters &cfg, bool group_boundary)
+
+int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
+{
+	if(gv.size() == 0) return 0;
+
+	transcript_set ts;
+	int subindex = 0;
+
+	if(gv.size() == 1)
+	{
+		assemble(gv, instance, subindex, ts);
+		store_transcripts(ts, mylock);
+		return 0;
+	}
+
+	combined_graph cx;
+	resolve_cluster(gv, cx);
+	cx.set_gid(instance, subindex++);
+	transcript_set ts1;
+	assemble(cx, ts1);
+
+	int n = gv.size();
+	int k = n; 
+	for(;;)
+	{
+		if(k > n) k = n;
+		vector<vector<combined_graph*>> gvv(k);
+		for(int i = 0; i < gv.size(); i++)
+		{
+			int j = i % k;
+			gvv[j].push_back(gv[i]);
+		}
+
+		transcript_set tsk;
+		for(int i = 0; i < k; i++)
+		{
+			assemble(gvv[i], instance, subindex++, tsk);
+		}
+
+		if(k == n) tsk.add(ts1, TRANSCRIPT_COUNT_ADD_COVERAGE_NUL);
+		
+		ts.add(tsk, TRANSCRIPT_COUNT_MAX_COVERAGE_MAX);
+
+		if(k >= n) break;
+		k = k * 2;
+	}
+
+	store_transcripts(ts, mylock);
+
+	for(int i = 0; i > gv.size(); i++) gv[i]->clear();
+
+	return 0;
+}
+
+int incubator::assemble(vector<combined_graph*> gv, int instance, int subindex, transcript_set &ts)
+{
+	if(gv.size() <= 0) return 0;
+
+	if(gv.size() == 1)
+	{
+		combined_graph &cb = *(gv[0]);
+		cb.set_gid(instance, subindex);
+		assemble(cb, ts);
+	}
+	else
+	{
+		combined_graph cb;
+		cb.combine(gv);
+		cb.copy_meta_information(*(gv[0]));
+		cb.set_gid(instance, subindex);
+		assemble(cb, ts);
+	}
+	return 0;
+}
+
+int incubator::assemble(combined_graph &cb, transcript_set &ts)
 {
 	// rebuild splice graph
 	splice_graph gx;
@@ -261,13 +268,11 @@ int assemble(combined_graph &cb, transcript_set &vt, const parameters &cfg, bool
 	gx.build_vertex_index();
 
 	phase_set px = cb.ps;
-	//if(group_boundary == true)
-	{
-		map<int32_t, int32_t> smap, tmap;
-		group_start_boundaries(gx, smap, cfg.max_group_boundary_distance);
-		group_end_boundaries(gx, tmap, cfg.max_group_boundary_distance);
-		px.project_boundaries(smap, tmap);
-	}
+
+	map<int32_t, int32_t> smap, tmap;
+	group_start_boundaries(gx, smap, cfg.max_group_boundary_distance);
+	group_end_boundaries(gx, tmap, cfg.max_group_boundary_distance);
+	px.project_boundaries(smap, tmap);
 
 	refine_splice_graph(gx);
 
@@ -283,7 +288,6 @@ int assemble(combined_graph &cb, transcript_set &vt, const parameters &cfg, bool
 	printf("==\n");
 	*/
 
-	// assemble 
 	gx.gid = cb.gid;
 	scallop sx(gx, hx, cfg);
 	sx.assemble();
@@ -296,7 +300,7 @@ int assemble(combined_graph &cb, transcript_set &vt, const parameters &cfg, bool
 		t.RPKM = 0;
 		t.count = 1;
 		z++;
-		vt.add(t, ADD_TRANSCRIPT_COVERAGE_SUM);
+		ts.add(t, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		//t.write(cout);
 	}
 
@@ -306,107 +310,7 @@ int assemble(combined_graph &cb, transcript_set &vt, const parameters &cfg, bool
 	return 0;
 }
 
-int assemble(vector<combined_graph*> gv, int instance, int subindex, transcript_set &vt, const parameters &cfg)
-{
-	if(gv.size() <= 0) return 0;
-
-	if(gv.size() == 1)
-	{
-		combined_graph &cb = *(gv[0]);
-		cb.set_gid(instance, subindex);
-		assemble(cb, vt, cfg, false);
-	}
-	else
-	{
-		combined_graph cb;
-		cb.combine(gv);
-		cb.copy_meta_information(*(gv[0]));
-		cb.set_gid(instance, subindex);
-		assemble(cb, vt, cfg, true);
-	}
-	return 0;
-}
-
-int assemble_single(combined_graph &cb, int instance, transcript_set &ts, mutex &mylock, const parameters &cfg)
-{
-	cb.set_gid(instance, 0);
-	transcript_set vt;
-	assemble(cb, vt, cfg, false);
-
-	mylock.lock();
-	ts.add(vt, ADD_TRANSCRIPT_COVERAGE_SUM);
-	mylock.unlock();
-
-	cb.clear();
-	return 0;
-}
-
-int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &ts, mutex &mylock, const parameters &cfg)
-{
-	assert(gv.size() >= 2);
-	transcript_set tts;
-
-	int subindex = 0;
-	combined_graph cx;
-	resolve_cluster(gv, cx, cfg);
-	cx.set_gid(instance, subindex++);
-	transcript_set vt0;
-	assemble(cx, vt0, cfg, true);
-
-	// sample d points from [1, n]
-	set<int> ss;
-	/*
-	int d = 4;
-	int n = (1 + gv.size()) / 2 - 1;
-	if(d > n) d = n;
-	ss.insert(1);
-	ss.insert(n + 1);
-	for(int i = 1; i < d; i++) ss.insert(1 + i * n / d);
-	*/
-
-	ss.insert(1);
-
-	for(auto &k: ss)
-	{
-		//if(k < 1 || k > n + 1) continue;
-		transcript_set vt;
-		for(int i = 0; i <= gv.size() / k; i++)
-		{
-			vector<combined_graph*> gv1;
-			for(int j = 0; j < k; j++)
-			{
-				if(i * k + j < gv.size()) gv1.push_back(gv[i * k + j]);
-			}
-			assemble(gv1, instance, subindex++, vt, cfg);
-		}
-		if(k == 1) vt.add(vt0, ADD_TRANSCRIPT_COVERAGE_NUL);
-		tts.add(vt, 2, ADD_TRANSCRIPT_NUL);
-	}
-
-	mylock.lock();
-
-	/*
-	printf("------\n");
-	printf("instance = %d, %lu predicted transcripts\n", instance, tts.get_transcripts(1).size());
-	tts.print();
-	printf("\n");
-	*/
-
-	ts.add(tts, ADD_TRANSCRIPT_COVERAGE_SUM);
-	mylock.unlock();
-
-	for(int i = 0; i > gv.size(); i++) gv[i]->clear();
-	return 0;
-}
-
-int resolve_cluster(vector<combined_graph*> gv, const parameters &cfg)
-{
-	combined_graph cb;
-	resolve_cluster(gv, cb, cfg);
-	return 0;
-}
-
-int resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, const parameters &cfg)
+int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb)
 {
 	if(gv.size() <= 1) return 0;
 
@@ -448,6 +352,76 @@ int resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, const parame
 		}
 		gv[i]->combine(&g1);
 		gv[i]->vc.clear();
+	}
+	return 0;
+}
+
+int incubator::postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock)
+{
+	vector<transcript> v = ts.get_transcripts(2);
+
+	//cluster cs(v, cfg);
+	//cs.solve();
+
+	filter ft(v, /*cs.cct,*/ cfg);
+	ft.join_single_exon_transcripts();
+	ft.filter_length_coverage();
+
+	stringstream ss;
+	for(int i = 0; i < ft.trs.size(); i++)
+	{
+		transcript &t = ft.trs[i];
+		t.write(ss);
+	}
+
+	mylock.lock();
+	const string &s = ss.str();
+	fout.write(s.c_str(), s.size());
+	mylock.unlock();
+
+	return 0;
+}
+
+int incubator::init_transcript_sets()
+{
+	tss.resize(groups.size());
+	assert(g2g.size() == 3);
+	string ss = ".+-";
+	for(int i = 0; i < 3; i++)
+	{
+		for(auto &x : g2g[i])
+		{
+			string s = x.first;
+			int k = x.second;
+			assert(k >= 0 && k < tss.size());
+			tss[k].chrm = s;
+			tss[k].strand = ss[i];
+		}
+	}
+	return 0;
+}
+
+int incubator::store_transcripts(const transcript_set &ts, mutex &mylock)
+{
+	mylock.lock();
+	int k = 0;
+	if(ts.strand == '+') k = 1;
+	if(ts.strand == '-') k = 2;
+
+	assert(g2g[k].find(ts.chrm) != g2g[k].end());
+	int z= g2g[k][ts.chrm];
+
+	tss[z].add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+	mylock.unlock();
+	return 0;
+}
+
+int incubator::print_groups()
+{
+	for(int k = 0; k < groups.size(); k++)
+	{
+		printf("group %d (chrm = %s, strand = %c) contains %lu graphs (%lu merged graphs)\n", k, groups[k].chrm.c_str(), groups[k].strand, groups[k].gset.size(), groups[k].gvv.size());
+		//groups[k].print();
 	}
 	return 0;
 }

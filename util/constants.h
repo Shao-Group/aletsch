@@ -53,11 +53,9 @@ using namespace std;
 #define CONFLICTING 9
 
 // how to combine transcript
-#define ADD_TRANSCRIPT_COVERAGE_SUM 1
-#define ADD_TRANSCRIPT_COVERAGE_MAX 2
-#define ADD_TRANSCRIPT_COVERAGE_MIN 3
-#define ADD_TRANSCRIPT_COVERAGE_NUL 4
-#define ADD_TRANSCRIPT_NUL 5
+#define TRANSCRIPT_COUNT_ADD_COVERAGE_ADD 1
+#define TRANSCRIPT_COUNT_ADD_COVERAGE_NUL 2
+#define TRANSCRIPT_COUNT_MAX_COVERAGE_MAX 3
 
 const static string position_names[] = {"identical", "fall-right", "fall-left", "contained", "containing", "extend_right", "extend_left", "nested", "nesting", "conflicting"};
 

@@ -20,29 +20,28 @@ public:
 
 public:
 	const parameters &cfg;						// parameters for scallop
+	vector<map<string, int>> g2g;				// group map
 	vector<combined_group> groups;				// graph groups
-	vector< map<string, int> > g2g;				// group map
-	transcript_set tset;						// assembled transcripts
+	vector<transcript_set> tss;					// assembled transcripts
 
 public:
 	int resolve();
-
-public:
 	int generate();
 	int merge();
 	int assemble();
 	int postprocess();
 
+private:
+	int generate(const string &file, vector<combined_group> &gv, mutex &mylock);
+	int assemble(vector<combined_graph*> gv, int instance, mutex &mylock);
+	int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);
+	int init_transcript_sets();
+	int assemble(vector<combined_graph*> gv, int instance, int subindex, transcript_set &ts);
+	int assemble(combined_graph &cb, transcript_set &ts);
+	int resolve_cluster(vector<combined_graph*> gv, combined_graph &cb);
+	int store_transcripts(const transcript_set &ts, mutex &mylock);
+
 	int print_groups();
 };
-
-int generate_single(const string &file, vector<combined_group> &gv, mutex &mylock, vector< map<string, int> > &g2g, const parameters &cfg);
-
-int assemble_single(combined_graph &cb, int instance, transcript_set &ts, mutex &mylock, const parameters &cfg);
-int assemble_cluster(vector<combined_graph*> gv, int instance, transcript_set &ts, mutex &mylock, const parameters &cfg);
-int assemble(combined_graph &cb, transcript_set &ts, const parameters &cfg, bool group_boundary);
-int assemble(vector<combined_graph*> gv, int instance, int subindex, transcript_set &ts, const parameters &cfg);
-int resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, const parameters &cfg);
-int resolve_cluster(vector<combined_graph*> gv, const parameters &cfg);
 
 #endif
