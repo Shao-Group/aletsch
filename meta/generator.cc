@@ -65,6 +65,7 @@ int generator::resolve()
 
 		// TODO for test
 		//if(ht.tid >= 1) break;
+		//if(index >= 100) break;
 
 		qlen += ht.qlen;
 		qcnt += 1;

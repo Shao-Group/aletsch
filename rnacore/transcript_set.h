@@ -21,7 +21,7 @@ public:
 	int add(const transcript_set &ts, int mode);
 	vector<transcript> get_transcripts(int min_count) const;
 	bool query(const transcript &t) const;
-	int print();
+	int print() const;
 };
 
 #endif

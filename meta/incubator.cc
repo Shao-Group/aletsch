@@ -403,15 +403,19 @@ int incubator::init_transcript_sets()
 
 int incubator::store_transcripts(const transcript_set &ts, mutex &mylock)
 {
+	if(ts.mt.size() == 0) return 0;
+
 	mylock.lock();
+
 	int k = 0;
 	if(ts.strand == '+') k = 1;
 	if(ts.strand == '-') k = 2;
 
 	assert(g2g[k].find(ts.chrm) != g2g[k].end());
-	int z= g2g[k][ts.chrm];
+	int z = g2g[k][ts.chrm];
 
 	tss[z].add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+
 	mylock.unlock();
 	return 0;
 }
