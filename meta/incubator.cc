@@ -207,8 +207,8 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	transcript_set ts1;
 	assemble(cx, ts1);
 
-	int k = 2; 
 	int n = gv.size();
+	int k = n; 
 	for(;;)
 	{
 		if(k > n) k = n;
