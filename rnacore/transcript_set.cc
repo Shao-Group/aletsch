@@ -23,9 +23,15 @@ int transcript_set::add(const transcript &t1, int mode)
 	transcript t = t1;
 
 	if(t.exons.size() <= 1) return 0;
+	assert(t.count >= 1);
+
+	if(t.strand != strand || t.seqname != chrm)
+	{
+		print();
+		t.write(cout);
+	}
 	assert(t.strand == strand);
 	assert(t.seqname == chrm);
-	assert(t.count >= 1);
 
 	size_t h = t.get_intron_chain_hashing();
 
@@ -100,6 +106,7 @@ vector<transcript> transcript_set::get_transcripts(int min_count) const
 
 int transcript_set::print()
 {
+	printf("transcript-set: chrm = %s, strand = %c\n", chrm.c_str(), strand);
 	vector<transcript> vv = get_transcripts(1);
 	for(int i = 0; i < vv.size(); i++) vv[i].write(cout);
 	return 0;
