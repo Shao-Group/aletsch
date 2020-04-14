@@ -56,7 +56,10 @@ int incubator::generate()
 		exit(0);
 	}
 
-	boost::asio::thread_pool pool(cfg.max_threads);		// thread pool
+	int num_threads = cfg.max_threads;
+	if(cfg.single_sample_multiple_threading == true) num_threads = cfg.max_threads / 2;
+	
+	boost::asio::thread_pool pool(num_threads);			// thread pool
 	mutex mylock;										// lock for trsts
 
 	char line[102400];

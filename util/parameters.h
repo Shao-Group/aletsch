@@ -35,6 +35,7 @@ public:
 	int max_combined;
 	double merge_threshold;
 	double standalone_coverage;
+	bool single_sample_multiple_threading;
 
 	// for bridging paired-end reads
 	int bridge_dp_solution_size;

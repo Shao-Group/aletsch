@@ -31,6 +31,7 @@ parameters::parameters()
 	max_combined = 100;
 	merge_threshold = 0.5;
 	standalone_coverage = 10.0;
+	single_sample_multiple_threading = false;
 
 	// for bridging paired-end reads
 	bridge_dp_solution_size = 10;
@@ -151,6 +152,11 @@ int parameters::parse_arguments(int argc, const char ** argv)
 			max_combined = atoi(argv[i + 1]);
 			i++;
 		}
+		else if(string(argv[i]) == "--single_sample_multiple_threading")
+		{
+			single_sample_multiple_threading = true;
+		}
+
 		else if(string(argv[i]) == "--bridge_dp_solution_size")
 		{
 			bridge_dp_solution_size = atoi(argv[i + 1]);
