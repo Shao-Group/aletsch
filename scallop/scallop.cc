@@ -1591,7 +1591,7 @@ int scallop::collect_path(int e)
 
 	path p;
 	p.length = mi;
-	p.abd = gr.get_edge_weight(i2e[e]);
+	p.abd = log(1.0 + gr.get_edge_weight(i2e[e]));
 	p.reads = med[i2e[e]];
 	//p.abd = med[i2e[e]] / mi;
 	//p.reads = gr.get_edge_weight(i2e[e]);
