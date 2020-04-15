@@ -212,6 +212,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 
 	int n = gv.size();
 	set<int> ss;
+	ss.insert(n);
 	for(int i = 1; i <= 5; i++)
 	{
 		int k = (n + 1) * i / 10;
