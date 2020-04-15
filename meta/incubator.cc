@@ -215,7 +215,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	for(int i = 1; i <= 5; i++)
 	{
 		int k = n * i / 5;
-		if(k == 1) continue;
+		if(k <= 1) continue;
 		if(k >= n) k = n;
 		ss.insert(k);
 	}
@@ -368,10 +368,12 @@ int incubator::postprocess(const transcript_set &ts, ofstream &fout, mutex &mylo
 {
 	vector<transcript> v = ts.get_transcripts(2);
 
+	/*
 	cluster cs(v, cfg);
 	cs.solve();
+	*/
 
-	filter ft(/*v, */cs.cct, cfg);
+	filter ft(v, /*cs.cct,*/ cfg);
 	ft.join_single_exon_transcripts();
 	ft.filter_length_coverage();
 
