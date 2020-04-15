@@ -211,7 +211,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	assemble(cx, ts1);
 
 	int n = gv.size();
-	int k = n; 
+	int k = 2; 
 	for(;;)
 	{
 		if(k > n) k = n;
@@ -418,7 +418,7 @@ int incubator::store_transcripts(const transcript_set &ts, mutex &mylock)
 	assert(g2g[k].find(ts.chrm) != g2g[k].end());
 	int z = g2g[k][ts.chrm];
 
-	tss[z].add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+	tss[z].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 
 	mylock.unlock();
 	return 0;
