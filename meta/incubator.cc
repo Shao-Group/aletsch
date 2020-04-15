@@ -214,7 +214,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	set<int> ss;
 	for(int i = 1; i <= 5; i++)
 	{
-		int k = n * i / 5;
+		int k = (n + 1) * i / 10;
 		if(k <= 1) continue;
 		if(k >= n) k = n;
 		ss.insert(k);
@@ -237,8 +237,8 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 
 		if(k == n) tsk.add(ts1, TRANSCRIPT_COUNT_ADD_COVERAGE_NUL);
 		
-		ts.add(tsk, TRANSCRIPT_COUNT_MAX_COVERAGE_ADD);
-		//ts.add(tsk, TRANSCRIPT_COUNT_MAX_COVERAGE_MAX);
+		//ts.add(tsk, TRANSCRIPT_COUNT_MAX_COVERAGE_ADD);
+		ts.add(tsk, TRANSCRIPT_COUNT_MAX_COVERAGE_MAX);
 	}
 
 	store_transcripts(ts, mylock);
