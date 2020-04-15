@@ -364,10 +364,10 @@ int incubator::postprocess(const transcript_set &ts, ofstream &fout, mutex &mylo
 {
 	vector<transcript> v = ts.get_transcripts(2);
 
-	//cluster cs(v, cfg);
-	//cs.solve();
+	cluster cs(v, cfg);
+	cs.solve();
 
-	filter ft(v, /*cs.cct,*/ cfg);
+	filter ft(/*v, */cs.cct, cfg);
 	ft.join_single_exon_transcripts();
 	ft.filter_length_coverage();
 
