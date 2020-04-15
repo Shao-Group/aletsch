@@ -211,7 +211,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	assemble(cx, ts1);
 
 	int n = gv.size();
-	int k = 2; 
+	int k = n; 
 	for(;;)
 	{
 		if(k > n) k = n;
