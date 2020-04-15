@@ -237,6 +237,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 
 		if(k == n) tsk.add(ts1, TRANSCRIPT_COUNT_ADD_COVERAGE_NUL);
 		
+		//ts.add(tsk, TRANSCRIPT_COUNT_MAX_COVERAGE_ADD);
 		ts.add(tsk, TRANSCRIPT_COUNT_MAX_COVERAGE_MAX);
 	}
 
