@@ -211,18 +211,10 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	assemble(cx, ts1);
 
 	int n = gv.size();
-	set<int> ss;
-	ss.insert(n);
-	for(int i = 1; i <= 5; i++)
+	int k = n; 
+	for(;;)
 	{
-		int k = (n + 1) * i / 10;
-		if(k <= 1) continue;
-		if(k >= n) k = n;
-		ss.insert(k);
-	}
-
-	for(auto &k: ss)
-	{
+		if(k > n) k = n;
 		vector<vector<combined_graph*>> gvv(k);
 		for(int i = 0; i < gv.size(); i++)
 		{
@@ -238,8 +230,10 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 
 		if(k == n) tsk.add(ts1, TRANSCRIPT_COUNT_ADD_COVERAGE_NUL);
 		
-		//ts.add(tsk, TRANSCRIPT_COUNT_MAX_COVERAGE_ADD);
 		ts.add(tsk, TRANSCRIPT_COUNT_MAX_COVERAGE_MAX);
+
+		if(k >= n) break;
+		k = k * 2;
 	}
 
 	store_transcripts(ts, mylock);
@@ -370,10 +364,8 @@ int incubator::postprocess(const transcript_set &ts, ofstream &fout, mutex &mylo
 {
 	vector<transcript> v = ts.get_transcripts(2);
 
-	/*
-	cluster cs(v, cfg);
-	cs.solve();
-	*/
+	//cluster cs(v, cfg);
+	//cs.solve();
 
 	filter ft(v, /*cs.cct,*/ cfg);
 	ft.join_single_exon_transcripts();

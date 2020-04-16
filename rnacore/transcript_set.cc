@@ -62,13 +62,6 @@ int transcript_set::add(const transcript &t1, int mode)
 				z.count += t.count;
 			}
 
-			if(mode == TRANSCRIPT_COUNT_MAX_COVERAGE_ADD) 
-			{
-				if(t.count > z.count) z.count = t.count; 
-				z.coverage += t.coverage;
-				z.extend_bounds(t);
-			}
-
 			if(mode == TRANSCRIPT_COUNT_MAX_COVERAGE_MAX)
 			{
 				if(t.count > z.count) z = t;
