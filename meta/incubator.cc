@@ -139,8 +139,7 @@ int incubator::merge()
 
 int incubator::assemble()
 {
-	init_transcript_sets();
-
+	//init_transcript_sets();
 	boost::asio::thread_pool pool(cfg.max_threads);
 	mutex mylock;
 
@@ -457,7 +456,7 @@ int incubator::store_transcripts(const transcript_set &ts, mutex &mylock)
 		found = true;
 		break;
 	}
-	if(found == false) return 0;
+	if(found == true) return 0;
 
 	tss.resize(tss.size() + 1);
 	tss[tss.size() - 1].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
