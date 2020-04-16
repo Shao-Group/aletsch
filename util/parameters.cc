@@ -23,6 +23,7 @@ parameters::parameters()
 	algo = "meta-scallop";
 	version = "0.1.1";
 	max_threads = 10;
+	meta_batch_size = 100;
 
 	// for meta-assembly
 	min_supporting_samples = 2;	
@@ -107,6 +108,11 @@ int parameters::parse_arguments(int argc, const char ** argv)
 		else if(string(argv[i]) == "-t")
 		{
 			max_threads = atoi(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "-m")
+		{
+			meta_batch_size = atof(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "--version")

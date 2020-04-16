@@ -20,16 +20,21 @@ public:
 
 public:
 	const parameters &cfg;						// parameters for scallop
+	vector<string> bams;						// bam files
+	vector<transcript_set> tss;					// assembled transcripts
+
 	vector<map<string, int>> g2g;				// group map
 	vector<combined_group> groups;				// graph groups
-	vector<transcript_set> tss;					// assembled transcripts
 
 public:
 	int resolve();
-	int generate();
+	int read_bam_list();
+	int clear();
+	int postprocess();
+
+	int generate(int a, int b);
 	int merge();
 	int assemble();
-	int postprocess();
 
 private:
 	int generate(const string &file, vector<combined_group> &gv, mutex &mylock);

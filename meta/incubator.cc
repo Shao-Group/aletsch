@@ -28,26 +28,45 @@ incubator::incubator(const parameters &c)
 int incubator::resolve()
 {
 	time_t mytime;
-	mytime = time(NULL);
-	printf("\nStep 1: generate graphs for individual bam/sam files, %s\n", ctime(&mytime));
-	generate();
+	read_bam_list();
+
+	int a = 0;
+	while(true)
+	{
+		int b = a + cfg.meta_batch_size;
+		if(b >= bams.size()); b = bams.size();
+		if(a >= b) break;
+
+		mytime = time(NULL);
+		printf("START PROCESSING BATCH WITH %d SAMPLES, %s\n\n", b - a, ctime(&mytime));
+
+		mytime = time(NULL);
+		printf("step 1: generate graphs for individual bam/sam files, %s\n", ctime(&mytime));
+		generate(a, b);
+
+		mytime = time(NULL);
+		printf("step 2: merge splice graphs, %s\n", ctime(&mytime));
+		merge();
+
+		mytime = time(NULL);
+		printf("step 3: assemble merged splice graphs, %s\n", ctime(&mytime));
+		assemble();
+
+		a = b;
+		clear();
+
+		mytime = time(NULL);
+		printf("\nFINISH PROCESSING BATCH\n");
+	}
 
 	mytime = time(NULL);
-	printf("Step 2: merge splice graphs, %s\n", ctime(&mytime));
-	merge();
-
-	mytime = time(NULL);
-	printf("Step 3: assemble merged splice graphs, %s\n", ctime(&mytime));
-	assemble();
-
-	mytime = time(NULL);
-	printf("Step 4: filter and output assembled transcripts, %s\n", ctime(&mytime));
+	printf("\nFINAL: filter and output assembled transcripts, %s\n", ctime(&mytime));
 	postprocess();
 
 	return 0;
 }
 
-int incubator::generate()
+int incubator::read_bam_list()
 {
 	ifstream fin(cfg.input_bam_list.c_str());
 	if(fin.fail())
@@ -56,17 +75,38 @@ int incubator::generate()
 		exit(0);
 	}
 
+	char line[102400];
+	while(fin.getline(line, 102400, '\n'))
+	{
+		string file(line);
+		if(file.size() == 0) continue;
+		bams.push_back(file);
+	}
+	fin.close();
+	return 0;
+}
+
+int incubator::clear()
+{
+	for(int i = 0; i < 3; i++) g2g[i].clear();
+	groups.clear();
+	return 0;
+}
+
+int incubator::generate(int a, int b)
+{
+	if(a >= b) return 0;
+
 	int num_threads = cfg.max_threads;
 	if(cfg.single_sample_multiple_threading == true) num_threads = cfg.max_threads / 2;
+	if(num_threads > b - a) num_threads = b - a;
 	
 	boost::asio::thread_pool pool(num_threads);			// thread pool
 	mutex mylock;										// lock for trsts
 
-	char line[102400];
-	while(fin.getline(line, 10240, '\n'))
+	for(int i = a; i < b; i++)
 	{
-		string file(line);
-		if(file.size() == 0) continue;
+		string file = bams[i];
 		boost::asio::post(pool, [this, &mylock, file]{ this->generate(file, this->groups, mylock); });
 	}
 
@@ -76,7 +116,6 @@ int incubator::generate()
 	time_t mytime = time(NULL);
 	printf("finish processing all individual samples, %s\n", ctime(&mytime));
 
-	fin.close();
 	return 0;
 }
 
@@ -187,7 +226,6 @@ int incubator::generate(const string &file, vector<combined_group> &gv, mutex &m
 	printf("finish processing individual sample %s, %s", file.c_str(), ctime(&mytime));
 	return 0;
 }
-
 
 int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 {
@@ -411,16 +449,21 @@ int incubator::store_transcripts(const transcript_set &ts, mutex &mylock)
 
 	mylock.lock();
 
-	int k = 0;
-	if(ts.strand == '+') k = 1;
-	if(ts.strand == '-') k = 2;
+	bool found = false;
+	for(int i = 0; i < tss.size(); i++)
+	{
+		if(tss[i].chrm != ts.chrm || tss[i].strand != ts.strand) continue;
+		tss[i].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+		found = true;
+		break;
+	}
+	if(found == false) return 0;
 
-	assert(g2g[k].find(ts.chrm) != g2g[k].end());
-	int z = g2g[k][ts.chrm];
-
-	tss[z].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+	tss.resize(tss.size() + 1);
+	tss[tss.size() - 1].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 
 	mylock.unlock();
+
 	return 0;
 }
 

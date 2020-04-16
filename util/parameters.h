@@ -29,6 +29,7 @@ public:
 	int max_threads;
 
 	// for meta-assembly
+	int meta_batch_size;
 	int min_supporting_samples;
 	int min_splicing_count;
 	int min_phasing_count;
