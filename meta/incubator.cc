@@ -34,7 +34,8 @@ int incubator::resolve()
 	while(true)
 	{
 		int b = a + cfg.meta_batch_size;
-		if(b >= bams.size()); b = bams.size();
+
+		if(b >= bams.size()) b = bams.size();
 		if(a >= b) break;
 
 		mytime = time(NULL);
