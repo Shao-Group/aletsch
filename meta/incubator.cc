@@ -200,8 +200,6 @@ int incubator::generate(const string &file, vector<combined_group> &gv, mutex &m
 	mylock.lock();
 	for(int k = 0; k < v.size(); k++)
 	{
-		v[k].print(k);
-
 		string chrm = v[k].chrm;
 		char c = v[k].strand;
 		int s = 0;
@@ -456,10 +454,12 @@ int incubator::store_transcripts(const transcript_set &ts, mutex &mylock)
 		found = true;
 		break;
 	}
-	if(found == true) return 0;
 
-	tss.resize(tss.size() + 1);
-	tss[tss.size() - 1].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+	if(found == false)
+	{
+		tss.resize(tss.size() + 1);
+		tss[tss.size() - 1].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+	}
 
 	mylock.unlock();
 
