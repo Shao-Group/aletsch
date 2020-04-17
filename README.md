@@ -70,7 +70,7 @@ The executable file `meta-scallop` will appear at `meta/meta-scallop`.
 
 The usage of `meta-scallop` is:
 ```
-./meta-scallop -i <input-bam-list> -o <output.gtf> [-t num-threads] [options]
+./meta-scallop -i <input-bam-list> -o <output.gtf> [options]
 ```
 
 The `input-bam-list` specifies the list of aligned samples (in .bam format).
@@ -82,7 +82,9 @@ samtools sort input.bam > input.sort.bam
 ```
 The assembled transcripts from all these samples will be written to `output.gtf`.
 
-meta-scallop support the following parameters. 
+meta-scallop support the following parameters. It also supports all parameters
+that needed in the core algorithm of Scallop. Dry run `meta-scallop` for more
+details.
 
  Parameters | Default Value | Description
  ------------------------- | ------------- | ----------
@@ -92,4 +94,3 @@ meta-scallop support the following parameters.
  -b | 100 | the number of samples that will be process at a time
  -c | 100 | the maximized number of splice graphs that will be combined
  -s | 0.3 | the minimized similarity between two splice graphs that can be combined
- --min_splice_bundary_hits    | 1 | the minimum number of spliced reads required to support a junction
