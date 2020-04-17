@@ -1,3 +1,9 @@
+/*
+Part of meta-scallop
+(c) 2020 by Mingfu Shao, The Pennsylvania State University
+See LICENSE for licensing.
+*/
+
 #include "incubator.h"
 #include "generator.h"
 #include "filter.h"
@@ -39,7 +45,7 @@ int incubator::resolve()
 		if(a >= b) break;
 
 		mytime = time(NULL);
-		printf("START PROCESSING BATCH WITH %d SAMPLES, %s\n\n", b - a, ctime(&mytime));
+		printf("START PROCESSING BATCH WITH %d SAMPLES, %s\n", b - a, ctime(&mytime));
 
 		mytime = time(NULL);
 		printf("step 1: generate graphs for individual bam/sam files, %s\n", ctime(&mytime));
@@ -57,7 +63,7 @@ int incubator::resolve()
 		clear();
 
 		mytime = time(NULL);
-		printf("\nFINISH PROCESSING BATCH\n");
+		printf("FINISH PROCESSING BATCH\n");
 	}
 
 	mytime = time(NULL);

@@ -1,3 +1,9 @@
+/*
+Part of meta-scallop
+(c) 2020 by Mingfu Shao, The Pennsylvania State University
+See LICENSE for licensing.
+*/
+
 #ifndef __COMBINED_GROUP_H__
 #define __COMBINED_GROUP_H__
 

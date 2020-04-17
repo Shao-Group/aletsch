@@ -1,3 +1,10 @@
+/*
+Part of meta-scallop
+(c) 2020 by Mingfu Shao, The Pennsylvania State University
+See LICENSE for licensing.
+*/
+
+
 #ifndef __TRANSCRIPT_SET_H__
 #define __TRANSCRIPT_SET_H__
 

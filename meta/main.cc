@@ -1,17 +1,11 @@
 /*
-Part of Scallop Transcript Assembler
-(c) 2017 by  Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
+Part of meta-scallop
+(c) 2020 by Mingfu Shao, The Pennsylvania State University
 See LICENSE for licensing.
 */
 
 #include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <vector>
 #include <iostream>
-#include <ctime>
-#include <cassert>
-#include <sstream>
 
 #include "parameters.h"
 #include "incubator.h"
@@ -20,7 +14,6 @@ using namespace std;
 
 int main(int argc, const char **argv)
 {
-	srand(time(0));	// TODO
 	parameters cfg;
 
 	if(argc == 1)
@@ -28,7 +21,6 @@ int main(int argc, const char **argv)
 		cfg.print_copyright();
 		cfg.print_help();
 		printf("\n");
-		cfg.print_logo();
 		return 0;
 	}
 

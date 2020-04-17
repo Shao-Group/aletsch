@@ -1,4 +1,6 @@
 /*
+Part of meta-scallop
+(c) 2020 by Mingfu Shao, The Pennsylvania State University
 Part of Scallop Transcript Assembler
 (c) 2017 by  Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
 See LICENSE for licensing.
@@ -30,12 +32,8 @@ public:
 
 	// for meta-assembly
 	int meta_batch_size;
-	int min_supporting_samples;
-	int min_splicing_count;
-	int min_phasing_count;
-	int max_combined;
-	double merge_threshold;
-	double standalone_coverage;
+	int max_merge_cluster;
+	double min_merge_similarity;
 	bool single_sample_multiple_threading;
 
 	// for bridging paired-end reads

@@ -1,3 +1,9 @@
+/*
+Part of meta-scallop
+(c) 2020 by Mingfu Shao, The Pennsylvania State University
+See LICENSE for licensing.
+*/
+
 #include "pier.h"
 
 pier::pier(int s, int t)

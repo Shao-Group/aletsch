@@ -1,6 +1,6 @@
 /*
-Part of Coral, an efficient tool to bridge mate pairs
-(c) 2018 by Mingfu Shao and The Pennsylvania State University.
+Part of meta-scallop
+(c) 2020 by Mingfu Shao, The Pennsylvania State University
 See LICENSE for licensing.
 */
 

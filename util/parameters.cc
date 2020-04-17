@@ -1,4 +1,6 @@
 /*
+Part of meta-scallop
+(c) 2020 by Mingfu Shao, The Pennsylvania State University
 Part of Scallop Transcript Assembler
 (c) 2017 by  Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
 See LICENSE for licensing.
@@ -23,15 +25,11 @@ parameters::parameters()
 	algo = "meta-scallop";
 	version = "0.1.1";
 	max_threads = 10;
-	meta_batch_size = 100;
 
 	// for meta-assembly
-	min_supporting_samples = 2;	
-	min_splicing_count = 5;
-	min_phasing_count = 1;
-	max_combined = 100;
-	merge_threshold = 0.5;
-	standalone_coverage = 10.0;
+	meta_batch_size = 100;
+	max_merge_cluster = 100;
+	min_merge_similarity = 0.3;
 	single_sample_multiple_threading = false;
 
 	// for bridging paired-end reads
@@ -78,7 +76,7 @@ parameters::parameters()
 	max_dp_table_size = 10000;
 	
 	// for filtering paths
-	min_transcript_coverage = 1.01;
+	min_transcript_coverage = 1.0;
 	min_single_exon_coverage = 20;
 	min_transcript_length_base = 150;
 	min_transcript_length_increase = 50;
@@ -110,9 +108,34 @@ int parameters::parse_arguments(int argc, const char ** argv)
 			max_threads = atoi(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "-m")
+		else if(string(argv[i]) == "-b")
 		{
 			meta_batch_size = atof(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "-meta_batch_size")
+		{
+			meta_batch_size = atof(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "-s")
+		{
+			min_merge_similarity = atof(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "--min_merge_similarity")
+		{
+			min_merge_similarity = atof(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "-c")
+		{
+			max_merge_cluster = atoi(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "--max_merge_cluster")
+		{
+			max_merge_cluster = atoi(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "--version")
@@ -133,36 +156,10 @@ int parameters::parse_arguments(int argc, const char ** argv)
 			verbose = atoi(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "--merge_threshold")
-		{
-			merge_threshold = atof(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--standalone_coverage")
-		{
-			standalone_coverage = atof(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_supporting_samples")
-		{
-			min_supporting_samples = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_splicing_count")
-		{
-			min_splicing_count = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--max_combined")
-		{
-			max_combined = atoi(argv[i + 1]);
-			i++;
-		}
 		else if(string(argv[i]) == "--single_sample_multiple_threading")
 		{
 			single_sample_multiple_threading = true;
 		}
-
 		else if(string(argv[i]) == "--bridge_dp_solution_size")
 		{
 			bridge_dp_solution_size = atoi(argv[i + 1]);
@@ -171,11 +168,6 @@ int parameters::parse_arguments(int argc, const char ** argv)
 		else if(string(argv[i]) == "--bridge_dp_stack_size")
 		{
 			bridge_dp_stack_size = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_phasing_count")
-		{
-			min_phasing_count = atoi(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "--max_reads_partition_gap")
@@ -257,7 +249,6 @@ int parameters::parse_arguments(int argc, const char ** argv)
 		{
 			min_transcript_coverage = atof(argv[i + 1]);
 			i++;
-			if(fabs(min_transcript_coverage - 1.0) < 0.01) min_transcript_coverage = 1.01;
 		}
 		else if(string(argv[i]) == "--min_single_exon_coverage")
 		{
@@ -371,19 +362,6 @@ int parameters::print_command_line(int argc, const char ** argv)
 
 int parameters::print_logo()
 {
-	printf("      ___           ___           ___                                       ___           ___    \n");
-	printf("     /  /\\         /  /\\         /  /\\                                     /  /\\         /  /\\   \n");
-	printf("    /  /:/_       /  /:/        /  /::\\                                   /  /::\\       /  /::\\  \n");
-	printf("   /  /:/ /\\     /  /:/        /  /:/\\:\\    ___     ___   ___     ___    /  /:/\\:\\     /  /:/\\:\\ \n");
-	printf("  /  /:/ /::\\   /  /:/  ___   /  /:/~/::\\  /__/\\   /  /\\ /__/\\   /  /\\  /  /:/  \\:\\   /  /:/~/:/ \n");
-	printf(" /__/:/ /:/\\:\\ /__/:/  /  /\\ /__/:/ /:/\\:\\ \\  \\:\\ /  /:/ \\  \\:\\ /  /:/ /__/:/ \\__\\:\\ /__/:/ /:/  \n");
-	printf(" \\  \\:\\/:/~/:/ \\  \\:\\ /  /:/ \\  \\:\\/:/__\\/  \\  \\:\\  /:/   \\  \\:\\  /:/  \\  \\:\\ /  /:/ \\  \\:\\/:/   \n");
-	printf("  \\  \\::/ /:/   \\  \\:\\  /:/   \\  \\::/        \\  \\:\\/:/     \\  \\:\\/:/    \\  \\:\\  /:/   \\  \\::/    \n");
-	printf("   \\__\\/ /:/     \\  \\:\\/:/     \\  \\:\\         \\  \\::/       \\  \\::/      \\  \\:\\/:/     \\  \\:\\    \n");
-	printf("     /__/:/       \\  \\::/       \\  \\:\\         \\__\\/         \\__\\/        \\  \\::/       \\  \\:\\   \n");
-	printf("     \\__\\/         \\__\\/         \\__\\/                                     \\__\\/         \\__\\/   \n");
-	printf("\n");
-
 	return 0;
 }
 
@@ -396,12 +374,11 @@ int parameters::print_help()
 	printf(" %-42s  %s\n", "--help",  "print usage of meta-scallop and exit");
 	printf(" %-42s  %s\n", "--version",  "print current version of meta-scallop and exit");
 	printf(" %-42s  %s\n", "-t/--max_threads <integer>",  "number of threads, default 10");
-	printf(" %-42s  %s\n", "--max_combined <integer>",  "the maximized number of splice graphs that will be combined, default: 100");
-	printf(" %-42s  %s\n", "--merge_threshold <float>",  "the minimized similarity for two graphs to be combined, default: 0.5");
-	printf(" %-42s  %s\n", "--min_supporting_samples <integer>",  "the minimized number of samples needed to support a splicing site, default: 2");
-	printf(" %-42s  %s\n", "--min_splicing_count <integer>",  "the minimized coverage needed to support a splicing site, default: 5");
+	printf(" %-42s  %s\n", "-b/--meta_batch_size <integer>",  "process this number of samples at one time, default: 100");
+	printf(" %-42s  %s\n", "-c/--max_merge_cluster <integer>",  "the maximized number of splice graphs that will be combined, default: 100");
+	printf(" %-42s  %s\n", "-s/--min_merge_similarity <float>",  "the minimized similarity for two graphs to be combined, default: 0.3");
 	printf(" %-42s  %s\n", "--min_splice_bundary_hits <integer>",  "the minimum number of spliced reads required to support a junction, default: 1");
-	printf(" %-42s  %s\n", "--min_transcript_coverage <float>",  "minimum coverage required for a multi-exon transcript, default: 1.01");
+	printf(" %-42s  %s\n", "--min_transcript_coverage <float>",  "minimum coverage required for a multi-exon transcript, default: 1.0");
 	printf(" %-42s  %s\n", "--min_single_exon_coverage <float>",  "minimum coverage required for a single-exon transcript, default: 20");
 	printf(" %-42s  %s\n", "--min_transcript_length_increase <integer>",  "default: 50");
 	printf(" %-42s  %s\n", "--min_transcript_length_base <integer>",  "default: 150, minimum length of a transcript would be");

@@ -1,3 +1,9 @@
+/*
+Part of meta-scallop
+(c) 2020 by Mingfu Shao, The Pennsylvania State University
+See LICENSE for licensing.
+*/
+
 #ifndef __INCUBATOR_H__
 #define __INCUBATOR_H__
 

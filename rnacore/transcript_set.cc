@@ -1,3 +1,10 @@
+/*
+Part of meta-scallop
+(c) 2020 by Mingfu Shao, The Pennsylvania State University
+See LICENSE for licensing.
+*/
+
+
 #include <cassert>
 #include "transcript_set.h"
 #include "constants.h"

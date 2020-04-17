@@ -1,3 +1,9 @@
+/*
+Part of meta-scallop
+(c) 2020 by Mingfu Shao, The Pennsylvania State University
+See LICENSE for licensing.
+*/
+
 #ifndef __ESSENTIAL_H__
 #define __ESSENTIAL_H__
 

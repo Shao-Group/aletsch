@@ -1,3 +1,9 @@
+/*
+Part of meta-scallop
+(c) 2020 by Mingfu Shao, The Pennsylvania State University
+See LICENSE for licensing.
+*/
+
 #include <algorithm>
 #include <sstream>
 #include <fstream>
@@ -84,7 +90,7 @@ int combined_group::build_similarity()
 				// TODO parameters
 				bool b = true;
 				if(c <= 1.50) b = false;
-				if(r < cfg.merge_threshold) b = false;
+				if(r < cfg.min_merge_similarity) b = false;
 
 				//printf("graph-similarity: b = %c, r = %.3lf, c = %d, size1 = %lu, size2 = %lu\n", b ? 'T' : 'F', r, c, gset[i].splices.size(), gset[j].splices.size());
 
@@ -133,8 +139,8 @@ int combined_group::combine_graphs()
 		int py = ds.find_set(y);
 
 		if(px == py) continue;
-		if(csize[px] >= cfg.max_combined) continue;
-		if(csize[py] >= cfg.max_combined) continue;
+		if(csize[px] >= cfg.max_merge_cluster) continue;
+		if(csize[py] >= cfg.max_merge_cluster) continue;
 
 		int sum = csize[px] + csize[py]; 
 

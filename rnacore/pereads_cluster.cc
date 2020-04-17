@@ -1,3 +1,10 @@
+/*
+Part of meta-scallop
+(c) 2020 by Mingfu Shao, The Pennsylvania State University
+See LICENSE for licensing.
+*/
+
+
 #include "pereads_cluster.h"
 #include "util.h"
 #include <cstdio>
