@@ -8,11 +8,11 @@ at overlapped gene loci. Eventually, the core algorithm used in Scallop (i.e., p
 is employed to decompose the combined splice graphs to transcripts.
 
 # Release
-Latest release of meta-scallop is [v0.1.1](https://github.com/Shao-Group/meta-scallop/releases/tag/v0.1.1).
+Latest release of meta-scallop is [v0.1.2](https://github.com/Shao-Group/meta-scallop/releases/tag/v0.1.2).
 
 # Installation
 Download the source code of meta-scallop from
-[here](https://github.com/Shao-Group/meta-scallop/releases/download/v0.1.1/meta-scallop-0.1.1.tar.gz).
+[here](https://github.com/Shao-Group/meta-scallop/releases/download/v0.1.2/meta-scallop-0.1.2.tar.gz).
 meta-scallop uses additional libraries of Boost and htslib. 
 If they have not been installed in your system, you first
 need to download and install them. You might also need to
@@ -89,8 +89,7 @@ meta-scallop support the following parameters.
  --help  | | print usage of meta-scallop and exit
  --version | | print version of meta-scallop and exit
  -t | 10 | number of threads
- --max_combined | 100 | the maximized number of splice graphs that will be combined
- --merge_threshold | 0.5 | the minimized similarity between two splice graphs that can be combined
- --min_supporting_samples | 2 | the minimized number of samples needed to support a splicing site
- --min_splicing_count | 5 | the minimized coverage needed to support a splicing site
+ -b | 100 | the number of samples that will be process at a time
+ -c | 100 | the maximized number of splice graphs that will be combined
+ -s | 0.3 | the minimized similarity between two splice graphs that can be combined
  --min_splice_bundary_hits    | 1 | the minimum number of spliced reads required to support a junction
