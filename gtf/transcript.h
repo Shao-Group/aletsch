@@ -11,6 +11,7 @@ See LICENSE for licensing.
 #include <iostream>
 #include <string>
 #include <vector>
+#include <set>
 #include "item.h"
 
 using namespace std;
@@ -40,7 +41,6 @@ public:
 	double score;
 	char strand;
 	int frame;
-	int count;
 	double coverage;
 	double covratio;
 	double RPKM;
@@ -48,6 +48,9 @@ public:
 	double TPM;
 
 	vector<PI32> exons;
+
+	int count;
+	set<int> samples;
 
 public:
 	int add_exon(int s, int t);

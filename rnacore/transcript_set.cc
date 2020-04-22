@@ -62,11 +62,13 @@ int transcript_set::add(const transcript &t1, int mode)
 				z.count += t.count;
 				z.coverage += t.coverage;
 				z.extend_bounds(t);
+				z.samples.insert(t.samples.begin(), t.samples.end());
 			}
 
 			if(mode == TRANSCRIPT_COUNT_ADD_COVERAGE_NUL) 
 			{
 				z.count += t.count;
+				z.samples.insert(t.samples.begin(), t.samples.end());
 			}
 
 			if(mode == TRANSCRIPT_COUNT_MAX_COVERAGE_MAX)
@@ -74,6 +76,7 @@ int transcript_set::add(const transcript &t1, int mode)
 				if(t.count > z.count) z = t;
 				if(t.count == z.count && t.coverage > z.coverage) z.coverage = t.coverage;
 				if(t.count == z.count && t.coverage > z.coverage) z.extend_bounds(t);
+				z.samples.insert(t.samples.begin(), t.samples.end());
 			}
 
 			found = true;

@@ -23,12 +23,12 @@ using namespace std;
 class generator
 {
 public:
-	generator(const string &bamfile, vector<combined_graph> &cbv, const parameters &c);
+	generator(sample_profile &sp, vector<combined_graph> &cbv, const parameters &c);
 	~generator();
 
 private:
 	const parameters &cfg;
-	sample_profile sp;
+	sample_profile &sp;
 	samFile *sfn;
 	bam_hdr_t *hdr;
 	bam1_t *b1t;

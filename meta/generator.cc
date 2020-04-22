@@ -23,14 +23,14 @@ See LICENSE for licensing.
 #include "graph_reviser.h"
 #include "essential.h"
 
-generator::generator(const string &bamfile, vector<combined_graph> &v, const parameters &c)
-	: vcb(v), cfg(c)
+generator::generator(sample_profile &s, vector<combined_graph> &v, const parameters &c)
+	: vcb(v), cfg(c), sp(s)
 {
-	previewer pre(bamfile, cfg, sp);
+	previewer pre(cfg, sp);
 	pre.infer_library_type();
 	pre.infer_insertsize();
 
-    sfn = sam_open(bamfile.c_str(), "r");
+    sfn = sam_open(sp.file_name.c_str(), "r");
     hdr = sam_hdr_read(sfn);
     b1t = bam_init1();
 	index = 0;
@@ -182,7 +182,7 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 
 		string gid = "gene." + tostring(index) + "." + tostring(k);
 		combined_graph cb;
-		cb.sp = sp;
+		cb.sid = sp.sample_id;
 		cb.gid = gid;
 		cb.build(grv[k], hsv[k], ubv[k]);
 

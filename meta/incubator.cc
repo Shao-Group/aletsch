@@ -41,7 +41,7 @@ int incubator::resolve()
 	{
 		int b = a + cfg.meta_batch_size;
 
-		if(b >= bams.size()) b = bams.size();
+		if(b >= samples.size()) b = samples.size();
 		if(a >= b) break;
 
 		mytime = time(NULL);
@@ -87,8 +87,16 @@ int incubator::read_bam_list()
 	{
 		string file(line);
 		if(file.size() == 0) continue;
-		bams.push_back(file);
+		sample_profile sp;
+		sp.file_name = file;
+		samples.push_back(sp);
 	}
+
+	for(int i = 0; i < samples.size(); i++)
+	{
+		samples[i].sample_id = i;
+	}
+
 	fin.close();
 	return 0;
 }
@@ -113,8 +121,8 @@ int incubator::generate(int a, int b)
 
 	for(int i = a; i < b; i++)
 	{
-		string file = bams[i];
-		boost::asio::post(pool, [this, &mylock, file]{ this->generate(file, this->groups, mylock); });
+		sample_profile &sp = samples[i];
+		boost::asio::post(pool, [this, &mylock, &sp]{ this->generate(sp, this->groups, mylock); });
 	}
 
 	pool.join();
@@ -146,7 +154,6 @@ int incubator::merge()
 
 int incubator::assemble()
 {
-	//init_transcript_sets();
 	boost::asio::thread_pool pool(cfg.max_threads);
 	mutex mylock;
 
@@ -182,9 +189,9 @@ int incubator::postprocess()
 	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
 	mutex mylock;									// lock for trsts
 
-	for(int i = 0; i < tss.size(); i++)
+	for(int i = 0; i < trsts.size(); i++)
 	{
-		transcript_set &ts = tss[i];
+		transcript_set &ts = trsts[i];
 		boost::asio::post(pool, [this, &ts, &mylock, &fout]{ this->postprocess(ts, fout, mylock); });
 	}
 
@@ -197,11 +204,11 @@ int incubator::postprocess()
 	return 0;
 }
 
-int incubator::generate(const string &file, vector<combined_group> &gv, mutex &mylock)
+int incubator::generate(sample_profile &sp, vector<combined_group> &gv, mutex &mylock)
 {	
 	vector<combined_graph> v;
 	parameters c = cfg;
-	generator gt(file, v, c);
+	generator gt(sp, v, c);
 	gt.resolve();
 
 	mylock.lock();
@@ -227,7 +234,7 @@ int incubator::generate(const string &file, vector<combined_group> &gv, mutex &m
 	mylock.unlock();
 
 	time_t mytime = time(NULL);
-	printf("finish processing individual sample %s, %s", file.c_str(), ctime(&mytime));
+	printf("finish processing individual sample %s, %s", sp.file_name.c_str(), ctime(&mytime));
 	return 0;
 }
 
@@ -240,73 +247,32 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 
 	if(gv.size() == 1)
 	{
-		assemble(gv, instance, subindex, ts);
+		gv[0]->set_gid(instance, subindex++);
+		assemble(*gv[0], ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		ts.increase_count(1);
-		store_transcripts(ts, mylock);
-		return 0;
 	}
-
-	combined_graph cx;
-	resolve_cluster(gv, cx);
-	cx.set_gid(instance, subindex++);
-	transcript_set ts1;
-	assemble(cx, ts1);
-
-	int n = gv.size();
-	int k = n; 
-	for(;;)
+	else
 	{
-		if(k > n) k = n;
-		vector<vector<combined_graph*>> gvv(k);
+		combined_graph cx;
+		resolve_cluster(gv, cx);
+
 		for(int i = 0; i < gv.size(); i++)
 		{
-			int j = i % k;
-			gvv[j].push_back(gv[i]);
+			gv[i]->set_gid(instance, subindex++);
+			assemble(*gv[i], ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		}
 
-		transcript_set tsk;
-		for(int i = 0; i < k; i++)
-		{
-			assemble(gvv[i], instance, subindex++, tsk);
-		}
-
-		if(k == n) tsk.add(ts1, TRANSCRIPT_COUNT_ADD_COVERAGE_NUL);
-		
-		ts.add(tsk, TRANSCRIPT_COUNT_MAX_COVERAGE_MAX);
-
-		if(k >= n) break;
-		k = k * 2;
+		cx.set_gid(instance, subindex++);
+		assemble(cx, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_NUL);
 	}
 
 	store_transcripts(ts, mylock);
-
 	for(int i = 0; i > gv.size(); i++) gv[i]->clear();
 
 	return 0;
 }
 
-int incubator::assemble(vector<combined_graph*> gv, int instance, int subindex, transcript_set &ts)
-{
-	if(gv.size() <= 0) return 0;
-
-	if(gv.size() == 1)
-	{
-		combined_graph &cb = *(gv[0]);
-		cb.set_gid(instance, subindex);
-		assemble(cb, ts);
-	}
-	else
-	{
-		combined_graph cb;
-		cb.combine(gv);
-		cb.copy_meta_information(*(gv[0]));
-		cb.set_gid(instance, subindex);
-		assemble(cb, ts);
-	}
-	return 0;
-}
-
-int incubator::assemble(combined_graph &cb, transcript_set &ts)
+int incubator::assemble(combined_graph &cb, transcript_set &ts, int mode)
 {
 	// rebuild splice graph
 	splice_graph gx;
@@ -346,7 +312,7 @@ int incubator::assemble(combined_graph &cb, transcript_set &ts)
 		t.RPKM = 0;
 		t.count = 1;
 		z++;
-		ts.add(t, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+		ts.add(t, mode);
 		//t.write(cout);
 	}
 
@@ -377,8 +343,10 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb)
 	for(int k = 0; k < gv.size(); k++)
 	{
 		combined_graph &gt = *(gv[k]);
-		if(gt.sp.insertsize_low < length_low) length_low = gt.sp.insertsize_low;
-		if(gt.sp.insertsize_high > length_high) length_high = gt.sp.insertsize_high;
+		assert(gt.sid >= 0 && gt.sid < samples.size());
+		sample_profile &sp = samples[gt.sid];
+		if(sp.insertsize_low < length_low) length_low = sp.insertsize_low;
+		if(sp.insertsize_high > length_high) length_high = sp.insertsize_high;
 		index[k].first = vc.size();
 		vc.insert(vc.end(), gt.vc.begin(), gt.vc.end());
 		index[k].second = vc.size();
@@ -428,25 +396,6 @@ int incubator::postprocess(const transcript_set &ts, ofstream &fout, mutex &mylo
 	return 0;
 }
 
-int incubator::init_transcript_sets()
-{
-	tss.resize(groups.size());
-	assert(g2g.size() == 3);
-	string ss = ".+-";
-	for(int i = 0; i < 3; i++)
-	{
-		for(auto &x : g2g[i])
-		{
-			string s = x.first;
-			int k = x.second;
-			assert(k >= 0 && k < tss.size());
-			tss[k].chrm = s;
-			tss[k].strand = ss[i];
-		}
-	}
-	return 0;
-}
-
 int incubator::store_transcripts(const transcript_set &ts, mutex &mylock)
 {
 	if(ts.mt.size() == 0) return 0;
@@ -454,18 +403,18 @@ int incubator::store_transcripts(const transcript_set &ts, mutex &mylock)
 	mylock.lock();
 
 	bool found = false;
-	for(int i = 0; i < tss.size(); i++)
+	for(int i = 0; i < trsts.size(); i++)
 	{
-		if(tss[i].chrm != ts.chrm || tss[i].strand != ts.strand) continue;
-		tss[i].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+		if(trsts[i].chrm != ts.chrm || trsts[i].strand != ts.strand) continue;
+		trsts[i].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		found = true;
 		break;
 	}
 
 	if(found == false)
 	{
-		tss.resize(tss.size() + 1);
-		tss[tss.size() - 1].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+		trsts.resize(trsts.size() + 1);
+		trsts[trsts.size() - 1].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	}
 
 	mylock.unlock();
