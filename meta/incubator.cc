@@ -275,7 +275,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 		ts.add(tsk, TRANSCRIPT_COUNT_MAX_COVERAGE_MAX);
 
 		if(k >= n) break;
-		k = k * 2;
+		k = k + 2;
 	}
 
 	store_transcripts(ts, mylock);
