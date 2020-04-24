@@ -24,7 +24,7 @@ parameters::parameters()
 	output_gtf_dir = "";
 	verbose = 1;
 	algo = "meta-scallop";
-	version = "0.1.2";
+	version = "0.1.3";
 	max_threads = 10;
 
 	// for meta-assembly
