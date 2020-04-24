@@ -8,11 +8,11 @@ at overlapped gene loci. Eventually, the core algorithm used in Scallop (i.e., p
 is employed to decompose the combined splice graphs to transcripts.
 
 # Release
-Latest release of meta-scallop is [v0.1.2](https://github.com/Shao-Group/meta-scallop/releases/tag/v0.1.2).
+Latest release of meta-scallop is [v0.1.3](https://github.com/Shao-Group/meta-scallop/releases/tag/v0.1.3).
 
 # Installation
 Download the source code of meta-scallop from
-[here](https://github.com/Shao-Group/meta-scallop/releases/download/v0.1.2/meta-scallop-0.1.2.tar.gz).
+[here](https://github.com/Shao-Group/meta-scallop/releases/download/v0.1.3/meta-scallop-0.1.3.tar.gz).
 meta-scallop uses additional libraries of Boost and htslib. 
 If they have not been installed in your system, you first
 need to download and install them. You might also need to
@@ -76,11 +76,11 @@ The usage of `meta-scallop` is:
 The `input-bam-list` specifies the list of aligned samples (in .bam format).
 Note meta-scallop will try to infer the `library_type` of each individual sample
 using the `XS` tag stored in the input bam files. 
-Also make sure that they are sorted; otherwise run `samtools` to sort it:
-```
-samtools sort input.bam > input.sort.bam
-```
+Also make sure that they are sorted; otherwise run `samtools` to sort it (`samtools sort input.bam > input.sort.bam`).
 The assembled transcripts from all these samples will be written to `output.gtf`.
+If `-d directory` option is provided, the assembled transcripts for each individual
+sample will be generated under the specified directory. NOTE: make sure the specified
+directory exists, as `meta-scallop` will NOT create it in the program.
 
 meta-scallop support the following parameters. It also supports all parameters
 that needed in the core algorithm of Scallop. Dry run `meta-scallop` for more
@@ -94,3 +94,4 @@ details.
  -b | 100 | the number of samples that will be process at a time
  -c | 100 | the maximized number of splice graphs that will be combined
  -s | 0.3 | the minimized similarity between two splice graphs that can be combined
+ -d | N/A | the directory in which assembled transcripts for individual sample will be generated
