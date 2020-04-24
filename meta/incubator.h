@@ -25,30 +25,31 @@ public:
 	incubator(const parameters &c);
 
 public:
-	const parameters &cfg;						// parameters for scallop
-	vector<string> bams;						// bam files
-	vector<transcript_set> tss;					// assembled transcripts
-
-	vector<map<string, int>> g2g;				// group map
-	vector<combined_group> groups;				// graph groups
+	const parameters &cfg;							// parameters for scallop
+	vector<sample_profile> samples;					// samples
+	vector<vector<transcript>> strsts;				// predicted transcripts for each sample
+	vector<transcript_set> tsets;					// assembled transcripts for all samples
+	vector<map<string, int>> g2g;					// group map
+	vector<combined_group> groups;					// graph groups
 
 public:
 	int resolve();
 	int read_bam_list();
 	int clear();
 	int postprocess();
+	int write();
 
 	int generate(int a, int b);
 	int merge();
 	int assemble();
+	int write(int id);
 
 private:
-	int generate(const string &file, vector<combined_group> &gv, mutex &mylock);
+	int generate(sample_profile &sp, vector<combined_group> &gv, mutex &mylock);
 	int assemble(vector<combined_graph*> gv, int instance, mutex &mylock);
 	int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);
 	int init_transcript_sets();
-	int assemble(vector<combined_graph*> gv, int instance, int subindex, transcript_set &ts);
-	int assemble(combined_graph &cb, transcript_set &ts);
+	int assemble(combined_graph &cb, transcript_set &ts, int mode);
 	int resolve_cluster(vector<combined_graph*> gv, combined_graph &cb);
 	int store_transcripts(const transcript_set &ts, mutex &mylock);
 

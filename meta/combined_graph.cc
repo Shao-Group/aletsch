@@ -20,10 +20,10 @@ combined_graph::combined_graph()
 
 int combined_graph::copy_meta_information(const combined_graph &cb)
 {
+	sid = cb.sid;
 	gid = cb.gid;
 	chrm = cb.chrm;
 	strand = cb.strand;
-	sp = cb.sp;
 	return 0;
 }
 
@@ -531,6 +531,7 @@ set<int32_t> combined_graph::get_reliable_splices(int samples, double weight)
 int combined_graph::clear()
 {
 	num_combined = 0;
+	sid = -1;
 	gid = "";
 	chrm = "";
 	strand = '.';
@@ -555,8 +556,8 @@ int combined_graph::print(int index)
 		pereads += vc[i].extend.size();
 	}
 
-	printf("combined-graph %d: gid = %s, #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phases = %lu, #pereads = %lu / %d\n", 
-			index, gid.c_str(), num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), ps.pmap.size(), vc.size(), pereads);
+	printf("combined-graph %d: sid = %d, gid = %s, #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phases = %lu, #pereads = %lu / %d\n", 
+			index, sid, gid.c_str(), num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), ps.pmap.size(), vc.size(), pereads);
 
 	return 0;
 

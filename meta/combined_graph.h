@@ -29,11 +29,11 @@ public:
 	combined_graph();
 
 public:
-	int num_combined;
+	int sid;
 	string gid;
 	string chrm;
 	char strand;
-	sample_profile sp;
+	int num_combined;
 
 	vector<PPDI> regions;
 	vector<PPDI> junctions;

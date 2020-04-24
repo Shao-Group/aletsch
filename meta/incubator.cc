@@ -41,7 +41,7 @@ int incubator::resolve()
 	{
 		int b = a + cfg.meta_batch_size;
 
-		if(b >= bams.size()) b = bams.size();
+		if(b >= samples.size()) b = samples.size();
 		if(a >= b) break;
 
 		mytime = time(NULL);
@@ -68,7 +68,9 @@ int incubator::resolve()
 
 	mytime = time(NULL);
 	printf("\nFINAL: filter and output assembled transcripts, %s\n", ctime(&mytime));
+
 	postprocess();
+	write();
 
 	return 0;
 }
@@ -87,8 +89,16 @@ int incubator::read_bam_list()
 	{
 		string file(line);
 		if(file.size() == 0) continue;
-		bams.push_back(file);
+		sample_profile sp;
+		sp.file_name = file;
+		samples.push_back(sp);
 	}
+
+	for(int i = 0; i < samples.size(); i++)
+	{
+		samples[i].sample_id = i;
+	}
+
 	fin.close();
 	return 0;
 }
@@ -109,12 +119,12 @@ int incubator::generate(int a, int b)
 	if(num_threads > b - a) num_threads = b - a;
 	
 	boost::asio::thread_pool pool(num_threads);			// thread pool
-	mutex mylock;										// lock for trsts
+	mutex mylock;										// lock for tsets
 
 	for(int i = a; i < b; i++)
 	{
-		string file = bams[i];
-		boost::asio::post(pool, [this, &mylock, file]{ this->generate(file, this->groups, mylock); });
+		sample_profile &sp = samples[i];
+		boost::asio::post(pool, [this, &mylock, &sp]{ this->generate(sp, this->groups, mylock); });
 	}
 
 	pool.join();
@@ -146,7 +156,6 @@ int incubator::merge()
 
 int incubator::assemble()
 {
-	//init_transcript_sets();
 	boost::asio::thread_pool pool(cfg.max_threads);
 	mutex mylock;
 
@@ -180,11 +189,12 @@ int incubator::postprocess()
 	}
 
 	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
-	mutex mylock;									// lock for trsts
+	mutex mylock;									// lock for tsets
 
-	for(int i = 0; i < tss.size(); i++)
+	strsts.resize(samples.size());
+	for(int i = 0; i < tsets.size(); i++)
 	{
-		transcript_set &ts = tss[i];
+		transcript_set &ts = tsets[i];
 		boost::asio::post(pool, [this, &ts, &mylock, &fout]{ this->postprocess(ts, fout, mylock); });
 	}
 
@@ -197,11 +207,30 @@ int incubator::postprocess()
 	return 0;
 }
 
-int incubator::generate(const string &file, vector<combined_group> &gv, mutex &mylock)
+int incubator::write()
+{
+	if(cfg.output_gtf_dir == "") return 0;
+
+	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
+	mutex mylock;									// lock for tsets
+
+	for(int i = 0; i < strsts.size(); i++)
+	{
+		boost::asio::post(pool, [this, i]{ this->write(i); });
+	}
+
+	pool.join();
+
+	time_t mytime = time(NULL);
+	printf("finish writing individual assembled transcripts, %s\n", ctime(&mytime));
+	return 0;
+}
+
+int incubator::generate(sample_profile &sp, vector<combined_group> &gv, mutex &mylock)
 {	
 	vector<combined_graph> v;
 	parameters c = cfg;
-	generator gt(file, v, c);
+	generator gt(sp, v, c);
 	gt.resolve();
 
 	mylock.lock();
@@ -227,7 +256,7 @@ int incubator::generate(const string &file, vector<combined_group> &gv, mutex &m
 	mylock.unlock();
 
 	time_t mytime = time(NULL);
-	printf("finish processing individual sample %s, %s", file.c_str(), ctime(&mytime));
+	printf("finish processing individual sample %s, %s", sp.file_name.c_str(), ctime(&mytime));
 	return 0;
 }
 
@@ -240,73 +269,32 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 
 	if(gv.size() == 1)
 	{
-		assemble(gv, instance, subindex, ts);
+		gv[0]->set_gid(instance, subindex++);
+		assemble(*gv[0], ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		ts.increase_count(1);
-		store_transcripts(ts, mylock);
-		return 0;
 	}
-
-	combined_graph cx;
-	resolve_cluster(gv, cx);
-	cx.set_gid(instance, subindex++);
-	transcript_set ts1;
-	assemble(cx, ts1);
-
-	int n = gv.size();
-	int k = 2; 
-	for(;;)
+	else
 	{
-		if(k > n) k = n;
-		vector<vector<combined_graph*>> gvv(k);
+		combined_graph cx;
+		resolve_cluster(gv, cx);
+
 		for(int i = 0; i < gv.size(); i++)
 		{
-			int j = i % k;
-			gvv[j].push_back(gv[i]);
+			gv[i]->set_gid(instance, subindex++);
+			assemble(*gv[i], ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		}
 
-		transcript_set tsk;
-		for(int i = 0; i < k; i++)
-		{
-			assemble(gvv[i], instance, subindex++, tsk);
-		}
-
-		if(k == n) tsk.add(ts1, TRANSCRIPT_COUNT_ADD_COVERAGE_NUL);
-		
-		ts.add(tsk, TRANSCRIPT_COUNT_MAX_COVERAGE_MAX);
-
-		if(k >= n) break;
-		k = k + 2;
+		cx.set_gid(instance, subindex++);
+		assemble(cx, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_NUL);
 	}
 
 	store_transcripts(ts, mylock);
-
 	for(int i = 0; i > gv.size(); i++) gv[i]->clear();
 
 	return 0;
 }
 
-int incubator::assemble(vector<combined_graph*> gv, int instance, int subindex, transcript_set &ts)
-{
-	if(gv.size() <= 0) return 0;
-
-	if(gv.size() == 1)
-	{
-		combined_graph &cb = *(gv[0]);
-		cb.set_gid(instance, subindex);
-		assemble(cb, ts);
-	}
-	else
-	{
-		combined_graph cb;
-		cb.combine(gv);
-		cb.copy_meta_information(*(gv[0]));
-		cb.set_gid(instance, subindex);
-		assemble(cb, ts);
-	}
-	return 0;
-}
-
-int incubator::assemble(combined_graph &cb, transcript_set &ts)
+int incubator::assemble(combined_graph &cb, transcript_set &ts, int mode)
 {
 	// rebuild splice graph
 	splice_graph gx;
@@ -344,9 +332,8 @@ int incubator::assemble(combined_graph &cb, transcript_set &ts)
 		transcript &t = sx.trsts[k];
 		if(t.exons.size() <= 1) continue;
 		t.RPKM = 0;
-		t.count = 1;
 		z++;
-		ts.add(t, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+		ts.add(t, 1, cb.sid, mode);
 		//t.write(cout);
 	}
 
@@ -358,11 +345,12 @@ int incubator::assemble(combined_graph &cb, transcript_set &ts)
 
 int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb)
 {
-	if(gv.size() <= 1) return 0;
+	assert(gv.size() >= 2);
 
 	// construct combined graph
 	cb.copy_meta_information(*(gv[0]));
 	cb.combine(gv);
+	cb.sid = -1;
 
 	// rebuild splice graph
 	splice_graph gx;
@@ -377,8 +365,10 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb)
 	for(int k = 0; k < gv.size(); k++)
 	{
 		combined_graph &gt = *(gv[k]);
-		if(gt.sp.insertsize_low < length_low) length_low = gt.sp.insertsize_low;
-		if(gt.sp.insertsize_high > length_high) length_high = gt.sp.insertsize_high;
+		assert(gt.sid >= 0 && gt.sid < samples.size());
+		sample_profile &sp = samples[gt.sid];
+		if(sp.insertsize_low < length_low) length_low = sp.insertsize_low;
+		if(sp.insertsize_high > length_high) length_high = sp.insertsize_high;
 		index[k].first = vc.size();
 		vc.insert(vc.end(), gt.vc.begin(), gt.vc.end());
 		index[k].second = vc.size();
@@ -414,36 +404,65 @@ int incubator::postprocess(const transcript_set &ts, ofstream &fout, mutex &mylo
 	ft.filter_length_coverage();
 
 	stringstream ss;
+	vector<vector<transcript>> vv(samples.size());
 	for(int i = 0; i < ft.trs.size(); i++)
 	{
 		transcript &t = ft.trs[i];
 		t.write(ss);
+		pair<bool, trans_item> p = ts.query(t);
+		if(p.first == false) continue;
+
+		for(auto &k : p.second.samples)
+		{
+			if(k < 0) continue;
+			assert(k >= 0 && k < vv.size());
+			vv[k].push_back(t);
+		}
 	}
 
 	mylock.lock();
+
 	const string &s = ss.str();
 	fout.write(s.c_str(), s.size());
+
+	for(int i = 0; i < vv.size(); i++)
+	{
+		strsts[i].insert(strsts[i].end(), vv[i].begin(), vv[i].end());
+	}
+
 	mylock.unlock();
 
 	return 0;
 }
 
-int incubator::init_transcript_sets()
+int incubator::write(int id)
 {
-	tss.resize(groups.size());
-	assert(g2g.size() == 3);
-	string ss = ".+-";
-	for(int i = 0; i < 3; i++)
+	if(id < 0) return 0;
+	assert(id >= 0 && id < samples.size());
+	assert(samples.size() == strsts.size());
+
+	vector<transcript> &v = strsts[id];
+
+	stringstream ss;
+	for(int i = 0; i < v.size(); i++)
 	{
-		for(auto &x : g2g[i])
-		{
-			string s = x.first;
-			int k = x.second;
-			assert(k >= 0 && k < tss.size());
-			tss[k].chrm = s;
-			tss[k].strand = ss[i];
-		}
+		transcript &t = v[i];
+		t.write(ss);
 	}
+
+	size_t p = samples[id].file_name.find_last_of("/\\");
+	string bfile = samples[id].file_name.substr(p + 1);
+
+	char file[10240];
+	sprintf(file, "%s/%d.gtf", cfg.output_gtf_dir.c_str(), id);
+
+	ofstream fout(file);
+	if(fout.fail()) return 0;
+
+	const string &s = ss.str();
+	fout.write(s.c_str(), s.size());
+
+	fout.close();
 	return 0;
 }
 
@@ -454,18 +473,18 @@ int incubator::store_transcripts(const transcript_set &ts, mutex &mylock)
 	mylock.lock();
 
 	bool found = false;
-	for(int i = 0; i < tss.size(); i++)
+	for(int i = 0; i < tsets.size(); i++)
 	{
-		if(tss[i].chrm != ts.chrm || tss[i].strand != ts.strand) continue;
-		tss[i].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+		if(tsets[i].chrm != ts.chrm || tsets[i].strand != ts.strand) continue;
+		tsets[i].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		found = true;
 		break;
 	}
 
 	if(found == false)
 	{
-		tss.resize(tss.size() + 1);
-		tss[tss.size() - 1].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+		tsets.resize(tsets.size() + 1);
+		tsets[tsets.size() - 1].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	}
 
 	mylock.unlock();

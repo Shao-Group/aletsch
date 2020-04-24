@@ -4,33 +4,15 @@ Part of meta-scallop
 See LICENSE for licensing.
 */
 
-
 #include <cassert>
 #include "transcript_set.h"
 #include "constants.h"
 
-bool transcript_set::query(const transcript &t) const
+int transcript_set::add(const trans_item &ti, int mode)
 {
-	size_t h = t.get_intron_chain_hashing();
-	auto it = mt.find(h);
-	if(it == mt.end()) return false;
-
-	auto &v = it->second;
-	for(int k = 0; k < v.size(); k++)
-	{
-		if(v[k].strand != t.strand) continue;
-		bool b = v[k].intron_chain_match(t);
-		if(b == true) return true;
-	}
-	return false;
-}
-
-int transcript_set::add(const transcript &t1, int mode)
-{
-	transcript t = t1;
+	transcript t = ti.trst;
 
 	if(t.exons.size() <= 1) return 0;
-	assert(t.count >= 1);
 
 	if(mt.size() == 0) strand = t.strand;
 	if(mt.size() == 0) chrm = t.seqname;
@@ -43,8 +25,8 @@ int transcript_set::add(const transcript &t1, int mode)
 	auto it = mt.find(h);
 	if(it == mt.end())
 	{
-		vector<transcript> v;
-		v.push_back(t);
+		vector<trans_item> v;
+		v.push_back(ti);
 		mt.insert(make_pair(h, v));
 	}
 	else
@@ -53,33 +35,48 @@ int transcript_set::add(const transcript &t1, int mode)
 		bool found = false;
 		for(int k = 0; k < v.size(); k++)
 		{
-			transcript &z = v[k];
-			bool b = z.intron_chain_match(t);
+			bool b = v[k].trst.intron_chain_match(t);
 			if(b == false) continue;
 
 			if(mode == TRANSCRIPT_COUNT_ADD_COVERAGE_ADD) 
 			{
-				z.count += t.count;
-				z.coverage += t.coverage;
-				z.extend_bounds(t);
+				v[k].trst.coverage += t.coverage;
+				v[k].trst.extend_bounds(t);
+				v[k].count += ti.count;
+				v[k].samples.insert(ti.samples.begin(), ti.samples.end());
 			}
-
-			if(mode == TRANSCRIPT_COUNT_ADD_COVERAGE_NUL) 
+			else if(mode == TRANSCRIPT_COUNT_ADD_COVERAGE_NUL) 
 			{
-				z.count += t.count;
+				v[k].count += ti.count;
 			}
-
-			if(mode == TRANSCRIPT_COUNT_MAX_COVERAGE_MAX)
-			{
-				if(t.count > z.count) z = t;
-				if(t.count == z.count && t.coverage > z.coverage) z.coverage = t.coverage;
-				if(t.count == z.count && t.coverage > z.coverage) z.extend_bounds(t);
-			}
+			else assert(false);
 
 			found = true;
 			break;
 		}
-		if(found == false) v.push_back(t);
+		if(found == false) v.push_back(ti);
+	}
+	return 0;
+}
+
+int transcript_set::add(const transcript &t, int count, int sid, int mode)
+{
+	trans_item ti;
+	ti.trst = t;
+	ti.count = count;
+	ti.samples.insert(sid);
+	add(ti, mode);
+	return 0;
+}
+
+int transcript_set::add(const transcript_set &ts, int min_count, int mode)
+{
+	for(auto &x : ts.mt)
+	{
+		for(auto &z : x.second)
+		{
+			if(z.count >= min_count) add(z, mode);
+		}
 	}
 	return 0;
 }
@@ -96,27 +93,9 @@ int transcript_set::increase_count(int count)
 	return 0;
 }
 
-int transcript_set::add(const transcript_set &ts, int min_count, int mode)
+int transcript_set::print() const
 {
-	for(auto &x : ts.mt)
-	{
-		for(auto &z : x.second)
-		{
-			if(z.count >= min_count) add(z, mode);
-		}
-	}
-	return 0;
-}
-
-int transcript_set::add(const transcript_set &ts, int mode)
-{
-	for(auto &x : ts.mt)
-	{
-		for(auto &z : x.second)
-		{
-			add(z, mode);
-		}
-	}
+	printf("transcript-set: chrm = %s, strand = %c, mt.size() = %lu\n", chrm.c_str(), strand, mt.size());
 	return 0;
 }
 
@@ -127,16 +106,37 @@ vector<transcript> transcript_set::get_transcripts(int min_count) const
 	{
 		for(auto &z : x.second)
 		{
-			if(z.count >= min_count) v.push_back(z);
+			if(z.count < min_count) continue;
+			v.push_back(z.trst);
 		}
 	}
 	return v;
 }
 
-int transcript_set::print() const
+pair<bool, trans_item> transcript_set::query(const transcript &t) const
 {
-	printf("transcript-set: chrm = %s, strand = %c, mt.size() = %lu\n", chrm.c_str(), strand, mt.size());
-	vector<transcript> vv = get_transcripts(1);
-	for(int i = 0; i < vv.size(); i++) vv[i].write(cout);
-	return 0;
+	pair<bool, trans_item> p;
+	size_t h = t.get_intron_chain_hashing();
+	auto it = mt.find(h);
+	if(it == mt.end()) 
+	{
+		p.first = false;
+		return p;
+	}
+
+	auto &v = it->second;
+	for(int k = 0; k < v.size(); k++)
+	{
+		transcript x = v[k].trst;
+		if(x.strand != t.strand) continue;
+		bool b = x.intron_chain_match(t);
+		if(b == true) 
+		{
+			p.first = true;
+			p.second = v[k];
+			return p;
+		}
+	}
+	p.first = true;
+	return p;
 }

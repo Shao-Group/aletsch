@@ -17,10 +17,9 @@ See LICENSE for licensing.
 #include "graph_builder.h"
 #include "essential.h"
 
-previewer::previewer(const string &file, const parameters &c, sample_profile &s)
+previewer::previewer(const parameters &c, sample_profile &s)
 	: cfg(c), sp(s)
 {
-	input_file = file;
 	max_preview_reads = 2000000;
 	max_preview_spliced_reads = 50000;
 	min_preview_spliced_reads = 10000;
@@ -33,7 +32,7 @@ previewer::~previewer()
 
 int previewer::open_file()
 {
-    sfn = sam_open(input_file.c_str(), "r");
+    sfn = sam_open(sp.file_name.c_str(), "r");
     hdr = sam_hdr_read(sfn);
     b1t = bam_init1();
 	return 0;
@@ -126,7 +125,7 @@ int previewer::infer_library_type()
 	if(spn >= min_preview_spliced_reads && second > preview_infer_ratio * 2.0 * spn) s1 = FR_SECOND;
 
 	printf("infer-library-type (%s): reads = %d, single = %d, paired = %d, spliced = %d, first = %d, second = %d, inferred = %s\n",
-			input_file.c_str(), total, single, paired, spn, first, second, vv[s1 + 1].c_str());
+			sp.file_name.c_str(), total, single, paired, spn, first, second, vv[s1 + 1].c_str());
 
 	sp.library_type = s1;
 	close_file();
@@ -135,7 +134,6 @@ int previewer::infer_library_type()
 
 int previewer::infer_insertsize()
 {
-	//printf("preview insertsize for file %s\n", input_file.c_str());
 	open_file();
 
 	bundle bb1;
@@ -226,7 +224,7 @@ int previewer::infer_insertsize()
 	sp.insertsize_std = sqrt((sx2 - n * sp.insertsize_ave * sp.insertsize_ave) * 1.0 / n);
 
 	printf("preview (%s) insertsize: sampled reads = %d, isize = %.2lf +/- %.2lf, median = %d, low = %d, high = %d\n", 
-				input_file.c_str(), total, sp.insertsize_ave, sp.insertsize_std, sp.insertsize_median, sp.insertsize_low, sp.insertsize_high);
+				sp.file_name.c_str(), total, sp.insertsize_ave, sp.insertsize_std, sp.insertsize_median, sp.insertsize_low, sp.insertsize_high);
 
 	close_file();
 	return 0;
