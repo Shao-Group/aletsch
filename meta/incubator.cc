@@ -68,7 +68,9 @@ int incubator::resolve()
 
 	mytime = time(NULL);
 	printf("\nFINAL: filter and output assembled transcripts, %s\n", ctime(&mytime));
+
 	postprocess();
+	write();
 
 	return 0;
 }
@@ -117,7 +119,7 @@ int incubator::generate(int a, int b)
 	if(num_threads > b - a) num_threads = b - a;
 	
 	boost::asio::thread_pool pool(num_threads);			// thread pool
-	mutex mylock;										// lock for trsts
+	mutex mylock;										// lock for tsets
 
 	for(int i = a; i < b; i++)
 	{
@@ -187,11 +189,12 @@ int incubator::postprocess()
 	}
 
 	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
-	mutex mylock;									// lock for trsts
+	mutex mylock;									// lock for tsets
 
-	for(int i = 0; i < trsts.size(); i++)
+	strsts.resize(samples.size());
+	for(int i = 0; i < tsets.size(); i++)
 	{
-		transcript_set &ts = trsts[i];
+		transcript_set &ts = tsets[i];
 		boost::asio::post(pool, [this, &ts, &mylock, &fout]{ this->postprocess(ts, fout, mylock); });
 	}
 
@@ -201,6 +204,25 @@ int incubator::postprocess()
 	time_t mytime = time(NULL);
 	printf("finish filtering and reporting final assembled transcripts, %s\n", ctime(&mytime));
 
+	return 0;
+}
+
+int incubator::write()
+{
+	if(cfg.output_gtf_dir == "") return 0;
+
+	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
+	mutex mylock;									// lock for tsets
+
+	for(int i = 0; i < strsts.size(); i++)
+	{
+		boost::asio::post(pool, [this, i]{ this->write(i); });
+	}
+
+	pool.join();
+
+	time_t mytime = time(NULL);
+	printf("finish writing individual assembled transcripts, %s\n", ctime(&mytime));
 	return 0;
 }
 
@@ -310,9 +332,8 @@ int incubator::assemble(combined_graph &cb, transcript_set &ts, int mode)
 		transcript &t = sx.trsts[k];
 		if(t.exons.size() <= 1) continue;
 		t.RPKM = 0;
-		t.count = 1;
 		z++;
-		ts.add(t, mode);
+		ts.add(t, 1, cb.sid, mode);
 		//t.write(cout);
 	}
 
@@ -324,11 +345,12 @@ int incubator::assemble(combined_graph &cb, transcript_set &ts, int mode)
 
 int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb)
 {
-	if(gv.size() <= 1) return 0;
+	assert(gv.size() >= 2);
 
 	// construct combined graph
 	cb.copy_meta_information(*(gv[0]));
 	cb.combine(gv);
+	cb.sid = -1;
 
 	// rebuild splice graph
 	splice_graph gx;
@@ -382,17 +404,65 @@ int incubator::postprocess(const transcript_set &ts, ofstream &fout, mutex &mylo
 	ft.filter_length_coverage();
 
 	stringstream ss;
+	vector<vector<transcript>> vv(samples.size());
 	for(int i = 0; i < ft.trs.size(); i++)
 	{
 		transcript &t = ft.trs[i];
 		t.write(ss);
+		pair<bool, trans_item> p = ts.query(t);
+		if(p.first == false) continue;
+
+		for(auto &k : p.second.samples)
+		{
+			if(k < 0) continue;
+			assert(k >= 0 && k < vv.size());
+			vv[k].push_back(t);
+		}
 	}
 
 	mylock.lock();
+
 	const string &s = ss.str();
 	fout.write(s.c_str(), s.size());
+
+	for(int i = 0; i < vv.size(); i++)
+	{
+		strsts[i].insert(strsts[i].end(), vv[i].begin(), vv[i].end());
+	}
+
 	mylock.unlock();
 
+	return 0;
+}
+
+int incubator::write(int id)
+{
+	if(id < 0) return 0;
+	assert(id >= 0 && id < samples.size());
+	assert(samples.size() == strsts.size());
+
+	vector<transcript> &v = strsts[id];
+
+	stringstream ss;
+	for(int i = 0; i < v.size(); i++)
+	{
+		transcript &t = v[i];
+		t.write(ss);
+	}
+
+	size_t p = samples[id].file_name.find_last_of("/\\");
+	string bfile = samples[id].file_name.substr(p + 1);
+
+	char file[10240];
+	sprintf(file, "%s/%d.gtf", cfg.output_gtf_dir.c_str(), id);
+
+	ofstream fout(file);
+	if(fout.fail()) return 0;
+
+	const string &s = ss.str();
+	fout.write(s.c_str(), s.size());
+
+	fout.close();
 	return 0;
 }
 
@@ -403,18 +473,18 @@ int incubator::store_transcripts(const transcript_set &ts, mutex &mylock)
 	mylock.lock();
 
 	bool found = false;
-	for(int i = 0; i < trsts.size(); i++)
+	for(int i = 0; i < tsets.size(); i++)
 	{
-		if(trsts[i].chrm != ts.chrm || trsts[i].strand != ts.strand) continue;
-		trsts[i].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+		if(tsets[i].chrm != ts.chrm || tsets[i].strand != ts.strand) continue;
+		tsets[i].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		found = true;
 		break;
 	}
 
 	if(found == false)
 	{
-		trsts.resize(trsts.size() + 1);
-		trsts[trsts.size() - 1].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+		tsets.resize(tsets.size() + 1);
+		tsets[tsets.size() - 1].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	}
 
 	mylock.unlock();

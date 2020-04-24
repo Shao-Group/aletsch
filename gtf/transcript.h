@@ -49,9 +49,6 @@ public:
 
 	vector<PI32> exons;
 
-	int count;
-	set<int> samples;
-
 public:
 	int add_exon(int s, int t);
 	int add_exon(const item &e);

@@ -25,6 +25,7 @@ public:
 	// for controling
 	string input_bam_list;
 	string output_gtf_file;
+	string output_gtf_dir;
 	int verbose;
 	string algo;
 	string version;

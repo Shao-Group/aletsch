@@ -137,6 +137,7 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	char buf[1024];
 	strcpy(buf, hdr->target_name[bb->tid]);
 	bb->chrm = string(buf);
+	bb->compute_strand(sp.library_type);
 
 	splice_graph gr;
 	graph_builder gb(*bb, cfg);

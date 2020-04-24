@@ -16,21 +16,29 @@ See LICENSE for licensing.
 
 using namespace std;
 
+class trans_item
+{
+public:
+	transcript trst;
+	int count;
+	set<int> samples;
+};
+
 class transcript_set
 {
 public:
 	string chrm;
 	char strand;
-	map<size_t, vector<transcript>> mt;
+	map<size_t, vector<trans_item>> mt;
 
 public:
-	int add(const transcript &t, int mode);
-	int add(const transcript_set &ts, int mode);
+	int add(const trans_item &t, int mode);
+	int add(const transcript &t, int count, int sid, int mode);
 	int add(const transcript_set &ts, int min_count, int mode);
 	int increase_count(int count);
-	vector<transcript> get_transcripts(int min_count) const;
-	bool query(const transcript &t) const;
 	int print() const;
+	vector<transcript> get_transcripts(int min_count) const;
+	pair<bool, trans_item> query(const transcript &t) const;
 };
 
 #endif

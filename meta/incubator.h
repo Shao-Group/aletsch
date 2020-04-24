@@ -27,7 +27,8 @@ public:
 public:
 	const parameters &cfg;							// parameters for scallop
 	vector<sample_profile> samples;					// samples
-	vector<transcript_set> trsts;					// assembled transcripts for all samples
+	vector<vector<transcript>> strsts;				// predicted transcripts for each sample
+	vector<transcript_set> tsets;					// assembled transcripts for all samples
 	vector<map<string, int>> g2g;					// group map
 	vector<combined_group> groups;					// graph groups
 
@@ -36,10 +37,12 @@ public:
 	int read_bam_list();
 	int clear();
 	int postprocess();
+	int write();
 
 	int generate(int a, int b);
 	int merge();
 	int assemble();
+	int write(int id);
 
 private:
 	int generate(sample_profile &sp, vector<combined_group> &gv, mutex &mylock);

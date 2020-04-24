@@ -21,6 +21,7 @@ parameters::parameters()
 	// for controling
 	input_bam_list = "";
 	output_gtf_file = "";
+	output_gtf_dir = "";
 	verbose = 1;
 	algo = "meta-scallop";
 	version = "0.1.2";
@@ -101,6 +102,11 @@ int parameters::parse_arguments(int argc, const char ** argv)
 		else if(string(argv[i]) == "-o")
 		{
 			output_gtf_file = string(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "-d")
+		{
+			output_gtf_dir = string(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "-t")
