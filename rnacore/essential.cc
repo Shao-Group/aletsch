@@ -397,3 +397,28 @@ bool consistent_intron_chains(const vector<int32_t> &x, const vector<int32_t> &y
 	vector<int32_t> v;
 	return merge_intron_chains(x, y, v);
 }
+
+int add_cigar_match(bam1_t &b1t, int32_t p1, int32_t p2)
+{
+	assert(p1 < p2);
+	uint32_t c1 = p2 - p1;
+	c1 = c1 << 4;
+	c1 += BAM_CMATCH;
+	memcpy(b1t.data + b1t.l_data, &c1, 4);
+	b1t.l_data += 4;
+	b1t.core.n_cigar++;
+	return 0;
+}
+
+int add_cigar_skip(bam1_t &b1t, int32_t p1, int32_t p2)
+{
+	assert(p1 < p2);
+	uint32_t c1 = p2 - p1;
+	c1 = c1 << 4;
+	c1 += BAM_CREF_SKIP;
+	memcpy(b1t.data + b1t.l_data, &c1, 4);
+	b1t.l_data += 4;
+	b1t.core.n_cigar++;
+	return 0;
+}
+
