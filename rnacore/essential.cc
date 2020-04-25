@@ -423,3 +423,49 @@ int add_cigar_skip(bam1_t &b1t, int32_t p1, int32_t p2)
 	return 0;
 }
 
+int build_bam1_t(bam1_t &b1t, const hit &h)
+{
+	b1t.core = h;
+	b1t.core.pos = h.pos;
+	b1t.core.bin = 0;
+	b1t.core.n_cigar = 0;
+	b1t.core.l_qseq = 0;
+	b1t.core.isize = h.isize;
+	b1t.core.flag = h.flag;
+
+	b1t.m_data = b1t.core.l_qname + 4 * (h.spos.size() + 1) + 7 * 3;
+	b1t.data = new uint8_t[b1t.m_data];
+
+	// copy qname
+	b1t.l_data = 0;
+	assert(h.qname.size() + b1t.core.l_extranul + 1 == b1t.core.l_qname);
+	memcpy(b1t.data, h.qname.c_str(), h.qname.size());
+	b1t.l_data += h.qname.length();
+	for(int i = 0; i <= b1t.core.l_extranul; i++)
+	{
+		b1t.data[b1t.l_data] = 0;
+		b1t.l_data++;
+	}
+	assert(b1t.l_data == b1t.core.l_qname);
+
+	vector<int32_t> z;
+	z.push_back(h.pos);
+	z.insert(z.end(), h.spos.begin(), h.spos.end());
+	z.push_back(h.rpos);
+
+	// CIGAR
+	for(int i = 0; i < z.size() - 1; i++)
+	{
+		int32_t x1 = z[i + 0];
+		int32_t x2 = z[i + 1];
+		assert(x1 <= x2);
+		if(i % 2 == 0) add_cigar_match(b1t, x1, x2);
+		else add_cigar_skip(b1t, x1, x2);
+	}
+
+	if(h.xs !='.') bam_aux_append(&(b1t), "XS", 'A', 1, (uint8_t*)(&h.xs));
+	if(h.hi != -1) bam_aux_append(&(b1t), "HI", 'i', 4, (uint8_t*)(&h.hi));
+	if(h.nh != -1) bam_aux_append(&(b1t), "NH", 'i', 4, (uint8_t*)(&h.nh));
+
+	return 0;
+}

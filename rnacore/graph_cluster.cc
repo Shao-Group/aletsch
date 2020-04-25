@@ -236,6 +236,31 @@ int graph_cluster::build_phase_set_from_unpaired_reads(phase_set &ps)
 	return 0;
 }
 
+int graph_cluster::write_unpaired_reads(BGZF *fout, map<int, bam1_t> &umap, int libtype)
+{
+	for(int i = 0; i < hits.size(); i++)
+	{
+		if(paired[i] == true) continue;
+
+		hit &h = hits[i];
+
+		bam1_t b1t;
+		build_bam1_t(b1t, h);
+
+		if(libtype == UNSTRANDED && h.xs == '.')
+		{
+			umap.insert(pair<int, bam1_t>(h.hid, b1t));
+		}
+		else
+		{
+			bam_write1(fout, &(b1t));
+			assert(b1t.data != NULL);
+			delete b1t.data;
+		}
+	}
+	return 0;
+}
+
 bool compare_rank0(const vector<int32_t> &x, const vector<int32_t> &y) { return x[0] < y[0]; }
 bool compare_rank1(const vector<int32_t> &x, const vector<int32_t> &y) { return x[1] < y[1]; }
 bool compare_rank2(const vector<int32_t> &x, const vector<int32_t> &y) { return x[2] < y[2]; }

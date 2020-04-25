@@ -57,6 +57,8 @@ int generator::resolve()
 	bundle *bb1 = new bundle();
 	bundle *bb2 = new bundle();
 
+	int hid = 0;
+
     while(sam_read1(sfn, hdr, b1t) >= 0)
 	{
 		bam1_core_t &p = b1t->core;
@@ -67,7 +69,7 @@ int generator::resolve()
 		if(p.qual < cfg.min_mapping_quality) continue;								// ignore hits with small quality
 		if(p.n_cigar < 1) continue;													// should never happen
 
-		hit ht(b1t);
+		hit ht(b1t, hid++);
 		ht.set_splices(b1t);
 		ht.set_tags(b1t);
 		ht.set_strand(sp.library_type);

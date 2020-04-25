@@ -59,6 +59,7 @@ int previewer::infer_library_type()
 	vector<int> spn1;
 	vector<int> spn2;
 
+	int hid = 0;
     while(sam_read1(sfn, hdr, b1t) >= 0)
 	{
 		if(total >= max_preview_reads) break;
@@ -74,7 +75,7 @@ int previewer::infer_library_type()
 
 		total++;
 
-		hit ht(b1t);
+		hit ht(b1t, hid++);
 		ht.set_splices(b1t);
 		ht.set_tags(b1t);
 
@@ -142,6 +143,7 @@ int previewer::infer_insertsize()
 	bb2.strand = '-';
 	map<int32_t, int> m;
 	int cnt = 0;
+	int hid = 0;
 
     while(sam_read1(sfn, hdr, b1t) >= 0)
 	{
@@ -153,7 +155,7 @@ int previewer::infer_insertsize()
 		if(p.qual < cfg.min_mapping_quality) continue;								// ignore hits with small quality
 		if(p.n_cigar < 1) continue;												// should never happen
 
-		hit ht(b1t);
+		hit ht(b1t, hid++);
 		ht.set_splices(b1t);
 		ht.set_tags(b1t);
 		ht.set_strand(sp.library_type);

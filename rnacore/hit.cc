@@ -17,6 +17,7 @@ See LICENSE for licensing.
 hit& hit::operator=(const hit &h)
 {
 	bam1_core_t::operator=(h);
+	hid = h.hid;
 	rpos = h.rpos;
 	qlen = h.qlen;
 	qname = h.qname;
@@ -32,6 +33,7 @@ hit& hit::operator=(const hit &h)
 hit::hit(const hit &h)
 	:bam1_core_t(h)
 {
+	hid = h.hid;
 	rpos = h.rpos;
 	qlen = h.qlen;
 	qname = h.qname;
@@ -47,8 +49,8 @@ hit::~hit()
 {
 }
 
-hit::hit(bam1_t *b)
-	:bam1_core_t(b->core)
+hit::hit(bam1_t *b, int id)
+	:bam1_core_t(b->core), hid(id)
 {
 	// fetch query name
 	char buf[1024];
@@ -187,8 +189,8 @@ bool hit::operator<(const hit &h) const
 int hit::print() const
 {
 	// print basic information
-	printf("Hit %s: [%d-%d), mpos = %d, flag = %d, quality = %d, strand = %c, xs = %c, ts = %c, isize = %d, qlen = %d, hi = %d\n", 
-			qname.c_str(), pos, rpos, mpos, flag, qual, strand, xs, ts, isize, qlen, hi);
+	printf("Hit %s: hid = %d, [%d-%d), mpos = %d, flag = %d, quality = %d, strand = %c, xs = %c, ts = %c, isize = %d, qlen = %d, hi = %d\n", 
+			qname.c_str(), hid, pos, rpos, mpos, flag, qual, strand, xs, ts, isize, qlen, hi);
 
 	printf(" start position (%d - )\n", pos);
 	for(int i = 0; i < spos.size() / 2; i++)
