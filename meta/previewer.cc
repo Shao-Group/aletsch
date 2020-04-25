@@ -247,7 +247,7 @@ int previewer::process(bundle &bd, map<int32_t, int> &m)
 	gr.build_vertex_index();
 
 	vector<pereads_cluster> vc;
-	graph_cluster gc(gr, bd.hits, 2);
+	graph_cluster gc(gr, bd.hits, 2, false);
 	gc.build_pereads_clusters(vc);
 
 	int cnt = 0;

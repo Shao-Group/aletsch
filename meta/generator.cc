@@ -61,11 +61,11 @@ int generator::resolve()
 	{
 		bam1_core_t &p = b1t->core;
 
-		if((p.flag & 0x4) >= 1) continue;										// read is not mapped
+		if((p.flag & 0x4) >= 1) continue;											// read is not mapped
 		if((p.flag & 0x100) >= 1 && cfg.use_second_alignment == false) continue;	// secondary alignment
 		if(p.n_cigar > cfg.max_num_cigar) continue;									// ignore hits with more than max-num-cigar types
 		if(p.qual < cfg.min_mapping_quality) continue;								// ignore hits with small quality
-		if(p.n_cigar < 1) continue;												// should never happen
+		if(p.n_cigar < 1) continue;													// should never happen
 
 		hit ht(b1t);
 		ht.set_splices(b1t);
@@ -155,7 +155,7 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 
 	vector<pereads_cluster> vc;
 	phase_set ps;
-	graph_cluster gc(gr, bb->hits, cfg.max_reads_partition_gap);
+	graph_cluster gc(gr, bb->hits, cfg.max_reads_partition_gap, false);
 	gc.build_pereads_clusters(vc);
 	gc.build_phase_set_from_unpaired_reads(ps);
 
