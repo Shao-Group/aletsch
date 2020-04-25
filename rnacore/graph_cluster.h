@@ -18,7 +18,7 @@ using namespace std;
 class graph_cluster
 {
 public:
-	graph_cluster(splice_graph &gr, vector<hit> &hits, int max_gap);
+	graph_cluster(splice_graph &gr, vector<hit> &hits, int max_gap, bool b);
 
 public:
 	splice_graph &gr;				// given splice graph
@@ -29,6 +29,7 @@ private:
 	vector<int32_t> extend;
 	vector< vector<PI> > groups;
 	int max_partition_gap;
+	bool store_hits;
 
 public:
 	int build_pereads_clusters(vector<pereads_cluster> &vc);

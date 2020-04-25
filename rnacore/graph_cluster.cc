@@ -11,8 +11,8 @@ See LICENSE for licensing.
 
 #include <algorithm>
 
-graph_cluster::graph_cluster(splice_graph &g, vector<hit> &h, int max_gap)
-	: gr(g), hits(h), max_partition_gap(max_gap)
+graph_cluster::graph_cluster(splice_graph &g, vector<hit> &h, int max_gap, bool b)
+	: gr(g), hits(h), max_partition_gap(max_gap), store_hits(b)
 {
 	group_pereads();
 } 
@@ -43,11 +43,17 @@ int graph_cluster::group_pereads()
 	{
 		int h1 = fs[i].first;
 		int h2 = fs[i].second;
+
+		if(hits[h1].rpos > hits[h2].rpos) continue;
+		if(hits[h1].pos > hits[h2].pos) continue;
+
+		bool b = consistent_intron_chains(hits[h1].spos, hits[h2].spos);
+		if(b == false) continue;
+
 		vector<int> v1;
 		vector<int> v2;
 		bool b1 = align_hit_to_splice_graph(hits[h1], gr, v1);
 		bool b2 = align_hit_to_splice_graph(hits[h2], gr, v2);
-
 		if(b1 == false || b2 == false)  continue;
 		if(v1.size() == 0 || v2.size() == 0) continue;
 
@@ -106,42 +112,40 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 
 		int h1 = fs[zz[i][0]].first;
 		int h2 = fs[zz[i][0]].second;
+		assert(hits[h1].rpos <= hits[h2].rpos);
+		assert(hits[h1].pos <= hits[h2].pos);
 
 		bool b = consistent_intron_chains(hits[h1].spos, hits[h2].spos);
-		if(b == false) continue;
+		assert(b == true);
 
 		pereads_cluster pc;
 		pc.count = 0;
+		pc.chain1 = hits[h1].spos;
+		pc.chain2 = hits[h2].spos;
+
 		vector<int32_t> bounds(4, 0);
-		for(int k = 0; k < zz[i].size(); k++)
-		{
-			h1 = fs[zz[i][k]].first;
-			h2 = fs[zz[i][k]].second;
-			if(hits[h1].rpos > hits[h2].rpos) continue;
-			if(hits[h1].pos > hits[h2].pos) continue;
-
-			pc.chain1 = hits[h1].spos;
-			pc.chain2 = hits[h2].spos;
-
-			bounds[0] = hits[h1].pos;
-			bounds[1] = hits[h1].rpos;
-			bounds[2] = hits[h2].pos;
-			bounds[3] = hits[h2].rpos;
-			break;
-		}
+		bounds[0] = hits[h1].pos;
+		bounds[1] = hits[h1].rpos;
+		bounds[2] = hits[h2].pos;
+		bounds[3] = hits[h2].rpos;
 
 		for(int k = 0; k < zz[i].size(); k++)
 		{
 			h1 = fs[zz[i][k]].first;
 			h2 = fs[zz[i][k]].second;
-			if(hits[h1].rpos > hits[h2].rpos) continue;
-			if(hits[h1].pos > hits[h2].pos) continue;
 
 			pc.bounds[0] += hits[h1].pos  - bounds[0];
 			pc.bounds[1] += hits[h1].rpos - bounds[1];
 			pc.bounds[2] += hits[h2].pos  - bounds[2];
 			pc.bounds[3] += hits[h2].rpos - bounds[3];
+
 			pc.count++;
+			
+			if(store_hits == true)
+			{
+				pc.hits1.push_back(hits[h1]);
+				pc.hits2.push_back(hits[h2]);
+			}
 		}
 
 		if(pc.count <= 0) continue;
