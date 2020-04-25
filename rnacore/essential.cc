@@ -4,12 +4,13 @@ Part of meta-scallop
 See LICENSE for licensing.
 */
 
-
 #include "util.h"
 #include "essential.h"
 #include "splice_graph.h"
 
 #include <algorithm>
+#include <cstdio>
+#include <cstring>
 
 int build_child_splice_graph(splice_graph &root, splice_graph &gr, map<int, int> &a2b)
 {
