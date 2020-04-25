@@ -469,3 +469,55 @@ int build_bam1_t(bam1_t &b1t, const hit &h)
 
 	return 0;
 }
+
+int build_bam1_t(bam1_t &b1t, const hit &h1, const hit &h2, const vector<int32_t> &chain)
+{
+	b1t.core = h1;
+	b1t.core.pos = h1.pos;
+	b1t.core.bin = 0;
+	b1t.core.n_cigar = 0;
+	b1t.core.l_qseq = 0;
+	b1t.core.isize = h2.rpos - h1.pos;
+	b1t.core.flag = h1.flag;
+	//b1t.core.flag -= b1t.core.flag & (0x1);
+
+	b1t.m_data = b1t.core.l_qname + 4 * (chain.size() + 1) + 7 * 3;
+	b1t.data = new uint8_t[b1t.m_data];
+
+	// copy qname
+	b1t.l_data = 0;
+	assert(h1.qname == h2.qname);
+	assert(h1.qname.size() + b1t.core.l_extranul + 1 == b1t.core.l_qname);
+	memcpy(b1t.data, h1.qname.c_str(), h1.qname.size());
+	b1t.l_data += h1.qname.length();
+	for(int i = 0; i <= b1t.core.l_extranul; i++)
+	{
+		b1t.data[b1t.l_data] = 0;
+		b1t.l_data++;
+	}
+	assert(b1t.l_data == b1t.core.l_qname);
+
+	vector<int32_t> z;
+	z.push_back(h1.pos);
+	z.insert(z.end(), chain.begin(), chain.end());
+	z.push_back(h2.rpos);
+
+	// CIGAR
+	for(int i = 0; i < z.size() - 1; i++)
+	{
+		int32_t x1 = z[i + 0];
+		int32_t x2 = z[i + 1];
+		assert(x1 <= x2);
+		if(i % 2 == 0) add_cigar_match(b1t, x1, x2);
+		else add_cigar_skip(b1t, x1, x2);
+	}
+
+	char c = h1.xs;
+	if(c == '.' && h2.xs != '.') c = h2.xs;
+
+	if(c != '.') bam_aux_append(&(b1t), "XS", 'A', 1, (uint8_t*)(&c));
+	if(h1.hi != -1 && h1.hi == h2.hi) bam_aux_append(&(b1t), "HI", 'i', 4, (uint8_t*)(&h1.hi));
+	if(h1.nh != -1 && h1.nh == h2.nh) bam_aux_append(&(b1t), "NH", 'i', 4, (uint8_t*)(&h1.nh));
+
+	return 0;
+}
