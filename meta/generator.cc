@@ -103,13 +103,15 @@ int generator::resolve()
 		if(sp.library_type != UNSTRANDED && ht.strand == '+' && ht.xs == '-') continue;
 		if(sp.library_type != UNSTRANDED && ht.strand == '-' && ht.xs == '+') continue;
 		if(sp.library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
-
 		if(sp.library_type != UNSTRANDED && ht.strand == '+') bb1->add_hit_intervals(ht, b1t);
 		if(sp.library_type != UNSTRANDED && ht.strand == '-') bb2->add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED) bb1->add_hit_intervals(ht, b1t);
+		/*
 		if(sp.library_type == UNSTRANDED && ht.xs == '+') bb1->add_hit_intervals(ht, b1t);
 		if(sp.library_type == UNSTRANDED && ht.xs == '-') bb2->add_hit_intervals(ht, b1t);
 		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb1->add_hit_intervals(ht, b1t);
 		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb2->add_hit_intervals(ht, b1t);
+		*/
 	}
 
 	if(cfg.single_sample_multiple_threading == false) this->generate(bb1, mylock, index);
@@ -140,6 +142,10 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	strcpy(buf, hdr->target_name[bb->tid]);
 	bb->chrm = string(buf);
 	bb->compute_strand(sp.library_type);
+
+	bb->print(index);
+
+	return 0;
 
 	splice_graph gr;
 	graph_builder gb(*bb, cfg);

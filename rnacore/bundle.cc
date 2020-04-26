@@ -149,15 +149,17 @@ int bundle::print(int index)
 
 	// statistic xs
 	int n0 = 0, np = 0, nq = 0;
+	int spliced = 0;
 	for(int i = 0; i < hits.size(); i++)
 	{
 		if(hits[i].xs == '.') n0++;
 		if(hits[i].xs == '+') np++;
 		if(hits[i].xs == '-') nq++;
+		if(hits[i].spos.size() >= 1) spliced++;
 	}
 
-	printf("tid = %d, #hits = %lu, range = %s:%d-%d, orient = %c (%d, %d, %d)\n",
-			tid, hits.size(), chrm.c_str(), lpos, rpos, strand, n0, np, nq);
+	printf("tid = %d, range = %s:%d-%d, orient = %c, #hits = %lu, #spliced = %d, +/-/. = %d / %d / %d\n",
+			tid, chrm.c_str(), lpos, rpos, strand, hits.size(), spliced, np, nq, n0);
 
 	printf("\n");
 
