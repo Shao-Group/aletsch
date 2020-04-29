@@ -87,7 +87,8 @@ int graph_builder::build_junctions()
 		//printf("junction: %s:%d-%d (%d, %d, %d) %d\n", chrm.c_str(), p1, p2, s0, s1, s2, s1 < s2 ? s1 : s2);
 
 		if(jc.xs1 > jc.xs2) jc.strand = '+';
-		else jc.strand = '-';
+		else if(jc.xs1 < jc.xs2) jc.strand = '-';
+		else jc.strand = '.';
 		junctions.push_back(jc);
 
 		/*

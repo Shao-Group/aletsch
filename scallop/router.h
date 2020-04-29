@@ -1,6 +1,8 @@
 /*
 Part of Scallop Transcript Assembler
-(c) 2017 by  Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
+Part of meta-scallop 
+(c) 2017 by Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
+(c) 2020 by Mingfu Shao, The Pennsylvania State University.
 See LICENSE for licensing.
 */
 
@@ -52,10 +54,6 @@ public:
 	vector<equation> eqns;		// split results
 	MPID pe2w;					// decompose results (for pairs of edges)
 
-#ifdef USECLP
-	MID se2w;
-#endif
-
 public:
 	int classify();												// compute status
 	int build();												// give solution
@@ -77,17 +75,6 @@ public:
 
 	PI get_largest_in_route(int x, const vector<PI> &rr, const vector<int> &cc);
 	PI get_largest_out_route(int x, const vector<PI> &rr, const vector<int> &cc);
-
-#ifdef USECLP
-	// decompose unsplitable vertex with LP 
-	int lpsolve();
-	int extend_bipartite_graph_max();							// extended graph
-	int extend_bipartite_graph_all();							// extended graph
-	int build_maximum_spanning_tree();							// make ug a (maximum) spanning tree
-	int decompose0_clp();										// solve LP with CLP
-	int decompose1_clp();										// solve LP with CLP
-	int decompose2_clp();										// solve LP with CLP
-#endif
 
 	// print and stats
 	int print();

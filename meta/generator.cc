@@ -28,7 +28,7 @@ generator::generator(sample_profile &s, vector<combined_graph> &v, const paramet
 {
 	previewer pre(cfg, sp);
 	pre.infer_library_type();
-	pre.infer_insertsize();
+	//pre.infer_insertsize();
 
     sfn = sam_open(sp.file_name.c_str(), "r");
     hdr = sam_hdr_read(sfn);
@@ -145,12 +145,12 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 
 	bb->print(index);
 
-	return 0;
-
 	splice_graph gr;
 	graph_builder gb(*bb, cfg);
 	gb.build(gr);
 	gr.build_vertex_index();
+
+	return 0;
 
 	revise_splice_graph_full(gr, cfg);
 
