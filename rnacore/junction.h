@@ -26,6 +26,9 @@ public:
 	int32_t rpos;		// right position
 	int count;			// number of hits having this splice junction
 	char strand;		// strandness of this junction
+	int xs0;			// supporting . reads
+	int xs1;			// supporting + reads
+	int xs2;			// supporting - reads
 	int nm;				// total mismatch
 
 	int lexon;			// pexon index corresponds to lpos

@@ -25,6 +25,7 @@ graph_builder::graph_builder(bundle &b, const parameters &c)
 int graph_builder::build(splice_graph &gr)
 {
 	build_junctions();
+	analyze_junctions();
 	build_regions();
 	build_partial_exons();
 	link_partial_exons();
@@ -73,26 +74,19 @@ int graph_builder::build_junctions()
 		int32_t p1 = it->first.first;
 		int32_t p2 = it->first.second;
 
-		int s0 = 0;
-		int s1 = 0;
-		int s2 = 0;
-		int nm = 0;
+		junction jc(p1, p2, v.size());
 		for(int k = 0; k < v.size(); k++)
 		{
 			const hit &h = bd.hits[v[k]];
-			nm += h.nm;
-			if(h.xs == '.') s0++;
-			if(h.xs == '+') s1++;
-			if(h.xs == '-') s2++;
+			jc.nm += h.nm;
+			if(h.xs == '.') jc.xs0++;
+			if(h.xs == '+') jc.xs1++;
+			if(h.xs == '-') jc.xs2++;
 		}
 
 		//printf("junction: %s:%d-%d (%d, %d, %d) %d\n", chrm.c_str(), p1, p2, s0, s1, s2, s1 < s2 ? s1 : s2);
 
-		junction jc(p1, p2, v.size());
-		jc.nm = nm;
-		if(s1 == 0 && s2 == 0) jc.strand = '.';
-		else if(s1 >= 1 && s2 >= 1) jc.strand = '.';
-		else if(s1 > s2) jc.strand = '+';
+		if(jc.xs1 > jc.xs2) jc.strand = '+';
 		else jc.strand = '-';
 		junctions.push_back(jc);
 
@@ -362,5 +356,27 @@ int graph_builder::print(int index)
 
 	printf("\n");
 
+	return 0;
+}
+
+int graph_builder::analyze_junctions()
+{
+	double threshold = 15;
+	for(int i = 0; i < junctions.size(); i++)
+	{
+		for(int j = i + 1; j < junctions.size(); j++)
+		{
+			junction &x = junctions[i];
+			junction &y = junctions[j];
+			if(x.strand == y.strand) continue;
+			double d = fabs(x.lpos - y.lpos) + fabs(x.rpos - y.rpos);
+			int32_t z = (x.rpos - x.lpos) - (y.rpos - y.lpos);
+			if(z != 0 && d > threshold) continue;
+			if(z == 0 && d > 2 * threshold) continue;
+			x.print(bd.chrm, i);
+			y.print(bd.chrm, j);
+			printf("\n");
+		}
+	}
 	return 0;
 }

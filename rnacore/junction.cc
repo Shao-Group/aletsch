@@ -24,6 +24,9 @@ junction::junction(int32_t l, int32_t r, int c)
 	lregion = -1;
 	rregion = -1;
 	nm = 0;
+	xs0 = 0;
+	xs1 = 0;
+	xs2 = 0;
 }
 
 junction::junction(const junction &sp)
@@ -37,6 +40,9 @@ junction::junction(const junction &sp)
 	lregion = sp.lregion;
 	rregion = sp.rregion;
 	nm = sp.nm;
+	xs0 = sp.xs0;
+	xs1 = sp.xs1;
+	xs2 = sp.xs2;
 }
 
 bool junction::operator<(const junction &x) const
@@ -47,8 +53,8 @@ bool junction::operator<(const junction &x) const
 
 int junction::print(const string &chrm, int index) const
 {
-	printf("junction %d: region = %s:%d-%d, region = %d -> %d, pexon = %d -> %d, length = %d, count = %d, strand = %c, nm = %d\n", 
-			index, chrm.c_str(), lpos, rpos, lregion, rregion, lexon, rexon, rpos - lpos, count, strand, nm);
+	printf("junction %d: region = %s:%d-%d, region = %d -> %d, pexon = %d -> %d, length = %d, count = %d, strand = %c, nm = %d, +/-/. = (%d, %d, %d)\n", 
+			index, chrm.c_str(), lpos, rpos, lregion, rregion, lexon, rexon, rpos - lpos, count, strand, nm, xs1, xs2, xs0);
 	return 0;
 }
 

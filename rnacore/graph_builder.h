@@ -34,6 +34,9 @@ public:
 	int clear();
 	int print(int index);
 
+public:
+	int analyze_junctions();
+
 private:
 	int build_junctions();
 	int build_regions();
