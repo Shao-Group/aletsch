@@ -150,31 +150,31 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	gb.build(gr);
 	gr.build_vertex_index();
 
-	return 0;
-
+	/* TODO
 	revise_splice_graph_full(gr, cfg);
-
 	if(gr.count_junctions() <= 0) 
 	{
 		bb->clear();
 		delete bb;
 		return 0;
 	}
+	*/
 
 	vector<pereads_cluster> vc;
 	phase_set ps;
+
+	/* TODO
 	graph_cluster gc(gr, bb->hits, cfg.max_reads_partition_gap, false);
 	gc.build_pereads_clusters(vc);
 	gc.build_phase_set_from_unpaired_reads(ps);
+	*/
 
 	bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
 	bs.build_phase_set(ps);
 	//bs.print();
 
 	vector<pereads_cluster> ub;
-	bs.collect_unbridged_clusters(ub); //TODO; for testing
-
-	//for(int k = 0; k < ub.size(); k++) ub[k].print(k);
+	bs.collect_unbridged_clusters(ub); 
 
 	vector<splice_graph> grv;
 	vector<phase_set> hsv;
@@ -188,6 +188,12 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	for(int k = 0; k < grv.size(); k++)
 	{
 		if(grv[k].count_junctions() <= 0) continue;
+
+		// TODO
+		grv[k].stat_strandness();
+		printf("\n");
+
+		continue;
 
 		string gid = "gene." + tostring(index) + "." + tostring(k);
 		combined_graph cb;
