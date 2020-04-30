@@ -1170,3 +1170,23 @@ int32_t splice_graph::get_total_length_of_vertices(const vector<int>& v) const
 	}
 	return flen;
 }
+
+int splice_graph::log_scale_weights()
+{
+	for(int i = 0; i < num_vertices(); i++)
+	{
+		double w = get_vertex_weight(i);
+		double z = log(1 + w);
+		set_vertex_weight(i, z);
+	}
+
+	PEEI pei;
+	edge_iterator it1, it2;
+	for(pei = edges(), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	{
+		double w = get_edge_weight(*it1);
+		double z = log(1 + w);
+		set_edge_weight(*it1, z);
+	}
+	return 0;
+}

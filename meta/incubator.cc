@@ -323,6 +323,7 @@ int incubator::assemble(combined_graph &cb, transcript_set &ts, int mode)
 	*/
 
 	gx.gid = cb.gid;
+	gx.log_scale_weights();
 	scallop sx(gx, hx, cfg);
 	sx.assemble();
 

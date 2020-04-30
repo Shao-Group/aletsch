@@ -106,6 +106,7 @@ public:
 	// rounding all weights to integers
 	int round_weights();
 	int locate(int v);
+	int log_scale_weights();
 
 	// indexes and queries
 	int build_vertex_index();
