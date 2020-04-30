@@ -123,7 +123,7 @@ public:
 	int print_nontrivial_vertices();
 	int print_weights();
 	int print();
-
+	int stat_strandness();
 };
 
 #endif

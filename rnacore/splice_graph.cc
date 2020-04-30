@@ -1170,3 +1170,38 @@ int32_t splice_graph::get_total_length_of_vertices(const vector<int>& v) const
 	}
 	return flen;
 }
+
+int splice_graph::stat_strandness()
+{
+	int x0 = 0;
+	int x1 = 0;
+	int x2 = 0;
+	double w0 = 0;
+	double w1 = 0;
+	double w2 = 0;
+	PEEI pei = edges(); 
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = (*it);
+
+		int s = e->source();
+		int t = e->target();
+		if(s == 0 || t == num_vertices() - 1) continue;
+
+		int32_t p1 = get_vertex_info(s).rpos;
+		int32_t p2 = get_vertex_info(t).lpos;
+
+		if(p1 >= p2) continue;
+
+		char c = get_edge_info(e).strand;
+		double w = get_edge_weight(e);
+		if(c == '.') x0++;
+		if(c == '+') x1++;
+		if(c == '-') x2++;
+		if(c == '.') w0 += w;
+		if(c == '+') w1 += w;
+		if(c == '-') w2 += w;
+	}
+	printf("strandness +/-/. = %d / %d / %d weight = %.0lf / %.0lf / %.0lf\n", x1, x2, x0, w1, w2, w0);
+	return 0;
+}
