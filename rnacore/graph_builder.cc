@@ -25,7 +25,8 @@ graph_builder::graph_builder(bundle &b, const parameters &c)
 int graph_builder::build(splice_graph &gr)
 {
 	build_junctions();
-	analyze_junctions();
+	remove_opposite_junctions();
+	//analyze_junctions();
 	build_regions();
 	build_partial_exons();
 	link_partial_exons();
@@ -101,6 +102,50 @@ int graph_builder::build_junctions()
 		assert(max_qual >= min_max_boundary_quality);
 		*/
 	}
+	return 0;
+}
+
+int graph_builder::remove_opposite_junctions()
+{
+	double threshold = 15;
+	set<int> fb;
+	for(int i = 0; i < junctions.size(); i++)
+	{
+		if(fb.find(i) != fb.end()) continue;
+		for(int j = i + 1; j < junctions.size(); j++)
+		{
+			if(fb.find(j) != fb.end()) continue;
+			junction &x = junctions[i];
+			junction &y = junctions[j];
+			if(x.strand == y.strand) continue;
+
+			double threshold = cfg.normal_junction_threshold;
+			int32_t z = (x.rpos - x.lpos) - (y.rpos - y.lpos);
+			if(z == 0 || x.lpos == y.lpos || x.rpos == y.rpos) threshold = cfg.extend_junction_threshold;
+
+			double d = fabs(x.lpos - y.lpos) + fabs(x.rpos - y.rpos);
+			if(d > threshold) continue;
+
+			if(x.count > y.count && x.nm * 1.0 / x.count < y.nm * 1.0 / y.count) fb.insert(j);
+			if(x.count < y.count && x.nm * 1.0 / x.count > y.nm * 1.0 / y.count) fb.insert(i);
+
+			if(fb.find(i) == fb.end()) continue;
+			if(fb.find(j) == fb.end()) continue;
+
+			//printf("remove opposite junction, count = %d / %d, nm = %d / %d\n", x.count, y.count, x.nm, y.nm);
+			//x.print(bd.chrm, i);
+			//y.print(bd.chrm, j);
+		}
+	}
+
+	vector<junction> v;
+	for(int i = 0; i < junctions.size(); i++)
+	{
+		if(fb.find(i) != fb.end()) continue;
+		v.push_back(junctions[i]);
+	}
+
+	junctions = v;
 	return 0;
 }
 
@@ -267,7 +312,8 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 		assert(b.count >= 1);
 		edge_info ei;
 		ei.weight = b.count;
-		ei.strand = b.strand;
+		if(b.strand == '+') ei.strand = 1;
+		if(b.strand == '-') ei.strand = 2;
 		gr.set_edge_info(p, ei);
 		gr.set_edge_weight(p, b.count);
 	}

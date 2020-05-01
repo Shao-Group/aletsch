@@ -41,26 +41,6 @@ router::router(int r, splice_graph &g, MEI &ei, VE &ie, const MPII &mpi, const p
 	}
 }
 
-router::router(int r, splice_graph &g, MEI &ei, VE &ie, const MPII &mpi, const MPII &mpx, const parameters &c)
-	:root(r), gr(g), e2i(ei), i2e(ie), degree(-1), type(-1), cfg(c)
-{
-	routes.clear();
-	counts.clear();
-	for(MPII::const_iterator it = mpi.begin(); it != mpi.end(); it++)
-	{
-		routes.push_back(it->first);
-		counts.push_back(it->second);
-	}
-
-	routex.clear();
-	countx.clear();
-	for(MPII::const_iterator it = mpx.begin(); it != mpx.end(); it++)
-	{
-		routex.push_back(it->first);
-		countx.push_back(it->second);
-	}
-}
-
 router& router::operator=(const router &rt)
 {
 	root = rt.root;
@@ -69,10 +49,7 @@ router& router::operator=(const router &rt)
 	i2e = rt.i2e;
 
 	routes = rt.routes;
-	routex = rt.routex;
-
 	counts = rt.counts;
-	countx = rt.countx;
 	
 	e2u = rt.e2u;
 	u2e = rt.u2e;
@@ -204,37 +181,6 @@ int router::build_bipartite_graph()
 		double w = counts[i];
 		u2w.insert(PED(e, w));
 	}
-
-	for(int s = 0; s < gr.in_degree(root); s++)
-	{
-		if(ug.degree(s) >= 1) continue;
-		PI z = get_largest_out_route(u2e[s], routex, countx);
-		if(z.first == -1) continue;
-		assert(e2u.find(z.first) != e2u.end());
-
-		//printf("z = %d, c = %d, e2u[z] = %d, s = %d, in-degree = %lu, out-degree = %lu, degree = %d\n", z.first, z.second, e2u[z.first], s, gr.in_degree(root), gr.out_degree(root), gr.degree(root));
-
-		int t = e2u[z.first];
-		if(t < gr.in_degree(root)) continue;
-		edge_descriptor e = ug.add_edge(s, t);
-		double w = z.second;
-		u2w.insert(PED(e, w));
-	}
-
-	for(int t = gr.in_degree(root); t < gr.degree(root); t++)
-	{
-		if(ug.degree(t) >= 1) continue;
-		PI z = get_largest_in_route(u2e[t], routex, countx);
-		if(z.first == -1) continue;
-		assert(e2u.find(z.first) != e2u.end());
-
-		int s = e2u[z.first];
-		if(s >= gr.in_degree(root)) continue;
-		edge_descriptor e = ug.add_edge(s, t);
-		double w = z.second;
-		u2w.insert(PED(e, w));
-	}
-
 	return 0;
 }
 

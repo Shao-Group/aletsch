@@ -1171,37 +1171,70 @@ int32_t splice_graph::get_total_length_of_vertices(const vector<int>& v) const
 	return flen;
 }
 
-int splice_graph::stat_strandness()
+int splice_graph::extend_strands()
 {
-	int x0 = 0;
-	int x1 = 0;
-	int x2 = 0;
-	double w0 = 0;
-	double w1 = 0;
-	double w2 = 0;
-	PEEI pei = edges(); 
+	PEEI pei = edges();
 	for(edge_iterator it = pei.first; it != pei.second; it++)
 	{
-		edge_descriptor e = (*it);
-
+		edge_descriptor e = *it;
+		int strand = get_edge_info(e).strand;
 		int s = e->source();
 		int t = e->target();
-		if(s == 0 || t == num_vertices() - 1) continue;
-
 		int32_t p1 = get_vertex_info(s).rpos;
 		int32_t p2 = get_vertex_info(t).lpos;
-
 		if(p1 >= p2) continue;
-
-		char c = get_edge_info(e).strand;
-		double w = get_edge_weight(e);
-		if(c == '.') x0++;
-		if(c == '+') x1++;
-		if(c == '-') x2++;
-		if(c == '.') w0 += w;
-		if(c == '+') w1 += w;
-		if(c == '-') w2 += w;
+		if(s + 2 != t) continue;
+		PEB e1 = edge(s, s + 1);
+		PEB e2 = edge(s + 1, t);
+		if(e1.second == true) 
+		{
+			edge_info ei = get_edge_info(e1.first);
+			ei.strand = strand;
+			set_edge_info(e1.first, ei);
+		}
+		if(e2.second == true) 
+		{
+			edge_info ei = get_edge_info(e2.first);
+			ei.strand = strand;
+			set_edge_info(e2.first, ei);
+		}
 	}
-	printf("strandness +/-/. = %d / %d / %d weight = %.0lf / %.0lf / %.0lf\n", x1, x2, x0, w1, w2, w0);
+	return 0;
+}
+
+int splice_graph::stat_strandness()
+{
+	for(int i = 1; i < num_vertices() - 1; i++)
+	{
+		int32_t p1 = get_vertex_info(i).lpos;
+		int32_t p2 = get_vertex_info(i).rpos;
+		PEEI pi = in_edges(i);
+		PEEI po = out_edges(i);
+		int xi[3] = {0, 0, 0};
+		int xo[3] = {0, 0, 0};
+		double wi[3] = {0, 0, 0};
+		double wo[3] = {0, 0, 0};
+		for(edge_iterator it = pi.first; it != pi.second; it++)
+		{
+			edge_descriptor e = (*it);
+			edge_info ei = get_edge_info(e);
+			double w = get_edge_weight(e);
+			xi[ei.strand]++;
+			wi[ei.strand] += w;
+		}
+		for(edge_iterator it = po.first; it != po.second; it++)
+		{
+			edge_descriptor e = (*it);
+			edge_info ei = get_edge_info(e);
+			double w = get_edge_weight(e);
+			xo[ei.strand]++;
+			wo[ei.strand] += w;
+		}
+		
+		if( (xi[1] <= 0 || xo[2] <= 0) && (xi[2] <= 0 || xo[1] <= 0) ) continue;
+
+		printf("vertex %d: %s:%d-%d, in-degree = %d / %d / %d, out-degree = %d / %d / %d, in-weight = %.0lf / %.0lf / %.0lf, out-weight = %.0lf / %.0lf / %.0lf\n",
+				i, chrm.c_str(), p1, p2, xi[0], xi[1], xi[2], xo[0], xo[1], xo[2], wi[0], wi[1], wi[2], wo[0], wo[1], wo[2]);
+	}
 	return 0;
 }

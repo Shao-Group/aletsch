@@ -148,9 +148,10 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	splice_graph gr;
 	graph_builder gb(*bb, cfg);
 	gb.build(gr);
+	gr.extend_strands();
 	gr.build_vertex_index();
 
-	/* TODO
+	/*
 	revise_splice_graph_full(gr, cfg);
 	if(gr.count_junctions() <= 0) 
 	{
@@ -191,8 +192,6 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 
 		// TODO
 		grv[k].stat_strandness();
-		printf("\n");
-
 		continue;
 
 		string gid = "gene." + tostring(index) + "." + tostring(k);

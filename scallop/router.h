@@ -29,7 +29,6 @@ class router
 public:
 	router(int r, splice_graph &g, MEI &ei, VE &ie, const parameters &cfg);
 	router(int r, splice_graph &g, MEI &ei, VE &ie, const MPII &mpi, const parameters &cfg);
-	router(int r, splice_graph &g, MEI &ei, VE &ie, const MPII &mpi, const MPII &mpx, const parameters &cfg);
 	router& operator=(const router &rt);
 
 public:
@@ -40,8 +39,6 @@ public:
 	VE &i2e;					// reference map of index to edge
 	vector<PI> routes;			// pairs of connections
 	vector<int> counts;			// counts for routes
-	vector<PI> routex;			// pairs of connections
-	vector<int> countx;			// counts for routes
 
 	MI e2u;						// edge to index
 	vector<int> u2e;			// index to edge

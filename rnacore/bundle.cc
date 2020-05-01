@@ -145,7 +145,7 @@ int bundle::check_right_ascending()
 
 int bundle::print(int index)
 {
-	printf("bundle%d: ", index);
+	printf("\nbundle%d: ", index);
 
 	// statistic xs
 	int n0 = 0, np = 0, nq = 0;
@@ -160,8 +160,6 @@ int bundle::print(int index)
 
 	printf("tid = %d, range = %s:%d-%d, orient = %c, #hits = %lu, #spliced = %d, +/-/. = %d / %d / %d\n",
 			tid, chrm.c_str(), lpos, rpos, strand, hits.size(), spliced, np, nq, n0);
-
-	printf("\n");
 
 	return 0;
 }

@@ -115,6 +115,8 @@ public:
 	int locate_rbound(int32_t p);
 	int32_t get_total_length_of_vertices(const vector<int>& v) const;
 	
+	// strandness
+	int extend_strands();
 
 	// draw and print
 	int draw(const string &file, bool footer = true);

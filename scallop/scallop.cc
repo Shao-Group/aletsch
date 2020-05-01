@@ -29,24 +29,6 @@ scallop::scallop(const splice_graph &g, const hyper_set &h1, const parameters &c
 	init_nonzeroset();
 }
 
-scallop::scallop(const splice_graph &g, const hyper_set &h1, const hyper_set &h2, const parameters &c)
-	: gr(g), hs(h1), hx(h2), cfg(c)
-{
-	round = 0;
-	//gr.draw(gr.gid + "." + tostring(round++) + ".tex");
-
-	gr.get_edge_indices(i2e, e2i);
-	//add_pseudo_hyper_edges();
-	//hs.build_confident_nodes(cfg.min_confident_phasing_path_weight);
-	//hx.build_confident_nodes(cfg.min_confident_phasing_path_weight);
-	hs.build(gr, e2i);
-	hx.build(gr, e2i);
-	init_super_edges();
-	init_vertex_map();
-	init_inner_weights();
-	init_nonzeroset();
-}
-
 scallop::~scallop()
 {
 }
@@ -72,8 +54,6 @@ int scallop::assemble()
 		//hs.print_edges();
 		//print_phasing_paths(hs);
 		//printf("---------\n");
-		//hx.print_edges();
-		//print_phasing_paths(hx);
 		printf("=========\n");
 		*/
 
@@ -235,11 +215,8 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 		if(gr.in_degree(t) <= 1) continue;
 
 		if(hs.right_extend(e) && hs.left_extend(e)) continue;
-		//if(hx.right_extend(e) && hx.left_extend(e)) continue;
 		if(t == i && hs.right_extend(e)) continue;
-		//if(t == i && hx.right_extend(e)) continue;
 		if(s == i && hs.left_extend(e)) continue;
-		//if(s == i && hx.left_extend(e)) continue;
 
 		if(r < 0.01)
 		{
@@ -249,7 +226,6 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 
 			remove_edge(e);
 			hs.remove(e);
-			hx.remove(e);
 			flag = true;
 			continue;
 		}
@@ -272,7 +248,6 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 
 	remove_edge(se);
 	hs.remove(se);
-	hx.remove(se);
 
 	return true;
 }
@@ -325,7 +300,6 @@ bool scallop::resolve_negligible_edges(bool extend, double max_ratio)
 
 			remove_edge(*it);
 			hs.remove(*it);
-			hx.remove(*it);
 			flag = true;
 		}
 	}
@@ -352,8 +326,7 @@ bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 		assert(gr.out_degree(i) >= 1);
 
 		MPII mpi = hs.get_routes(i, gr, e2i);
-		MPII mpx = hx.get_routes(i, gr, e2i);
-		router rt(i, gr, e2i, i2e, mpi, mpx, cfg);
+		router rt(i, gr, e2i, i2e, mpi, cfg);
 		rt.classify();
 
 		if(rt.type != type) continue;
@@ -401,8 +374,7 @@ bool scallop::resolve_unsplittable_vertex(int type, int degree, double max_ratio
 		assert(gr.out_degree(i) >= 1);
 
 		MPII mpi = hs.get_routes(i, gr, e2i);
-		MPII mpx = hx.get_routes(i, gr, e2i);
-		router rt(i, gr, e2i, i2e, mpi, mpx, cfg);
+		router rt(i, gr, e2i, i2e, mpi, cfg);
 		rt.classify();
 
 		if(rt.type != type) continue;
@@ -518,11 +490,8 @@ bool scallop::resolve_hyper_edge(int fsize)
 			//printf(" split (%d, %d), w = %.2lf, weight = (%.2lf, %.2lf), merge (%d, %d) -> %d\n", v1[i], v2[j], w, w1[i], w2[j], k1, k2, x);
 
 			hs.replace(v1[i], v2[j], x);
-			hx.replace(v1[i], v2[j], x);
 			if(k1 == v1[i]) hs.remove(v1[i]);
-			if(k1 == v1[i]) hx.remove(v1[i]);
 			if(k2 == v2[j]) hs.remove(v2[j]);
-			if(k2 == v2[j]) hx.remove(v2[j]);
 			//if(k1 == v1[i]) hs.replace(v1[i], x);
 			//if(k2 == v2[j]) hs.replace(v2[j], x);
 		}
@@ -643,7 +612,7 @@ int scallop::summarize_vertices()
 				s1.insert(p.first);
 				s2.insert(p.second);
 			}
-			router rt(i, gr, e2i, i2e, mpi, mpx, cfg);
+			router rt(i, gr, e2i, i2e, mpi, cfg);
 			rt.classify();
 			rt.build();
 			printf("summary: nontrivial vertex %d, degree = (%d, %d), hyper edges = %lu, graph degree = (%lu, %lu), type = %d, degree = %d, ratio = %.3lf\n", 
@@ -767,24 +736,6 @@ int scallop::init_nonzeroset()
 
 int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 {
-	// resolve hx first
-	// consider other combinations in hx
-	// that are not in pe2w
-	PEEI pi = gr.in_edges(root);
-	PEEI po = gr.out_edges(root);
-	edge_iterator it1, it2;
-	for(it1 = pi.first; it1 != pi.second; it1++)
-	{
-		int e1 = e2i[*it1];
-		for(it2 = po.first; it2 != po.second; it2++)
-		{
-			int e2 = e2i[*it2];
-			PI p(e1, e2);
-			if(pe2w.find(p) != pe2w.end()) continue;
-			hx.remove_pair(e1, e2);
-		}
-	}
-
 	// compute degree of each edge
 	map<int, int> mdegree;
 	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
@@ -826,6 +777,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 	int n = m;
 	map<int, int> ev1, ev2;
 	PEEI pei;
+	edge_iterator it1, it2;
 	for(pei = gr.in_edges(root), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
 	{
 		edge_descriptor e = (*it1);
@@ -961,7 +913,6 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			else mei.insert(PEI(p, l));
 
 			hs.insert_between(e1, e2, z);
-			hx.insert_between(e1, e2, z);
 		}
 	}
 
@@ -1045,12 +996,9 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 		int e = merge_adjacent_edges(e1, e2, w);
 
 		hs.replace(e1, e2, e);
-		hx.replace(e1, e2, e);
 
 		if(m[e1] == 1) hs.replace(e1, e);
-		if(m[e1] == 1) hx.replace(e1, e);
 		if(m[e2] == 1) hs.replace(e2, e);
-		if(m[e2] == 1) hx.replace(e2, e);
 	}
 
 	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
@@ -1059,12 +1007,8 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 		int e2 = it->first.second;
 		assert(hs.left_extend(e1) == false || hs.right_extend(e1) == false);
 		assert(hs.left_extend(e2) == false || hs.right_extend(e2) == false);
-		assert(hx.left_extend(e1) == false || hx.right_extend(e1) == false);
-		assert(hx.left_extend(e2) == false || hx.right_extend(e2) == false);
 		hs.remove(e1);
-		hx.remove(e1);
 		hs.remove(e2);
-		hx.remove(e2);
 
 	}
 
@@ -1480,7 +1424,6 @@ int scallop::split_vertex(int x, const vector<int> &xe, const vector<int> &ye)
 	exchange_sink(n - 1, n);
 
 	// revise phasing paths
-	// add for hx
 	set<int> sx(xe.begin(), xe.end());
 	set<int> sy(ye.begin(), ye.end());
 	PEEI pi = gr.in_edges(x);
@@ -1495,7 +1438,6 @@ int scallop::split_vertex(int x, const vector<int> &xe, const vector<int> &ye)
 			if(sx.find(e1) == sx.end() && sy.find(e2) == sy.end()) continue;
 			if(sx.find(e1) != sx.end() && sy.find(e2) != sy.end()) continue;
 			hs.remove_pair(e1, e2);
-			hx.remove_pair(e1, e2);
 		}
 	}
 

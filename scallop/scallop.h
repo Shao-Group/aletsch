@@ -31,7 +31,6 @@ class scallop
 {
 public:
 	scallop(const splice_graph &gr, const hyper_set &hs, const parameters &c);
-	scallop(const splice_graph &gr, const hyper_set &hs, const hyper_set &hx, const parameters &c);
 	virtual ~scallop();
 
 public:
@@ -48,7 +47,6 @@ public:
 	MEI mei;							// map from super edges to length
 	vector<int> v2v;					// vertex map
 	hyper_set hs;						// hyper edges
-	hyper_set hx;						// hyper edges (from parent graph)
 	int round;							// iteration
 	set<int> nonzeroset;				// vertices with degree >= 1
 	vector<path> paths;					// predicted paths

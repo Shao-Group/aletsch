@@ -21,7 +21,7 @@ public:
 	int jid;		// junction id
 	int count;		// #supporting samples
 	double weight;	// new weight from hyper-edges
-	char strand;	// strandness
+	int strand;		// strandness ./+/- => 0,1,2
 };
 
 #endif

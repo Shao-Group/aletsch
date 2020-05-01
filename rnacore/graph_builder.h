@@ -39,6 +39,7 @@ public:
 
 private:
 	int build_junctions();
+	int remove_opposite_junctions();
 	int build_regions();
 	int build_partial_exons();
 	int link_partial_exons();

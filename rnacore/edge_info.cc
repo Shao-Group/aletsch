@@ -11,7 +11,7 @@ edge_info::edge_info()
 {
 	type = 0;
 	jid = -1;
-	strand = '.';
+	strand = 0;
 	weight = 0;
 	count = 0;
 }
@@ -23,7 +23,7 @@ edge_info::edge_info(int l)
 	jid = -1;
 	count = 0;
 	weight = 0;
-	strand = '.';
+	strand = 0;
 }
 
 edge_info::edge_info(const edge_info &ei)

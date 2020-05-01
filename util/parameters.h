@@ -68,6 +68,8 @@ public:
 	int32_t max_group_boundary_distance;
 	double max_intron_contamination_coverage;
 	double min_surviving_edge_weight;
+	int normal_junction_threshold;
+	int extend_junction_threshold;
 
 	// for decomposing splice graph
 	double max_decompose_error_ratio[7];

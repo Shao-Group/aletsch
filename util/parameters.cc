@@ -64,6 +64,8 @@ parameters::parameters()
 	max_group_boundary_distance = 10000;
 	max_intron_contamination_coverage = 2.0;
 	min_surviving_edge_weight = 1.5;
+	normal_junction_threshold = 10;
+	extend_junction_threshold = 20;
 
 	// for decomposing splice graph
 	max_decompose_error_ratio[0] = 0.33;
