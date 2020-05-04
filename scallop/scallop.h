@@ -95,6 +95,8 @@ private:
 	int terminate_largest_edge(int root);
 	int terminate_edge_sink(edge_descriptor e);
 	int terminate_edge_source(edge_descriptor e);
+	int borrow_edge_strand(int e1, int e2);
+	bool consistent_strands(int e1, int e2);
 
 	int collect_existing_st_paths();
 	int collect_path(int e);

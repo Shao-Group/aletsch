@@ -101,6 +101,7 @@ int scallop::assemble()
 		b = resolve_trivial_vertex(2, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 		if(b == true) continue;
 
+		// process mixed vertices
 		b = resolve_mixed_vertex(MIXED_TRIVIAL);
 		if(b == true) continue;
 
@@ -646,6 +647,8 @@ int scallop::terminate_largest_edge(int root)
 		edge_descriptor e2 = gr.max_out_edge(root);
 		terminate_edge_sink(e1);
 		terminate_edge_source(e2);
+		assert(gr.degree(root) == 0);
+		nonzeroset.erase(root);
 	}
 	return 0;
 }
@@ -659,6 +662,7 @@ int scallop::terminate_edge_sink(edge_descriptor e)
 	double ww = gr.get_out_weights(t) + gr.get_in_weights(t);
 	double sw = vw * ew / ww;
 
+	hs.right_break(e2i[e]);
 	gr.move_edge(e, e->source(), n);
 	mev[e].push_back(t);
 
@@ -681,7 +685,9 @@ int scallop::terminate_edge_source(edge_descriptor e)
 	double ww = gr.get_out_weights(s) + gr.get_in_weights(s);
 	double sw = vw * ew / ww;
 
+	hs.left_break(e2i[e]);
 	gr.move_edge(e, 0, e->target());
+	mev[e].insert(mev[e].begin(), 0);
 
 	vertex_info vi = gr.get_vertex_info(s);
 	assert(med.find(e) != med.end());
@@ -925,11 +931,6 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 
 		gr.move_edge(e, e->source(), k);
 
-		//double w = gr.get_edge_weight(e);
-		//gr.set_vertex_weight(k, w);
-		//assert(mweight.find(e) != mweight.end());
-		//gr.set_vertex_weight(mweight[e]);
-		//gr.set_vertex_info(k, root_info);
 		gr.set_vertex_info(k, vertex_info());
 		gr.set_vertex_weight(k, 0);
 		v2v[k] = v2v[root];
@@ -951,6 +952,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 	{
 		int e1 = it->first.first;
 		int e2 = it->first.second;
+		assert(consistent_strands(e1, e2));
 		double w = it->second;
 
 		if(mdegree[e1] == 1)
@@ -959,6 +961,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			assert(ev1.find(e1) == ev1.end());
 			assert(ev2.find(e2) != ev2.end());
 			edge_descriptor p = i2e[e1];
+			borrow_edge_strand(e1, e2);
 			int v1 = p->source();
 			int v2 = ev2[e2];
 			gr.move_edge(p, v1, v2);
@@ -976,6 +979,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			assert(ev1.find(e1) != ev1.end());
 			assert(ev2.find(e2) == ev2.end());
 			edge_descriptor p = i2e[e2];
+			borrow_edge_strand(e2, e1);
 			int v1 = ev1[e1];
 			int v2 = p->target();
 			gr.move_edge(p, v1, v2);
@@ -1018,6 +1022,8 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			if(mei.find(p) != mei.end()) mei[p] = l;
 			else mei.insert(PEI(p, l));
 
+			borrow_edge_strand(z, e1);
+			borrow_edge_strand(z, e2);
 			hs.insert_between(e1, e2, z);
 		}
 	}
@@ -1036,6 +1042,27 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		resolve_single_trivial_vertex_fast(k, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 	}
 
+	return 0;
+}
+
+bool scallop::consistent_strands(int e1, int e2)
+{
+	int s1 = gr.get_edge_info(i2e[e1]).strand;
+	int s2 = gr.get_edge_info(i2e[e1]).strand;
+	if(s1 == 1 && s2 == 2) return false;
+	if(s1 == 2 && s2 == 1) return false;
+	return true;
+}
+
+int scallop::borrow_edge_strand(int e1, int e2)
+{
+	// set the strand for e1 using e2
+	int s1 = gr.get_edge_info(i2e[e1]).strand;
+	int s2 = gr.get_edge_info(i2e[e1]).strand;
+	if(s2 == 0) return 0;
+	edge_info ei = gr.get_edge_info(i2e[e1]);
+	ei.strand = s2;
+	gr.set_edge_info(i2e[e1], ei);
 	return 0;
 }
 
@@ -1115,7 +1142,6 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 		assert(hs.left_extend(e2) == false || hs.right_extend(e2) == false);
 		hs.remove(e1);
 		hs.remove(e2);
-
 	}
 
 	assert(gr.degree(root) == 0);
@@ -1238,6 +1264,7 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
 	if(yt == xs) return merge_adjacent_equal_edges(y, x);
 	
 	assert(xt == ys);
+	assert(consistent_strands(x, y));
 
 	edge_descriptor p = gr.add_edge(xs, yt);
 
@@ -1257,6 +1284,9 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
 
 	gr.set_edge_weight(p, wx0 * 0.5 + wy0 * 0.5);
 	gr.set_edge_info(p, edge_info(lxy));
+
+	borrow_edge_strand(n, x);
+	borrow_edge_strand(n, y);
 
 	vector<int> v = mev[xx];
 	v.insert(v.end(), mev[yy].begin(), mev[yy].end());

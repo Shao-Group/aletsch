@@ -851,6 +851,44 @@ int hyper_set::insert_between(int x, int y, int e)
 	return 0;
 }
 
+int hyper_set::right_break(int x)
+{
+	if(e2s.find(x) == e2s.end()) return 0;
+	set<int> s = e2s[x];
+	for(set<int>::iterator it = s.begin(); it != s.end(); it++)
+	{
+		int k = (*it);
+		vector<int> &vv = edges[k];
+		assert(vv.size() >= 1);
+
+		for(int i = 0; i < vv.size() - 1; i++)
+		{
+			if(vv[i] != x) continue;
+			vv.insert(vv.begin() + i + 1, -1);
+		}
+	}
+	return 0;
+}
+
+int hyper_set::left_break(int x)
+{
+	if(e2s.find(x) == e2s.end()) return 0;
+	set<int> s = e2s[x];
+	for(set<int>::iterator it = s.begin(); it != s.end(); it++)
+	{
+		int k = (*it);
+		vector<int> &vv = edges[k];
+		assert(vv.size() >= 1);
+
+		for(int i = 1; i < vv.size(); i++)
+		{
+			if(vv[i] != x) continue;
+			vv.insert(vv.begin() + i, -1);
+		}
+	}
+	return 0;
+}
+
 bool hyper_set::extend(int e)
 {
 	return (left_extend(e) || right_extend(e));

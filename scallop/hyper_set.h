@@ -71,7 +71,8 @@ public:
 	int remove(const set<int> &x);
 	int remove_pair(int x, int y);
 	int insert_between(int x, int y, int e);
-	bool useful(const vector<int> &v, int k1, int k2);
+	int left_break(int e);
+	int right_break(int e);
 	bool extend(int e);
 	bool left_extend(int e);
 	bool left_extend(const vector<int> &s);
@@ -79,6 +80,7 @@ public:
 	bool right_extend(const vector<int> &s);
 	bool left_dominate(int e);
 	bool right_dominate(int e);
+	bool useful(const vector<int> &v, int k1, int k2);
 };
 
 #endif
