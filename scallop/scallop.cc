@@ -89,32 +89,28 @@ int scallop::assemble()
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, cfg.max_decompose_error_ratio[UNSPLITTABLE_SINGLE]);
 		if(b == true) continue;
 
-		if(cfg.algo == "global")
-		{
-			b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, DBL_MAX);
-			if(b == true) continue;
+		b = resolve_hyper_edge(2);
+		if(b == true) continue;
 
-			b = resolve_unsplittable_vertex(UNSPLITTABLE_MULTIPLE, INT_MAX, DBL_MAX);
-			if(b == true) continue;
-
-			b = resolve_splittable_vertex(SPLITTABLE_HYPER, INT_MAX, DBL_MAX);
-			if(b == true) continue;
-		}
-		else
-		{
-			b = resolve_hyper_edge(2);
-			if(b == true) continue;
-
-			b = resolve_hyper_edge(1);
-			if(b == true) continue;
-		}
+		b = resolve_hyper_edge(1);
+		if(b == true) continue;
 
 		b = resolve_smallest_edges(DBL_MAX);
 		if(b == true) continue;
 
-		//summarize_vertices();
-
 		b = resolve_trivial_vertex(2, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
+		if(b == true) continue;
+
+		b = resolve_mixed_vertex(MIXED_TRIVIAL);
+		if(b == true) continue;
+
+		b = resolve_mixed_vertex(MIXED_SPLITTABLE);
+		if(b == true) continue;
+
+		b = resolve_mixed_vertex(MIXED_BLOCKED);
+		if(b == true) continue;
+
+		b = resolve_mixed_vertex(MIXED_TANGLED);
 		if(b == true) continue;
 
 		break;
@@ -202,6 +198,7 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 
 		if(gr.in_degree(i) <= 1) continue;
 		if(gr.out_degree(i) <= 1) continue;
+		if(gr.mixed_strand_vertex(i)) continue;
 
 		double r;
 		int e = compute_smallest_edge(i, r);
@@ -265,6 +262,7 @@ bool scallop::resolve_negligible_edges(bool extend, double max_ratio)
 		assert(gr.out_degree(i) >= 1);
 		if(gr.in_degree(i) <= 1) continue;
 		if(gr.out_degree(i) <= 1) continue;
+		if(gr.mixed_strand_vertex(i)) continue;
 
 		double ww1 = gr.get_max_in_weight(i);
 		double ww2 = gr.get_max_out_weight(i);
@@ -424,21 +422,21 @@ bool scallop::resolve_hyper_edge(int fsize)
 		MI s;
 		s = hs.get_successors(e);
 		//if(s.size() >= 2 && hs.right_extend(get_keys(s)) == false && (hs.left_extend(e) == false || gr.out_degree(vs) == 1))
-		if(s.size() >= fsize && (hs.left_extend(e) == false || gr.out_degree(vs) == 1))
+		if(gr.mixed_strand_vertex(vt) == false && s.size() >= fsize && (hs.left_extend(e) == false || gr.out_degree(vs) == 1))
 		{
 			v1.push_back(e);
 			v2 = get_keys(s);
-			root = (*it1)->target();
+			root = vt;
 			break;
 		}
 
 		s = hs.get_predecessors(e);
 		//if(s.size() >= 2 && hs.left_extend(get_keys(s)) == false && (hs.right_extend(e) == false || gr.in_degree(vt) == 1))
-		if(s.size() >= fsize && (hs.right_extend(e) == false || gr.in_degree(vt) == 1))
+		if(gr.mixed_strand_vertex(vs) == false && s.size() >= fsize && (hs.right_extend(e) == false || gr.in_degree(vt) == 1))
 		{
 			v1 = get_keys(s);
 			v2.push_back(e);
-			root = (*it1)->source();
+			root = vs;
 			break;
 		}
 	}
@@ -514,6 +512,7 @@ bool scallop::resolve_trivial_vertex(int type, double jump_ratio)
 		assert(gr.degree(i) >= 1);
 		if(gr.in_degree(i) <= 0) continue;
 		if(gr.out_degree(i) <= 0) continue;
+		if(gr.mixed_strand_vertex(i)) continue;
 		assert(gr.in_degree(i) >= 1);
 		assert(gr.out_degree(i) >= 1);
 
@@ -573,6 +572,7 @@ bool scallop::resolve_single_trivial_vertex_fast(int i, double jump_ratio)
 {
 	if(gr.degree(i) == 0) return false;
 	if(gr.in_degree(i) >= 2 && gr.out_degree(i) >= 2) return false;
+	if(gr.mixed_strand_vertex(i)) return false;
 	if(classify_trivial_vertex(i, false) != 1) return false;
 
 	double r = compute_balance_ratio(i);
@@ -585,6 +585,112 @@ bool scallop::resolve_single_trivial_vertex_fast(int i, double jump_ratio)
 	assert(gr.degree(i) == 0);
 
 	return true;
+}
+
+bool scallop::resolve_mixed_vertex(int type)
+{
+	int root = -1;
+	vector<int> vv(nonzeroset.begin(), nonzeroset.end());
+	for(int k = 0; k < vv.size(); k++)
+	{
+		int i = vv[k];
+		if(gr.mixed_strand_vertex(i) == false) continue;
+
+		MPII mpi = hs.get_routes(i, gr, e2i);
+		router rt(i, gr, e2i, i2e, mpi, cfg);
+		rt.classify();
+		if(rt.type != type) continue;
+
+		root = i;
+
+		if(type == MIXED_TRIVIAL)
+		{
+			decompose_trivial_vertex(root);
+			assert(gr.degree(root) == 0);
+			return true;
+		}
+
+		if(type == MIXED_SPLITTABLE)
+		{
+			assert(rt.eqns.size() >= 1);
+			split_vertex(root, rt.eqns[0].s, rt.eqns[0].t);
+			return true;
+		}
+
+		if(type == MIXED_TANGLED || type == MIXED_BLOCKED)
+		{
+			terminate_largest_edge(root);
+			return true;
+		}
+	}
+	return false;
+}
+
+int scallop::terminate_largest_edge(int root)
+{
+	if(gr.in_degree(root) >= 2)
+	{
+		edge_descriptor e = gr.max_in_edge(root);
+		terminate_edge_sink(e);
+	}
+	else if(gr.out_degree(root) >= 2)
+	{
+		edge_descriptor e = gr.max_out_edge(root);
+		terminate_edge_source(e);
+	}
+	else
+	{
+		assert(gr.in_degree(root) == 1);
+		assert(gr.out_degree(root) == 1);
+		edge_descriptor e1 = gr.max_in_edge(root);
+		edge_descriptor e2 = gr.max_out_edge(root);
+		terminate_edge_sink(e1);
+		terminate_edge_source(e2);
+	}
+	return 0;
+}
+
+int scallop::terminate_edge_sink(edge_descriptor e)
+{
+	int t = e->target();
+	int n = gr.num_vertices() - 1;
+	double vw = gr.get_vertex_weight(t);
+	double ew = gr.get_edge_weight(e);
+	double ww = gr.get_out_weights(t) + gr.get_in_weights(t);
+	double sw = vw * ew / ww;
+
+	gr.move_edge(e, e->source(), n);
+	mev[e].push_back(t);
+
+	vertex_info vi = gr.get_vertex_info(t);
+	assert(med.find(e) != med.end());
+	assert(mei.find(e) != mei.end());
+	med[e] += sw;
+	mei[e] += vi.rpos - vi.lpos;
+	assert(vw >= sw - SMIN);
+	gr.set_vertex_weight(t, vw - sw);
+
+	return 0;
+}
+
+int scallop::terminate_edge_source(edge_descriptor e)
+{
+	int s = e->source();
+	double vw = gr.get_vertex_weight(s);
+	double ew = gr.get_edge_weight(e);
+	double ww = gr.get_out_weights(s) + gr.get_in_weights(s);
+	double sw = vw * ew / ww;
+
+	gr.move_edge(e, 0, e->target());
+
+	vertex_info vi = gr.get_vertex_info(s);
+	assert(med.find(e) != med.end());
+	assert(mei.find(e) != mei.end());
+	med[e] += sw;
+	assert(vw >= sw - SMIN);
+	gr.set_vertex_weight(s, vw - sw);
+
+	return 0;
 }
 
 int scallop::summarize_vertices()
@@ -1044,6 +1150,7 @@ int scallop::decompose_trivial_vertex(int x)
 
 int scallop::classify_trivial_vertex(int x, bool fast)
 {
+	assert(gr.mixed_strand_vertex(x) == false);
 	int d1 = gr.in_degree(x);
 	int d2 = gr.out_degree(x);
 	if(d1 != 1 && d2 != 1) return -1;
@@ -1580,7 +1687,6 @@ int scallop::collect_phasing_path(int e, int s, int t)
 
 	return 0;
 }
-
 
 int scallop::greedy_decompose()
 {

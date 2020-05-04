@@ -44,6 +44,7 @@ public:
 	vector<int> u2e;			// index to edge
 	MED u2w;					// weights of edges of ug
 	undirected_graph ug;		// bipartite graph
+	undirected_graph sg;		// strand graph
 
 	int type;					// trivial, splitable, single, or multiple 
 	int degree;					// level
@@ -52,16 +53,21 @@ public:
 	MPID pe2w;					// decompose results (for pairs of edges)
 
 public:
-	int classify();												// compute status
+	int classify();												// high-level classify
+	int classify_plain_vertex();								// compute type / degree
+	int classify_mixed_vertex();								// compute type
 	int build();												// give solution
 
 	// init
 	int build_indices();										// build u2e and e2u
 	int build_bipartite_graph();								// build bipartite graph
+	int build_strand_graph();
 	vector<double> compute_balanced_weights();					// balanced weights
+	bool one_side_connected(undirected_graph &xg);
 
 	// decompose splitable vertex
-	int split();												// for splitable vertices
+	int split_plain_vertex();									// for splitable vertices
+	int split_mixed_vertex();									// for splitable vertices
 
 	// decompose unsplitable vertex with greedy algorithm
 	int thread();												// for unsplitable vertices
@@ -69,9 +75,6 @@ public:
 	int thread_isolate2(int k, vector<double> &vw);
 	bool thread_leaf(vector<double> &vw);
 	bool thread_turn(vector<double> &vw);
-
-	PI get_largest_in_route(int x, const vector<PI> &rr, const vector<int> &cc);
-	PI get_largest_out_route(int x, const vector<PI> &rr, const vector<int> &cc);
 
 	// print and stats
 	int print();

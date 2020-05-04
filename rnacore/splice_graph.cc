@@ -1202,6 +1202,33 @@ int splice_graph::extend_strands()
 	return 0;
 }
 
+bool splice_graph::mixed_strand_vertex(int i)
+{
+	bool p = false;
+	bool q = false;
+	PEEI pei = in_edges(i);
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = *it;
+		int s = get_edge_info(e).strand;
+		if(s == 1) p = true;
+		if(s == 2) q = true;
+		if(p && q) return true;
+	}
+
+	pei = out_edges(i);
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = *it;
+		int s = get_edge_info(e).strand;
+		if(s == 1) p = true;
+		if(s == 2) q = true;
+		if(p && q) return true;
+	}
+
+	return false;
+}
+
 int splice_graph::stat_strandness()
 {
 	for(int i = 1; i < num_vertices() - 1; i++)

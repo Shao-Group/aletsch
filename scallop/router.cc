@@ -18,12 +18,6 @@ See LICENSE for licensing.
 #include <cfloat>
 #include <stdint.h>
 
-#ifdef USECLP
-#include "ClpSimplex.hpp"
-#include "CoinHelperFunctions.hpp"
-#include "CoinBuild.hpp"
-#endif
-
 router::router(int r, splice_graph &g, MEI &ei, VE &ie, const parameters &c)
 	:root(r), gr(g), e2i(ei), i2e(ie), degree(-1), type(-1), cfg(c)
 {
@@ -65,8 +59,65 @@ router& router::operator=(const router &rt)
 
 int router::classify()
 {
+	type = -1;
+	degree = 0;
+
 	assert(gr.in_degree(root) >= 1);
 	assert(gr.out_degree(root) >= 1);
+
+	build_indices();
+
+	if(gr.mixed_strand_vertex(root)) classify_mixed_vertex();
+	else classify_plain_vertex();
+	return 0;
+}
+
+int router::classify_mixed_vertex()
+{
+	build_strand_graph();
+
+	int xi[3] = {0, 0, 0};
+	int xo[3] = {0, 0, 0};
+	PEEI pei;
+	edge_iterator it1, it2;
+	for(pei = gr.in_edges(root), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	{
+		edge_descriptor e = (*it1);
+		int s = gr.get_edge_info(e).strand;
+		xi[s]++;
+	}
+	for(pei = gr.out_edges(root), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	{
+		edge_descriptor e = (*it1);
+		int s = gr.get_edge_info(e).strand;
+		xo[s]++;
+	}
+
+	if(xi[0] == 0 && xi[1] == 0 && xo[1] >= 1) type = MIXED_BLOCKED;
+	if(xi[0] == 0 && xi[2] == 0 && xo[2] >= 1) type = MIXED_BLOCKED;
+	if(xi[1] >= 1 && xo[0] == 0 && xo[1] == 0) type = MIXED_BLOCKED;
+	if(xi[2] >= 1 && xo[0] == 0 && xo[2] == 0) type = MIXED_BLOCKED;
+
+	if(type == MIXED_BLOCKED) return 0;
+
+	if(gr.in_degree(root) == 1 || gr.out_degree(root) == 1)
+	{
+		type = MIXED_TRIVIAL;
+		return 0;
+	}
+
+	split_mixed_vertex();
+
+	if(eqns.size() == 2) type = MIXED_SPLITTABLE;
+	else if(eqns.size() == 0) type = MIXED_TANGLED;
+	else assert(false);
+	
+	return 0;
+}
+
+int router::classify_plain_vertex()
+{
+	build_bipartite_graph();
 
 	if(gr.in_degree(root) == 1 || gr.out_degree(root) == 1)
 	{
@@ -75,16 +126,14 @@ int router::classify()
 		return 0;
 	}
 
-	build_indices();
-	build_bipartite_graph();
-	vector< set<int> > vv = ug.compute_connected_components();
-
 	if(routes.size() == 0)
 	{
 		type = SPLITTABLE_SIMPLE;
 		degree = gr.degree(root) - 1;
 		return 0;
 	}
+
+	vector< set<int> > vv = ug.compute_connected_components();
 
 	if(vv.size() == 1)
 	{
@@ -93,20 +142,7 @@ int router::classify()
 		return 0;
 	}
 
-	vector<int> v = ug.assign_connected_components();
-
-	bool b1 = true;
-	bool b2 = true;
-	for(int i = 1; i < gr.in_degree(root); i++)
-	{
-		if(v[i] != v[0]) b1 = false;
-	}
-	for(int i = gr.in_degree(root) + 1; i < gr.degree(root); i++)
-	{
-		if(v[i] != v[gr.in_degree(root)]) b2 = false;
-	}
-	
-	if(b1 == true || b2 == true)
+	if(one_side_connected(ug) == true)
 	{
 		type = UNSPLITTABLE_MULTIPLE;
 		degree = ug.num_edges() - ug.num_vertices() + vv.size() + vv.size();
@@ -118,11 +154,31 @@ int router::classify()
 	return 0;
 }
 
+bool router::one_side_connected(undirected_graph &xg)
+{
+	vector<int> v = xg.assign_connected_components();
+
+	bool b1 = true;
+	bool b2 = true;
+	for(int i = 1; i < gr.in_degree(root); i++)
+	{
+		if(v[i] != v[0]) b1 = false;
+	}
+
+	for(int i = gr.in_degree(root) + 1; i < gr.degree(root); i++)
+	{
+		if(v[i] != v[gr.in_degree(root)]) b2 = false;
+	}
+
+	if(b1 || b2) return true;
+	else return false;
+}
+
 int router::build()
 {
 	if(type == SPLITTABLE_SIMPLE || type == SPLITTABLE_HYPER) 
 	{
-		split();
+		split_plain_vertex();
 	}
 	if(type == UNSPLITTABLE_SINGLE || type == UNSPLITTABLE_MULTIPLE) 
 	{
@@ -184,35 +240,40 @@ int router::build_bipartite_graph()
 	return 0;
 }
 
-PI router::get_largest_in_route(int x, const vector<PI> &rr, const vector<int> &cc)
+int router::build_strand_graph()
 {
-	int z = -1;
-	int c = -1;
-	for(int k = 0; k < rr.size(); k++)
+	sg.clear();
+	for(int i = 0; i < u2e.size(); i++) sg.add_vertex();
+	for(int i = 0; i < routes.size(); i++)
 	{
-		if(rr[k].second != x) continue;
-		if(cc[k] < c) continue;
-		c = cc[k];
-		z = rr[k].first;
+		int e1 = routes[i].first;
+		int e2 = routes[i].second;
+		assert(e2u.find(e1) != e2u.end());
+		assert(e2u.find(e2) != e2u.end());
+		int s = e2u[e1];
+		int t = e2u[e2];
+		assert(s >= 0 && s < gr.in_degree(root));
+		assert(t >= gr.in_degree(root) && t < gr.degree(root));
+		sg.add_edge(s, t);
 	}
-	return PI(z, c);
+
+	for(int i = 0; i < gr.degree(root); i++)
+	{
+		for(int j = i + 1; j < gr.degree(root); j++)
+		{
+			edge_descriptor e1 = i2e[u2e[i]];
+			edge_descriptor e2 = i2e[u2e[j]];
+			int s1 = gr.get_edge_info(e1).strand;
+			int s2 = gr.get_edge_info(e1).strand;
+			if(s1 != s2) continue;
+			if(s1 == 0) continue;
+			sg.add_edge(i, j);
+		}
+	}
+	return 0;
 }
 
-PI router::get_largest_out_route(int x, const vector<PI> &rr, const vector<int> &cc)
-{
-	int z = -1;
-	int c = -1;
-	for(int k = 0; k < rr.size(); k++)
-	{
-		if(rr[k].first != x) continue;
-		if(cc[k] < c) continue;
-		c = cc[k];
-		z = rr[k].second;
-	}
-	return PI(z, c);
-}
-
-int router::split()
+int router::split_plain_vertex()
 {
 	eqns.clear();
 
@@ -387,6 +448,134 @@ int router::split()
 
 	eqns.push_back(eqn2);
 	eqns.push_back(eqn3);
+
+	return 0;
+}
+
+int router::split_mixed_vertex()
+{
+	eqns.clear();
+
+	// locally smooth weights
+	vector<double> vw;
+	double sum1 = 0, sum2 = 0;
+	for(int i = 0; i < u2e.size(); i++)
+	{
+		edge_descriptor e = i2e[u2e[i]];
+		assert(e != null_edge);
+		double w = gr.get_edge_weight(e);
+		if(i < gr.in_degree(root)) sum1 += w;
+		else sum2 += w;
+		vw.push_back(w);
+	}
+
+	double sum = (sum1 > sum2) ? sum1 : sum2;
+	double r1 = (sum1 > sum2) ? 1.0 : sum2 / sum1;
+	double r2 = (sum1 < sum2) ? 1.0 : sum1 / sum2;
+	
+	for(int i = 0; i < gr.in_degree(root); i++) vw[i] *= r1;
+	for(int i = gr.in_degree(root); i < gr.degree(root); i++) vw[i] *= r2;
+
+	vector< set<int> > vv = ug.compute_connected_components();
+
+	// collect strands, sizes, and weights, for each component
+	vector<int> cs(vv.size(), 0);
+	vector<PI> cn(vv.size(), PI(0, 0));
+	vector<double> cw(vv.size(), 0);
+	for(int i = 0; i < vv.size(); i++)
+	{
+		for(set<int>::iterator it = vv[i].begin(); it != vv[i].end(); it++)
+		{
+			int k = u2e[*it];
+			edge_descriptor e = i2e[k];
+			int s = gr.get_edge_info(e).strand;
+			if(s == 1) assert(cs[i] != 2);
+			if(s == 2) assert(cs[i] != 1);
+			cs[i] = s;
+
+			cw[i] += vw[*it];
+
+			if(*it < gr.in_degree(root)) cn[i].first++;
+			else cn[i].second++;
+		}
+	}
+
+	// add strand 1 to eqn1
+	equation eqn1;
+	eqn1.e = 0;
+	double ww = 0;
+	vector<bool> cb(vv.size(), false);
+	for(int i = 0; i < vv.size(); i++)
+	{
+		if(cs[i] != 1) continue;
+		for(set<int>::iterator it = vv[i].begin(); it != vv[i].end(); it++)
+		{
+			int e = *it;
+			if(e < gr.in_degree(root)) eqn1.s.push_back(u2e[e]);
+			else eqn1.t.push_back(u2e[e]);
+		}
+		ww = cw[i];
+		cb[i] = true;
+		break;
+	}
+	assert(eqn1.s.size() >= 1 || eqn1.t.size() >= 1);
+
+	// greedy adding other components
+	while(true)
+	{
+		double bestw = fabs(ww);
+		int besti = -1;
+		for(int i = 0; i < vv.size(); i++)
+		{
+			if(cs[i] != 0) continue;
+
+			int s1 = eqn1.s.size() + cn[i].first;
+			int t1 = eqn1.t.size() + cn[i].second;
+			if(s1 == 0 || t1 == 0 || s1 == gr.in_degree(root) || t1 == gr.out_degree(root)) continue;
+
+			double w = cw[i];
+			if(fabs(w + ww) >= bestw) continue;
+
+			bestw = fabs(w + ww);
+			besti = i;
+		}
+		if(besti == -1) break;
+
+		ww += cw[besti];
+		cb[besti] = true;
+		for(set<int>::iterator it = vv[besti].begin(); it != vv[besti].end(); it++)
+		{
+			int e = *it;
+			if(e < gr.in_degree(root)) eqn1.s.push_back(u2e[e]);
+			else eqn1.t.push_back(u2e[e]);
+		}
+	}
+
+	set<int> s1(eqn1.s.begin(), eqn1.s.end());
+	set<int> s2(eqn1.t.begin(), eqn1.t.end());
+	equation eqn2;
+	for(int i = 0; i < gr.in_degree(root); i++)
+	{
+		int e = u2e[i];
+		if(s1.find(e) != s1.end()) continue;
+		eqn2.s.push_back(e);
+	}
+	for(int i = gr.in_degree(root); i < gr.degree(root); i++)
+	{
+		int e = u2e[i];
+		if(s2.find(e) != s2.end()) continue;
+		eqn2.t.push_back(e);
+	}
+
+	if(eqn1.s.size() == 0 || eqn1.t.size() == 0) return 0;
+	if(eqn2.s.size() == 0 || eqn2.t.size() == 0) return 0;
+
+	eqn1.e = fabs(ww) / sum;
+	eqn2.e = fabs(ww) / sum;
+	ratio = eqn1.e;
+
+	eqns.push_back(eqn1);
+	eqns.push_back(eqn2);
 
 	return 0;
 }

@@ -71,6 +71,7 @@ private:
 	bool resolve_splittable_vertex(int type, int degree, double max_ratio);
 	bool resolve_unsplittable_vertex(int type, int degree, double max_ratio);
 	bool resolve_hyper_edge(int fsize);
+	bool resolve_mixed_vertex(int type);
 
 	// smooth vertex
 	int balance_vertex(int x);
@@ -91,6 +92,9 @@ private:
 	int remove_edge(int e);
 	int split_merge_path(const VE &p, double w);
 	int split_merge_path(const vector<int> &p, double w);
+	int terminate_largest_edge(int root);
+	int terminate_edge_sink(edge_descriptor e);
+	int terminate_edge_source(edge_descriptor e);
 
 	int collect_existing_st_paths();
 	int collect_path(int e);

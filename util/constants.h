@@ -34,6 +34,10 @@ using namespace std;
 #define UNSPLITTABLE_SINGLE 4
 #define UNSPLITTABLE_MULTIPLE 5
 #define TRIVIAL_VERTEX 6
+#define MIXED_BLOCKED 7
+#define MIXED_TRIVIAL 8
+#define MIXED_TANGLED 9
+#define MIXED_SPLITTABLE 10
 
 #define EMPTY -1
 #define UNSTRANDED 0
