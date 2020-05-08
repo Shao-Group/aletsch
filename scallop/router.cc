@@ -454,6 +454,7 @@ int router::split_plain_vertex()
 
 int router::split_mixed_vertex()
 {
+	//print();
 	eqns.clear();
 
 	// locally smooth weights
@@ -476,7 +477,7 @@ int router::split_mixed_vertex()
 	for(int i = 0; i < gr.in_degree(root); i++) vw[i] *= r1;
 	for(int i = gr.in_degree(root); i < gr.degree(root); i++) vw[i] *= r2;
 
-	vector< set<int> > vv = ug.compute_connected_components();
+	vector< set<int> > vv = sg.compute_connected_components();
 
 	// collect strands, sizes, and weights, for each component
 	vector<int> cs(vv.size(), 0);
@@ -488,10 +489,11 @@ int router::split_mixed_vertex()
 		{
 			int k = u2e[*it];
 			edge_descriptor e = i2e[k];
+
 			int s = gr.get_edge_info(e).strand;
-			if(s == 1) assert(cs[i] != 2);
-			if(s == 2) assert(cs[i] != 1);
-			cs[i] = s;
+			if(s == 1 && cs[i] == 2) return 0;
+			if(s == 2 && cs[i] == 1) return 0;
+			if(s == 1 || s == 2) cs[i] = s;
 
 			cw[i] += vw[*it];
 
@@ -767,13 +769,13 @@ int router::print()
 
 	printf("router %d, #routes = %lu, type = %d, degree = %d, ratio = %.2lf\n", root, routes.size(), type, degree, ratio);
 	printf("in-edges = ( ");
-	for(int i = 0; i < gr.in_degree(root); i++) printf("%d ", u2e[i]);
+	for(int i = 0; i < gr.in_degree(root); i++) printf("(%d, %d) ", u2e[i], gr.get_edge_info(i2e[u2e[i]]).strand);
 	printf("), weights = ( ");
 	for(int i = 0; i < gr.in_degree(root); i++) printf("%.1lf,%.1lf ", gr.get_edge_weight(i2e[u2e[i]]), vw[i]);
 	printf(")\n");
 
 	printf("out-edges = ( ");
-	for(int i = gr.in_degree(root); i < gr.degree(root); i++) printf("%d ", u2e[i]);
+	for(int i = gr.in_degree(root); i < gr.degree(root); i++) printf("(%d, %d) ", u2e[i], gr.get_edge_info(i2e[u2e[i]]).strand);
 	printf("), weights = ( ");
 	for(int i = gr.in_degree(root); i < gr.degree(root); i++) printf("%.1lf,%.1lf ", gr.get_edge_weight(i2e[u2e[i]]), vw[i]);
 	printf(")\n");

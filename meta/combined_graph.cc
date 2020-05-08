@@ -122,10 +122,11 @@ int combined_graph::build_splices_junctions(splice_graph &gr)
 		int32_t p1 = gr.get_vertex_info(s).rpos;
 		int32_t p2 = gr.get_vertex_info(t).lpos;
 		int c = 1;
+		int strand = gr.get_edge_info(*it).strand;
 		if(p1 >= p2) continue;
 
-		PI32 p(p1, p2);
-		junctions.push_back(PPDI(p, DI(w, 1)));
+		TI32 p(PI32(p1, p2), strand);
+		junctions.push_back(PTDI(p, DI(w, 1)));
 		sp.insert(p1);
 		sp.insert(p2);
 	}
@@ -161,7 +162,7 @@ int combined_graph::combine(vector<combined_graph*> &gv)
 	*/
 
 	split_interval_double_map imap;
-	map<PI32, DI> mj;
+	map<TI32, DI> mj;
 	map<int32_t, DI> ms;
 	map<int32_t, DI> mt;
 
@@ -207,18 +208,18 @@ int combined_graph::combine_regions(split_interval_double_map &imap) const
 	return 0;
 }
 
-int combined_graph::combine_junctions(map<PI32, DI> &m) const
+int combined_graph::combine_junctions(map<TI32, DI> &m) const
 {
 	for(int i = 0; i < junctions.size(); i++)
 	{
-		PI32 p = junctions[i].first;
+		TI32 p = junctions[i].first;
 		DI d = junctions[i].second;
 
-		map<PI32, DI>::iterator x = m.find(p);
+		map<TI32, DI>::iterator x = m.find(p);
 
 		if(x == m.end())
 		{
-			m.insert(pair<PI32, DI>(p, d));
+			m.insert(pair<TI32, DI>(p, d));
 		}
 		else 
 		{
@@ -343,7 +344,8 @@ int combined_graph::append_junctions(const pereads_cluster &pc, const bridge_pat
 		int32_t p1 = bbp.chain[i * 2 + 0];
 		int32_t p2 = bbp.chain[i * 2 + 1];
 		assert(p1 < p2);
-		PPDI pi(PI32(p1, p2), DI(pc.count, 1));
+		TI32 ti(PI32(p1, p2), 0);			// TODO
+		PTDI pi(ti, DI(pc.count, 1));
 		junctions.push_back(pi);
 	}
 	return 0;
@@ -427,7 +429,8 @@ int combined_graph::build_splice_graph(splice_graph &gr, const parameters &cfg)
 	// add junctions
 	for(int i = 0; i < junctions.size(); i++)
 	{
-		PI32 p = junctions[i].first;
+		PI32 p = junctions[i].first.first;
+		int strand = junctions[i].first.second;
 		double w = junctions[i].second.first;
 		int c = junctions[i].second.second;
 
@@ -440,6 +443,7 @@ int combined_graph::build_splice_graph(splice_graph &gr, const parameters &cfg)
 		edge_info ei;
 		ei.weight = w;
 		ei.count = c;
+		ei.strand = strand;
 		gr.set_edge_info(e, ei);
 		gr.set_edge_weight(e, w);
 	}
@@ -487,7 +491,7 @@ set<int32_t> combined_graph::get_reliable_splices(int samples, double weight)
 	map<int32_t, DI> m;
 	for(int i = 0; i < junctions.size(); i++)
 	{
-		PI32 p = junctions[i].first;
+		PI32 p = junctions[i].first.first;
 		int32_t p1 = p.first;
 		int32_t p2 = p.second;
 		double w = junctions[i].second.first;
@@ -569,9 +573,9 @@ int combined_graph::print(int index)
 	}
 	for(int i = 0; i < junctions.size(); i++)
 	{
-		PI32 p = junctions[i].first;
+		TI32 p = junctions[i].first;
 		DI d = junctions[i].second;
-		printf("junction %d: [%d, %d), w = %.2lf, c = %d\n", i, p.first, p.second, d.first, d.second);
+		printf("junction %d: [%d, %d, %d), w = %.2lf, c = %d\n", i, p.first.first, p.first.second, p.second, d.first, d.second);
 	}
 	for(int i = 0; i < sbounds.size(); i++)
 	{

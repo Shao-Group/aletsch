@@ -341,8 +341,6 @@ int build_paired_reads(const vector<hit> &hits, vector<PI> &fs)
 	for(int i = 0; i < hits.size(); i++)
 	{
 		const hit &h = hits[i];
-		if(h.isize >= 0) continue;
-
 		// do not use hi; as long as qname, pos and isize are identical
 		int k = (h.get_qhash() % max_index + h.pos % max_index + (0 - h.isize) % max_index) % max_index;
 		vv[k].push_back(i);
@@ -352,7 +350,6 @@ int build_paired_reads(const vector<hit> &hits, vector<PI> &fs)
 	{
 		const hit &h = hits[i];
 		if(paired[i] == true) continue;
-		if(h.isize <= 0) continue;
 
 		int k = (h.get_qhash() % max_index + h.mpos % max_index + h.isize % max_index) % max_index;
 		int x = -1;
@@ -360,25 +357,27 @@ int build_paired_reads(const vector<hit> &hits, vector<PI> &fs)
 		{
 			int u = vv[k][j];
 			const hit &z = hits[u];
+			if(u == i) continue;
 			//if(z.hi != h.hi) continue;
 			if(paired[u] == true) continue;
 			if(z.pos != h.mpos) continue;
 			if(z.isize + h.isize != 0) continue;
 			//if(z.qhash != h.qhash) continue;
 			if(z.qname != h.qname) continue;
-			x = vv[k][j];
+			x = u;
 			break;
 		}
 
 		if(x == -1) continue;
 
+		assert(i != x);
 		fs.push_back(PI(i, x));
 
 		paired[i] = true;
 		paired[x] = true;
 	}
 
-	//printf("total hits = %lu, total fragments = %lu\n", hits.size(), fragments.size());
+	//printf("total hits = %lu, total fragments = %lu\n", hits.size(), fs.size());
 	return 0;
 }
 

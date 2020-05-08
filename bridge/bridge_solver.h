@@ -38,7 +38,7 @@ public:
 
 public:
 	splice_graph &gr;						// given splice graph
-	vector<pereads_cluster> &vc;		// given paired reads clusters
+	vector<pereads_cluster> &vc;			// given paired reads clusters
 	const parameters &cfg;
 
 	vector<PI> vpairs;						// vertices for each cluster

@@ -865,6 +865,7 @@ int hyper_set::right_break(int x)
 		{
 			if(vv[i] != x) continue;
 			vv.insert(vv.begin() + i + 1, -1);
+			break;
 		}
 	}
 	return 0;
@@ -884,6 +885,7 @@ int hyper_set::left_break(int x)
 		{
 			if(vv[i] != x) continue;
 			vv.insert(vv.begin() + i, -1);
+			break;
 		}
 	}
 	return 0;

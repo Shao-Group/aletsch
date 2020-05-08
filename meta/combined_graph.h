@@ -36,7 +36,7 @@ public:
 	int num_combined;
 
 	vector<PPDI> regions;
-	vector<PPDI> junctions;
+	vector<PTDI> junctions;
 	vector<PIDI> sbounds;
 	vector<PIDI> tbounds;
 	vector<int32_t> splices;
@@ -62,7 +62,7 @@ public:
 	int combine(combined_graph *cb);
 	int combine(vector<combined_graph*> &gv);
 	int combine_regions(split_interval_double_map &imap) const;
-	int combine_junctions(map<PI32, DI> &m) const;
+	int combine_junctions(map<TI32, DI> &m) const;
 	int combine_start_bounds(map<int32_t, DI> &m) const;
 	int combine_end_bounds(map<int32_t, DI> &m) const;
 

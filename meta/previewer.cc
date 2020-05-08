@@ -245,12 +245,15 @@ int previewer::process(bundle &bd, map<int32_t, int> &m)
 	splice_graph gr;
 	graph_builder gb(bd, cfg);
 	gb.build(gr);
+	//gr.print();
 
 	gr.build_vertex_index();
 
 	vector<pereads_cluster> vc;
 	graph_cluster gc(gr, bd.hits, 2, false);
 	gc.build_pereads_clusters(vc);
+	
+	//printf("process bundle in previewer with %lu hits, %lu clusters\n", bd.hits.size(), vc.size());
 
 	int cnt = 0;
 	for(int k = 0; k < vc.size(); k++)

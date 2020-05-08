@@ -66,8 +66,10 @@ const static string position_names[] = {"identical", "fall-right", "fall-left", 
 typedef pair<int, int> PI;
 typedef pair<double, int> DI;
 typedef pair<int32_t, int32_t> PI32;
+typedef pair<PI32, int> TI32;
 typedef pair<int32_t, DI> PIDI;
 typedef pair<PI32, DI> PPDI;
+typedef pair<TI32, DI> PTDI;
 typedef pair<PI, double> PPID;
 typedef pair<int32_t, set<int> > PISI;
 typedef map<int, double> MID;

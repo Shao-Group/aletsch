@@ -39,6 +39,8 @@ int graph_cluster::group_pereads()
 	build_paired_reads(hits, fs);
 	paired.resize(hits.size(), false);
 
+	//printf("total %lu paired reads\n", fs.size());
+
 	for(int i = 0; i < fs.size(); i++)
 	{
 		int h1 = fs[i].first;

@@ -28,7 +28,7 @@ generator::generator(sample_profile &s, vector<combined_graph> &v, const paramet
 {
 	previewer pre(cfg, sp);
 	pre.infer_library_type();
-	//pre.infer_insertsize();
+	pre.infer_insertsize();
 
     sfn = sam_open(sp.file_name.c_str(), "r");
     hdr = sam_hdr_read(sfn);
@@ -75,7 +75,7 @@ int generator::resolve()
 		ht.set_strand(sp.library_type);
 
 		// TODO for test
-		//if(ht.tid >= 1) break;
+		if(ht.tid >= 1) break;
 		//if(index >= 100) break;
 
 		qlen += ht.qlen;
@@ -143,7 +143,7 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	bb->chrm = string(buf);
 	bb->compute_strand(sp.library_type);
 
-	bb->print(index);
+	//bb->print(index);
 
 	splice_graph gr;
 	graph_builder gb(*bb, cfg);
@@ -151,7 +151,9 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	gr.extend_strands();
 	gr.build_vertex_index();
 
-	/*
+	gr.print();
+	printf("\n");
+
 	revise_splice_graph_full(gr, cfg);
 	if(gr.count_junctions() <= 0) 
 	{
@@ -159,16 +161,13 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 		delete bb;
 		return 0;
 	}
-	*/
 
 	vector<pereads_cluster> vc;
 	phase_set ps;
 
-	/* TODO
 	graph_cluster gc(gr, bb->hits, cfg.max_reads_partition_gap, false);
 	gc.build_pereads_clusters(vc);
 	gc.build_phase_set_from_unpaired_reads(ps);
-	*/
 
 	bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
 	bs.build_phase_set(ps);
@@ -191,8 +190,10 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 		if(grv[k].count_junctions() <= 0) continue;
 
 		// TODO
-		grv[k].stat_strandness();
-		continue;
+		//grv[k].stat_strandness();
+		if(grv[k].mixed_strand_graph() == false) continue;
+		grv[k].print();
+		printf("\n");
 
 		string gid = "gene." + tostring(index) + "." + tostring(k);
 		combined_graph cb;
@@ -200,7 +201,7 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 		cb.gid = gid;
 		cb.build(grv[k], hsv[k], ubv[k]);
 
-		//cb.print(k);	// TODO
+		//cb.print(k);
 		//printf("\n");
 
 		tmp.push_back(std::move(cb));

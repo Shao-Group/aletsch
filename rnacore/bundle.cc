@@ -145,7 +145,7 @@ int bundle::check_right_ascending()
 
 int bundle::print(int index)
 {
-	printf("\nbundle%d: ", index);
+	printf("bundle%d: ", index);
 
 	// statistic xs
 	int n0 = 0, np = 0, nq = 0;

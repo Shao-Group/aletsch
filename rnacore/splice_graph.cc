@@ -1110,7 +1110,7 @@ int splice_graph::draw(const string &file, bool footer)
 	for(pei = edges(), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
 	{
 		double w = get_edge_weight(*it1);
-		sprintf(buf, "%.1lf", w);
+		sprintf(buf, "%.1lf:%d", w, get_edge_info(*it1).strand);
 		mes.insert(PES(*it1, buf));
 	}
 	draw(file, mis, mes, 1.5, footer);
@@ -1153,7 +1153,8 @@ int splice_graph::print_weights()
 		int32_t p2 = get_vertex_info(t).lpos;
 		double w1 = get_edge_weight(e);
 		double w2 = get_edge_info(e).weight;
-		printf("edge (%d, %d) pos = %d-%d length = %d weight = (%.2lf, %.2lf)\n", s, t, p1, p2, p2 - p1 + 1, w1, w2);
+		int strand = get_edge_info(e).strand;
+		printf("edge (%d, %d) pos = %d-%d length = %d weight = (%.2lf, %.2lf) strand = %d\n", s, t, p1, p2, p2 - p1 + 1, w1, w2, strand);
 	}
 	return 0;
 }
@@ -1184,18 +1185,20 @@ int splice_graph::extend_strands()
 		int32_t p2 = get_vertex_info(t).lpos;
 		if(p1 >= p2) continue;
 		if(s + 2 != t) continue;
+		if(get_vertex_info(s + 1).lpos != p1) continue;
+		if(get_vertex_info(s + 1).rpos != p2) continue;
 		PEB e1 = edge(s, s + 1);
 		PEB e2 = edge(s + 1, t);
 		if(e1.second == true) 
 		{
 			edge_info ei = get_edge_info(e1.first);
-			ei.strand = strand;
+			if(ei.strand == 0) ei.strand = strand;
 			set_edge_info(e1.first, ei);
 		}
 		if(e2.second == true) 
 		{
 			edge_info ei = get_edge_info(e2.first);
-			ei.strand = strand;
+			if(ei.strand == 0) ei.strand = strand;
 			set_edge_info(e2.first, ei);
 		}
 	}
@@ -1226,6 +1229,22 @@ bool splice_graph::mixed_strand_vertex(int i)
 		if(p && q) return true;
 	}
 
+	return false;
+}
+
+bool splice_graph::mixed_strand_graph()
+{
+	bool p = false;
+	bool q = false;
+	PEEI pei = edges();
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = *it;
+		int s = get_edge_info(e).strand;
+		if(s == 1) p = true;
+		if(s == 2) q = true;
+		if(p && q) return true;
+	}
 	return false;
 }
 
@@ -1263,5 +1282,37 @@ int splice_graph::stat_strandness()
 		printf("vertex %d: %s:%d-%d, in-degree = %d / %d / %d, out-degree = %d / %d / %d, in-weight = %.0lf / %.0lf / %.0lf, out-weight = %.0lf / %.0lf / %.0lf\n",
 				i, chrm.c_str(), p1, p2, xi[0], xi[1], xi[2], xo[0], xo[1], xo[2], wi[0], wi[1], wi[2], wo[0], wo[1], wo[2]);
 	}
+	return 0;
+}
+
+int splice_graph::print_vertex(int i)
+{
+	int32_t p1 = get_vertex_info(i).lpos;
+	int32_t p2 = get_vertex_info(i).rpos;
+	PEEI pi = in_edges(i);
+	PEEI po = out_edges(i);
+	int xi[3] = {0, 0, 0};
+	int xo[3] = {0, 0, 0};
+	double wi[3] = {0, 0, 0};
+	double wo[3] = {0, 0, 0};
+	for(edge_iterator it = pi.first; it != pi.second; it++)
+	{
+		edge_descriptor e = (*it);
+		edge_info ei = get_edge_info(e);
+		double w = get_edge_weight(e);
+		xi[ei.strand]++;
+		wi[ei.strand] += w;
+	}
+	for(edge_iterator it = po.first; it != po.second; it++)
+	{
+		edge_descriptor e = (*it);
+		edge_info ei = get_edge_info(e);
+		double w = get_edge_weight(e);
+		xo[ei.strand]++;
+		wo[ei.strand] += w;
+	}
+
+	printf("vertex %d: %s:%d-%d, in-degree = %d / %d / %d, out-degree = %d / %d / %d, in-weight = %.0lf / %.0lf / %.0lf, out-weight = %.0lf / %.0lf / %.0lf\n",
+			i, chrm.c_str(), p1, p2, xi[0], xi[1], xi[2], xo[0], xo[1], xo[2], wi[0], wi[1], wi[2], wo[0], wo[1], wo[2]);
 	return 0;
 }

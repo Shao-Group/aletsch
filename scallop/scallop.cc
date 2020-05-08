@@ -523,6 +523,9 @@ bool scallop::resolve_trivial_vertex(int type, double jump_ratio)
 		int e;
 		double r = compute_balance_ratio(i);
 
+		// TODO: test
+		gr.print_vertex(i);
+
 		if(r < 1.02)
 		{
 			if(cfg.verbose >= 2) printf("resolve trivial vertex %d, type = %d, ratio = %.2lf, degree = (%d, %d)\n", i, type, 
@@ -604,6 +607,10 @@ bool scallop::resolve_mixed_vertex(int type)
 
 		root = i;
 
+		printf("resolve mixed vertex, type = %d, root = %d, v2v[root] = %d, degree = (%d, %d)\n", 
+			type, root, v2v[root], gr.in_degree(root), gr.out_degree(root));
+		gr.print_vertex(root);
+
 		if(type == MIXED_TRIVIAL)
 		{
 			decompose_trivial_vertex(root);
@@ -669,7 +676,7 @@ int scallop::terminate_edge_sink(edge_descriptor e)
 	vertex_info vi = gr.get_vertex_info(t);
 	assert(med.find(e) != med.end());
 	assert(mei.find(e) != mei.end());
-	med[e] += sw;
+	med[e] += sw * (vi.rpos - vi.lpos);
 	mei[e] += vi.rpos - vi.lpos;
 	assert(vw >= sw - SMIN);
 	gr.set_vertex_weight(t, vw - sw);
@@ -687,12 +694,13 @@ int scallop::terminate_edge_source(edge_descriptor e)
 
 	hs.left_break(e2i[e]);
 	gr.move_edge(e, 0, e->target());
-	mev[e].insert(mev[e].begin(), 0);
+	mev[e].insert(mev[e].begin(), s);
 
 	vertex_info vi = gr.get_vertex_info(s);
 	assert(med.find(e) != med.end());
 	assert(mei.find(e) != mei.end());
-	med[e] += sw;
+	med[e] += sw * (vi.rpos - vi.lpos);
+	mei[e] += vi.rpos - vi.lpos;
 	assert(vw >= sw - SMIN);
 	gr.set_vertex_weight(s, vw - sw);
 
@@ -801,8 +809,8 @@ int scallop::init_super_edges()
 	for(pei = gr.edges(), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
 	{
 		vector<int> v;
-		int s = (*it1)->source();
-		v.push_back(s);
+		//int s = (*it1)->source();
+		//v.push_back(s);
 		mev.insert(PEV(*it1, v));
 		med.insert(PED(*it1, 0));
 		mei.insert(PEI(*it1, 0));
@@ -933,7 +941,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 
 		gr.set_vertex_info(k, vertex_info());
 		gr.set_vertex_weight(k, 0);
-		v2v[k] = v2v[root];
+		v2v[k] = -2; //v2v[root];
 	}
 	for(map<int, int>::iterator it = ev2.begin(); it != ev2.end(); it++)
 	{
@@ -966,12 +974,12 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			int v2 = ev2[e2];
 			gr.move_edge(p, v1, v2);
 
+			mev[p].push_back(root);
+
 			assert(med.find(p) != med.end());
 			assert(mei.find(p) != mei.end());
 			med[p] += mweight[e1];
 			mei[p] += root_info.rpos - root_info.lpos;
-
-			//gr.set_edge_weight(p, w);
 		}
 		else if(mdegree[e2] == 1)
 		{
@@ -984,12 +992,12 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			int v2 = p->target();
 			gr.move_edge(p, v1, v2);
 
+			mev[p].insert(mev[p].begin(), root);
+
 			assert(med.find(p) != med.end());
 			assert(mei.find(p) != mei.end());
 			med[p] += mweight[e2];
 			mei[p] += root_info.rpos - root_info.lpos;
-
-			//gr.set_edge_weight(p, w);
 		}
 		else
 		{
@@ -1011,6 +1019,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			gr.set_edge_info(p, edge_info());
 
 			vector<int> v0;
+			v0.push_back(root);
 			if(mev.find(p) != mev.end()) mev[p] = v0;
 			else mev.insert(PEV(p, v0));
 
@@ -1058,7 +1067,7 @@ int scallop::borrow_edge_strand(int e1, int e2)
 {
 	// set the strand for e1 using e2
 	int s1 = gr.get_edge_info(i2e[e1]).strand;
-	int s2 = gr.get_edge_info(i2e[e1]).strand;
+	int s2 = gr.get_edge_info(i2e[e2]).strand;
 	if(s2 == 0) return 0;
 	edge_info ei = gr.get_edge_info(i2e[e1]);
 	ei.strand = s2;
@@ -1110,6 +1119,7 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 		hs.remove_pair(it->first.first, it->first.second);
 	}
 
+	// collect degree
 	map<int, int> m;
 	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
 	{
@@ -1120,6 +1130,8 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 		if(m.find(e2) == m.end()) m.insert(PI(e2, 1));
 		else m[e2]++;
 	}
+
+	// decompose
 	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
 	{
 		int e1 = it->first.first;
@@ -1289,6 +1301,7 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
 	borrow_edge_strand(n, y);
 
 	vector<int> v = mev[xx];
+	v.push_back(xt);
 	v.insert(v.end(), mev[yy].begin(), mev[yy].end());
 
 	if(mev.find(p) != mev.end()) mev[p] = v;
@@ -1659,13 +1672,18 @@ int scallop::collect_path(int e)
 		mi += vi.rpos - vi.lpos;
 	}
 
+	printf("collect path %d, mi = %d, mei = %d, v = ( ", e, mi, mei[i2e[e]]);
+	printv(v);
+	printf(")\n");
+
 	assert(mei[i2e[e]] == mi);
 
 	sort(v.begin(), v.end());
 
 	int n = v2v[gr.num_vertices() - 1];
-	assert(v[0] == 0);
+	assert(v[0] > 0);
 	assert(v[v.size() - 1] < n);
+	v.insert(v.begin(), 0);
 	v.push_back(n);
 
 	path p;

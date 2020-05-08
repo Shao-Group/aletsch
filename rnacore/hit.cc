@@ -192,6 +192,8 @@ int hit::print() const
 	printf("Hit %s: hid = %d, [%d-%d), mpos = %d, flag = %d, quality = %d, strand = %c, xs = %c, ts = %c, isize = %d, qlen = %d, hi = %d\n", 
 			qname.c_str(), hid, pos, rpos, mpos, flag, qual, strand, xs, ts, isize, qlen, hi);
 
+	return 0;
+
 	printf(" start position (%d - )\n", pos);
 	for(int i = 0; i < spos.size() / 2; i++)
 	{
@@ -200,7 +202,6 @@ int hit::print() const
 		printf(" splice position (%d - %d)\n", p1, p2);
 	}
 	printf(" end position (%d - )\n", rpos);
-
 
 	return 0;
 }

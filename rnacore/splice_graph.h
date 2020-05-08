@@ -118,11 +118,13 @@ public:
 	// strandness
 	int extend_strands();
 	bool mixed_strand_vertex(int i);
+	bool mixed_strand_graph();
 
 	// draw and print
 	int draw(const string &file, bool footer = true);
 	int draw(const string &file, const MIS &mis, const MES &mes, double len, bool footer = true);
 	int draw(const string &file, const MIS &mis, const MES &mes, double len, const vector<int> &tp, bool footer = true);
+	int print_vertex(int i);
 	int print_nontrivial_vertices();
 	int print_weights();
 	int print();
