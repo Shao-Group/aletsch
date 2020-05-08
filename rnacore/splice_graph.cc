@@ -242,6 +242,38 @@ edge_descriptor splice_graph::max_in_edge(int v)
 	return ee;
 }
 
+edge_descriptor splice_graph::min_out_edge(int v)
+{
+	edge_iterator it1, it2;
+	edge_descriptor ee = null_edge;
+	PEEI pei;
+	double ww = DBL_MAX;
+	for(pei = out_edges(v), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	{
+		double w = get_edge_weight(*it1);
+		if(w > ww) continue;
+		ee = (*it1);
+		ww = w;
+	}
+	return ee;
+}
+
+edge_descriptor splice_graph::min_in_edge(int v)
+{
+	PEEI pei;
+	edge_iterator it1, it2;
+	edge_descriptor ee = null_edge;
+	double ww = DBL_MAX;
+	for(pei = in_edges(v), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	{
+		double w = get_edge_weight(*it1);
+		if(w > ww) continue;
+		ee = (*it1);
+		ww = w;
+	}
+	return ee;
+}
+
 int splice_graph::count_junctions()
 {
 	int cnt = 0;

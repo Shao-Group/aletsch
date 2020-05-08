@@ -59,6 +59,8 @@ public:
 	int set_edge_weights(const MED & med);
 	int set_vertex_weights(const vector<double> &v);
 
+	edge_descriptor min_out_edge(int v);
+	edge_descriptor min_in_edge(int v);
 	edge_descriptor max_out_edge(int v);
 	edge_descriptor max_in_edge(int v);
 	double get_in_weights(int v);

@@ -523,9 +523,6 @@ bool scallop::resolve_trivial_vertex(int type, double jump_ratio)
 		int e;
 		double r = compute_balance_ratio(i);
 
-		// TODO: test
-		gr.print_vertex(i);
-
 		if(r < 1.02)
 		{
 			if(cfg.verbose >= 2) printf("resolve trivial vertex %d, type = %d, ratio = %.2lf, degree = (%d, %d)\n", i, type, 
@@ -607,9 +604,11 @@ bool scallop::resolve_mixed_vertex(int type)
 
 		root = i;
 
-		printf("resolve mixed vertex, type = %d, root = %d, v2v[root] = %d, degree = (%d, %d)\n", 
-			type, root, v2v[root], gr.in_degree(root), gr.out_degree(root));
-		gr.print_vertex(root);
+		if(cfg.verbose >= 2)
+		{
+			printf("resolve mixed vertex, type = %d, root = %d, v2v[root] = %d, degree = (%d, %d)\n", type, root, v2v[root], gr.in_degree(root), gr.out_degree(root));
+			gr.print_vertex(root);
+		}
 
 		if(type == MIXED_TRIVIAL)
 		{
@@ -625,33 +624,92 @@ bool scallop::resolve_mixed_vertex(int type)
 			return true;
 		}
 
-		if(type == MIXED_TANGLED || type == MIXED_BLOCKED)
+		if(type == MIXED_BLOCKED)
 		{
-			terminate_largest_edge(root);
+			terminate_blocked_edges(root);
+			return true;
+		}
+
+		if(type == MIXED_TANGLED)
+		{
+			terminate_smallest_edge(root);
 			return true;
 		}
 	}
 	return false;
 }
 
-int scallop::terminate_largest_edge(int root)
+int scallop::terminate_blocked_edges(int root)
+{
+	PEEI pi = gr.in_edges(root);
+	PEEI po = gr.out_edges(root);
+	int xi[3] = {0, 0, 0};
+	int xo[3] = {0, 0, 0};
+
+	for(edge_iterator it = pi.first; it != pi.second; it++)
+	{
+		edge_descriptor e = (*it);
+		int s = gr.get_edge_info(e).strand;
+		xi[s]++;
+	}
+	for(edge_iterator it = po.first; it != po.second; it++)
+	{
+		edge_descriptor e = (*it);
+		int s = gr.get_edge_info(e).strand;
+		xo[s]++;
+	}
+
+	vector<edge_descriptor> vei;
+	vector<edge_descriptor> veo;
+	for(edge_iterator it = pi.first; it != pi.second; it++)
+	{
+		edge_descriptor e = (*it);
+		int s = gr.get_edge_info(e).strand;
+		if(s == 0) continue;
+		if(xo[0] >= 1) continue;
+		if(xo[s] >= 1) continue;
+		vei.push_back(e);
+	}
+
+	for(edge_iterator it = po.first; it != po.second; it++)
+	{
+		edge_descriptor e = (*it);
+		int s = gr.get_edge_info(e).strand;
+		if(s == 0) continue;
+		if(xi[0] >= 1) continue;
+		if(xi[s] >= 1) continue;
+		veo.push_back(e);
+	}
+
+	assert(vei.size() + veo.size() >= 1);
+
+	for(int i = 0; i < vei.size(); i++) terminate_edge_sink(vei[i]);
+	for(int i = 0; i < veo.size(); i++) terminate_edge_source(veo[i]);
+
+	if(gr.degree(root) == 0) nonzeroset.erase(root);
+	else assert(gr.in_degree(root) >= 1 && gr.out_degree(root) >= 1);
+
+	return 0;
+}
+
+int scallop::terminate_smallest_edge(int root)
 {
 	if(gr.in_degree(root) >= 2)
 	{
-		edge_descriptor e = gr.max_in_edge(root);
+		edge_descriptor e = gr.min_in_edge(root);
 		terminate_edge_sink(e);
 	}
 	else if(gr.out_degree(root) >= 2)
 	{
-		edge_descriptor e = gr.max_out_edge(root);
+		edge_descriptor e = gr.min_out_edge(root);
 		terminate_edge_source(e);
 	}
 	else
 	{
 		assert(gr.in_degree(root) == 1);
 		assert(gr.out_degree(root) == 1);
-		edge_descriptor e1 = gr.max_in_edge(root);
-		edge_descriptor e2 = gr.max_out_edge(root);
+		edge_descriptor e1 = gr.min_in_edge(root);
+		edge_descriptor e2 = gr.min_out_edge(root);
 		terminate_edge_sink(e1);
 		terminate_edge_source(e2);
 		assert(gr.degree(root) == 0);
@@ -1671,10 +1729,6 @@ int scallop::collect_path(int e)
 		vertex_info vi = gr.get_vertex_info(v2v[v0[i]]);
 		mi += vi.rpos - vi.lpos;
 	}
-
-	printf("collect path %d, mi = %d, mei = %d, v = ( ", e, mi, mei[i2e[e]]);
-	printv(v);
-	printf(")\n");
 
 	assert(mei[i2e[e]] == mi);
 

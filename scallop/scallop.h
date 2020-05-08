@@ -92,7 +92,8 @@ private:
 	int remove_edge(int e);
 	int split_merge_path(const VE &p, double w);
 	int split_merge_path(const vector<int> &p, double w);
-	int terminate_largest_edge(int root);
+	int terminate_blocked_edges(int root);
+	int terminate_smallest_edge(int root);
 	int terminate_edge_sink(edge_descriptor e);
 	int terminate_edge_source(edge_descriptor e);
 	int borrow_edge_strand(int e1, int e2);
