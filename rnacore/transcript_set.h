@@ -28,7 +28,6 @@ class transcript_set
 {
 public:
 	string chrm;
-	char strand;
 	map<size_t, vector<trans_item>> mt;
 
 public:

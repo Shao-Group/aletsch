@@ -14,10 +14,7 @@ int transcript_set::add(const trans_item &ti, int mode)
 
 	if(t.exons.size() <= 1) return 0;
 
-	if(mt.size() == 0) strand = t.strand;
 	if(mt.size() == 0) chrm = t.seqname;
-
-	assert(t.strand == strand);
 	assert(t.seqname == chrm);
 
 	size_t h = t.get_intron_chain_hashing();
@@ -35,6 +32,8 @@ int transcript_set::add(const trans_item &ti, int mode)
 		bool found = false;
 		for(int k = 0; k < v.size(); k++)
 		{
+			if(v[k].trst.strand != t.strand) continue;
+
 			bool b = v[k].trst.intron_chain_match(t);
 			if(b == false) continue;
 
@@ -95,7 +94,7 @@ int transcript_set::increase_count(int count)
 
 int transcript_set::print() const
 {
-	printf("transcript-set: chrm = %s, strand = %c, mt.size() = %lu\n", chrm.c_str(), strand, mt.size());
+	printf("transcript-set: chrm = %s, mt.size() = %lu\n", chrm.c_str(), mt.size());
 	return 0;
 }
 

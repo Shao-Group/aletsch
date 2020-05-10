@@ -407,6 +407,7 @@ int incubator::postprocess(const transcript_set &ts, ofstream &fout, mutex &mylo
 {
 	vector<transcript> v = ts.get_transcripts(2);
 
+	// warning: ts contains mixed strands
 	//cluster cs(v, cfg);
 	//cs.solve();
 
@@ -486,7 +487,7 @@ int incubator::store_transcripts(const transcript_set &ts, mutex &mylock)
 	bool found = false;
 	for(int i = 0; i < tsets.size(); i++)
 	{
-		if(tsets[i].chrm != ts.chrm || tsets[i].strand != ts.strand) continue;
+		if(tsets[i].chrm != ts.chrm) continue;
 		tsets[i].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		found = true;
 		break;
