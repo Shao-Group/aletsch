@@ -128,21 +128,24 @@ int graph_builder::remove_opposite_junctions()
 
 			if(x.count > y.count && x.nm * 1.0 / x.count < y.nm * 1.0 / y.count) fb.insert(j);
 			if(x.count < y.count && x.nm * 1.0 / x.count > y.nm * 1.0 / y.count) fb.insert(i);
-
-			if(fb.find(i) == fb.end()) continue;
-			if(fb.find(j) == fb.end()) continue;
-
-			//printf("remove opposite junction, count = %d / %d, nm = %d / %d\n", x.count, y.count, x.nm, y.nm);
-			//x.print(bd.chrm, i);
-			//y.print(bd.chrm, j);
 		}
 	}
 
 	vector<junction> v;
 	for(int i = 0; i < junctions.size(); i++)
 	{
-		if(fb.find(i) != fb.end()) continue;
-		v.push_back(junctions[i]);
+		if(fb.find(i) != fb.end()) 
+		{
+			if(cfg.verbose >= 2)
+			{
+				printf("remove opposite junction: ");
+				junctions[i].print(bd.chrm, i);
+			}
+		}
+		else
+		{
+			v.push_back(junctions[i]);
+		}
 	}
 
 	junctions = v;

@@ -76,28 +76,18 @@ int router::classify_mixed_vertex()
 {
 	build_strand_graph();
 
-	int xi[3] = {0, 0, 0};
-	int xo[3] = {0, 0, 0};
-	PEEI pei;
-	edge_iterator it1, it2;
-	for(pei = gr.in_edges(root), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
-	{
-		edge_descriptor e = (*it1);
-		int s = gr.get_edge_info(e).strand;
-		xi[s]++;
-	}
-	for(pei = gr.out_edges(root), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
-	{
-		edge_descriptor e = (*it1);
-		int s = gr.get_edge_info(e).strand;
-		xo[s]++;
-	}
+	vector<int> xx = gr.get_strand_degree(root);
+	assert(xx[0] + xx[1] + xx[2] >= 1);
+	assert(xx[3] + xx[4] + xx[5] >= 1);
 
-	if(xi[0] == 0 && xi[1] == 0 && xo[1] >= 1) type = MIXED_BLOCKED;
-	if(xi[0] == 0 && xi[2] == 0 && xo[2] >= 1) type = MIXED_BLOCKED;
-	if(xi[1] >= 1 && xo[0] == 0 && xo[1] == 0) type = MIXED_BLOCKED;
-	if(xi[2] >= 1 && xo[0] == 0 && xo[2] == 0) type = MIXED_BLOCKED;
+	if(xx[0] + xx[1] == 0 && xx[3] + xx[5] == 0) type = MIXED_DIVIDED;
+	if(xx[0] + xx[2] == 0 && xx[3] + xx[4] == 0) type = MIXED_DIVIDED;
+	if(type == MIXED_DIVIDED) return 0;
 
+	if(xx[0] == 0 && xx[1] == 0 && xx[4] >= 1) type = MIXED_BLOCKED;
+	if(xx[0] == 0 && xx[2] == 0 && xx[5] >= 1) type = MIXED_BLOCKED;
+	if(xx[1] >= 1 && xx[3] == 0 && xx[4] == 0) type = MIXED_BLOCKED;
+	if(xx[2] >= 1 && xx[3] == 0 && xx[5] == 0) type = MIXED_BLOCKED;
 	if(type == MIXED_BLOCKED) return 0;
 
 	if(gr.in_degree(root) == 1 || gr.out_degree(root) == 1)
@@ -264,7 +254,7 @@ int router::build_strand_graph()
 			edge_descriptor e1 = i2e[u2e[i]];
 			edge_descriptor e2 = i2e[u2e[j]];
 			int s1 = gr.get_edge_info(e1).strand;
-			int s2 = gr.get_edge_info(e1).strand;
+			int s2 = gr.get_edge_info(e2).strand;
 			if(s1 != s2) continue;
 			if(s1 == 0) continue;
 			sg.add_edge(i, j);
@@ -454,7 +444,6 @@ int router::split_plain_vertex()
 
 int router::split_mixed_vertex()
 {
-	//print();
 	eqns.clear();
 
 	// locally smooth weights
@@ -489,16 +478,24 @@ int router::split_mixed_vertex()
 		{
 			int k = u2e[*it];
 			edge_descriptor e = i2e[k];
-
 			int s = gr.get_edge_info(e).strand;
+
 			if(s == 1 && cs[i] == 2) return 0;
 			if(s == 2 && cs[i] == 1) return 0;
 			if(s == 1 || s == 2) cs[i] = s;
 
-			cw[i] += vw[*it];
 
-			if(*it < gr.in_degree(root)) cn[i].first++;
-			else cn[i].second++;
+			if(*it < gr.in_degree(root)) 
+			{
+				cn[i].first++;
+				cw[i] += vw[*it];
+			}
+			else 
+			{
+				cn[i].second++;
+				cw[i] -= vw[*it];
+			}
+			//printf(" component %d: u = %d, e = %d, s = %d, cs[%d] = %d, cn[%d] = (%d, %d), cw[%d] = %.2lf\n", i, *it, k, s, i, cs[i], i, cn[i].first, cn[i].second, i, cw[i]);
 		}
 	}
 
@@ -526,10 +523,12 @@ int router::split_mixed_vertex()
 	while(true)
 	{
 		double bestw = fabs(ww);
+		if(eqn1.s.size() == 0 || eqn1.t.size() == 0) bestw = DBL_MAX;
 		int besti = -1;
 		for(int i = 0; i < vv.size(); i++)
 		{
 			if(cs[i] != 0) continue;
+			if(cb[i] == true) continue;
 
 			int s1 = eqn1.s.size() + cn[i].first;
 			int t1 = eqn1.t.size() + cn[i].second;
@@ -568,6 +567,13 @@ int router::split_mixed_vertex()
 		if(s2.find(e) != s2.end()) continue;
 		eqn2.t.push_back(e);
 	}
+
+	/*
+	printf("eqn1.s = "); printv(eqn1.s); printf("\n");
+	printf("eqn1.t = "); printv(eqn1.t); printf("\n");
+	printf("eqn2.s = "); printv(eqn2.s); printf("\n");
+	printf("eqn2.t = "); printv(eqn2.t); printf("\n");
+	*/
 
 	if(eqn1.s.size() == 0 || eqn1.t.size() == 0) return 0;
 	if(eqn2.s.size() == 0 || eqn2.t.size() == 0) return 0;
@@ -792,7 +798,6 @@ int router::print()
 		printf("decompose: (%d, %d), w = %.2lf\n", it->first.first, it->first.second, it->second);
 	}
 
-	printf("\n");
 	return 0;
 }
 

@@ -302,7 +302,6 @@ int incubator::assemble(combined_graph &cb, transcript_set &ts, int mode)
 	gx.build_vertex_index();
 	gx.extend_strands();
 
-
 	phase_set px = cb.ps;
 
 	map<int32_t, int32_t> smap, tmap;
@@ -326,12 +325,14 @@ int incubator::assemble(combined_graph &cb, transcript_set &ts, int mode)
 
 	gx.gid = cb.gid;
 
+	/*
 	gx.print();
 	if(gx.num_vertices() <= 40) 
 	{
 		string texfile = "tex/" + gx.gid + ".tex";
 		gx.draw(texfile);
 	}
+	*/
 
 	scallop sx(gx, hx, cfg);
 	sx.assemble();
@@ -347,8 +348,8 @@ int incubator::assemble(combined_graph &cb, transcript_set &ts, int mode)
 		//t.write(cout);
 	}
 
-	printf("assemble %s: %d transcripts, ", cb.gid.c_str(), z);
-	cb.print(0);
+	//printf("assemble %s: %d transcripts, ", cb.gid.c_str(), z);
+	//cb.print(0);
 
 	return 0;
 }

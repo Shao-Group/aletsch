@@ -75,7 +75,7 @@ int generator::resolve()
 		ht.set_strand(sp.library_type);
 
 		// TODO for test
-		if(ht.tid >= 1) break;
+		//if(ht.tid >= 1) break;
 		//if(index >= 100) break;
 
 		qlen += ht.qlen;
@@ -151,8 +151,8 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	gr.extend_strands();
 	gr.build_vertex_index();
 
-	gr.print();
-	printf("\n");
+	//gr.print();
+	//printf("\n");
 
 	revise_splice_graph_full(gr, cfg);
 	if(gr.count_junctions() <= 0) 
@@ -190,10 +190,11 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 		if(grv[k].count_junctions() <= 0) continue;
 
 		// TODO
-		//grv[k].stat_strandness();
+		/*
 		if(grv[k].mixed_strand_graph() == false) continue;
 		grv[k].print();
 		printf("\n");
+		*/
 
 		string gid = "gene." + tostring(index) + "." + tostring(k);
 		combined_graph cb;

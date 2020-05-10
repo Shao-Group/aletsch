@@ -22,6 +22,7 @@ public:
 	int length;
 	double abd;
 	double reads;
+	char strand;
 
 public:
 	int clear();

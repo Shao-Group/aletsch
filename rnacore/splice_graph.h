@@ -119,8 +119,9 @@ public:
 	
 	// strandness
 	int extend_strands();
-	bool mixed_strand_vertex(int i);
 	bool mixed_strand_graph();
+	bool mixed_strand_vertex(int i);
+	vector<int> get_strand_degree(int i);
 
 	// draw and print
 	int draw(const string &file, bool footer = true);

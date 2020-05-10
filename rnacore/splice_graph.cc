@@ -1217,6 +1217,10 @@ int splice_graph::extend_strands()
 		int32_t p2 = get_vertex_info(t).lpos;
 		if(p1 >= p2) continue;
 		if(s + 2 != t) continue;
+
+		double we = get_edge_weight(e);
+		double wv = get_vertex_weight(s + 1);
+		if(we <= wv) continue;
 		if(get_vertex_info(s + 1).lpos != p1) continue;
 		if(get_vertex_info(s + 1).rpos != p2) continue;
 		PEB e1 = edge(s, s + 1);
@@ -1239,16 +1243,23 @@ int splice_graph::extend_strands()
 
 bool splice_graph::mixed_strand_vertex(int i)
 {
-	bool p = false;
-	bool q = false;
+	vector<int> v = get_strand_degree(i);
+	int p = v[1] + v[4];
+	int q = v[2] + v[5];
+	if(p >= 1 && q >= 1) return true;
+	else return false;
+}
+
+vector<int> splice_graph::get_strand_degree(int i)
+{
+	vector<int> vs(6, 0);
 	PEEI pei = in_edges(i);
 	for(edge_iterator it = pei.first; it != pei.second; it++)
 	{
 		edge_descriptor e = *it;
 		int s = get_edge_info(e).strand;
-		if(s == 1) p = true;
-		if(s == 2) q = true;
-		if(p && q) return true;
+		assert(s >= 0 && s <= 2);
+		vs[s]++;
 	}
 
 	pei = out_edges(i);
@@ -1256,12 +1267,11 @@ bool splice_graph::mixed_strand_vertex(int i)
 	{
 		edge_descriptor e = *it;
 		int s = get_edge_info(e).strand;
-		if(s == 1) p = true;
-		if(s == 2) q = true;
-		if(p && q) return true;
+		assert(s >= 0 && s <= 2);
+		vs[s + 3]++;
 	}
 
-	return false;
+	return vs;
 }
 
 bool splice_graph::mixed_strand_graph()

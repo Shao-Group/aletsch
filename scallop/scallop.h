@@ -72,6 +72,7 @@ private:
 	bool resolve_unsplittable_vertex(int type, int degree, double max_ratio);
 	bool resolve_hyper_edge(int fsize);
 	bool resolve_mixed_vertex(int type);
+	bool resolve_mixed_smallest_edges();
 
 	// smooth vertex
 	int balance_vertex(int x);
@@ -98,6 +99,7 @@ private:
 	int terminate_edge_source(edge_descriptor e);
 	int borrow_edge_strand(int e1, int e2);
 	bool consistent_strands(int e1, int e2);
+	int break_divided_phases();
 
 	int collect_existing_st_paths();
 	int collect_path(int e);

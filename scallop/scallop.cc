@@ -102,13 +102,21 @@ int scallop::assemble()
 		if(b == true) continue;
 
 		// process mixed vertices
+		break_divided_phases();
+
+		b = resolve_mixed_vertex(MIXED_DIVIDED);
+		if(b == true) continue;
+
+		b = resolve_mixed_smallest_edges();
+		if(b == true) continue;
+
 		b = resolve_mixed_vertex(MIXED_TRIVIAL);
 		if(b == true) continue;
 
-		b = resolve_mixed_vertex(MIXED_SPLITTABLE);
+		b = resolve_mixed_vertex(MIXED_BLOCKED);
 		if(b == true) continue;
 
-		b = resolve_mixed_vertex(MIXED_BLOCKED);
+		b = resolve_mixed_vertex(MIXED_SPLITTABLE);
 		if(b == true) continue;
 
 		b = resolve_mixed_vertex(MIXED_TANGLED);
@@ -199,7 +207,6 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 
 		if(gr.in_degree(i) <= 1) continue;
 		if(gr.out_degree(i) <= 1) continue;
-		if(gr.mixed_strand_vertex(i)) continue;
 
 		double r;
 		int e = compute_smallest_edge(i, r);
@@ -208,6 +215,7 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 
 		int s = i2e[e]->source();
 		int t = i2e[e]->target();
+		assert(s == i || t == i);
 
 		if(gr.out_degree(s) <= 1) continue;
 		if(gr.in_degree(t) <= 1) continue;
@@ -215,6 +223,14 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 		if(hs.right_extend(e) && hs.left_extend(e)) continue;
 		if(t == i && hs.right_extend(e)) continue;
 		if(s == i && hs.left_extend(e)) continue;
+
+		//if(gr.mixed_strand_vertex(i)) continue;
+		// check if there are at least two possible ways 
+		// for e to go to the dther side
+		vector<int> vs = gr.get_strand_degree(i);
+		int z = gr.get_edge_info(i2e[e]).strand;
+		if(s == i && z >= 1 && vs[0] + vs[z + 0] <= 1) continue;
+		if(t == i && z >= 1 && vs[3] + vs[z + 3] <= 1) continue;
 
 		if(r < 0.01)
 		{
@@ -610,6 +626,13 @@ bool scallop::resolve_mixed_vertex(int type)
 			gr.print_vertex(root);
 		}
 
+		if(type == MIXED_DIVIDED)
+		{
+			terminate_blocked_edges(root);
+			assert(gr.degree(root) == 0);
+			return true;
+		}
+
 		if(type == MIXED_TRIVIAL)
 		{
 			decompose_trivial_vertex(root);
@@ -635,6 +658,47 @@ bool scallop::resolve_mixed_vertex(int type)
 			terminate_smallest_edge(root);
 			return true;
 		}
+	}
+	return false;
+}
+
+bool scallop::resolve_mixed_smallest_edges()
+{
+	vector<int> vv(nonzeroset.begin(), nonzeroset.end());
+	for(int k = 0; k < vv.size(); k++)
+	{
+		int i = vv[k];
+		assert(gr.degree(i) >= 1);
+
+		double r;
+		int e = compute_smallest_edge(i, r);
+		int s = i2e[e]->source();
+		int t = i2e[e]->target();
+		assert(s == i || t == i);
+
+		if(gr.out_degree(s) <= 1) continue;
+		if(gr.in_degree(t) <= 1) continue;
+
+		if(hs.right_extend(e) && hs.left_extend(e)) continue;
+		if(t == i && hs.right_extend(e)) continue;
+		if(s == i && hs.left_extend(e)) continue;
+
+		vector<int> vs = gr.get_strand_degree(i);
+		int z = gr.get_edge_info(i2e[e]).strand;
+		if(s == i && z >= 1 && vs[0] + vs[z + 0] >= 1) continue;
+		if(t == i && z >= 1 && vs[3] + vs[z + 3] >= 1) continue;
+
+		if(s == i) assert(gr.out_degree(i) >= 2);
+		if(t == i) assert(gr.in_degree(i) >= 2);
+
+		double w = gr.get_edge_weight(i2e[e]);
+		if(cfg.verbose >= 2) printf("remove blocked smallest edge, edge = %d, weight = %.2lf, ratio = %.2lf, vertex = (%d, %d), degree = (%d, %d)\n", 
+				e, w, r, s, t, gr.out_degree(s), gr.in_degree(t));
+
+		remove_edge(e);
+		hs.remove(e);
+
+		return true;
 	}
 	return false;
 }
@@ -762,6 +826,31 @@ int scallop::terminate_edge_source(edge_descriptor e)
 	assert(vw >= sw - SMIN);
 	gr.set_vertex_weight(s, vw - sw);
 
+	return 0;
+}
+
+int scallop::break_divided_phases()
+{
+	for(int i = 1; i < gr.num_vertices() - 1; i++)
+	{
+		vector<int> vs(6, 0);
+		PEEI pei = gr.in_edges(i);
+		PEEI peo = gr.out_edges(i);
+		for(edge_iterator ti = pei.first; ti != pei.second; ti++)
+		{
+			edge_descriptor e1 = *ti;
+			int s1 = gr.get_edge_info(e1).strand;
+			if(s1 == 0) continue;
+			for(edge_iterator to = peo.first; to != peo.second; to++)
+			{
+				edge_descriptor e2 = *to;
+				int s2 = gr.get_edge_info(e2).strand;
+				if(s2 == 0) continue;
+				if(s1 == s2) continue;
+				hs.insert_between(e2i[e1], e2i[e2], -1);
+			}
+		}
+	}
 	return 0;
 }
 
@@ -1747,6 +1836,9 @@ int scallop::collect_path(int e)
 	//p.abd = med[i2e[e]] / mi;
 	//p.reads = gr.get_edge_weight(i2e[e]);
 	p.v = v;
+	if(gr.get_edge_info(i2e[e]).strand == 1) p.strand = '+';
+	if(gr.get_edge_info(i2e[e]).strand == 2) p.strand = '-';
+	if(p.strand == '.') p.strand = gr.strand;
 	paths.push_back(p);
 
 	gr.remove_edge(i2e[e]);
@@ -1781,6 +1873,10 @@ int scallop::collect_phasing_path(int e, int s, int t)
 	path p;
 	p.abd = gr.get_edge_weight(i2e[e]);
 	p.v = v;
+	if(gr.get_edge_info(i2e[e]).strand == 1) p.strand = '+';
+	if(gr.get_edge_info(i2e[e]).strand == 2) p.strand = '-';
+	if(p.strand == '.') p.strand = gr.strand;
+
 	paths.push_back(p);
 
 	gr.remove_edge(i2e[e]);
@@ -1983,7 +2079,7 @@ int scallop::output_transcript(transcript &trst, const path &p, const string &ti
 	trst.gene_id = gr.gid;
 	trst.transcript_id = tid;
 	trst.coverage = p.abd;
-	trst.strand = gr.strand;
+	trst.strand = p.strand;
 
 	const vector<int> &v = p.v;
 	join_interval_map jmap;
