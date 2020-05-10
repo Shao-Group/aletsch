@@ -73,6 +73,7 @@ public:
 
 	// recover splice graph and phasing paths
 	int build_splice_graph(splice_graph &gr, const parameters &cfg);
+	int shrink_junctions();
 	PIDI get_leftmost_bound();
 	PIDI get_rightmost_bound();
 

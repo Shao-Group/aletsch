@@ -426,6 +426,9 @@ int combined_graph::build_splice_graph(splice_graph &gr, const parameters &cfg)
 		gr.set_edge_weight(e, w);
 	}
 
+	// shrink junctions first
+	shrink_junctions();
+
 	// add junctions
 	for(int i = 0; i < junctions.size(); i++)
 	{
@@ -483,6 +486,41 @@ int combined_graph::build_splice_graph(splice_graph &gr, const parameters &cfg)
 		gr.set_edge_info(e, ei);
 		gr.set_edge_weight(e, w);
 	}
+	return 0;
+}
+
+int combined_graph::shrink_junctions()
+{
+	vector< map<PI, int> > mm(3);
+	set<PI> ss;
+	for(int i = 0; i < junctions.size(); i++)
+	{
+		PI32 p = junctions[i].first.first;
+		int s = junctions[i].first.second;
+		assert(mm[s].find(p) == mm[s].end());
+		mm[s].insert(make_pair(p, i));
+		ss.insert(p);
+	}
+
+	vector<PTDI> v;
+	for(auto &x : ss)
+	{
+		int c = -1;
+		PTDI jx(make_pair(TI32(x, 0), DI(0, 0)));
+		for(int k = 0; k < 3; k++)
+		{
+			if(mm[k].find(x) == mm[k].end()) continue;
+			PTDI jc = junctions[mm[k][x]];
+			assert(jc.first.first == jx.first.first);
+			jx.second.first += jc.second.first;
+			jx.second.second += jc.second.second;
+			if(c == -1 || jc.second.first > junctions[mm[c][x]].second.first) c = k;
+		}
+		assert(c != -1);
+		jx.first.second = c;
+		v.push_back(jx);
+	}
+	junctions = v;
 	return 0;
 }
 

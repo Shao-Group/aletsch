@@ -112,13 +112,13 @@ int graph_builder::remove_opposite_junctions()
 	for(int i = 0; i < junctions.size(); i++)
 	{
 		if(fb.find(i) != fb.end()) continue;
-		junction &x = junctions[i];
-		if(x.strand == '.') continue;
 		for(int j = i + 1; j < junctions.size(); j++)
 		{
 			if(fb.find(j) != fb.end()) continue;
+			junction &x = junctions[i];
 			junction &y = junctions[j];
-			if(y.strand == '.') continue;
+			//if(x.strand == '.') continue;
+			//if(y.strand == '.') continue;
 			if(x.strand == y.strand) continue;
 
 			double threshold = cfg.normal_junction_threshold;
