@@ -141,7 +141,7 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	char buf[1024];
 	strcpy(buf, hdr->target_name[bb->tid]);
 	bb->chrm = string(buf);
-	bb->compute_strand(sp.library_type);
+	//bb->compute_strand(sp.library_type);
 
 	//bb->print(index);
 

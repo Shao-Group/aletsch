@@ -26,7 +26,6 @@ int graph_builder::build(splice_graph &gr)
 {
 	build_junctions();
 	remove_opposite_junctions();
-	//analyze_junctions();
 	build_regions();
 	build_partial_exons();
 	link_partial_exons();
