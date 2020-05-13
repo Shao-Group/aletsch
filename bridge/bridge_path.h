@@ -26,6 +26,7 @@ public:
 	double score;
 	vector<int> stack;
 	int count;
+	int strand;
 
 public:
 	int clear();

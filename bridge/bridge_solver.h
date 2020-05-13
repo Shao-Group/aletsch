@@ -43,6 +43,7 @@ public:
 
 	vector<PI> vpairs;						// vertices for each cluster
 	vector<pier> piers;						// piers
+	vector<int> bounds;						// groups of piers
 	map<PI, int> pindex;					// piers index
 	vector<bridge_path> opt;				// optimal bridge path
 
@@ -60,8 +61,11 @@ private:
 	bool check_right_relaxing(const pereads_cluster &pc, int v);
 	int build_piers();
 	int build_piers_index();
+	int build_bounds();
 	int nominate();
-	int dynamic_programming(int k1, int k2, vector< vector<entry> > &table);
+	int nominate(int strand);
+	int refine_pier(pier &p);
+	int dynamic_programming(int k1, int k2, vector< vector<entry> > &table, int strand);
 	vector<int> update_stack(const vector<int> &v, int s);
 	vector< vector<int> > trace_back(int k, const vector< vector<entry> > &table);
 	int vote();

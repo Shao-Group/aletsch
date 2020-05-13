@@ -118,11 +118,31 @@ int bridge_solver::build_piers_index()
 
 int bridge_solver::nominate()
 {
-	if(piers.size() <= 0) return 0;
+	build_bounds();
 
+	if(gr.strand == 0)
+	{
+		nominate(1);
+		nominate(2);
+	}
+	else
+	{
+		nominate(gr.strand);
+	}
+
+	for(int i = 0; i < piers.size(); i++)
+	{
+		refine_pier(piers[i]);
+	}
+	return 0;
+}
+
+int bridge_solver::build_bounds()
+{
+	if(piers.size() <= 0) return 0;
 	sort(piers.begin(), piers.end());
 
-	vector<int> bounds;
+	bounds.clear();
 	bounds.push_back(0);
 	for(int i = 1; i < piers.size(); i++)
 	{
@@ -133,7 +153,11 @@ int bridge_solver::nominate()
 		}
 	}
 	bounds.push_back(piers.size() - 1);
+	return 0;
+}
 
+int bridge_solver::nominate(int strand)
+{
 	vector< vector<entry> > table;
 	table.resize(gr.num_vertices());
 	for(int k = 0; k < bounds.size() / 2; k++)
@@ -144,11 +168,10 @@ int bridge_solver::nominate()
 		int k1 = piers[b2].bs;
 		int k2 = piers[b2].bt;
 
-		dynamic_programming(k1, k2, table);
+		dynamic_programming(k1, k2, table, strand);
 
 		for(int b = b1; b <= b2; b++)
 		{
-
 			int bt = piers[b].bt;
 			vector< vector<int> > pb = trace_back(bt, table);
 
@@ -161,18 +184,25 @@ int bridge_solver::nominate()
 				build_intron_coordinates_from_path(gr, p.v, p.chain);
 				piers[b].bridges.push_back(p);
 			}
-
-			sort(piers[b].bridges.begin(), piers[b].bridges.end(), compare_bridge_path_stack);
-
-			/*
-			printf("bridges for pier %d: (%d, %d)\n", b, piers[b].bs, piers[b].bt);
-			for(int i = 0; i < piers[b].bridges.size(); i++)
-			{
-				piers[b].bridges[i].print(i);
-			}
-			*/
 		}
 	}
+	return 0;
+}
+
+int bridge_solver::refine_pier(pier &p)
+{
+	if(p.bridges.size() == 0) return 0;
+	sort(p.bridges.begin(), p.bridges.end(), compare_bridge_path_vertices);
+	vector<bridge_path> v;
+	v.push_back(p.bridges[0]);
+	for(int i = 1; i < p.bridges.size(); i++)
+	{
+		if(p.bridges[i].v == p.bridges[i - 1].v) continue;
+		v.push_back(p.bridges[i]);
+	}
+
+	p.bridges = v;
+	sort(p.bridges.begin(), p.bridges.end(), compare_bridge_path_stack);
 	return 0;
 }
 
@@ -201,16 +231,19 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 	vector< vector<int32_t> > chains;
 	vector< vector<int32_t> > wholes;
 	vector<int> scores;
+	vector<int> strands;
 	if(ss >= tt)
 	{
 		vector<int32_t> c;
 		vector<int32_t> w;
 		bool b = merge_intron_chains(pc.chain1, pc.chain2, w);
 		assert(b == true);
+		int s = check_strand_from_intron_coordinates(gr, w);
 		type = 1;
 		chains.push_back(c);
 		wholes.push_back(w);
 		scores.push_back(10);
+		strands.push_back(s);
 	}
 	else if(pindex.find(PI(ss, tt)) != pindex.end())
 	{
@@ -223,9 +256,11 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 			vector<int32_t> w = pc.chain1;
 			w.insert(w.end(), pb[e].chain.begin(), pb[e].chain.end());
 			w.insert(w.end(), pc.chain2.begin(), pc.chain2.end());
+			int s = check_strand_from_intron_coordinates(gr, w);
 			wholes.push_back(w);
 			chains.push_back(pb[e].chain);
 			scores.push_back(pb[e].score);
+			strands.push_back(s);
 		}
 	}
 
@@ -246,6 +281,8 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 		int32_t length = pc.bounds[3] - pc.bounds[0] - intron;
 		if(length < length_low) continue;
 		if(length > length_high) continue;
+		if(strands[e] < 0) continue;
+
 		be = e;
 		break;
 	}
@@ -256,6 +293,7 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 	bbp.score = scores[be];
 	bbp.chain = chains[be];
 	bbp.whole = wholes[be];
+	bbp.strand = strands[be];
 
 	return 0;
 }
@@ -356,7 +394,7 @@ int add_phases_from_bridge_path(const pereads_cluster &pc, const bridge_path &bb
 	return 0;
 }
 
-int bridge_solver::dynamic_programming(int k1, int k2, vector< vector<entry> > &table)
+int bridge_solver::dynamic_programming(int k1, int k2, vector< vector<entry> > &table, int strand)
 {
 	int n = gr.num_vertices();
 	assert(k1 >= 0 && k1 < n);
@@ -379,6 +417,8 @@ int bridge_solver::dynamic_programming(int k1, int k2, vector< vector<entry> > &
 		for(edge_iterator it = pi.first; it != pi.second; it++)
 		{
 			edge_descriptor e = (*it);
+			int s = gr.get_edge_info(e).strand;
+			if(s != 0 && s != strand) continue;
 			int j = e->source();
 			int w = (int)(gr.get_edge_weight(e));
 			if(j < k1) continue;

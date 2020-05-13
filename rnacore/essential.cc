@@ -159,6 +159,39 @@ int build_intron_coordinates_from_path(splice_graph &gr, const vector<int> &v, v
 	return 0;
 }
 
+int check_strand_from_intron_coordinates(splice_graph &gr, const vector<int32_t> &v)
+{
+	// assume v encodes intron chain coordinates
+	assert(v.size() % 2 == 0);
+	if(v.size() <= 0) return 0;
+
+	bool b1 = false;
+	bool b2 = false;
+	int n = v.size() / 2;
+	for(int k = 0; k < n; k++)
+	{
+		int32_t p = v[2 * k + 0];
+		int32_t q = v[2 * k + 1];
+		assert(p >= 0 && q >= 0);
+		assert(p <= q);
+
+		if(gr.rindex.find(p) == gr.rindex.end()) return -1;
+		if(gr.lindex.find(q) == gr.lindex.end()) return -1;
+
+		PEB pe = gr.edge(p, q);
+		if(pe.second == false) return false;
+
+		int strand = gr.get_edge_info(pe.first).strand;
+		if(strand == 1) b1 = true;
+		if(strand == 2) b2 = true;
+	}
+
+	if(b1 == true && b2 == true) return -1;
+	if(b1 == true) return 1;
+	if(b2 == true) return 2;
+	return 0;
+}
+
 bool build_path_from_exon_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv)
 {
 	// assume v encodes exon-chain coordinates

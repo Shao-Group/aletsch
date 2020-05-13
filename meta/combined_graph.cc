@@ -344,7 +344,7 @@ int combined_graph::append_junctions(const pereads_cluster &pc, const bridge_pat
 		int32_t p1 = bbp.chain[i * 2 + 0];
 		int32_t p2 = bbp.chain[i * 2 + 1];
 		assert(p1 < p2);
-		TI32 ti(PI32(p1, p2), 0);			// TODO
+		TI32 ti(PI32(p1, p2), bbp.strand);
 		PTDI pi(ti, DI(pc.count, 1));
 		junctions.push_back(pi);
 	}

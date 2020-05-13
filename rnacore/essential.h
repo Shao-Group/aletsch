@@ -28,6 +28,7 @@ int32_t get_total_length_of_introns(const vector<int32_t> &chain);
 // transform between paths and coordinates
 int build_exon_coordinates_from_path(splice_graph &gr, const vector<int> &v, vector<int32_t> &vv);
 int build_intron_coordinates_from_path(splice_graph &gr, const vector<int> &v, vector<int32_t> &vv);
+int check_strand_from_intron_coordinates(splice_graph &gr, const vector<int32_t> &v);
 bool build_path_from_exon_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv);
 bool build_path_from_intron_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv);
 bool build_path_from_mixed_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv);
