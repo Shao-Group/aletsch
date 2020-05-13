@@ -181,7 +181,7 @@ int check_strand_from_intron_coordinates(splice_graph &gr, const vector<int32_t>
 		int kq = gr.lindex[q];
 
 		PEB pe = gr.edge(kp, kq);
-		if(pe.second == false) return false;
+		if(pe.second == false) return -1;
 
 		int strand = gr.get_edge_info(pe.first).strand;
 		if(strand == 1) b1 = true;

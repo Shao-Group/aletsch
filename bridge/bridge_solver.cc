@@ -120,14 +120,18 @@ int bridge_solver::nominate()
 {
 	build_bounds();
 
-	if(gr.strand == 0)
+	if(gr.strand == '.')
 	{
 		nominate(1);
 		nominate(2);
 	}
-	else
+	else if(gr.strand == '+')
 	{
-		nominate(gr.strand);
+		nominate(1);
+	}
+	else if(gr.strand == '-')
+	{
+		nominate(2);
 	}
 
 	for(int i = 0; i < piers.size(); i++)

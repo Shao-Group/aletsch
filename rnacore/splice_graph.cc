@@ -1210,7 +1210,7 @@ int splice_graph::extend_strands()
 	for(edge_iterator it = pei.first; it != pei.second; it++)
 	{
 		edge_descriptor e = *it;
-		int strand = get_edge_info(e).strand;
+		int sd = get_edge_info(e).strand;
 		int s = e->source();
 		int t = e->target();
 		int32_t p1 = get_vertex_info(s).rpos;
@@ -1228,13 +1228,13 @@ int splice_graph::extend_strands()
 		if(e1.second == true) 
 		{
 			edge_info ei = get_edge_info(e1.first);
-			if(ei.strand == 0) ei.strand = strand;
+			if(ei.strand == 0) ei.strand = sd;
 			set_edge_info(e1.first, ei);
 		}
 		if(e2.second == true) 
 		{
 			edge_info ei = get_edge_info(e2.first);
-			if(ei.strand == 0) ei.strand = strand;
+			if(ei.strand == 0) ei.strand = sd;
 			set_edge_info(e2.first, ei);
 		}
 	}
