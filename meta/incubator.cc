@@ -422,6 +422,8 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb)
 			sample_profile &sp = samples[gt.sid];
 			for(int k = index[i].first; k < index[i].second; k++)
 			{
+				vc[k].print(k);
+
 				if(br.opt[k].type < 0) 
 				{
 					write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
