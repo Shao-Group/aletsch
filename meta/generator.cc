@@ -173,6 +173,9 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	bs.build_phase_set(ps);
 	//bs.print();
 
+	printf("single-bridge, combined = %d, \n", 1);
+	bs.print();
+
 	vector<pereads_cluster> ub;
 	bs.collect_unbridged_clusters(ub); 
 

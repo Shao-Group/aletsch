@@ -388,6 +388,9 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb)
 	bridge_solver br(gx, vc, cfg, length_low, length_high);
 	br.build_phase_set(cb.ps);
 
+	printf("cluster-bridge, combined = %lu, \n", gv.size());
+	br.print();
+
 	// resolve individual graphs
 	for(int i = 0; i < gv.size(); i++)
 	{

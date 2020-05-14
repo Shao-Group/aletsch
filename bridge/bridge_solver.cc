@@ -272,6 +272,7 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 	if(chains.size() == 0) return 0;
 
 	int be = -1;
+	int choices = 0;
 	for(int e = 0; e < chains.size(); e++)
 	{
 		assert(check_increasing_sequence<int32_t>(wholes[e]));
@@ -287,8 +288,8 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 		if(length > length_high) continue;
 		if(strands[e] < 0) continue;
 
-		be = e;
-		break;
+		if(be < 0) be = e;
+		choices++;
 	}
 
 	if(be < 0) return 0;
@@ -298,6 +299,7 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 	bbp.chain = chains[be];
 	bbp.whole = wholes[be];
 	bbp.strand = strands[be];
+	bbp.choices = choices;
 
 	return 0;
 }
@@ -489,14 +491,33 @@ int bridge_solver::print()
 	int total_reads = 0;
 	int bridged_reads = 0;
 	int bridged_clusters = 0;
+	//map<int, int> map_choices;
+	//map<int, int> map_scores;
+	int score1;
+	int score2;
+	int choice1;
+	int choice2;
+
 	for(int i = 0; i < vc.size(); i++)
 	{
 		total_reads += vc[i].count;
 		if(opt[i].type < 0) continue;
 		bridged_reads += vc[i].count;
 		bridged_clusters++;
+		int c = opt[i].choices;
+		if(opt[i].choices <= 1) choice1++;
+		else choice2++;
+		if(opt[i].score <= 1.5) score1++;
+		else score2++;
+		/*
+		int s = (int)(opt[i].score);
+		if(map_choices.find(c) == map_choices.end()) map_choices.insert(make_pair(c, 1));
+		else map_choices[c]++;
+		if(map_scores.find(s) == map_scores.end()) map_scores.insert(make_pair(s, 1));
+		else map_scores[s]++;
+		*/
 	}
 
-	printf("bridge_solver: clusters %d / %lu, reads %d / %d, low = %d, high = %d\n", bridged_clusters, vc.size(), bridged_reads, total_reads, length_low, length_high);
+	printf("bridge_solver: clusters %d / %lu, reads %d / %d, choices = %d / %d, scores = %d / %d\n", bridged_clusters, vc.size(), bridged_reads, total_reads, choice1, choice2, score1, score2);
 	return 0;
 }

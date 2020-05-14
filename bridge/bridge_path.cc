@@ -19,6 +19,7 @@ bridge_path::bridge_path()
 	score = 0;
 	count = 0;
 	strand = 0;
+	choices = 0;
 	stack.clear();
 }
 
@@ -34,6 +35,7 @@ int bridge_path::clear()
 	score = 0;
 	count = 0;
 	strand = 0;
+	choices = 0;
 	stack.clear();
 	return 0;
 }
@@ -41,7 +43,7 @@ int bridge_path::clear()
 int bridge_path::print(int index) const
 {
 	if(v.size() == 0) return 0;
-	printf("bridge_path %d: score = %.2lf, count = %d, strand = %d, stack = ( ", index, score, count, strand);
+	printf("bridge_path %d: score = %.2lf, count = %d, strand = %d, choices = %d, stack = ( ", index, score, count, choices, strand);
 	printv(stack);
 	printf("), v = ( ");
 	printv(v);

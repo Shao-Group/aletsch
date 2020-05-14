@@ -27,6 +27,7 @@ public:
 	vector<int> stack;
 	int count;
 	int strand;
+	int choices;
 
 public:
 	int clear();
