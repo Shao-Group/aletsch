@@ -75,7 +75,7 @@ int generator::resolve()
 		ht.set_strand(sp.library_type);
 
 		// TODO for test
-		if(ht.tid >= 1) break;
+		//if(ht.tid >= 1) break;
 		//if(index >= 100) break;
 
 		qlen += ht.qlen;
