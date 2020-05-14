@@ -34,7 +34,7 @@ private:
 public:
 	int build_pereads_clusters(vector<pereads_cluster> &vc);
 	int build_phase_set_from_unpaired_reads(phase_set &ps);
-	int write_unpaired_reads(BGZF *fout, map<int, bam1_t> &umap, int libtype);
+	int write_unpaired_reads(BGZF *fout);
 
 private:
 	int group_pereads();

@@ -54,6 +54,7 @@ public:
 	int print();
 	int build_phase_set(phase_set &ps);
 	int collect_unbridged_clusters(vector<pereads_cluster> &v);
+	int write_bridged_reads(BGZF *fout);
 
 private:
 	int build_bridging_vertices();

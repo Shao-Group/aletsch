@@ -23,6 +23,7 @@ class incubator
 {
 public:
 	incubator(const parameters &c);
+	~incubator();
 
 public:
 	const parameters &cfg;							// parameters for scallop

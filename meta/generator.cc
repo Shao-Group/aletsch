@@ -168,6 +168,7 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	graph_cluster gc(gr, bb->hits, cfg.max_reads_partition_gap, false);
 	gc.build_pereads_clusters(vc);
 	gc.build_phase_set_from_unpaired_reads(ps);
+	if(cfg.output_bridged_bam_dir != "") gc.write_unpaired_reads(sp.bridged_bam);
 
 	bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
 	bs.build_phase_set(ps);

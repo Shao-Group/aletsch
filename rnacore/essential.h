@@ -10,6 +10,7 @@ See LICENSE for licensing.
 #include "hit.h"
 #include "splice_graph.h"
 #include "constants.h"
+#include "pereads_cluster.h"
 
 using namespace std;
 
@@ -47,5 +48,7 @@ int add_cigar_skip(bam1_t &b1t, int32_t p1, int32_t p2);
 int add_cigar_match(bam1_t &b1t, int32_t p1, int32_t p2);
 int build_bam1_t(bam1_t &b1t, const hit &h);
 int build_bam1_t(bam1_t &b1t, const hit &h1, const hit &h2, const vector<int32_t> &chain);
+int write_bridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc, const vector<int32_t> &whole);
+int write_unbridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc);
 
 #endif

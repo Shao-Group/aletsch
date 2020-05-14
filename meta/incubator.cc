@@ -31,6 +31,15 @@ incubator::incubator(const parameters &c)
 	g2g.resize(3);
 }
 
+incubator::~incubator()
+{
+	if(cfg.output_bridged_bam_dir == "") return;
+	for(int i = 0; i < samples.size(); i++)
+	{
+		samples[i].close_bridged_bam();
+	}
+}
+
 int incubator::resolve()
 {
 	time_t mytime;
@@ -91,6 +100,10 @@ int incubator::read_bam_list()
 		if(file.size() == 0) continue;
 		sample_profile sp;
 		sp.file_name = file;
+		if(cfg.output_bridged_bam_dir != "")
+		{
+			sp.open_bridged_bam(cfg.output_bridged_bam_dir);
+		}
 		samples.push_back(sp);
 	}
 
@@ -401,8 +414,29 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb)
 			g1.append(vc[k], br.opt[k]);
 		}
 		gv[i]->combine(&g1);
-		gv[i]->vc.clear();
 	}
+
+	// write bridged and unbridged reads
+	for(int i = 0; i < gv.size(); i++)
+	{
+		combined_graph &gt = *(gv[i]);
+		sample_profile &sp = samples[gt.sid];
+		for(int k = index[i].first; k < index[i].second; k++)
+		{
+			if(br.opt[k].type < 0) 
+			{
+				write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
+			}
+			else
+			{
+				write_bridged_pereads_cluster(sp.bridged_bam, vc[k], br.opt[k].whole);
+			}
+		}
+	}
+
+	// clear to release memory
+	for(int i = 0; i < gv.size(); i++) gv[i]->vc.clear();
+
 	return 0;
 }
 

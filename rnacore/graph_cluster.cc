@@ -238,7 +238,7 @@ int graph_cluster::build_phase_set_from_unpaired_reads(phase_set &ps)
 	return 0;
 }
 
-int graph_cluster::write_unpaired_reads(BGZF *fout, map<int, bam1_t> &umap, int libtype)
+int graph_cluster::write_unpaired_reads(BGZF *fout)
 {
 	for(int i = 0; i < hits.size(); i++)
 	{
@@ -249,16 +249,9 @@ int graph_cluster::write_unpaired_reads(BGZF *fout, map<int, bam1_t> &umap, int 
 		bam1_t b1t;
 		build_bam1_t(b1t, h);
 
-		if(libtype == UNSTRANDED && h.xs == '.')
-		{
-			umap.insert(pair<int, bam1_t>(h.hid, b1t));
-		}
-		else
-		{
-			bam_write1(fout, &(b1t));
-			assert(b1t.data != NULL);
-			delete b1t.data;
-		}
+		bam_write1(fout, &(b1t));
+		assert(b1t.data != NULL);
+		delete b1t.data;
 	}
 	return 0;
 }

@@ -506,6 +506,7 @@ int build_bam1_t(bam1_t &b1t, const hit &h)
 
 int build_bam1_t(bam1_t &b1t, const hit &h1, const hit &h2, const vector<int32_t> &chain)
 {
+	// TODO TODO qname prefix for multiple samples
 	b1t.core = h1;
 	b1t.core.pos = h1.pos;
 	b1t.core.bin = 0;
@@ -553,5 +554,56 @@ int build_bam1_t(bam1_t &b1t, const hit &h1, const hit &h2, const vector<int32_t
 	if(h1.hi != -1 && h1.hi == h2.hi) bam_aux_append(&(b1t), "HI", 'i', 4, (uint8_t*)(&h1.hi));
 	if(h1.nh != -1 && h1.nh == h2.nh) bam_aux_append(&(b1t), "NH", 'i', 4, (uint8_t*)(&h1.nh));
 
+	return 0;
+}
+
+int write_bridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc, const vector<int32_t> &whole)
+{
+	assert(pc.hits1.size() == pc.hits2.size());
+	if(pc.hits1.size() == 0) return 0;
+
+	for(int i = 0; i < pc.hits1.size(); i++)
+	{
+		const hit &h1 = pc.hits1[i];
+		const hit &h2 = pc.hits2[i];
+
+		bam1_t b1t;
+		build_bam1_t(b1t, h1, h2, whole);
+
+		bam_write1(fout, &(b1t));
+		assert(b1t.data != NULL);
+		delete b1t.data;
+	}
+	return 0;
+}
+
+int write_unbridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc)
+{
+	assert(pc.hits1.size() == pc.hits2.size());
+	if(pc.hits1.size() == 0) return 0;
+
+	for(int i = 0; i < pc.hits1.size(); i++)
+	{
+		const hit &h1 = pc.hits1[i];
+
+		bam1_t b1t;
+		build_bam1_t(b1t, h1);
+
+		bam_write1(fout, &(b1t));
+		assert(b1t.data != NULL);
+		delete b1t.data;
+	}
+
+	for(int i = 0; i < pc.hits2.size(); i++)
+	{
+		const hit &h2 = pc.hits2[i];
+
+		bam1_t b1t;
+		build_bam1_t(b1t, h2);
+
+		bam_write1(fout, &(b1t));
+		assert(b1t.data != NULL);
+		delete b1t.data;
+	}
 	return 0;
 }

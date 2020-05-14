@@ -9,14 +9,19 @@ See LICENSE for licensing.
 
 #include <vector>
 #include <string>
+#include <htslib/sam.h>
 
 using namespace std;
 
 class sample_profile
 {
 public:
+	sample_profile();
+
+public:
 	int sample_id;
 	string file_name;
+	BGZF *bridged_bam;
 	int library_type;
 	double insertsize_ave;
 	double insertsize_std;
@@ -24,6 +29,10 @@ public:
 	int insertsize_high;
 	int insertsize_median;
 	vector<double> insertsize_profile;
+
+public:
+	int open_bridged_bam(const string &dir);
+	int close_bridged_bam();
 };
 
 #endif
