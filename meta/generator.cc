@@ -176,6 +176,9 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	bs.build_phase_set(ps);
 	//bs.print();
 
+	vector<pereads_cluster> ub;
+	bs.collect_unbridged_clusters(ub); 
+
 	if(store_hits == true)
 	{
 		gc.write_unpaired_reads(sp.bridged_bam);
@@ -187,10 +190,9 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 		}
 	}
 
-	//printf("single-bridge, combined = %d, ", 1); bs.print();
+	for(int i = 0; i < vc.size(); i++) vc[i].clear();
 
-	vector<pereads_cluster> ub;
-	bs.collect_unbridged_clusters(ub); 
+	//printf("single-bridge, combined = %d, ", 1); bs.print();
 
 	vector<splice_graph> grv;
 	vector<phase_set> hsv;
