@@ -549,9 +549,10 @@ int build_bam1_t(bam1_t &b1t, const hit &h1, const hit &h2, const vector<int32_t
 			h2.print();
 			printv(chain);
 			printf("\n");
+			x2 = x1 + 1;
 		}
 
-		assert(x1 <= x2);
+		//assert(x1 <= x2);
 		if(i % 2 == 0) add_cigar_match(b1t, x1, x2);
 		else add_cigar_skip(b1t, x1, x2);
 	}
