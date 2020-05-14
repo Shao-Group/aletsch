@@ -11,6 +11,7 @@ librnacore_a_SOURCES = splice_graph.h splice_graph.cc \
 					   edge_info.h edge_info.cc \
 					   interval_map.h interval_map.cc \
 					   hit.h hit.cc \
+					   hit_core.h hit_core.cc \
 					   partial_exon.h partial_exon.cc \
 					   region.h region.cc \
 					   junction.h junction.cc \

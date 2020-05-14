@@ -27,6 +27,7 @@ hit& hit::operator=(const hit &h)
 	ts = h.ts;
 	hi = h.hi;
 	nm = h.nm;
+	nh = h.nh;
 	return *this;
 }
 
@@ -43,6 +44,7 @@ hit::hit(const hit &h)
 	ts = h.ts;
 	hi = h.hi;
 	nm = h.nm;
+	nh = h.nh;
 }
 
 hit::~hit()
