@@ -493,10 +493,10 @@ int bridge_solver::print()
 	int bridged_clusters = 0;
 	//map<int, int> map_choices;
 	//map<int, int> map_scores;
-	int score1;
-	int score2;
-	int choice1;
-	int choice2;
+	int score1 = 0;
+	int score2 = 0;
+	int choice1 = 0;
+	int choice2 = 0;
 
 	for(int i = 0; i < vc.size(); i++)
 	{
