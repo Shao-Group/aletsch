@@ -542,7 +542,17 @@ int build_bam1_t(bam1_t &b1t, const hit_core &h1, const hit_core &h2, const vect
 	{
 		int32_t x1 = z[i + 0];
 		int32_t x2 = z[i + 1];
-		assert(x1 <= x2);
+
+		if(x1 > x2)
+		{
+			h1.print();
+			h2.print();
+			printv(chain);
+			printf("\n");
+			x2 = x1 + 1;
+		}
+
+		//assert(x1 <= x2);
 		if(i % 2 == 0) add_cigar_match(b1t, x1, x2);
 		else add_cigar_skip(b1t, x1, x2);
 	}
