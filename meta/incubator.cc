@@ -100,16 +100,14 @@ int incubator::read_bam_list()
 		if(file.size() == 0) continue;
 		sample_profile sp;
 		sp.file_name = file;
-		if(cfg.output_bridged_bam_dir != "")
-		{
-			sp.open_bridged_bam(cfg.output_bridged_bam_dir);
-		}
 		samples.push_back(sp);
 	}
 
 	for(int i = 0; i < samples.size(); i++)
 	{
 		samples[i].sample_id = i;
+		if(cfg.output_bridged_bam_dir == "") continue;
+		samples[i].open_bridged_bam(cfg.output_bridged_bam_dir);
 	}
 
 	fin.close();
@@ -401,8 +399,7 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb)
 	bridge_solver br(gx, vc, cfg, length_low, length_high);
 	br.build_phase_set(cb.ps);
 
-	printf("cluster-bridge, combined = %lu, ", gv.size());
-	br.print();
+	//printf("cluster-bridge, combined = %lu, ", gv.size()); br.print();
 
 	// resolve individual graphs
 	for(int i = 0; i < gv.size(); i++)
@@ -417,19 +414,22 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb)
 	}
 
 	// write bridged and unbridged reads
-	for(int i = 0; i < gv.size(); i++)
+	if(cfg.output_bridged_bam_dir != "")
 	{
-		combined_graph &gt = *(gv[i]);
-		sample_profile &sp = samples[gt.sid];
-		for(int k = index[i].first; k < index[i].second; k++)
+		for(int i = 0; i < gv.size(); i++)
 		{
-			if(br.opt[k].type < 0) 
+			combined_graph &gt = *(gv[i]);
+			sample_profile &sp = samples[gt.sid];
+			for(int k = index[i].first; k < index[i].second; k++)
 			{
-				write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
-			}
-			else
-			{
-				write_bridged_pereads_cluster(sp.bridged_bam, vc[k], br.opt[k].whole);
+				if(br.opt[k].type < 0) 
+				{
+					write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
+				}
+				else
+				{
+					write_bridged_pereads_cluster(sp.bridged_bam, vc[k], br.opt[k].whole);
+				}
 			}
 		}
 	}

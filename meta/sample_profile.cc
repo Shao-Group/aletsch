@@ -17,8 +17,9 @@ int sample_profile::open_bridged_bam(const string &dir)
 	samFile *sfn = sam_open(file_name.c_str(), "r");
 	bam_hdr_t *hdr = sam_hdr_read(sfn);
 
-	string file = dir + "/" + file_name + ".bridged.bam";
-	bridged_bam = bgzf_open(file.c_str(), "w");
+	char file[10240];
+	sprintf(file, "%s/%d.bam", dir.c_str(), sample_id);
+	bridged_bam = bgzf_open(file, "w");
 	bam_hdr_write(bridged_bam, hdr);
 
     bam_hdr_destroy(hdr);

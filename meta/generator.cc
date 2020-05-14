@@ -75,7 +75,7 @@ int generator::resolve()
 		ht.set_strand(sp.library_type);
 
 		// TODO for test
-		//if(ht.tid >= 1) break;
+		if(ht.tid >= 1) break;
 		//if(index >= 100) break;
 
 		qlen += ht.qlen;
@@ -165,17 +165,29 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	vector<pereads_cluster> vc;
 	phase_set ps;
 
-	graph_cluster gc(gr, bb->hits, cfg.max_reads_partition_gap, false);
+	bool store_hits = false;
+	if(cfg.output_bridged_bam_dir != "") store_hits = true;
+
+	graph_cluster gc(gr, bb->hits, cfg.max_reads_partition_gap, store_hits);
 	gc.build_pereads_clusters(vc);
 	gc.build_phase_set_from_unpaired_reads(ps);
-	if(cfg.output_bridged_bam_dir != "") gc.write_unpaired_reads(sp.bridged_bam);
 
 	bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
 	bs.build_phase_set(ps);
 	//bs.print();
 
-	printf("single-bridge, combined = %d, ", 1);
-	bs.print();
+	if(store_hits == true)
+	{
+		gc.write_unpaired_reads(sp.bridged_bam);
+		assert(vc.size() == bs.opt.size());
+		for(int k = 0; k < vc.size(); k++)
+		{
+			if(bs.opt[k].type >= 0) write_bridged_pereads_cluster(sp.bridged_bam, vc[k], bs.opt[k].whole);
+			else write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
+		}
+	}
+
+	//printf("single-bridge, combined = %d, ", 1); bs.print();
 
 	vector<pereads_cluster> ub;
 	bs.collect_unbridged_clusters(ub); 
