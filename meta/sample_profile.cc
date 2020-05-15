@@ -30,6 +30,7 @@ int sample_profile::open_bridged_bam(const string &dir)
 int sample_profile::close_bridged_bam()
 {
 	if(bridged_bam == NULL) return 0;
-	bgzf_close(bridged_bam);
+	int f = bgzf_close(bridged_bam);
+	printf("close bridged bam for sample %s with code %d\n", file_name.c_str(), f);
 	return 0;
 }
