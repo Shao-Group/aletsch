@@ -457,7 +457,7 @@ int add_cigar_skip(bam1_t &b1t, int32_t p1, int32_t p2)
 	return 0;
 }
 
-int build_bam1_t(bam1_t &b1t, const hit_core &h, const vector<int32_t> &chain)
+bool build_bam1_t(bam1_t &b1t, const hit_core &h, const vector<int32_t> &chain)
 {
 	b1t.core = h;
 	b1t.core.pos = h.pos;
@@ -492,7 +492,13 @@ int build_bam1_t(bam1_t &b1t, const hit_core &h, const vector<int32_t> &chain)
 	{
 		int32_t x1 = z[i + 0];
 		int32_t x2 = z[i + 1];
-		assert(x1 <= x2);
+
+		if(x1 >= x2)
+		{
+			printf("fail to build bam1 for %s\n", h.qname.c_str());
+			return false;
+		}
+
 		if(i % 2 == 0) add_cigar_match(b1t, x1, x2);
 		else add_cigar_skip(b1t, x1, x2);
 	}
@@ -501,12 +507,11 @@ int build_bam1_t(bam1_t &b1t, const hit_core &h, const vector<int32_t> &chain)
 	if(h.hi != -1) bam_aux_append(&(b1t), "HI", 'i', 4, (uint8_t*)(&h.hi));
 	if(h.nh != -1) bam_aux_append(&(b1t), "NH", 'i', 4, (uint8_t*)(&h.nh));
 
-	return 0;
+	return true;
 }
 
-int build_bam1_t(bam1_t &b1t, const hit_core &h1, const hit_core &h2, const vector<int32_t> &chain)
+bool build_bam1_t(bam1_t &b1t, const hit_core &h1, const hit_core &h2, const vector<int32_t> &chain)
 {
-	// TODO TODO qname prefix for multiple samples
 	b1t.core = h1;
 	b1t.core.pos = h1.pos;
 	b1t.core.bin = 0;
@@ -543,13 +548,10 @@ int build_bam1_t(bam1_t &b1t, const hit_core &h1, const hit_core &h2, const vect
 		int32_t x1 = z[i + 0];
 		int32_t x2 = z[i + 1];
 
-		if(x1 > x2)
+		if(x1 >= x2)
 		{
-			h1.print();
-			h2.print();
-			printv(chain);
-			printf("\n");
-			x2 = x1 + 1;
+			printf("fail to build bam1 for %s\n", h1.qname.c_str());
+			return false;
 		}
 
 		//assert(x1 <= x2);
@@ -564,7 +566,7 @@ int build_bam1_t(bam1_t &b1t, const hit_core &h1, const hit_core &h2, const vect
 	if(h1.hi != -1 && h1.hi == h2.hi) bam_aux_append(&(b1t), "HI", 'i', 4, (uint8_t*)(&h1.hi));
 	if(h1.nh != -1 && h1.nh == h2.nh) bam_aux_append(&(b1t), "NH", 'i', 4, (uint8_t*)(&h1.nh));
 
-	return 0;
+	return true;
 }
 
 int write_bridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc, const vector<int32_t> &whole)
@@ -578,9 +580,9 @@ int write_bridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc, const v
 		const hit &h2 = pc.hits2[i];
 
 		bam1_t b1t;
-		build_bam1_t(b1t, h1, h2, whole);
-
-		bam_write1(fout, &(b1t));
+		bool b = build_bam1_t(b1t, h1, h2, whole);
+		if(b == true) bam_write1(fout, &(b1t));
+		// TODO, handle false
 		assert(b1t.data != NULL);
 		delete b1t.data;
 	}
@@ -597,9 +599,8 @@ int write_unbridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc)
 		const hit &h1 = pc.hits1[i];
 
 		bam1_t b1t;
-		build_bam1_t(b1t, h1, pc.chain1);
-
-		bam_write1(fout, &(b1t));
+		bool b = build_bam1_t(b1t, h1, pc.chain1);
+		if(b == true) bam_write1(fout, &(b1t));
 		assert(b1t.data != NULL);
 		delete b1t.data;
 	}
@@ -609,9 +610,8 @@ int write_unbridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc)
 		const hit &h2 = pc.hits2[i];
 
 		bam1_t b1t;
-		build_bam1_t(b1t, h2, pc.chain2);
-
-		bam_write1(fout, &(b1t));
+		bool b = build_bam1_t(b1t, h2, pc.chain2);
+		if(b == true) bam_write1(fout, &(b1t));
 		assert(b1t.data != NULL);
 		delete b1t.data;
 	}

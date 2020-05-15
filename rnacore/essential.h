@@ -47,8 +47,8 @@ bool consistent_intron_chains(const vector<int32_t> &x, const vector<int32_t> &y
 // write bam
 int add_cigar_skip(bam1_t &b1t, int32_t p1, int32_t p2);
 int add_cigar_match(bam1_t &b1t, int32_t p1, int32_t p2);
-int build_bam1_t(bam1_t &b1t, const hit_core &h, const vector<int32_t> &chain);
-int build_bam1_t(bam1_t &b1t, const hit_core &h1, const hit_core &h2, const vector<int32_t> &chain);
+bool build_bam1_t(bam1_t &b1t, const hit_core &h, const vector<int32_t> &chain);
+bool build_bam1_t(bam1_t &b1t, const hit_core &h1, const hit_core &h2, const vector<int32_t> &chain);
 int write_bridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc, const vector<int32_t> &whole);
 int write_unbridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc);
 

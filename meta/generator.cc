@@ -63,6 +63,9 @@ int generator::resolve()
 	{
 		bam1_core_t &p = b1t->core;
 
+		// TODO
+		//if(p.tid != 8) continue;
+
 		if((p.flag & 0x4) >= 1) continue;											// read is not mapped
 		if((p.flag & 0x100) >= 1 && cfg.use_second_alignment == false) continue;	// secondary alignment
 		if(p.n_cigar > cfg.max_num_cigar) continue;									// ignore hits with more than max-num-cigar types
@@ -73,10 +76,6 @@ int generator::resolve()
 		ht.set_splices(b1t);
 		ht.set_tags(b1t);
 		ht.set_strand(sp.library_type);
-
-		// TODO for test
-		//if(ht.tid >= 1) break;
-		//if(index >= 100) break;
 
 		qlen += ht.qlen;
 		qcnt += 1;

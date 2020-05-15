@@ -247,9 +247,8 @@ int graph_cluster::write_unpaired_reads(BGZF *fout)
 		hit &h = hits[i];
 
 		bam1_t b1t;
-		build_bam1_t(b1t, h, hits[i].spos);
-
-		bam_write1(fout, &(b1t));
+		bool b = build_bam1_t(b1t, h, hits[i].spos);
+		if(b == true) bam_write1(fout, &(b1t));
 		assert(b1t.data != NULL);
 		delete b1t.data;
 	}
