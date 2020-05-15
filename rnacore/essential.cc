@@ -504,8 +504,8 @@ bool build_bam1_t(bam1_t &b1t, const hit_core &h, const vector<int32_t> &chain)
 	}
 
 	if(h.xs !='.') bam_aux_append(&(b1t), "XS", 'A', 1, (uint8_t*)(&h.xs));
-	if(h.hi != -1) bam_aux_append(&(b1t), "HI", 'C', 4, (uint8_t*)(&h.hi));
-	if(h.nh != -1) bam_aux_append(&(b1t), "NH", 'C', 4, (uint8_t*)(&h.nh));
+	if(h.hi != -1) bam_aux_append(&(b1t), "HI", 'i', 4, (uint8_t*)(&h.hi));
+	if(h.nh != -1) bam_aux_append(&(b1t), "NH", 'i', 4, (uint8_t*)(&h.nh));
 
 	return true;
 }
@@ -563,8 +563,8 @@ bool build_bam1_t(bam1_t &b1t, const hit_core &h1, const hit_core &h2, const vec
 	if(c == '.' && h2.xs != '.') c = h2.xs;
 
 	if(c != '.') bam_aux_append(&(b1t), "XS", 'A', 1, (uint8_t*)(&c));
-	if(h1.hi != -1 && h1.hi == h2.hi) bam_aux_append(&(b1t), "HI", 'C', 4, (uint8_t*)(&h1.hi));
-	if(h1.nh != -1 && h1.nh == h2.nh) bam_aux_append(&(b1t), "NH", 'C', 4, (uint8_t*)(&h1.nh));
+	if(h1.hi != -1 && h1.hi == h2.hi) bam_aux_append(&(b1t), "HI", 'i', 4, (uint8_t*)(&h1.hi));
+	if(h1.nh != -1 && h1.nh == h2.nh) bam_aux_append(&(b1t), "NH", 'i', 4, (uint8_t*)(&h1.nh));
 
 	return true;
 }
