@@ -414,6 +414,7 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb)
 	}
 
 	// write bridged and unbridged reads
+	/*
 	if(cfg.output_bridged_bam_dir != "")
 	{
 		for(int i = 0; i < gv.size(); i++)
@@ -435,6 +436,7 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb)
 			}
 		}
 	}
+	*/
 
 	// clear to release memory
 	for(int i = 0; i < gv.size(); i++) gv[i]->vc.clear();
