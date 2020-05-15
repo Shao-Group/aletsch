@@ -542,12 +542,6 @@ bool build_bam1_t(bam1_t &b1t, const hit_core &h1, const hit_core &h2, const vec
 	z.insert(z.end(), chain.begin(), chain.end());
 	z.push_back(h2.rpos);
 
-	{
-		printf("z = ( ");
-		printv(z);
-		printf(")\n");
-	}
-
 	// CIGAR
 	for(int i = 0; i < z.size() - 1; i++)
 	{
@@ -568,13 +562,9 @@ bool build_bam1_t(bam1_t &b1t, const hit_core &h1, const hit_core &h2, const vec
 	char c = h1.xs;
 	if(c == '.' && h2.xs != '.') c = h2.xs;
 
-	int f = -1;
-	if(c != '.') f = bam_aux_append(&(b1t), "XS", 'A', 1, (uint8_t*)(&c));
-	if(c != '.') assert(f == 0);
-	if(h1.hi != -1 && h1.hi == h2.hi) f = bam_aux_append(&(b1t), "HI", 'C', 4, (uint8_t*)(&h1.hi));
-	if(h1.hi != -1 && h1.hi == h2.hi) assert(f == 0);
-	if(h1.nh != -1 && h1.nh == h2.nh) f = bam_aux_append(&(b1t), "NH", 'C', 4, (uint8_t*)(&h1.nh));
-	if(h1.nh != -1 && h1.nh == h2.nh) assert(f == 0);
+	if(c != '.') bam_aux_append(&(b1t), "XS", 'A', 1, (uint8_t*)(&c));
+	if(h1.hi != -1 && h1.hi == h2.hi) bam_aux_append(&(b1t), "HI", 'C', 4, (uint8_t*)(&h1.hi));
+	if(h1.nh != -1 && h1.nh == h2.nh) bam_aux_append(&(b1t), "NH", 'C', 4, (uint8_t*)(&h1.nh));
 
 	return true;
 }
