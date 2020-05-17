@@ -19,6 +19,7 @@ vertex_info::vertex_info()
 	count = 0;
 	lstrand = '.';
 	rstrand = '.';
+	regional = false;
 }
 
 vertex_info::vertex_info(int l)
@@ -34,6 +35,7 @@ vertex_info::vertex_info(int l)
 	count = 0;
 	lstrand = '.';
 	rstrand = '.';
+	regional = false;
 }
 
 vertex_info::vertex_info(const vertex_info &vi)
@@ -49,4 +51,5 @@ vertex_info::vertex_info(const vertex_info &vi)
 	count = vi.count;
 	lstrand = vi.lstrand;
 	rstrand = vi.rstrand;
+	regional = vi.regional;
 }

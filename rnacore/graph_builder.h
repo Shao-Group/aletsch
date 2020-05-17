@@ -28,6 +28,7 @@ public:
 	vector<junction> junctions;		// splice junctions
 	vector<region> regions;			// regions
 	vector<partial_exon> pexons;	// partial exons
+	vector<bool> regional;			// if a partial_exon is regional
 
 public:
 	int build(splice_graph &gr);

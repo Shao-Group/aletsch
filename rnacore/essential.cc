@@ -17,6 +17,12 @@ int build_child_splice_graph(splice_graph &root, splice_graph &gr, map<int, int>
 	gr.clear();
 	if(a2b.size() <= 0) return 0;
 
+	/*
+	printf("constructing child graph: ");
+	for(auto &z : a2b) printf(" %d -> %d, ", z.first, z.second);
+	printf("\n");
+	*/
+
 	vector<int> vv = get_keys(a2b);
 	sort(vv.begin(), vv.end());
 
@@ -80,6 +86,8 @@ int build_child_splice_graph(splice_graph &root, splice_graph &gr, map<int, int>
 			int t = (*it1)->target();
 			assert(t == n || a2b.find(t) != a2b.end());
 			int y = ((t == n) ? gr.num_vertices() - 1 : a2b[t]);
+
+			//printf("there exists edge from %d to %d in root => (%d, %d)\n", s, t, x, y);
 
 			edge_descriptor e = gr.add_edge(x, y);
 			gr.set_edge_weight(e, root.get_edge_weight(*it1));

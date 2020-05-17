@@ -64,7 +64,7 @@ int generator::resolve()
 		bam1_core_t &p = b1t->core;
 
 		// TODO
-		//if(p.tid >= 1) break;
+		if(p.tid >= 1) break;
 
 		if((p.flag & 0x4) >= 1) continue;											// read is not mapped
 		if((p.flag & 0x100) >= 1 && cfg.use_second_alignment == false) continue;	// secondary alignment
@@ -150,16 +150,23 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	gr.extend_strands();
 	gr.build_vertex_index();
 
-	//gr.print();
-	//printf("\n");
-
 	revise_splice_graph_full(gr, cfg);
+
+	/*
+	printf("-----------------------------\n");
+	gr.print();
+	printf("\n");
+	*/
+
+
+	/* include single-exon transcripts
 	if(gr.count_junctions() <= 0) 
 	{
 		bb->clear();
 		delete bb;
 		return 0;
 	}
+	*/
 
 	vector<pereads_cluster> vc;
 	phase_set ps;
@@ -204,14 +211,10 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	vector<combined_graph> tmp;
 	for(int k = 0; k < grv.size(); k++)
 	{
-		if(grv[k].count_junctions() <= 0) continue;
+		bool b = process_regional_graph(grv[k], hsv[k], ubv[k]);
+		if(b == true) assert(grv[k].count_junctions() <= 0);
+		if(b == true) continue;
 
-		// TODO
-		/*
-		if(grv[k].mixed_strand_graph() == false) continue;
-		grv[k].print();
-		printf("\n");
-		*/
 
 		string gid = "gene." + tostring(index) + "." + tostring(k);
 		combined_graph cb;
@@ -219,8 +222,12 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 		cb.gid = gid;
 		cb.build(grv[k], hsv[k], ubv[k]);
 
-		//cb.print(k);
-		//printf("\n");
+		if(grv[k].num_vertices() == 3)
+		{
+			grv[k].print();
+			cb.print(k);
+			printf("\n");
+		}
 
 		tmp.push_back(std::move(cb));
 	}
@@ -235,6 +242,27 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	bb->clear();
 	delete bb;
 	return 0;
+}
+
+bool generator::process_regional_graph(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc)
+{
+	for(int i = 1; i < gr.num_vertices() - 1; i++)
+	{
+		if(gr.get_vertex_info(i).regional == false) return false;
+	}
+
+	if(cfg.output_bridged_bam_dir != "")
+	{
+		for(int k = 0; k < vc.size(); k++)
+		{
+			write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
+			vc[k].clear();
+		}
+	}
+
+	//gr.print(); printf("above graph is a regional graph\n\n");
+
+	return true;
 }
 
 int generator::partition(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &psv, vector< vector<pereads_cluster> > &ubv)
@@ -310,6 +338,17 @@ int generator::partition(splice_graph &gr, phase_set &ps, vector<pereads_cluster
 			vv[k].insert(i);
 		}
 	}
+
+	// print
+	/*
+	for(int i = 0; i < vv.size(); i++)
+	{
+		printf("component %d: ", i);
+		vector<int> z(vv[i].begin(), vv[i].end());
+		printv(z);
+		printf("\n");
+	}
+	*/
 
 	vector< map<int, int> > vm;
 	for(int k = 0; k < vv.size(); k++)

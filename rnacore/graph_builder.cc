@@ -39,6 +39,7 @@ int graph_builder::clear()
 	junctions.clear();
 	regions.clear();
 	pexons.clear();
+	regional.clear();
 	return 0;
 }
 
@@ -205,10 +206,17 @@ int graph_builder::build_regions()
 int graph_builder::build_partial_exons()
 {
 	pexons.clear();
+	regional.clear();
 	for(int i = 0; i < regions.size(); i++)
 	{
 		region &r = regions[i];
-		pexons.insert(pexons.end(), r.pexons.begin(), r.pexons.end());
+		for(int k = 0; k < r.pexons.size(); k++)
+		{
+			partial_exon &pe = r.pexons[k];
+			pexons.push_back(pe);
+			if((pe.lpos != bd.lpos || pe.rpos != bd.rpos) && pe.ltype == START_BOUNDARY && pe.rtype == END_BOUNDARY) regional.push_back(true);
+			else regional.push_back(false);
+		}
 	}
 	return 0;
 }
@@ -292,6 +300,7 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 		vi.rpos = r.rpos;
 		vi.length = length;
 		vi.stddev = r.dev;
+		vi.regional = regional[i];
 		gr.set_vertex_info(i + 1, vi);
 	}
 
