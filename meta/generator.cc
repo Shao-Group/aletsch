@@ -153,7 +153,7 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	//gr.print();
 	//printf("\n");
 
-	revise_splice_graph_full(gr, cfg);
+	//revise_splice_graph_full(gr, cfg);
 	if(gr.count_junctions() <= 0) 
 	{
 		bb->clear();
@@ -205,6 +205,8 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	for(int k = 0; k < grv.size(); k++)
 	{
 		if(grv[k].count_junctions() <= 0) continue;
+
+		revise_splice_graph_full(grv[k], cfg);
 
 		// TODO
 		/*
