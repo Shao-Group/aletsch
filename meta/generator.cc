@@ -210,22 +210,9 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	vector<combined_graph> tmp;
 	for(int k = 0; k < grv.size(); k++)
 	{
-<<<<<<< HEAD
-		if(grv[k].count_junctions() <= 0) continue;
-
-		revise_splice_graph_full(grv[k], cfg);
-
-		// TODO
-		/*
-		if(grv[k].mixed_strand_graph() == false) continue;
-		grv[k].print();
-		printf("\n");
-		*/
-=======
 		bool b = process_regional_graph(grv[k], hsv[k], ubv[k]);
 		if(b == true) assert(grv[k].count_junctions() <= 0);
 		if(b == true) continue;
->>>>>>> dev
 
 		string gid = "gene." + tostring(index) + "." + tostring(k);
 		combined_graph cb;
