@@ -79,9 +79,10 @@ public:
 
 	// for filtering paths
 	double min_transcript_coverage;
-	double min_single_exon_coverage;
+	double min_single_exon_transcript_coverage;
 	int min_transcript_length_base;
 	int min_transcript_length_increase;
+	int min_single_exon_transcript_length;
 	int min_exon_length;
 	int max_num_exons;
 

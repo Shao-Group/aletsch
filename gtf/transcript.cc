@@ -180,7 +180,7 @@ size_t transcript::get_intron_chain_hashing() const
 		vv.push_back(v[i].first);
 		vv.push_back(v[i].second);
 	}
-	return vector_hash(vv);
+	return vector_hash(vv) + 1;
 }
 
 bool transcript::intron_chain_match(const transcript &t) const
@@ -198,9 +198,31 @@ bool transcript::intron_chain_match(const transcript &t) const
 	return true;
 }
 
+bool transcript::equal1(const transcript &t) const
+{
+	if(exons.size() != t.exons.size()) return false;
+
+	if(seqname != t.seqname) return false;
+	if(strand == '+' && t.strand == '-') return false;
+	if(strand == '-' && t.strand == '+') return false;
+
+	if(exons.size() == 1)
+	{
+		int32_t p1 = exons[0].first < t.exons[0].first ? exons[0].first : t.exons[0].first;
+		int32_t p2 = exons[0].first < t.exons[0].first ? t.exons[0].first : exons[0].first;
+		int32_t q1 = exons[0].second > t.exons[0].second ? exons[0].second : t.exons[0].second;
+		int32_t q2 = exons[0].second > t.exons[0].second ? t.exons[0].second : exons[0].second;
+
+		double overlap = (q2 - p2) * 1.0 / (q1 - p1);
+		if(overlap < 0.8) return false;
+		else return true;
+	}
+
+	return intron_chain_match(t);
+}
+
 int transcript::extend_bounds(const transcript &t)
 {
-	assert(intron_chain_match(t));
 	if(exons.size() == 0) return 0;
 	if(t.exons.front().first < exons.front().first) exons.front().first = t.exons.front().first;
 	if(t.exons.back().second > exons.back().second) exons.back().second = t.exons.back().second;

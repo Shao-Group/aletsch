@@ -215,19 +215,21 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 		if(b == true) assert(grv[k].count_junctions() <= 0);
 		if(b == true) continue;
 
-
 		string gid = "gene." + tostring(index) + "." + tostring(k);
 		combined_graph cb;
 		cb.sid = sp.sample_id;
 		cb.gid = gid;
 		cb.build(grv[k], hsv[k], ubv[k]);
 
+		// print
+		/*
 		if(grv[k].num_vertices() == 3)
 		{
 			grv[k].print();
 			cb.print(k);
 			printf("\n");
 		}
+		*/
 
 		tmp.push_back(std::move(cb));
 	}
@@ -246,10 +248,14 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 
 bool generator::process_regional_graph(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc)
 {
+	bool all_regional = true;
 	for(int i = 1; i < gr.num_vertices() - 1; i++)
 	{
-		if(gr.get_vertex_info(i).regional == false) return false;
+		if(gr.get_vertex_info(i).regional == false) all_regional = false;
+		if(all_regional == false) break;
 	}
+
+	if(all_regional == false && gr.num_edges() >= 1) return false;
 
 	if(cfg.output_bridged_bam_dir != "")
 	{
