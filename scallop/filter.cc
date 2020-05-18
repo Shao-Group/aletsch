@@ -19,9 +19,10 @@ int filter::filter_length_coverage()
 	{
 		int e = trs[i].exons.size();
 		int minl = cfg.min_transcript_length_base + e * cfg.min_transcript_length_increase;
-		if(trs[i].length() < minl) continue;
-		if(e == 1 && trs[i].coverage < cfg.min_single_exon_coverage) continue;
+		if(e >= 2 && trs[i].length() < minl) continue;
 		if(e >= 2 && trs[i].coverage < cfg.min_transcript_coverage) continue;
+		if(e == 1 && trs[i].length() < cfg.min_single_exon_transcript_length) continue;
+		if(e == 1 && trs[i].coverage < cfg.min_single_exon_transcript_coverage) continue;
 		v.push_back(trs[i]);
 	}
 	trs = v;

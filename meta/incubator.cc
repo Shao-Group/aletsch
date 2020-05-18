@@ -352,15 +352,15 @@ int incubator::assemble(combined_graph &cb, transcript_set &ts, int mode)
 	for(int k = 0; k < sx.trsts.size(); k++)
 	{
 		transcript &t = sx.trsts[k];
-		if(t.exons.size() <= 1) continue;
+		//if(t.exons.size() <= 1) continue;
 		t.RPKM = 0;
 		z++;
 		ts.add(t, 1, cb.sid, mode);
 		//t.write(cout);
 	}
 
-	//printf("assemble %s: %d transcripts, ", cb.gid.c_str(), z);
-	//cb.print(0);
+	printf("assemble %s: %d transcripts, ", cb.gid.c_str(), z);
+	cb.print(0);
 
 	return 0;
 }
@@ -453,7 +453,7 @@ int incubator::postprocess(const transcript_set &ts, ofstream &fout, mutex &mylo
 	//cs.solve();
 
 	filter ft(v, /*cs.cct,*/ cfg);
-	ft.join_single_exon_transcripts();
+	//ft.join_single_exon_transcripts();
 	ft.filter_length_coverage();
 
 	stringstream ss;

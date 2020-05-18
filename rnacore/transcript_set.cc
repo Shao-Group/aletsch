@@ -12,12 +12,14 @@ int transcript_set::add(const trans_item &ti, int mode)
 {
 	transcript t = ti.trst;
 
-	if(t.exons.size() <= 1) return 0;
-
 	if(mt.size() == 0) chrm = t.seqname;
 	assert(t.seqname == chrm);
 
 	size_t h = t.get_intron_chain_hashing();
+	if(t.exons.size() <= 1) assert(h == 0);
+	if(t.exons.size() >= 2) assert(h >= 1);
+
+	//if(t.exons.size() == 1) printf("add single-exon transcript: %d-%d, cov = %.1lf\n",  t.exons[0].first, t.exons[0].second, t.coverage);
 
 	auto it = mt.find(h);
 	if(it == mt.end())
@@ -34,7 +36,7 @@ int transcript_set::add(const trans_item &ti, int mode)
 		{
 			if(v[k].trst.strand != t.strand) continue;
 
-			bool b = v[k].trst.intron_chain_match(t);
+			bool b = v[k].trst.equal1(t);
 			if(b == false) continue;
 
 			if(mode == TRANSCRIPT_COUNT_ADD_COVERAGE_ADD) 
@@ -128,7 +130,7 @@ pair<bool, trans_item> transcript_set::query(const transcript &t) const
 	{
 		transcript x = v[k].trst;
 		if(x.strand != t.strand) continue;
-		bool b = x.intron_chain_match(t);
+		bool b = x.equal1(t);
 		if(b == true) 
 		{
 			p.first = true;

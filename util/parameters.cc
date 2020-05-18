@@ -81,9 +81,10 @@ parameters::parameters()
 	
 	// for filtering paths
 	min_transcript_coverage = 1.0;
-	min_single_exon_coverage = 20;
 	min_transcript_length_base = 150;
 	min_transcript_length_increase = 50;
+	min_single_exon_transcript_coverage = 2.5;
+	min_single_exon_transcript_length = 250;
 	min_exon_length = 20;
 	max_num_exons = 10000;
 
@@ -264,9 +265,14 @@ int parameters::parse_arguments(int argc, const char ** argv)
 			min_transcript_coverage = atof(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "--min_single_exon_coverage")
+		else if(string(argv[i]) == "--min_single_exon_transcript_coverage")
 		{
-			min_single_exon_coverage = atof(argv[i + 1]);
+			min_single_exon_transcript_coverage = atof(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "--min_single_exon_transcript_length")
+		{
+			min_single_exon_transcript_length = atoi(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "--min_transcript_length_base")

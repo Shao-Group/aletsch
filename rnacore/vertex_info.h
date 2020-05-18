@@ -28,6 +28,7 @@ public:
 	int count;			// #samples supportin
 	char lstrand;		// left side strand
 	char rstrand;		// right side strand	
+	bool regional;		// if the partial-exon is regional
 };
 
 #endif
