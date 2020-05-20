@@ -12,7 +12,8 @@ See LICENSE for licensing.
 #include <sstream>
 #include <algorithm>
 
-combined_graph::combined_graph()
+combined_graph::combined_graph(const parameters &c)
+	: cfg(c)
 {
 	num_combined = 0;
 	strand = '?';
@@ -568,6 +569,71 @@ set<int32_t> combined_graph::get_reliable_splices(int samples, double weight)
 		s.insert(p);
 	}
 	return s;
+}
+
+int combined_graph::group_junctions()
+{
+	directed_graph gr;
+	build_junction_graph(gr);
+
+	set<int> fb;
+	vector<int> topo = gr.topological_sort();
+	for(int i = 0; i < topo.size(); i++)
+	{
+		if(fb.find(i) != fb.end()) continue;
+		vector<int> v;
+		vector<int> b;
+		gr.bfs(i, v, b, fb);
+
+		printf("cluster starting with %d: \n", i);
+		for(int k = 0; k < v.size(); k++)
+		{
+			int x = v[k];
+			assert(fb.find(x) == fb.end());
+			fb.insert(x);
+			PTDI &p = junctions[x];
+			printf(" junction %d: %d-%d, strand = %d, weight = %.1lf, count = %d\n", x, p.first.first.first, p.first.first.second, p.first.second, p.second.first, p.second.second);
+		}
+	}
+	return 0;
+}
+
+int combined_graph::build_junction_graph(directed_graph &gr)
+{
+	for(int i = 0; i < junctions.size(); i++)
+	{
+		gr.add_vertex();
+	}
+
+	for(int i = 0; i < junctions.size(); i++)
+	{
+		for(int j = i + 1; j < junctions.size(); j++)
+		{
+			int p = compare_two_junctions(junctions[i], junctions[j]);
+			if(p == +1) gr.add_edge(i, j);
+			if(p == -1) gr.add_edge(j, i);
+		}
+	}
+	return 0;
+}
+
+int combined_graph::compare_two_junctions(PTDI &x, PTDI &y)
+{
+	if(x.first.second != y.first.second) return 0;	// TODO
+	PI &px = x.first.first;
+	PI &py = y.first.first;
+
+	int32_t dx = px.second - px.first;
+	int32_t dy = py.second - py.first;
+	if(fabs(dx - dy) > cfg.max_cluster_intron_distance) return 0;
+
+	double s1 = fabs(px.first - py.first);
+	double s2 = fabs(px.second - py.second);
+	if(s1 > cfg.max_cluster_intron_shifting) return 0;
+	if(s2 > cfg.max_cluster_intron_shifting) return 0;
+
+	if(x.second.first > y.second.first) return 1;
+	else return -1;
 }
 
 int combined_graph::clear()

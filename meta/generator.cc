@@ -206,7 +206,7 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 		if(b == true) continue;
 
 		string gid = "gene." + tostring(index) + "." + tostring(k);
-		combined_graph cb;
+		combined_graph cb(cfg);
 		cb.sid = sp.sample_id;
 		cb.gid = gid;
 		cb.build(grv[k], hsv[k], ubv[k]);
@@ -220,6 +220,9 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 			printf("\n");
 		}
 		*/
+
+		cb.print(k);
+		cb.group_junctions();
 
 		tmp.push_back(std::move(cb));
 	}

@@ -291,7 +291,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	}
 	else
 	{
-		combined_graph cx;
+		combined_graph cx(cfg);
 		resolve_cluster(gv, cx, mylock);
 
 		for(int i = 0; i < gv.size(); i++)
@@ -409,7 +409,7 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, m
 	// resolve individual graphs
 	for(int i = 0; i < gv.size(); i++)
 	{
-		combined_graph g1;
+		combined_graph g1(cfg);
 		for(int k = index[i].first; k < index[i].second; k++)
 		{
 			if(br.opt[k].type < 0) continue;

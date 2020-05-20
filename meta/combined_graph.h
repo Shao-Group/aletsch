@@ -26,9 +26,10 @@ using namespace std;
 class combined_graph
 {
 public:
-	combined_graph();
+	combined_graph(const parameters &cfg);
 
 public:
+	const parameters &cfg;
 	int sid;
 	string gid;
 	string chrm;
@@ -70,6 +71,11 @@ public:
 	int append(const pereads_cluster &pc, const bridge_path &bbp);
 	int append_regions(const pereads_cluster &pc, const bridge_path &bbp);
 	int append_junctions(const pereads_cluster &pc, const bridge_path &bbp);
+
+	// group junctions
+	int group_junctions();
+	int build_junction_graph(directed_graph &gr);
+	int compare_two_junctions(PTDI &x, PTDI &y);
 
 	// recover splice graph and phasing paths
 	int build_splice_graph(splice_graph &gr, const parameters &cfg);

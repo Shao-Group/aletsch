@@ -89,6 +89,7 @@ public:
 	// for clustering assembled transcripts
 	int32_t max_cluster_boundary_distance;
 	int32_t max_cluster_intron_distance;
+	int32_t max_cluster_intron_shifting;
 	double min_cluster_single_exon_ratio;
 
 public:

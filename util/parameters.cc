@@ -91,6 +91,7 @@ parameters::parameters()
 	// for clustering assembled transcripts
 	max_cluster_boundary_distance = 10000;
 	max_cluster_intron_distance = 5;
+	max_cluster_intron_shifting = 10;
 	min_cluster_single_exon_ratio = 0.8;
 }
 
