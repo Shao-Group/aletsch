@@ -584,13 +584,19 @@ int combined_graph::group_junctions()
 		vector<int> v;
 		vector<int> b;
 		gr.bfs(i, v, b, fb);
-
-		printf("cluster starting with %d: \n", i);
 		for(int k = 0; k < v.size(); k++)
 		{
 			int x = v[k];
 			assert(fb.find(x) == fb.end());
 			fb.insert(x);
+		}
+
+		if(v.size() <= 1) continue;
+
+		printf("cluster starting with %d: \n", i);
+		for(int k = 0; k < v.size(); k++)
+		{
+			int x = v[k];
 			PTDI &p = junctions[x];
 			printf(" junction %d: %d-%d, strand = %d, weight = %.1lf, count = %d\n", x, p.first.first.first, p.first.first.second, p.first.second, p.second.first, p.second.second);
 		}

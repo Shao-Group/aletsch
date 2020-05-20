@@ -379,6 +379,9 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, m
 	cb.combine(gv);
 	cb.sid = -1;
 
+	// group junctions TODO
+	cb.group_junctions();
+
 	// rebuild splice graph
 	splice_graph gx;
 	cb.build_splice_graph(gx, cfg);
