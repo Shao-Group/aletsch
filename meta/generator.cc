@@ -28,7 +28,7 @@ generator::generator(sample_profile &s, vector<combined_graph> &v, const paramet
 {
 	previewer pre(cfg, sp);
 	pre.infer_library_type();
-	pre.infer_insertsize();
+	if(sp.data_type == "paired_end") pre.infer_insertsize();
 
     sfn = sam_open(sp.file_name.c_str(), "r");
     hdr = sam_hdr_read(sfn);
@@ -62,9 +62,7 @@ int generator::resolve()
     while(sam_read1(sfn, hdr, b1t) >= 0)
 	{
 		bam1_core_t &p = b1t->core;
-
-		// TODO
-		//if(p.tid >= 1) break;
+		//if(p.tid >= 1) break;		// TODO
 
 		if((p.flag & 0x4) >= 1) continue;											// read is not mapped
 		if((p.flag & 0x100) >= 1 && cfg.use_second_alignment == false) continue;	// secondary alignment
@@ -76,6 +74,8 @@ int generator::resolve()
 		ht.set_splices(b1t);
 		ht.set_tags(b1t);
 		ht.set_strand(sp.library_type);
+
+		//ht.print();
 
 		qlen += ht.qlen;
 		qcnt += 1;
@@ -156,15 +156,6 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	printf("-----------------------------\n");
 	gr.print();
 	printf("\n");
-	*/
-
-	/* include single-exon transcripts
-	if(gr.count_junctions() <= 0) 
-	{
-		bb->clear();
-		delete bb;
-		return 0;
-	}
 	*/
 
 	vector<pereads_cluster> vc;

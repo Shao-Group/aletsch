@@ -191,8 +191,8 @@ bool hit::operator<(const hit &h) const
 int hit::print() const
 {
 	// print basic information
-	printf("Hit %s: hid = %d, [%d-%d), mpos = %d, flag = %d, quality = %d, strand = %c, xs = %c, ts = %c, isize = %d, qlen = %d, hi = %d\n", 
-			qname.c_str(), hid, pos, rpos, mpos, flag, qual, strand, xs, ts, isize, qlen, hi);
+	printf("Hit %s: tid = %d, hid = %d, [%d-%d), mpos = %d, flag = %d, quality = %d, strand = %c, xs = %c, ts = %c, isize = %d, qlen = %d, hi = %d\n", 
+			qname.c_str(), tid, hid, pos, rpos, mpos, flag, qual, strand, xs, ts, isize, qlen, hi);
 
 	return 0;
 

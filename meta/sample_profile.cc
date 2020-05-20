@@ -10,6 +10,7 @@ See LICENSE for licensing.
 sample_profile::sample_profile()
 {
 	bridged_bam = NULL;
+	data_type = "paired_end";
 }
 
 int sample_profile::open_bridged_bam(const string &dir)
@@ -32,5 +33,11 @@ int sample_profile::close_bridged_bam()
 	if(bridged_bam == NULL) return 0;
 	int f = bgzf_close(bridged_bam);
 	printf("close bridged bam for sample %s with code %d\n", file_name.c_str(), f);
+	return 0;
+}
+
+int sample_profile::print()
+{
+	printf("file = %s, type = %s\n", file_name.c_str(), data_type.c_str());
 	return 0;
 }

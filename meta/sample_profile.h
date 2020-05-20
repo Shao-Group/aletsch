@@ -23,6 +23,7 @@ public:
 	string file_name;
 	BGZF *bridged_bam;
 	int library_type;
+	string data_type;
 	double insertsize_ave;
 	double insertsize_std;
 	int insertsize_low;
@@ -33,6 +34,7 @@ public:
 public:
 	int open_bridged_bam(const string &dir);
 	int close_bridged_bam();
+	int print();
 };
 
 #endif

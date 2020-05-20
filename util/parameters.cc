@@ -40,7 +40,7 @@ parameters::parameters()
 
 	// for loading bam file and reads
 	min_flank_length = 3;
-	max_num_cigar = 1000;
+	max_num_cigar = 10000;
 	min_bundle_gap = 50;
 	min_num_hits_in_bundle = 20;
 	min_mapping_quality = 1;

@@ -96,10 +96,15 @@ int incubator::read_bam_list()
 	char line[102400];
 	while(fin.getline(line, 102400, '\n'))
 	{
-		string file(line);
-		if(file.size() == 0) continue;
+		if(strlen(line) <= 0) continue;
+		stringstream sstr(line);
+		char file[10240];
+		char type[10240];
+		sstr >> file >> type;
 		sample_profile sp;
 		sp.file_name = file;
+		sp.data_type = type;
+		sp.print();
 		samples.push_back(sp);
 	}
 

@@ -283,7 +283,7 @@ bool build_path_from_intron_coordinates(splice_graph &gr, const vector<int32_t> 
 	{
 		int a = pp[k + 0].second;
 		int b = pp[k + 1].first;
-		assert(a <= b);
+		if(a > b) return false;
 		if(check_continuous_vertices(gr, a, b) == false) return false;
 		for(int j = a; j <= b; j++) vv.push_back(j);
 	}
