@@ -578,7 +578,8 @@ int combined_graph::refine_junctions(vector<combined_graph*> &gv, const vector<s
 
 	directed_graph gr;
 	map<PI32, PI32> jm;
-	build_junction_graph(gr, mt);
+	//build_junction_graph(gr, mt);
+	build_junction_graph(gr);
 	build_junction_map(gr, jm);
 
 	project_junctions(jm);
