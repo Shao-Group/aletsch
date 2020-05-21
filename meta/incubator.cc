@@ -248,8 +248,8 @@ int incubator::write()
 int incubator::generate(sample_profile &sp, vector<combined_group> &gv, mutex &mylock)
 {	
 	vector<combined_graph> v;
-	parameters c = cfg;
-	generator gt(sp, v, c);
+	parameters cfg1 = cfg;
+	generator gt(sp, v, cfg1);
 	gt.resolve();
 
 	mylock.lock();

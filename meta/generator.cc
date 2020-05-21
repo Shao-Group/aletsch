@@ -62,7 +62,7 @@ int generator::resolve()
     while(sam_read1(sfn, hdr, b1t) >= 0)
 	{
 		bam1_core_t &p = b1t->core;
-		if(p.tid >= 1) break;		// TODO
+		//if(p.tid >= 1) break;		// TODO
 
 		if((p.flag & 0x4) >= 1) continue;											// read is not mapped
 		if((p.flag & 0x100) >= 1 && cfg.use_second_alignment == false) continue;	// secondary alignment
@@ -130,13 +130,20 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 {
 	if(bb == NULL) return 0;
 
-	if(bb->tid < 0 || bb->hits.size() < cfg.min_num_hits_in_bundle) 
+	if(bb->tid < 0)
 	{
 		bb->clear();
 		delete bb;
 		return 0;
 	}
 
+	if(sp.data_type == "paired_end" && bb->hits.size() < cfg.min_num_hits_in_bundle) 
+	{
+		bb->clear();
+		delete bb;
+		return 0;
+	}
+	
 	char buf[1024];
 	strcpy(buf, hdr->target_name[bb->tid]);
 	bb->chrm = string(buf);
