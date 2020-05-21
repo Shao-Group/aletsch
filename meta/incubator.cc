@@ -28,6 +28,7 @@ See LICENSE for licensing.
 incubator::incubator(const parameters &c)
 	: cfg(c)
 {
+	batch = 0;
 	g2g.resize(3);
 }
 
@@ -73,6 +74,8 @@ int incubator::resolve()
 
 		mytime = time(NULL);
 		printf("FINISH PROCESSING BATCH\n");
+
+		batch++;
 	}
 
 	mytime = time(NULL);
@@ -285,7 +288,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 
 	if(gv.size() == 1)
 	{
-		gv[0]->set_gid(instance, subindex++);
+		gv[0]->set_gid(batch, instance, subindex++);
 		//map<PI32, PI32> jm = gv[0]->group_junctions();
 		//gv[0]->project_junctions(jm);
 		assemble(*gv[0], ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
@@ -298,11 +301,11 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 
 		for(int i = 0; i < gv.size(); i++)
 		{
-			gv[i]->set_gid(instance, subindex++);
+			gv[i]->set_gid(batch, instance, subindex++);
 			assemble(*gv[i], ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		}
 
-		cx.set_gid(instance, subindex++);
+		cx.set_gid(batch, instance, subindex++);
 		assemble(cx, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_NUL);
 	}
 

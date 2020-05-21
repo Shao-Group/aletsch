@@ -28,10 +28,10 @@ int combined_graph::copy_meta_information(const combined_graph &cb)
 	return 0;
 }
 
-int combined_graph::set_gid(int instance, int subindex)
+int combined_graph::set_gid(int batch, int instance, int subindex)
 {
 	char name[10240];
-	sprintf(name, "instance.%d.%d.0", instance, subindex);
+	sprintf(name, "instance.%d.%d.%d", batch, instance, subindex);
 	gid = name;
 	return 0;
 }

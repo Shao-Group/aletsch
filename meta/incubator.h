@@ -26,6 +26,7 @@ public:
 	~incubator();
 
 public:
+	int batch;										// batch id
 	const parameters &cfg;							// parameters for scallop
 	vector<sample_profile> samples;					// samples
 	vector<vector<transcript>> strsts;				// predicted transcripts for each sample
