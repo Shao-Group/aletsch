@@ -74,7 +74,6 @@ int phase_set::project_junctions(const map<PI32, PI32> &jm)
 		vector<int32_t> v = x->first;
 		int c = x->second;
 		assert(v.size() % 2 == 0);
-		if(v.size() <= 2) continue;
 
 		vector<int32_t> vv;
 		vv.push_back(v.front());

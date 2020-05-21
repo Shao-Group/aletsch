@@ -581,11 +581,9 @@ int combined_graph::refine_junctions(vector<combined_graph*> &gv, const vector<s
 	build_junction_graph(gr, mt);
 	build_junction_map(gr, jm);
 
-	// TODO
-	assert(jm.size() == 0);
 	project_junctions(jm);
-
 	for(int i = 0; i < gv.size(); i++) gv[i]->project_junctions(jm);
+
 	return 0;
 }
 
