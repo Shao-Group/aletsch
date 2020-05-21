@@ -96,12 +96,7 @@ int phase_set::project_junctions(const map<PI32, PI32> &jm)
 		vv.push_back(v.back());
 		assert(v.size() == vv.size());
 
-		bool succeed = true;
-		int p = vv.size() - 1;
-		int q = vv.size() - 2;
-		if(vv[0] >= vv[1]) succeed = false;
-		if(vv[p] <= vv[q]) succeed = false;
-
+		bool succeed = check_increasing_sequence(vv);
 		if(succeed == true) ps.add(vv, c);
 		else ps.add(v, c);
 	}

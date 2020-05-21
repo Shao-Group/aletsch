@@ -58,6 +58,10 @@ int pereads_cluster::project_junctions(const map<PI32, PI32> &jm)
 	if(chain2.size() >= 2 && extend[2] >= chain2.front()) succeed = false;
 	if(chain2.size() >= 2 && extend[3] <= chain2.back()) succeed = false;
 
+	vector<int32_t> chain = chain1;
+	chain.insert(chain.end(), chain2.begin(), chain2.end());
+	if(check_increasing_sequence(chain) == false) succeed = false;
+
 	if(succeed == true) return 0;
 
 	chain1 = c1;
