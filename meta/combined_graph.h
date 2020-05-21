@@ -20,6 +20,7 @@ See LICENSE for licensing.
 #include "interval_map.h"
 #include "constants.h"
 #include "parameters.h"
+#include "sample_profile.h"
 
 using namespace std;
 
@@ -74,8 +75,11 @@ public:
 
 	// group junctions
 	map<PI32, PI32> group_junctions();
+	int refine_junctions(vector<combined_graph*> &gv, const vector<sample_profile> &samples);
+	int classify_junctions(vector<combined_graph*> &gv, const vector<sample_profile> &samples, map<TI32, int> &mt);
 	int compare_two_junctions(PTDI &x, PTDI &y);
 	int build_junction_graph(directed_graph &gr);
+	int build_junction_graph(directed_graph &gr, const map<TI32, int> &mt);
 	int build_junction_map(directed_graph &gr, map<PI32, PI32> &jm);
 	int project_junctions(const map<PI32, PI32> &jm);
 	int rebuild_junctions(const map<PI32, PI32> &jm);

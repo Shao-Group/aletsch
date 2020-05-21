@@ -571,6 +571,50 @@ set<int32_t> combined_graph::get_reliable_splices(int samples, double weight)
 	return s;
 }
 
+int combined_graph::refine_junctions(vector<combined_graph*> &gv, const vector<sample_profile> &samples)
+{
+	map<TI32, int> mt;
+	classify_junctions(gv, samples, mt);
+
+	directed_graph gr;
+	map<PI32, PI32> jm;
+	build_junction_graph(gr, mt);
+	build_junction_map(gr, jm);
+
+	project_junctions(jm);
+
+	for(int i = 0; i < gv.size(); i++) gv[i]->project_junctions(jm);
+	return 0;
+}
+
+int combined_graph::classify_junctions(vector<combined_graph*> &gv, const vector<sample_profile> &samples, map<TI32, int> &mt)
+{
+	for(int i = 0; i < gv.size(); i++)
+	{
+		combined_graph *gt = gv[i];
+		assert(gt->sid >= 0 && gt->sid < samples.size());
+
+		for(int k = 0; k < gt->junctions.size(); k++)
+		{
+			PTDI p = gt->junctions[k];
+			
+			if(mt.find(p.first) == mt.end())
+			{
+				int type = 0;
+				if(samples[gt->sid].data_type == "paired_end") type = 1;
+				else if(samples[gt->sid].data_type == "ont") type = -1;
+				else assert(false);
+				mt.insert(make_pair(p.first, type));
+			}
+			else
+			{
+				mt[p.first] = 1;
+			}
+		}
+	}
+	return 0;
+}
+
 map<PI32, PI32> combined_graph::group_junctions()
 {
 	directed_graph gr;
@@ -682,6 +726,33 @@ int combined_graph::build_junction_map(directed_graph &gr, map<PI32, PI32> &jm)
 	junctions = vv;
 	*/
 
+	return 0;
+}
+
+int combined_graph::build_junction_graph(directed_graph &gr, const map<TI32, int> &mt)
+{
+	for(int i = 0; i < junctions.size(); i++)
+	{
+		gr.add_vertex();
+	}
+
+	for(int i = 0; i < junctions.size(); i++)
+	{
+		TI32 pi = junctions[i].first;
+		map<TI32, int>::const_iterator xi = mt.find(pi);
+		if(xi == mt.end()) continue;
+		if(xi->second != 1) continue;
+		for(int j = i + 1; j < junctions.size(); j++)
+		{
+			TI32 pj = junctions[j].first;
+			map<TI32, int>::const_iterator xj = mt.find(pj);
+			if(xj == mt.end()) continue;
+			if(xi->second != -1) continue;
+			int p = compare_two_junctions(junctions[i], junctions[j]);
+			if(p == +1) gr.add_edge(i, j);
+			//if(p == -1) gr.add_edge(j, i);
+		}
+	}
 	return 0;
 }
 
