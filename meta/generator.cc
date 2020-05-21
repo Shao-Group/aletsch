@@ -150,7 +150,10 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	gr.extend_strands();
 	gr.build_vertex_index();
 
-	revise_splice_graph_full(gr, cfg);
+	if(sp.data_type == "paired_end" || sp.data_type == "single_end")
+	{
+		revise_splice_graph_full(gr, cfg);
+	}
 
 	/*
 	printf("-----------------------------\n");
