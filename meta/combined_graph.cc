@@ -581,6 +581,8 @@ int combined_graph::refine_junctions(vector<combined_graph*> &gv, const vector<s
 	build_junction_graph(gr, mt);
 	build_junction_map(gr, jm);
 
+	// TODO
+	assert(jm.size() == 0);
 	project_junctions(jm);
 
 	for(int i = 0; i < gv.size(); i++) gv[i]->project_junctions(jm);
@@ -659,7 +661,7 @@ int combined_graph::rebuild_junctions(const map<PI32, PI32> &jm)
 		if(it != jm.end())
 		{
 			z.first.first.first = it->second.first;
-			z.first.first.second = it->second.first;
+			z.first.first.second = it->second.second;
 		}
 		v.push_back(z);
 	}
