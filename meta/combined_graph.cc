@@ -747,7 +747,7 @@ int combined_graph::build_junction_graph(directed_graph &gr, const map<TI32, int
 			TI32 pj = junctions[j].first;
 			map<TI32, int>::const_iterator xj = mt.find(pj);
 			if(xj == mt.end()) continue;
-			if(xi->second != -1) continue;
+			if(xj->second != -1) continue;
 			int p = compare_two_junctions(junctions[i], junctions[j]);
 			if(p == +1) gr.add_edge(i, j);
 			//if(p == -1) gr.add_edge(j, i);
