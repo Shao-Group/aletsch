@@ -42,21 +42,26 @@ int pereads_cluster::print(int index) const
 
 int pereads_cluster::project_junctions(const map<PI32, PI32> &jm)
 {
+	vector<int32_t> c1 = chain1;
+	vector<int32_t> c2 = chain2;
 	project_chain(jm, chain1);
 	project_chain(jm, chain2);
 
-	/*
-	if(chain1.size() >= 2 && bounds[0] >= chain1.front()) bounds[0] = chain1.front() - 1;
-	if(chain1.size() >= 2 && bounds[1] <= chain1.back()) bounds[1] = chain1.back() + 1;
-	if(chain2.size() >= 2 && bounds[2] >= chain2.front()) bounds[2] = chain2.front() - 1;
-	if(chain2.size() >= 2 && bounds[3] <= chain2.back()) bounds[3] = chain2.back() + 1;
+	bool succeed = true;
+	if(chain1.size() >= 2 && bounds[0] >= chain1.front()) succeed = false;
+	if(chain1.size() >= 2 && bounds[1] <= chain1.back()) succeed = false;
+	if(chain2.size() >= 2 && bounds[2] >= chain2.front()) succeed = false;
+	if(chain2.size() >= 2 && bounds[3] <= chain2.back()) succeed = false;
 
-	if(chain1.size() >= 2 && extend[0] >= chain1.front()) extend[0] = chain1.front() - 1;
-	if(chain1.size() >= 2 && extend[1] <= chain1.back()) extend[1] = chain1.back() + 1;
-	if(chain2.size() >= 2 && extend[2] >= chain2.front()) extend[2] = chain2.front() - 1;
-	if(chain2.size() >= 2 && extend[3] <= chain2.back()) extend[3] = chain2.back() + 1;
-	*/
+	if(chain1.size() >= 2 && extend[0] >= chain1.front()) succeed = false;
+	if(chain1.size() >= 2 && extend[1] <= chain1.back()) succeed = false;
+	if(chain2.size() >= 2 && extend[2] >= chain2.front()) succeed = false;
+	if(chain2.size() >= 2 && extend[3] <= chain2.back()) succeed = false;
 
+	if(succeed == true) return 0;
+
+	chain1 = c1;
+	chain2 = c2;
 	return 0;
 }
 

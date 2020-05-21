@@ -96,14 +96,14 @@ int phase_set::project_junctions(const map<PI32, PI32> &jm)
 		vv.push_back(v.back());
 		assert(v.size() == vv.size());
 
-		/*
+		bool succeed = true;
 		int p = vv.size() - 1;
 		int q = vv.size() - 2;
-		if(vv[0] >= vv[1]) vv[0] = vv[1] - 1;
-		if(vv[p] <= vv[q]) vv[p] = vv[q] + 1;
-		*/
+		if(vv[0] >= vv[1]) succeed = false;
+		if(vv[p] <= vv[q]) succeed = false;
 
-		ps.add(vv, c);
+		if(succeed == true) ps.add(vv, c);
+		else ps.add(v, c);
 	}
 
 	pmap = ps.pmap;
