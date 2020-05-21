@@ -213,6 +213,7 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 		cb.sid = sp.sample_id;
 		cb.gid = gid;
 		cb.build(grv[k], hsv[k], ubv[k]);
+		cb.group_junctions();
 
 		// print
 		/*
@@ -223,9 +224,6 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 			printf("\n");
 		}
 		*/
-
-		cb.print(k);
-		cb.group_junctions();
 
 		tmp.push_back(std::move(cb));
 	}

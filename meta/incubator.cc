@@ -379,12 +379,13 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, m
 	cb.combine(gv);
 	cb.sid = -1;
 
-	// group junctions TODO
+	/*
+	cb.group_junctions();
 	for(int i = 0; i < gv.size(); i++)
 	{
 		if(gv[i]->sid == 10) printf("ONT\n");
 	}
-	cb.group_junctions();
+	*/
 
 	// rebuild splice graph
 	splice_graph gx;

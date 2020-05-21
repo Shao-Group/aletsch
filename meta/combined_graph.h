@@ -74,8 +74,10 @@ public:
 
 	// group junctions
 	int group_junctions();
-	int build_junction_graph(directed_graph &gr);
 	int compare_two_junctions(PTDI &x, PTDI &y);
+	int build_junction_graph(directed_graph &gr);
+	int rebuild_junctions(directed_graph &gr, map<PI32, PI32> &jm);
+	int rebuild_splices();
 
 	// recover splice graph and phasing paths
 	int build_splice_graph(splice_graph &gr, const parameters &cfg);

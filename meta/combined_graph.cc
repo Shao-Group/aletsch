@@ -574,26 +574,63 @@ set<int32_t> combined_graph::get_reliable_splices(int samples, double weight)
 int combined_graph::group_junctions()
 {
 	directed_graph gr;
+	map<PI32, PI32> jm;
 	build_junction_graph(gr);
+	rebuild_junctions(gr, jm);
+	rebuild_splices();
+	ps.project_junctions(jm);
+	for(int i = 0; i < vc.size(); i++) vc[i].project_junctions(jm);
+	return 0;
+}
 
+int combined_graph::rebuild_splices()
+{
+	set<int32_t> s;
+	for(int i = 0; i < junctions.size(); i++)
+	{
+		s.insert(junctions[i].first.first.first);
+		s.insert(junctions[i].first.first.second);
+	}
+
+	vector<int32_t> v(s.begin(), s.end());
+	sort(v.begin(), v.end());
+	splices = v;
+	return 0;
+}
+
+int combined_graph::rebuild_junctions(directed_graph &gr, map<PI32, PI32> &jm)
+{
 	set<int> fb;
 	vector<int> topo = gr.topological_sort();
 	for(int i = 0; i < topo.size(); i++)
 	{
-		if(fb.find(i) != fb.end()) continue;
+		int z = topo[i];
+		if(fb.find(z) != fb.end()) continue;
 		vector<int> v;
 		vector<int> b;
-		gr.bfs(i, v, b, fb);
+		gr.bfs(z, v, b, fb);
+
+		PI32 pz = junctions[z].first.first;
+
 		for(int k = 0; k < v.size(); k++)
 		{
 			int x = v[k];
 			assert(fb.find(x) == fb.end());
 			fb.insert(x);
+
+			if(x == z) continue;
+
+			PI32 px = junctions[x].first.first;
+			if(jm.find(px) == jm.end()) jm.insert(make_pair(px, pz));
+
+			junctions[z].second.first += junctions[x].second.first;
+			junctions[x].second.first = -1;
 		}
 
 		if(v.size() <= 1) continue;
 
-		printf("cluster starting with %d: \n", i);
+		// print
+		printf("cluster starting with junction %d, sid = %d \n", z, sid);
 		for(int k = 0; k < v.size(); k++)
 		{
 			int x = v[k];
@@ -601,6 +638,15 @@ int combined_graph::group_junctions()
 			printf(" junction %d: %d-%d, strand = %d, weight = %.1lf, count = %d\n", x, p.first.first.first, p.first.first.second, p.first.second, p.second.first, p.second.second);
 		}
 	}
+
+	vector<PTDI> vv;
+	for(int i = 0; i < junctions.size(); i++)
+	{
+		if(junctions[i].second.first < 0) continue;
+		vv.push_back(junctions[i]);
+	}
+
+	junctions = vv;
 	return 0;
 }
 
@@ -625,7 +671,7 @@ int combined_graph::build_junction_graph(directed_graph &gr)
 
 int combined_graph::compare_two_junctions(PTDI &x, PTDI &y)
 {
-	if(x.first.second != y.first.second) return 0;	// TODO
+	//if(x.first.second != y.first.second) return 0;	// TODO
 	PI &px = x.first.first;
 	PI &py = y.first.first;
 
@@ -638,8 +684,9 @@ int combined_graph::compare_two_junctions(PTDI &x, PTDI &y)
 	if(s1 > cfg.max_cluster_intron_shifting) return 0;
 	if(s2 > cfg.max_cluster_intron_shifting) return 0;
 
-	if(x.second.first > y.second.first) return 1;
-	else return -1;
+	if(x.second.first > (y.second.first + 1) * (y.second.first + 1)) return +1;
+	if(y.second.first > (x.second.first + 1) * (x.second.first + 1)) return -1;
+	return 0;
 }
 
 int combined_graph::clear()

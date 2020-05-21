@@ -8,8 +8,10 @@ See LICENSE for licensing.
 #define __PEREADS_CLUSTER_H__
 
 #include "hit.h"
+#include "constants.h"
 #include <cstdint>
 #include <vector>
+#include <map>
 
 using namespace std;
 
@@ -30,6 +32,8 @@ public:
 public:
 	int clear();
 	int print(int k) const;
+	int project_junctions(const map<PI32, PI32> &jm);
+	int project_chain(const map<PI32, PI32> &jm, vector<int32_t> &chain);
 };
 
 #endif

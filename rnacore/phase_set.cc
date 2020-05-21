@@ -65,3 +65,45 @@ int phase_set::project_boundaries(const map<int32_t, int32_t> &smap, const map<i
 	pmap = ps.pmap;
 	return 0;
 }
+
+int phase_set::project_junctions(const map<PI32, PI32> &jm)
+{
+	phase_set ps;
+	for(MVII::const_iterator x = pmap.begin(); x != pmap.end(); x++)
+	{
+		vector<int32_t> v = x->first;
+		int c = x->second;
+		assert(v.size() % 2 == 0);
+		if(v.size() <= 2) continue;
+
+		vector<int32_t> vv;
+		vv.push_back(v.front());
+		for(int k = 0; k < v.size() / 2 - 1; k++)
+		{
+			PI32 p(v[k * 2 + 1], v[k * 2 + 2]);
+			map<PI32, PI32>::const_iterator it = jm.find(p);
+			if(it == jm.end())
+			{
+				vv.push_back(v[k * 2 + 1]);
+				vv.push_back(v[k * 2 + 2]);
+			}
+			else
+			{
+				vv.push_back(it->second.first);
+				vv.push_back(it->second.second);
+			}
+		}
+		vv.push_back(v.back());
+		assert(v.size() == vv.size());
+
+		int p = vv.size() - 1;
+		int q = vv.size() - 2;
+		if(vv[0] >= vv[1]) vv[0] = vv[1] - 1;
+		if(vv[p] <= vv[q]) vv[p] = vv[q] + 1;
+
+		ps.add(vv, c);
+	}
+
+	pmap = ps.pmap;
+	return 0;
+}
