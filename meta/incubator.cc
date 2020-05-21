@@ -384,7 +384,7 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, m
 	cb.combine(gv);
 	cb.sid = -1;
 
-	//cb.refine_junctions(gv, samples);
+	cb.refine_junctions(gv, samples);
 
 	/*
 	map<PI32, PI32> jm = cb.group_junctions();
