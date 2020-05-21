@@ -216,8 +216,7 @@ bool build_path_from_exon_coordinates(splice_graph &gr, const vector<int32_t> &v
 		int32_t p = v[2 * k + 0];
 		int32_t q = v[2 * k + 1];
 		assert(p >= 0 && q >= 0);
-		assert(p <= q);
-
+		if(p >= q) return false;
 		if(gr.lindex.find(p) == gr.lindex.end()) return false;
 		if(gr.rindex.find(q) == gr.rindex.end()) return false;
 		int kp = gr.lindex[p];
@@ -230,18 +229,6 @@ bool build_path_from_exon_coordinates(splice_graph &gr, const vector<int32_t> &v
 	{
 		int a = pp[k].first;
 		int b = pp[k].second;
-
-		if(a > b)
-		{
-			printf("TEST: a = %d, b = %d\n", a, b);
-			gr.print();
-			printf("v = ");
-			printv(v);
-			printf("\n list = ");
-			for(int i = 0; i < n; i++) printf("(%d, %d), ", pp[i].first, pp[i].second);
-			printf("\n");
-			fflush(stdout);
-		}
 
 		if(a > b) return false;
 		//assert(a <= b);
@@ -268,8 +255,7 @@ bool build_path_from_intron_coordinates(splice_graph &gr, const vector<int32_t> 
 		int32_t p = v[2 * k + 0];
 		int32_t q = v[2 * k + 1];
 		assert(p >= 0 && q >= 0);
-		assert(p <= q);
-
+		if(p >= q) return false;
 		if(gr.rindex.find(p) == gr.rindex.end()) return false;
 		if(gr.lindex.find(q) == gr.lindex.end()) return false;
 		int kp = gr.rindex[p];

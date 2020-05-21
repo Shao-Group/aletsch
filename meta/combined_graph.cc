@@ -612,6 +612,19 @@ int combined_graph::rebuild_junctions(directed_graph &gr, map<PI32, PI32> &jm)
 
 		PI32 pz = junctions[z].first.first;
 
+		// print
+		if(v.size() >= 2)
+		{
+			printf("cluster junction weights: ");
+			for(int k = 0; k < v.size(); k++)
+			{
+				int x = v[k];
+				PTDI &p = junctions[x];
+				printf("%.0lf, ", p.second.first);
+			}
+			printf("\n");
+		}
+
 		for(int k = 0; k < v.size(); k++)
 		{
 			int x = v[k];
@@ -627,16 +640,6 @@ int combined_graph::rebuild_junctions(directed_graph &gr, map<PI32, PI32> &jm)
 			junctions[x].second.first = -1;
 		}
 
-		if(v.size() <= 1) continue;
-
-		// print
-		printf("cluster starting with junction %d, sid = %d \n", z, sid);
-		for(int k = 0; k < v.size(); k++)
-		{
-			int x = v[k];
-			PTDI &p = junctions[x];
-			printf(" junction %d: %d-%d, strand = %d, weight = %.1lf, count = %d\n", x, p.first.first.first, p.first.first.second, p.first.second, p.second.first, p.second.second);
-		}
 	}
 
 	vector<PTDI> vv;
