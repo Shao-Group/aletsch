@@ -571,12 +571,18 @@ set<int32_t> combined_graph::get_reliable_splices(int samples, double weight)
 	return s;
 }
 
-int combined_graph::group_junctions()
+map<PI32, PI32> combined_graph::group_junctions()
 {
 	directed_graph gr;
 	map<PI32, PI32> jm;
 	build_junction_graph(gr);
-	rebuild_junctions(gr, jm);
+	build_junction_map(gr, jm);
+	return jm;
+}
+
+int combined_graph::project_junctions(const map<PI32, PI32> &jm)
+{
+	rebuild_junctions(jm);
 	rebuild_splices();
 	ps.project_junctions(jm);
 	for(int i = 0; i < vc.size(); i++) vc[i].project_junctions(jm);
@@ -598,7 +604,31 @@ int combined_graph::rebuild_splices()
 	return 0;
 }
 
-int combined_graph::rebuild_junctions(directed_graph &gr, map<PI32, PI32> &jm)
+int combined_graph::rebuild_junctions(const map<PI32, PI32> &jm)
+{
+	vector<PTDI> v;
+	for(int i = 0; i < junctions.size(); i++)
+	{
+		PTDI z = junctions[i];
+		PI32 p = z.first.first;
+		map<PI32, PI32>::const_iterator it = jm.find(p);
+		if(it != jm.end())
+		{
+			z.first.first.first = it->second.first;
+			z.first.first.second = it->second.first;
+		}
+		v.push_back(z);
+	}
+	junctions = v;
+
+	map<TI32, DI> mj;
+	combine_junctions(mj);
+	junctions.assign(mj.begin(), mj.end());
+
+	return 0;
+}
+
+int combined_graph::build_junction_map(directed_graph &gr, map<PI32, PI32> &jm)
 {
 	set<int> fb;
 	vector<int> topo = gr.topological_sort();
@@ -636,20 +666,22 @@ int combined_graph::rebuild_junctions(directed_graph &gr, map<PI32, PI32> &jm)
 			PI32 px = junctions[x].first.first;
 			if(jm.find(px) == jm.end()) jm.insert(make_pair(px, pz));
 
-			junctions[z].second.first += junctions[x].second.first;
-			junctions[x].second.first = -1;
+			//junctions[z].second.first += junctions[x].second.first;
+			//junctions[x].second.first = -1;
 		}
 
 	}
 
+	/*
 	vector<PTDI> vv;
 	for(int i = 0; i < junctions.size(); i++)
 	{
 		if(junctions[i].second.first < 0) continue;
 		vv.push_back(junctions[i]);
 	}
-
 	junctions = vv;
+	*/
+
 	return 0;
 }
 

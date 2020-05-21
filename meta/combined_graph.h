@@ -73,10 +73,12 @@ public:
 	int append_junctions(const pereads_cluster &pc, const bridge_path &bbp);
 
 	// group junctions
-	int group_junctions();
+	map<PI32, PI32> group_junctions();
 	int compare_two_junctions(PTDI &x, PTDI &y);
 	int build_junction_graph(directed_graph &gr);
-	int rebuild_junctions(directed_graph &gr, map<PI32, PI32> &jm);
+	int build_junction_map(directed_graph &gr, map<PI32, PI32> &jm);
+	int project_junctions(const map<PI32, PI32> &jm);
+	int rebuild_junctions(const map<PI32, PI32> &jm);
 	int rebuild_splices();
 
 	// recover splice graph and phasing paths
