@@ -46,7 +46,7 @@ public:
 public:
 	// copy gid etc from cb
 	int copy_meta_information(const combined_graph &cb);
-	int set_gid(int instance, int subindex);
+	int set_gid(int batch, int instance, int subindex);
 
 	// build from gr, hs, and ub
 	int build(splice_graph &gr, const phase_set &ps, const vector<pereads_cluster> &ub);
