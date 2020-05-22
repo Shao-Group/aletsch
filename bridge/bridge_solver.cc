@@ -241,7 +241,8 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 		vector<int32_t> c;
 		vector<int32_t> w;
 		bool b = merge_intron_chains(pc.chain1, pc.chain2, w);
-		assert(b == true);
+		if(b == false) return 0;
+
 		int s = check_strand_from_intron_coordinates(gr, w);
 		type = 1;
 		chains.push_back(c);
@@ -260,7 +261,10 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 			vector<int32_t> w = pc.chain1;
 			w.insert(w.end(), pb[e].chain.begin(), pb[e].chain.end());
 			w.insert(w.end(), pc.chain2.begin(), pc.chain2.end());
+			bool b = check_increasing_sequence(w);
+			if(b == false) continue;
 			int s = check_strand_from_intron_coordinates(gr, w);
+			if(s < 0) continue;
 			wholes.push_back(w);
 			chains.push_back(pb[e].chain);
 			scores.push_back(pb[e].score);
@@ -277,8 +281,8 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 	{
 		assert(check_increasing_sequence<int32_t>(wholes[e]));
 		assert(check_increasing_sequence<int32_t>(chains[e]));
-		if(wholes[e].size() >= 1) assert(wholes[e].front() > pc.bounds[0]);
-		if(wholes[e].size() >= 1) assert(wholes[e].back() < pc.bounds[3]);
+		if(wholes[e].size() >= 1 && wholes[e].front() <= pc.bounds[0]) continue;
+		if(wholes[e].size() >= 1 && wholes[e].back() >= pc.bounds[3]) continue;
 		if(pc.chain1.size() > 0 && chains[e].size() > 0) assert(pc.chain1.back() < chains[e].front());
 		if(pc.chain2.size() > 0 && chains[e].size() > 0) assert(pc.chain2.front() > chains[e].back());
 
@@ -335,8 +339,7 @@ int add_phases_from_bridged_pereads_cluster(const pereads_cluster &pc, const bri
 	v.push_back(p0);
 	v.insert(v.end(), bbp.whole.begin(), bbp.whole.end());
 	v.push_back(p3);
-	assert(check_increasing_sequence<int32_t>(v));
-	ps.add(v, pc.count);
+	if(check_increasing_sequence<int32_t>(v)) ps.add(v, pc.count);
 	return 0;
 }
 
@@ -352,15 +355,13 @@ int add_phases_from_unbridged_pereads_cluster(const pereads_cluster &pc, phase_s
 	v1.push_back(p0);
 	v1.insert(v1.end(), pc.chain1.begin(), pc.chain1.end());
 	v1.push_back(p1);
-	assert(check_increasing_sequence<int32_t>(v1));
-	ps.add(v1, pc.count);
+	if(check_increasing_sequence<int32_t>(v1)) ps.add(v1, pc.count);
 
 	vector<int32_t> v2;
 	v2.push_back(p2);
 	v2.insert(v2.end(), pc.chain2.begin(), pc.chain2.end());
 	v2.push_back(p3);
-	assert(check_increasing_sequence<int32_t>(v2));
-	ps.add(v2, pc.count);
+	if(check_increasing_sequence<int32_t>(v2)) ps.add(v2, pc.count);
 	return 0;
 }
 
