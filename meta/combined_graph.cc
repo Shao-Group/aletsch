@@ -571,14 +571,17 @@ set<int32_t> combined_graph::get_reliable_splices(int samples, double weight)
 	return s;
 }
 
-int combined_graph::refine_junctions(vector<combined_graph*> &gv, const vector<sample_profile> &samples)
+int combined_graph::refine_junctions()
 {
-	map<TI32, int> mt;
-	classify_junctions(gv, samples, mt);
+	vector<combined_graph*> gv;
+	refine_junctions(gv);
+	return 0;
+}
 
+int combined_graph::refine_junctions(vector<combined_graph*> &gv)
+{
 	directed_graph gr;
 	map<PI32, PI32> jm;
-	//build_junction_graph(gr, mt);
 	build_junction_graph(gr);
 	build_junction_map(gr, jm);
 

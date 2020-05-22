@@ -289,8 +289,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	if(gv.size() == 1)
 	{
 		gv[0]->set_gid(batch, instance, subindex++);
-		//map<PI32, PI32> jm = gv[0]->group_junctions();
-		//gv[0]->project_junctions(jm);
+		gv[0]->refine_junctions();
 		assemble(*gv[0], ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		ts.increase_count(1);
 	}
@@ -384,7 +383,7 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, m
 	cb.combine(gv);
 	cb.sid = -1;
 
-	cb.refine_junctions(gv, samples);
+	cb.refine_junctions(gv);
 
 	/*
 	map<PI32, PI32> jm = cb.group_junctions();
