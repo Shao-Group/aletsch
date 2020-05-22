@@ -97,7 +97,7 @@ int phase_set::project_junctions(const map<PI32, PI32> &jm)
 
 		bool succeed = check_increasing_sequence(vv);
 		if(succeed == true) ps.add(vv, c);
-		else ps.add(v, c);
+		//else ps.add(v, c);
 	}
 
 	pmap = ps.pmap;
