@@ -181,8 +181,7 @@ int check_strand_from_intron_coordinates(splice_graph &gr, const vector<int32_t>
 		int32_t p = v[2 * k + 0];
 		int32_t q = v[2 * k + 1];
 		assert(p >= 0 && q >= 0);
-		assert(p <= q);
-
+		if(p >= q) return -1;
 		if(gr.rindex.find(p) == gr.rindex.end()) return -1;
 		if(gr.lindex.find(q) == gr.lindex.end()) return -1;
 		int kp = gr.rindex[p];

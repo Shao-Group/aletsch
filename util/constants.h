@@ -62,6 +62,14 @@ using namespace std;
 #define TRANSCRIPT_COUNT_ADD_COVERAGE_NUL 2
 #define TRANSCRIPT_COUNT_MAX_COVERAGE_MAX 3
 
+// RNA-seq data type
+#define NUM_DATA_TYPES 5
+#define DEFAULT 0
+#define PAIRED_END 1
+#define SINGLE_END 2
+#define PACBIO 3
+#define ONT 4
+
 const static string position_names[] = {"identical", "fall-right", "fall-left", "contained", "containing", "extend_right", "extend_left", "nested", "nesting", "conflicting"};
 
 typedef pair<int, int> PI;

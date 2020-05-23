@@ -14,20 +14,23 @@ using namespace std;
 
 int main(int argc, const char **argv)
 {
-	parameters cfg;
+	parameters params[NUM_DATA_TYPES];
+	for(int i = 0; i < NUM_DATA_TYPES; i++)
+	{
+		params[i].set_default(i);
+		params[i].parse_arguments(argc, argv, i);
+	}
 
 	if(argc == 1)
 	{
-		cfg.print_copyright();
-		cfg.print_help();
+		params[0].print_copyright();
+		params[0].print_help();
 		printf("\n");
 		return 0;
 	}
 
-	cfg.parse_arguments(argc, argv);
-	cfg.print_command_line(argc, argv);
-
-	incubator icbt(cfg);
+	params[0].print_command_line(argc, argv);
+	incubator icbt(params[0]);
 	icbt.resolve();
 
 	return 0;

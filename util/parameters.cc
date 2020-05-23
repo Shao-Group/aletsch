@@ -94,7 +94,7 @@ parameters::parameters()
 	min_cluster_single_exon_ratio = 0.8;
 }
 
-int parameters::parse_arguments(int argc, const char ** argv)
+int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 {
 	for(int i = 1; i < argc; i++)
 	{
@@ -153,10 +153,25 @@ int parameters::parse_arguments(int argc, const char ** argv)
 			max_merge_cluster = atoi(argv[i + 1]);
 			i++;
 		}
+		else if(string(argv[i]) == "-m")
+		{
+			single_sample_multiple_threading = true;
+		}
+
+		else if(string(argv[i]) == "--single_sample_multiple_threading")
+		{
+			single_sample_multiple_threading = true;
+		}
+
 		else if(string(argv[i]) == "--version")
 		{
 			printf("%s\n", version.c_str());
 			exit(0);
+		}
+		else if(string(argv[i]) == "--verbose")
+		{
+			verbose = atoi(argv[i + 1]);
+			i++;
 		}
 		else if(string(argv[i]) == "--help")
 		{
@@ -166,15 +181,7 @@ int parameters::parse_arguments(int argc, const char ** argv)
 			print_logo();
 			exit(0);
 		}
-		else if(string(argv[i]) == "--verbose")
-		{
-			verbose = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--single_sample_multiple_threading")
-		{
-			single_sample_multiple_threading = true;
-		}
+
 		else if(string(argv[i]) == "--bridge_dp_solution_size")
 		{
 			bridge_dp_solution_size = atoi(argv[i + 1]);
@@ -185,81 +192,7 @@ int parameters::parse_arguments(int argc, const char ** argv)
 			bridge_dp_stack_size = atoi(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "--max_reads_partition_gap")
-		{
-			max_reads_partition_gap = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_flank_length")
-		{
-			min_flank_length = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--max_num_cigar")
-		{
-			max_num_cigar = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_bundle_gap")
-		{
-			min_bundle_gap = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_num_hits_in_bundle")
-		{
-			min_num_hits_in_bundle = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_mapping_quality")
-		{
-			min_mapping_quality = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--max_preview_spliced_reads")
-		{
-			max_preview_spliced_reads = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_preview_spliced_reads")
-		{
-			min_preview_spliced_reads = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--max_preview_reads")
-		{
-			max_preview_reads = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--preview_infer_ratio")
-		{
-			preview_infer_ratio = atof(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_subregion_gap")
-		{
-			min_subregion_gap = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_subregion_length")
-		{
-			min_subregion_length = atoi(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_subregion_overlap")
-		{
-			min_subregion_overlap = atof(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--min_surviving_edge_weight")
-		{
-			min_surviving_edge_weight = atof(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--max_intron_contamination_coverage")
-		{
-			max_intron_contamination_coverage = atof(argv[i + 1]);
-			i++;
-		}
+
 		else if(string(argv[i]) == "--min_transcript_coverage")
 		{
 			min_transcript_coverage = atof(argv[i + 1]);
@@ -335,28 +268,145 @@ int parameters::parse_arguments(int argc, const char ** argv)
 			max_decompose_error_ratio[6] = atof(argv[i + 1]);
 			i++;
 		}
+
+		else if(string(argv[i]) == "--min_flank_length")
+		{
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) min_flank_length = atoi(argv[i + 2]);
+			i++;
+			i++;
+		}
+		else if(string(argv[i]) == "--max_num_cigar")
+		{
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) max_num_cigar = atoi(argv[i + 2]);
+			i++;
+			i++;
+		}
+		else if(string(argv[i]) == "--min_bundle_gap")
+		{
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) min_bundle_gap = atoi(argv[i + 2]);
+			i++;
+			i++;
+		}
+		else if(string(argv[i]) == "--min_num_hits_in_bundle")
+		{
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) min_num_hits_in_bundle = atoi(argv[i + 2]);
+			i++;
+			i++;
+		}
+		else if(string(argv[i]) == "--min_mapping_quality")
+		{
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) min_mapping_quality = atoi(argv[i + 2]);
+			i++;
+			i++;
+		}
+		else if(string(argv[i]) == "--max_reads_partition_gap")
+		{
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) max_reads_partition_gap = atoi(argv[i + 2]);
+			i++;
+			i++;
+		}
+
+		else if(string(argv[i]) == "--batch_bundle_size")
+		{
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) batch_bundle_size = atoi(argv[i + 2]);
+			i++;
+			i++;
+		}
 		else if(string(argv[i]) == "--use_second_alignment")
 		{
-			string s(argv[i + 1]);
-			if(s == "true") use_second_alignment = true;
-			else use_second_alignment = false;
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type)
+			{
+				string s(argv[i + 2]);
+				if(s == "true") use_second_alignment = true;
+				else use_second_alignment = false;
+			}
+			i++;
 			i++;
 		}
 		else if(string(argv[i]) == "--uniquely_mapped_only")
 		{
-			string s(argv[i + 1]);
-			if(s == "true") uniquely_mapped_only = true;
-			else uniquely_mapped_only = false;
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) 
+			{
+				string s(argv[i + 2]);
+				if(s == "true") uniquely_mapped_only = true;
+				else uniquely_mapped_only = false;
+			}
+			i++;
 			i++;
 		}
-		else if(string(argv[i]) == "--verbose")
+
+		else if(string(argv[i]) == "--max_preview_spliced_reads")
 		{
-			verbose = atoi(argv[i + 1]);
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) max_preview_spliced_reads = atoi(argv[i + 2]);
+			i++;
 			i++;
 		}
-		else if(string(argv[i]) == "--batch_bundle_size")
+		else if(string(argv[i]) == "--min_preview_spliced_reads")
 		{
-			batch_bundle_size = atoi(argv[i + 1]);
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) min_preview_spliced_reads = atoi(argv[i + 2]);
+			i++;
+			i++;
+		}
+		else if(string(argv[i]) == "--max_preview_reads")
+		{
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) max_preview_reads = atoi(argv[i + 2]);
+			i++;
+			i++;
+		}
+		else if(string(argv[i]) == "--preview_infer_ratio")
+		{
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) preview_infer_ratio = atoi(argv[i + 2]);
+			i++;
+			i++;
+		}
+
+		else if(string(argv[i]) == "--min_subregion_gap")
+		{
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) min_subregion_gap = atoi(argv[i + 2]);
+			i++;
+			i++;
+		}
+		else if(string(argv[i]) == "--min_subregion_length")
+		{
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) min_subregion_length = atoi(argv[i + 2]);
+			i++;
+			i++;
+		}
+		else if(string(argv[i]) == "--min_subregion_overlap")
+		{
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) min_subregion_overlap = atoi(argv[i + 2]);
+			i++;
+			i++;
+		}
+
+		else if(string(argv[i]) == "--min_surviving_edge_weight")
+		{
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) min_surviving_edge_weight = atoi(argv[i + 2]);
+			i++;
+			i++;
+		}
+		else if(string(argv[i]) == "--max_intron_contamination_coverage")
+		{
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) max_intron_contamination_coverage = atoi(argv[i + 2]);
+			i++;
 			i++;
 		}
 	}
@@ -366,6 +416,13 @@ int parameters::parse_arguments(int argc, const char ** argv)
 		min_surviving_edge_weight = 0.1 + min_transcript_coverage;
 	}
 
+	return 0;
+}
+
+int parameters::set_default(int data_type)
+{
+	if(data_type == PACBIO) min_num_hits_in_bundle = 1;
+	if(data_type == ONT) min_num_hits_in_bundle = 1;
 	return 0;
 }
 

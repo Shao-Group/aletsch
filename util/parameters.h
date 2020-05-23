@@ -42,6 +42,25 @@ public:
 	int bridge_dp_solution_size;
 	int bridge_dp_stack_size;
 
+	// for decomposing splice graph
+	double max_decompose_error_ratio[7];
+	double min_guaranteed_edge_weight;
+	int max_dp_table_size;
+
+	// for filtering paths
+	double min_transcript_coverage;
+	double min_single_exon_transcript_coverage;
+	int min_transcript_length_base;
+	int min_transcript_length_increase;
+	int min_single_exon_transcript_length;
+	int min_exon_length;
+	int max_num_exons;
+
+	// for clustering assembled transcripts
+	int32_t max_cluster_boundary_distance;
+	int32_t max_cluster_intron_distance;
+	double min_cluster_single_exon_ratio;
+
 	// for loading bam file and reads
 	int min_flank_length;
 	int max_num_cigar;
@@ -72,31 +91,14 @@ public:
 	int normal_junction_threshold;
 	int extend_junction_threshold;
 
-	// for decomposing splice graph
-	double max_decompose_error_ratio[7];
-	double min_guaranteed_edge_weight;
-	int max_dp_table_size;
-
-	// for filtering paths
-	double min_transcript_coverage;
-	double min_single_exon_transcript_coverage;
-	int min_transcript_length_base;
-	int min_transcript_length_increase;
-	int min_single_exon_transcript_length;
-	int min_exon_length;
-	int max_num_exons;
-
-	// for clustering assembled transcripts
-	int32_t max_cluster_boundary_distance;
-	int32_t max_cluster_intron_distance;
-	double min_cluster_single_exon_ratio;
-
 public:
 	int print_command_line(int argc, const char ** argv);
-	int parse_arguments(int argc, const char ** argv);
+	int parse_arguments(int argc, const char ** argv, int data_type);
 	int print_copyright();
 	int print_logo();
 	int print_help();
+
+	int set_default(int data_type);
 };
 
 #endif
