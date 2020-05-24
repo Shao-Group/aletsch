@@ -14,7 +14,7 @@ using namespace std;
 
 int main(int argc, const char **argv)
 {
-	parameters params[NUM_DATA_TYPES];
+	vector<parameters> params(NUM_DATA_TYPES);
 	for(int i = 0; i < NUM_DATA_TYPES; i++)
 	{
 		params[i].set_default(i);

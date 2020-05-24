@@ -25,8 +25,8 @@ See LICENSE for licensing.
 #include <boost/asio/thread_pool.hpp>
 #include <boost/pending/disjoint_sets.hpp>
 
-incubator::incubator(const parameters &c)
-	: cfg(c)
+incubator::incubator(const vector<parameters> &v)
+	: params(v)
 {
 	batch = 0;
 	g2g.resize(3);
