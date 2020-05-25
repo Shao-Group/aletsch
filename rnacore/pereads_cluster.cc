@@ -42,11 +42,13 @@ int pereads_cluster::print(int index) const
 
 int pereads_cluster::project_junctions(const map<PI32, PI32> &jm)
 {
-	vector<int32_t> c1 = chain1;
-	vector<int32_t> c2 = chain2;
+	//vector<int32_t> c1 = chain1;
+	//vector<int32_t> c2 = chain2;
 	project_chain(jm, chain1);
 	project_chain(jm, chain2);
+	return 0;
 
+	/*
 	bool succeed = true;
 	if(chain1.size() >= 2 && bounds[0] >= chain1.front()) succeed = false;
 	if(chain1.size() >= 2 && bounds[1] <= chain1.back()) succeed = false;
@@ -67,6 +69,7 @@ int pereads_cluster::project_junctions(const map<PI32, PI32> &jm)
 	chain1 = c1;
 	chain2 = c2;
 	return 0;
+	*/
 }
 
 int pereads_cluster::project_chain(const map<PI32, PI32> &jm, vector<int32_t> &v)

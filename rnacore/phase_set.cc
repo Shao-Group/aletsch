@@ -74,7 +74,6 @@ int phase_set::project_junctions(const map<PI32, PI32> &jm)
 		vector<int32_t> v = x->first;
 		int c = x->second;
 		assert(v.size() % 2 == 0);
-		if(v.size() <= 2) continue;
 
 		vector<int32_t> vv;
 		vv.push_back(v.front());
@@ -98,7 +97,7 @@ int phase_set::project_junctions(const map<PI32, PI32> &jm)
 
 		bool succeed = check_increasing_sequence(vv);
 		if(succeed == true) ps.add(vv, c);
-		else ps.add(v, c);
+		//else ps.add(v, c);
 	}
 
 	pmap = ps.pmap;

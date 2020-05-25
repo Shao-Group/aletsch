@@ -75,7 +75,8 @@ public:
 
 	// group junctions
 	map<PI32, PI32> group_junctions();
-	int refine_junctions(vector<combined_graph*> &gv, const vector<sample_profile> &samples);
+	int refine_junctions();
+	int refine_junctions(vector<combined_graph*> &gv);
 	int classify_junctions(vector<combined_graph*> &gv, const vector<sample_profile> &samples, map<TI32, int> &mt);
 	int compare_two_junctions(PTDI &x, PTDI &y);
 	int build_junction_graph(directed_graph &gr);
