@@ -388,15 +388,6 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, m
 
 	cb.refine_junctions(gv);
 
-	/*
-	map<PI32, PI32> jm = cb.group_junctions();
-	cb.project_junctions(jm);
-	for(int i = 0; i < gv.size(); i++)
-	{
-		if(gv[i]->sid == 10) printf("ONT\n");
-	}
-	*/
-
 	// rebuild splice graph
 	splice_graph gx;
 	cb.build_splice_graph(gx, params[DEFAULT]);
