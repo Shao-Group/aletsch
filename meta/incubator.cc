@@ -101,13 +101,16 @@ int incubator::read_bam_list()
 	{
 		if(strlen(line) <= 0) continue;
 		stringstream sstr(line);
-		char file[10240];
-		int type;
-		sstr >> file >> type;
-		assert(type != DEFAULT);
 		sample_profile sp;
+		char file[10240];
+		char type[10240];
+		sstr >> file >> type;
 		sp.file_name = file;
-		sp.data_type = type;
+		if(string(type) == "paired_end") sp.data_type = PAIRED_END;
+		if(string(type) == "single_end") sp.data_type = SINGLE_END;
+		if(string(type) == "pacbio") sp.data_type = PACBIO;
+		if(string(type) == "ont") sp.data_type = ONT;
+		assert(sp.data_type != DEFAULT);
 		sp.print();
 		samples.push_back(sp);
 	}
