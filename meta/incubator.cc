@@ -25,8 +25,8 @@ See LICENSE for licensing.
 #include <boost/asio/thread_pool.hpp>
 #include <boost/pending/disjoint_sets.hpp>
 
-incubator::incubator(const parameters &c)
-	: cfg(c)
+incubator::incubator(const vector<parameters> &v)
+	: params(v)
 {
 	batch = 0;
 	g2g.resize(3);
@@ -34,7 +34,7 @@ incubator::incubator(const parameters &c)
 
 incubator::~incubator()
 {
-	if(cfg.output_bridged_bam_dir == "") return;
+	if(params[DEFAULT].output_bridged_bam_dir == "") return;
 	for(int i = 0; i < samples.size(); i++)
 	{
 		samples[i].close_bridged_bam();
@@ -49,7 +49,7 @@ int incubator::resolve()
 	int a = 0;
 	while(true)
 	{
-		int b = a + cfg.meta_batch_size;
+		int b = a + params[DEFAULT].meta_batch_size;
 
 		if(b >= samples.size()) b = samples.size();
 		if(a >= b) break;
@@ -89,10 +89,10 @@ int incubator::resolve()
 
 int incubator::read_bam_list()
 {
-	ifstream fin(cfg.input_bam_list.c_str());
+	ifstream fin(params[DEFAULT].input_bam_list.c_str());
 	if(fin.fail())
 	{
-		printf("cannot open input-bam-list-file %s\n", cfg.input_bam_list.c_str());
+		printf("cannot open input-bam-list-file %s\n", params[DEFAULT].input_bam_list.c_str());
 		exit(0);
 	}
 
@@ -102,8 +102,9 @@ int incubator::read_bam_list()
 		if(strlen(line) <= 0) continue;
 		stringstream sstr(line);
 		char file[10240];
-		char type[10240];
+		int type;
 		sstr >> file >> type;
+		assert(type != DEFAULT);
 		sample_profile sp;
 		sp.file_name = file;
 		sp.data_type = type;
@@ -114,8 +115,8 @@ int incubator::read_bam_list()
 	for(int i = 0; i < samples.size(); i++)
 	{
 		samples[i].sample_id = i;
-		if(cfg.output_bridged_bam_dir == "") continue;
-		samples[i].open_bridged_bam(cfg.output_bridged_bam_dir);
+		if(params[DEFAULT].output_bridged_bam_dir == "") continue;
+		samples[i].open_bridged_bam(params[DEFAULT].output_bridged_bam_dir);
 	}
 
 	fin.close();
@@ -133,8 +134,8 @@ int incubator::generate(int a, int b)
 {
 	if(a >= b) return 0;
 
-	int num_threads = cfg.max_threads;
-	if(cfg.single_sample_multiple_threading == true) num_threads = cfg.max_threads / 2;
+	int num_threads = params[DEFAULT].max_threads;
+	if(params[DEFAULT].single_sample_multiple_threading == true) num_threads = params[DEFAULT].max_threads / 2;
 	if(num_threads > b - a) num_threads = b - a;
 	
 	boost::asio::thread_pool pool(num_threads);			// thread pool
@@ -157,7 +158,7 @@ int incubator::generate(int a, int b)
 
 int incubator::merge()
 {
-	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
+	boost::asio::thread_pool pool(params[DEFAULT].max_threads); // thread pool
 
 	for(int k = 0; k < groups.size(); k++)
 	{
@@ -175,7 +176,7 @@ int incubator::merge()
 
 int incubator::assemble()
 {
-	boost::asio::thread_pool pool(cfg.max_threads);
+	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
 	mutex mylock;
 
 	int instance = 0;
@@ -200,14 +201,14 @@ int incubator::assemble()
 
 int incubator::postprocess()
 {
-	ofstream fout(cfg.output_gtf_file.c_str());
+	ofstream fout(params[DEFAULT].output_gtf_file.c_str());
 	if(fout.fail())
 	{
-		printf("cannot open output-get-file %s\n", cfg.output_gtf_file.c_str());
+		printf("cannot open output-get-file %s\n", params[DEFAULT].output_gtf_file.c_str());
 		exit(0);
 	}
 
-	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
+	boost::asio::thread_pool pool(params[DEFAULT].max_threads); // thread pool
 	mutex mylock;									// lock for tsets
 
 	strsts.resize(samples.size());
@@ -228,9 +229,9 @@ int incubator::postprocess()
 
 int incubator::write()
 {
-	if(cfg.output_gtf_dir == "") return 0;
+	if(params[DEFAULT].output_gtf_dir == "") return 0;
 
-	boost::asio::thread_pool pool(cfg.max_threads); // thread pool
+	boost::asio::thread_pool pool(params[DEFAULT].max_threads); // thread pool
 	mutex mylock;									// lock for tsets
 
 	for(int i = 0; i < strsts.size(); i++)
@@ -248,8 +249,7 @@ int incubator::write()
 int incubator::generate(sample_profile &sp, vector<combined_group> &gv, mutex &mylock)
 {	
 	vector<combined_graph> v;
-	parameters c = cfg;
-	generator gt(sp, v, c);
+	generator gt(sp, v, params[sp.data_type]);
 	gt.resolve();
 
 	mylock.lock();
@@ -262,7 +262,7 @@ int incubator::generate(sample_profile &sp, vector<combined_group> &gv, mutex &m
 		if(c == '-') s = 2;
 		if(g2g[s].find(chrm) == g2g[s].end())
 		{
-			combined_group gp(chrm, c, cfg);
+			combined_group gp(chrm, c, params[DEFAULT]);
 			gp.add_graph(std::move(v[k]));
 			g2g[s].insert(pair<string, int>(chrm, gv.size()));
 			gv.push_back(std::move(gp));
@@ -296,7 +296,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	}
 	else
 	{
-		combined_graph cx(cfg);
+		combined_graph cx(params[DEFAULT]);
 		resolve_cluster(gv, cx, mylock);
 
 		for(int i = 0; i < gv.size(); i++)
@@ -319,15 +319,15 @@ int incubator::assemble(combined_graph &cb, transcript_set &ts, int mode)
 {
 	// rebuild splice graph
 	splice_graph gx;
-	cb.build_splice_graph(gx, cfg);
+	cb.build_splice_graph(gx, params[DEFAULT]);
 	gx.build_vertex_index();
 	gx.extend_strands();
 
 	phase_set px = cb.ps;
 
 	map<int32_t, int32_t> smap, tmap;
-	group_start_boundaries(gx, smap, cfg.max_group_boundary_distance);
-	group_end_boundaries(gx, tmap, cfg.max_group_boundary_distance);
+	group_start_boundaries(gx, smap, params[DEFAULT].max_group_boundary_distance);
+	group_end_boundaries(gx, tmap, params[DEFAULT].max_group_boundary_distance);
 	px.project_boundaries(smap, tmap);
 
 	refine_splice_graph(gx);
@@ -355,7 +355,7 @@ int incubator::assemble(combined_graph &cb, transcript_set &ts, int mode)
 	}
 	*/
 
-	scallop sx(gx, hx, cfg);
+	scallop sx(gx, hx, params[DEFAULT]);
 	sx.assemble();
 
 	int z = 0;
@@ -397,7 +397,7 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, m
 
 	// rebuild splice graph
 	splice_graph gx;
-	cb.build_splice_graph(gx, cfg);
+	cb.build_splice_graph(gx, params[DEFAULT]);
 	gx.build_vertex_index();
 
 	// collect and bridge all unbridged pairs
@@ -418,7 +418,7 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, m
 		index[k].second = vc.size();
 	}
 
-	bridge_solver br(gx, vc, cfg, length_low, length_high);
+	bridge_solver br(gx, vc, params[DEFAULT], length_low, length_high);
 	br.build_phase_set(cb.ps);
 
 	//printf("cluster-bridge, combined = %lu, ", gv.size()); br.print();
@@ -426,7 +426,7 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, m
 	// resolve individual graphs
 	for(int i = 0; i < gv.size(); i++)
 	{
-		combined_graph g1(cfg);
+		combined_graph g1(params[DEFAULT]);
 		for(int k = index[i].first; k < index[i].second; k++)
 		{
 			if(br.opt[k].type < 0) continue;
@@ -436,7 +436,7 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, m
 	}
 
 	// write bridged and unbridged reads
-	if(cfg.output_bridged_bam_dir != "")
+	if(params[DEFAULT].output_bridged_bam_dir != "")
 	{
 		mylock.lock();
 		for(int i = 0; i < gv.size(); i++)
@@ -474,7 +474,7 @@ int incubator::postprocess(const transcript_set &ts, ofstream &fout, mutex &mylo
 	//cluster cs(v, cfg);
 	//cs.solve();
 
-	filter ft(v, /*cs.cct,*/ cfg);
+	filter ft(v, /*cs.cct,*/ params[DEFAULT]);
 	//ft.join_single_exon_transcripts();
 	ft.filter_length_coverage();
 
@@ -529,7 +529,7 @@ int incubator::write(int id)
 	string bfile = samples[id].file_name.substr(p + 1);
 
 	char file[10240];
-	sprintf(file, "%s/%d.gtf", cfg.output_gtf_dir.c_str(), id);
+	sprintf(file, "%s/%d.gtf", params[DEFAULT].output_gtf_dir.c_str(), id);
 
 	ofstream fout(file);
 	if(fout.fail()) return 0;

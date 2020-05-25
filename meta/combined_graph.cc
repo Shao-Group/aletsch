@@ -603,8 +603,8 @@ int combined_graph::classify_junctions(vector<combined_graph*> &gv, const vector
 			if(mt.find(p.first) == mt.end())
 			{
 				int type = 0;
-				if(samples[gt->sid].data_type == "paired_end") type = 1;
-				else if(samples[gt->sid].data_type == "ont") type = -1;
+				if(samples[gt->sid].data_type == PAIRED_END) type = 1;
+				else if(samples[gt->sid].data_type == ONT) type = -1;
 				else assert(false);
 				mt.insert(make_pair(p.first, type));
 			}

@@ -6,11 +6,12 @@ See LICENSE for licensing.
 
 #include "sample_profile.h"
 #include "htslib/bgzf.h"
+#include "constants.h"
 
 sample_profile::sample_profile()
 {
 	bridged_bam = NULL;
-	data_type = "paired_end";
+	data_type = DEFAULT;
 }
 
 int sample_profile::open_bridged_bam(const string &dir)
@@ -38,6 +39,6 @@ int sample_profile::close_bridged_bam()
 
 int sample_profile::print()
 {
-	printf("file = %s, type = %s\n", file_name.c_str(), data_type.c_str());
+	printf("file = %s, type = %d\n", file_name.c_str(), data_type);
 	return 0;
 }

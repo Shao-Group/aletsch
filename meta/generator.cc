@@ -28,7 +28,7 @@ generator::generator(sample_profile &s, vector<combined_graph> &v, const paramet
 {
 	previewer pre(cfg, sp);
 	pre.infer_library_type();
-	if(sp.data_type == "paired_end") pre.infer_insertsize();
+	if(sp.data_type == PAIRED_END) pre.infer_insertsize();
 
     sfn = sam_open(sp.file_name.c_str(), "r");
     hdr = sam_hdr_read(sfn);
@@ -150,7 +150,7 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	gr.extend_strands();
 	gr.build_vertex_index();
 
-	if(sp.data_type == "paired_end" || sp.data_type == "single_end")
+	if(sp.data_type == PAIRED_END || sp.data_type == SINGLE_END)
 	{
 		revise_splice_graph_full(gr, cfg);
 	}

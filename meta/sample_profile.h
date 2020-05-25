@@ -23,7 +23,7 @@ public:
 	string file_name;
 	BGZF *bridged_bam;
 	int library_type;
-	string data_type;
+	int data_type;
 	double insertsize_ave;
 	double insertsize_std;
 	int insertsize_low;

@@ -22,12 +22,12 @@ typedef pair<int, int> PI;
 class incubator
 {
 public:
-	incubator(const parameters &c);
+	incubator(const vector<parameters> &v);
 	~incubator();
 
 public:
 	int batch;										// batch id
-	const parameters &cfg;							// parameters for scallop
+	const vector<parameters> &params;				// parameters 
 	vector<sample_profile> samples;					// samples
 	vector<vector<transcript>> strsts;				// predicted transcripts for each sample
 	vector<transcript_set> tsets;					// assembled transcripts for all samples
