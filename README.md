@@ -92,9 +92,10 @@ details.
  ------------------------- | ------------- | ----------
  --help  | | print usage of meta-scallop and exit
  --version | | print version of meta-scallop and exit
- -t | 10 | number of threads
+ -t | 10  | number of threads
+ -m |     | if specified, invididual samples will be processed by two threads
  -b | 100 | the number of samples that will be process at a time
  -c | 100 | the maximized number of splice graphs that will be combined
  -s | 0.3 | the minimized similarity between two splice graphs that can be combined
- -d | N/A | the directory in which assembled transcripts for individual sample will be generated
- -D | N/A | the directory in which bridged alignments for individual sample will be generated
+ -d |     | the directory in which assembled transcripts for individual sample will be generated
+ -D |     | the directory in which bridged alignments for individual sample will be generated
