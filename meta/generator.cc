@@ -130,8 +130,31 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 {
 	if(bb == NULL) return 0;
 
-	if(bb->tid < 0 || bb->hits.size() < cfg.min_num_hits_in_bundle) 
+	if(bb->tid < 0)
 	{
+		bb->clear();
+		delete bb;
+		return 0;
+	}
+
+	bool store_hits = true;
+	if(cfg.output_bridged_bam_dir == "") store_hits = false;
+	if(sp.data_type != PAIRED_END) store_hits = false;
+
+	if(bb->hits.size() < cfg.min_num_hits_in_bundle) 
+	{
+		if(store_hits == true)
+		{
+			for(int i = 0; i < bb->hits.size(); i++)
+			{
+				hit &h = bb->hits[i];
+				bam1_t b1t;
+				bool b = build_bam1_t(b1t, h, bb->hits[i].spos);
+				if(b == true) bam_write1(sp.bridged_bam, &(b1t));
+				assert(b1t.data != NULL);
+				delete b1t.data;
+			}
+		}
 		bb->clear();
 		delete bb;
 		return 0;
@@ -163,9 +186,6 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 
 	vector<pereads_cluster> vc;
 	phase_set ps;
-
-	bool store_hits = false;
-	if(cfg.output_bridged_bam_dir != "") store_hits = true;
 
 	graph_cluster gc(gr, bb->hits, cfg.max_reads_partition_gap, store_hits);
 	gc.build_pereads_clusters(vc);
