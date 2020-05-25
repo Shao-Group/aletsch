@@ -242,8 +242,11 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 		vector<int32_t> w;
 		bool b = merge_intron_chains(pc.chain1, pc.chain2, w);
 		if(b == false) return 0;
-
+		b = check_increasing_sequence(w);
+		if(b == false) return 0;
 		int s = check_strand_from_intron_coordinates(gr, w);
+		if(s < 0) return 0;
+
 		type = 1;
 		chains.push_back(c);
 		wholes.push_back(w);

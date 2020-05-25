@@ -130,7 +130,7 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 {
 	if(bb == NULL) return 0;
 
-	if(bb->tid < 0 && bb->hits.size() < cfg.min_num_hits_in_bundle) 
+	if(bb->tid < 0 || bb->hits.size() < cfg.min_num_hits_in_bundle) 
 	{
 		bb->clear();
 		delete bb;
