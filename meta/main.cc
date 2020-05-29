@@ -14,6 +14,8 @@ using namespace std;
 
 int main(int argc, const char **argv)
 {
+	setbuf(stdout, NULL);
+
 	vector<parameters> params(NUM_DATA_TYPES);
 	for(int i = 0; i < NUM_DATA_TYPES; i++)
 	{
