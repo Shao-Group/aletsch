@@ -337,10 +337,12 @@ int incubator::assemble(combined_graph &cb, transcript_set &ts, int mode)
 	hyper_set hx(gx, px);
 	hx.filter_nodes(gx);
 
+	/*
 	cb.print(0);
 	printf("-----\n");
 	gx.print();
 	printf("=====\n\n");
+	*/
 
 	gx.gid = cb.gid;
 

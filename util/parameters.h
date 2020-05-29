@@ -60,6 +60,7 @@ public:
 	int32_t max_cluster_boundary_distance;
 	int32_t max_cluster_intron_distance;
 	int32_t max_cluster_intron_shifting;
+	double long_reads_cluster_boosting;
 	double min_cluster_single_exon_ratio;
 
 	// for loading bam file and reads

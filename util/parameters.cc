@@ -92,6 +92,7 @@ parameters::parameters()
 	max_cluster_boundary_distance = 10000;
 	max_cluster_intron_distance = 5;
 	max_cluster_intron_shifting = 10;
+	long_reads_cluster_boosting = 5;
 	min_cluster_single_exon_ratio = 0.8;
 }
 

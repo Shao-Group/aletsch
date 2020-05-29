@@ -78,7 +78,7 @@ public:
 	int refine_junctions();
 	int refine_junctions(vector<combined_graph*> &gv, const vector<sample_profile> &samples);
 	int classify_junctions(vector<combined_graph*> &gv, const vector<sample_profile> &samples, map<TI32, int> &mt);
-	int compare_two_junctions(PTDI &x, PTDI &y, int short2long);
+	int compare_two_junctions(PTDI &x, PTDI &y, int xt, int yt);
 	int build_junction_graph(directed_graph &gr);
 	int build_junction_graph(directed_graph &gr, const map<TI32, int> &mt);
 	int build_junction_map(directed_graph &gr, map<PI32, PI32> &jm);

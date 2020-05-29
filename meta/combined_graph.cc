@@ -573,31 +573,41 @@ set<int32_t> combined_graph::get_reliable_splices(int samples, double weight)
 
 int combined_graph::refine_junctions()
 {
-	map<TI32, int> mt;
-	directed_graph gr;
-	build_junction_graph(gr, mt);
+	while(true)
+	{
+		map<TI32, int> mt;
+		directed_graph gr;
+		build_junction_graph(gr, mt);
 
-	map<PI32, PI32> jm;
-	build_junction_map(gr, jm);
+		map<PI32, PI32> jm;
+		build_junction_map(gr, jm);
 
-	project_junctions(jm);
+		int n = project_junctions(jm);
+		if(n <= 0) break;
+	}
 	return 0;
 }
 
 int combined_graph::refine_junctions(vector<combined_graph*> &gv, const vector<sample_profile> &samples)
 {
-	map<TI32, int> mt;
-	classify_junctions(gv, samples, mt);
+	while(true)
+	{
+		map<TI32, int> mt;
+		classify_junctions(gv, samples, mt);
 
-	directed_graph gr;
-	build_junction_graph(gr, mt);
+		directed_graph gr;
+		build_junction_graph(gr, mt);
 
-	map<PI32, PI32> jm;
-	build_junction_map(gr, jm);
+		map<PI32, PI32> jm;
+		build_junction_map(gr, jm);
 
-	project_junctions(jm);
-	for(int i = 0; i < gv.size(); i++) gv[i]->project_junctions(jm);
-
+		int n = project_junctions(jm);
+		for(int i = 0; i < gv.size(); i++) 
+		{
+			n += gv[i]->project_junctions(jm);
+		}
+		if(n <= 0) break;
+	}
 	return 0;
 }
 
@@ -641,11 +651,14 @@ map<PI32, PI32> combined_graph::group_junctions()
 
 int combined_graph::project_junctions(const map<PI32, PI32> &jm)
 {
+	int n1 = junctions.size();
 	rebuild_junctions(jm);
 	rebuild_splices();
 	ps.project_junctions(jm);
 	for(int i = 0; i < vc.size(); i++) vc[i].project_junctions(jm);
-	return 0;
+	int n2 = junctions.size();
+	assert(n1 >= n2);
+	return n1 - n2;
 }
 
 int combined_graph::rebuild_splices()
@@ -760,9 +773,11 @@ int combined_graph::build_junction_graph(directed_graph &gr, const map<TI32, int
 			TI32 pj = junctions[j].first;
 			map<TI32, int>::const_iterator xj = mt.find(pj);
 			int short2long = 0;
-			if(xi != mt.end() && xj != mt.end() && xi->second == +1 && xj->second == -1) short2long = +1;
-			if(xi != mt.end() && xj != mt.end() && xi->second == -1 && xj->second == +1) short2long = -1;
-			int p = compare_two_junctions(junctions[i], junctions[j], short2long);
+			int ti = 0;
+			int tj =0;
+			if(xi != mt.end()) ti = xi->second;
+			if(xj != mt.end()) tj = xj->second;
+			int p = compare_two_junctions(junctions[i], junctions[j], ti, tj);
 			if(p == +1) gr.add_edge(i, j);
 			if(p == -1) gr.add_edge(j, i);
 		}
@@ -781,7 +796,7 @@ int combined_graph::build_junction_graph(directed_graph &gr)
 	{
 		for(int j = i + 1; j < junctions.size(); j++)
 		{
-			int p = compare_two_junctions(junctions[i], junctions[j], 0);
+			int p = compare_two_junctions(junctions[i], junctions[j], 0, 0);
 			if(p == +1) gr.add_edge(i, j);
 			if(p == -1) gr.add_edge(j, i);
 		}
@@ -789,34 +804,47 @@ int combined_graph::build_junction_graph(directed_graph &gr)
 	return 0;
 }
 
-int combined_graph::compare_two_junctions(PTDI &x, PTDI &y, int short2long)
+int combined_graph::compare_two_junctions(PTDI &x, PTDI &y, int xt, int yt)
 {
 	PI &px = x.first.first;
 	PI &py = y.first.first;
 
 	int32_t dx = px.second - px.first;
 	int32_t dy = py.second - py.first;
-	if(fabs(dx - dy) > cfg.max_cluster_intron_distance) return 0;
+
+	double dxy = cfg.max_cluster_intron_distance;
+	if(xt == -1 || yt == -1) dxy = dxy * cfg.long_reads_cluster_boosting;
+	if(fabs(dx - dy) > dxy) return 0;
 
 	double s1 = fabs(px.first - py.first);
 	double s2 = fabs(px.second - py.second);
-	if(s1 > cfg.max_cluster_intron_shifting) return 0;
-	if(s2 > cfg.max_cluster_intron_shifting) return 0;
+	double s12 = cfg.max_cluster_intron_shifting;
+	if(xt == -1 || yt == -1) s12 = s12 * cfg.long_reads_cluster_boosting;
+	if(s1 > s12) return 0;
+	if(s2 > s12) return 0;
 
-	if(short2long == +1) 
+	if(xt == +1 && yt == -1) 
 	{
-		if(x.second.first > (y.second.first + 1) / 2.0) return +1;
+		if(x.second.first >= (1 + y.second.first) / 2.0) return +1;
 		else return 0;
 	}
 
-	if(short2long == -1) 
+	if(xt == -1 && yt == +1)
 	{
-		if(y.second.first > (x.second.first + 1) / 2.0) return -1;
+		if(y.second.first >= (1 + x.second.first) / 2.0) return -1;
 		else return 0;
 	}
 
-	if(x.second.first > 2 * (y.second.first + 1)) return +1;
-	if(y.second.first > 2 * (x.second.first + 1)) return -1;
+	if(x.second.first >= 2 * y.second.first) return +1;
+	if(y.second.first >= 2 * x.second.first) return -1;
+
+	if(xt == -1 || yt == -1 && x.second.first <= 1.01 && y.second.first <= 1.01)
+	{
+		if(x.first.first < y.first.first) return +1;
+		if(y.first.first < x.first.first) return -1;
+		if(x.first.second < y.first.second) return +1;
+		if(y.first.second < x.first.second) return -1;
+	}
 
 	return 0;
 }
