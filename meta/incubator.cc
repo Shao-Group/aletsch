@@ -337,14 +337,10 @@ int incubator::assemble(combined_graph &cb, transcript_set &ts, int mode)
 	hyper_set hx(gx, px);
 	hx.filter_nodes(gx);
 
-	/*
 	cb.print(0);
-	printf("==\n");
+	printf("-----\n");
 	gx.print();
-	printf("==\n");
-	hx.print_nodes();
-	printf("==\n");
-	*/
+	printf("=====\n\n");
 
 	gx.gid = cb.gid;
 
@@ -386,7 +382,7 @@ int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, m
 	cb.combine(gv);
 	cb.sid = -1;
 
-	cb.refine_junctions(gv);
+	cb.refine_junctions(gv, samples);
 
 	// rebuild splice graph
 	splice_graph gx;
