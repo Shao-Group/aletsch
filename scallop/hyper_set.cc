@@ -335,6 +335,7 @@ int hyper_set::build_edges(directed_graph &gr, MEI& e2i)
 		bool b = true;
 		for(int k = 0; k < vv.size() - 1; k++)
 		{
+			assert(vv[k] < vv[k + 1]);
 			PEB p = gr.edge(vv[k], vv[k + 1]);
 			if(p.second == false) b = false;
 			if(p.second == false) ve.push_back(-1);

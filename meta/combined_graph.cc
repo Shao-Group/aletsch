@@ -371,6 +371,9 @@ int combined_graph::build_splice_graph(splice_graph &gr, const parameters &cfg)
 
 	for(int i = 0; i < regions.size(); i++) 
 	{
+		assert(regions[i].first.first < regions[i].first.second);
+		if(i >= 1) assert(regions[i - 1].first.second <= regions[i].first.first);
+
 		gr.add_vertex();
 		vertex_info vi;
 		vi.lpos = regions[i].first.first;
@@ -382,6 +385,7 @@ int combined_graph::build_splice_graph(splice_graph &gr, const parameters &cfg)
 		gr.set_vertex_info(i + 1, vi);
 	}
 
+	// verify
 	gr.add_vertex();	// n
 	PIDI tb = get_rightmost_bound();
 	vertex_info vn;
@@ -402,6 +406,7 @@ int combined_graph::build_splice_graph(splice_graph &gr, const parameters &cfg)
 
 		assert(gr.lindex.find(p) != gr.lindex.end());
 		int k = gr.lindex[p];
+		assert(k >= 1);
 		edge_descriptor e = gr.add_edge(0, k);
 		edge_info ei;
 		ei.weight = w;
@@ -419,6 +424,7 @@ int combined_graph::build_splice_graph(splice_graph &gr, const parameters &cfg)
 
 		assert(gr.rindex.find(p) != gr.rindex.end());
 		int k = gr.rindex[p];
+		assert(k < gr.num_vertices() - 1);
 		edge_descriptor e = gr.add_edge(k, gr.num_vertices() - 1);
 		edge_info ei;
 		ei.weight = w;
@@ -443,6 +449,7 @@ int combined_graph::build_splice_graph(splice_graph &gr, const parameters &cfg)
 		if(gr.lindex.find(p.second) == gr.lindex.end()) continue;
 		int s = gr.rindex[p.first];
 		int t = gr.lindex[p.second];
+		assert(s < t);
 		edge_descriptor e = gr.add_edge(s, t);
 		edge_info ei;
 		ei.weight = w;
