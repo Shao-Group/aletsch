@@ -62,7 +62,7 @@ int generator::resolve()
     while(sam_read1(sfn, hdr, b1t) >= 0)
 	{
 		bam1_core_t &p = b1t->core;
-		if(p.tid >= 1) break;		// TODO
+		//if(p.tid >= 1) break;		// TODO
 
 		if((p.flag & 0x4) >= 1) continue;											// read is not mapped
 		if((p.flag & 0x100) >= 1 && cfg.use_second_alignment == false) continue;	// secondary alignment
