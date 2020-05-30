@@ -43,6 +43,7 @@ parameters::parameters()
 	max_num_cigar = 10000;
 	min_bundle_gap = 50;
 	min_num_hits_in_bundle = 20;
+	min_junction_support = 1;
 	min_mapping_quality = 1;
 	use_second_alignment = false;
 	uniquely_mapped_only = false;
@@ -425,6 +426,7 @@ int parameters::set_default(int data_type)
 {
 	if(data_type == PACBIO) min_num_hits_in_bundle = 1;
 	if(data_type == ONT) min_num_hits_in_bundle = 1;
+	if(data_type == ONT) min_junction_support = 2;
 	return 0;
 }
 
