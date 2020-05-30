@@ -68,6 +68,7 @@ public:
 	int max_num_cigar;
 	int32_t min_bundle_gap;
 	int min_num_hits_in_bundle;
+	int min_junction_support;
 	uint32_t min_mapping_quality;
 	bool uniquely_mapped_only;
 	bool use_second_alignment;

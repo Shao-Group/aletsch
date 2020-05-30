@@ -76,6 +76,9 @@ int graph_builder::build_junctions()
 		int32_t p2 = it->first.second;
 
 		junction jc(p1, p2, v.size());
+
+		if(jc.count < cfg.min_junction_support) continue;
+
 		for(int k = 0; k < v.size(); k++)
 		{
 			const hit &h = bd.hits[v[k]];
