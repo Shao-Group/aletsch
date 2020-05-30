@@ -1343,8 +1343,8 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 			fflush(stdout);
 		}
 
-		assert(hs.left_extend(e1) == false || hs.right_extend(e1) == false);
-		assert(hs.left_extend(e2) == false || hs.right_extend(e2) == false);
+		//assert(hs.left_extend(e1) == false || hs.right_extend(e1) == false);
+		//assert(hs.left_extend(e2) == false || hs.right_extend(e2) == false);
 		hs.remove(e1);
 		hs.remove(e2);
 	}
