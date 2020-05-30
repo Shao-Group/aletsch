@@ -823,28 +823,35 @@ int combined_graph::compare_two_junctions(PTDI &x, PTDI &y, int xt, int yt)
 	if(s1 > s12) return 0;
 	if(s2 > s12) return 0;
 
+	// both are long reads
+	if(xt == -1 && yt == -1)
+	{
+		if(x.second.first >= 2 * y.second.first) return +1;
+		if(y.second.first >= 2 * x.second.first) return -1;
+
+		if(x.second.first <= 1.01 && y.second.first <= 1.01)
+		{
+			if(x.first.first < y.first.first) return +1;
+			if(y.first.first < x.first.first) return -1;
+			if(x.first.second < y.first.second) return +1;
+			if(y.first.second < x.first.second) return -1;
+		}
+	}
+
 	if(xt == +1 && yt == -1) 
 	{
-		if(x.second.first >= (1 + y.second.first) / 2.0) return +1;
+		if(x.second.first >= y.second.first / 2.0) return +1;
 		else return 0;
 	}
 
 	if(xt == -1 && yt == +1)
 	{
-		if(y.second.first >= (1 + x.second.first) / 2.0) return -1;
+		if(y.second.first >= x.second.first / 2.0) return -1;
 		else return 0;
 	}
 
-	if(x.second.first >= 2 * y.second.first) return +1;
-	if(y.second.first >= 2 * x.second.first) return -1;
-
-	if(xt == -1 && yt == -1 && x.second.first <= 1.01 && y.second.first <= 1.01)
-	{
-		if(x.first.first < y.first.first) return +1;
-		if(y.first.first < x.first.first) return -1;
-		if(x.first.second < y.first.second) return +1;
-		if(y.first.second < x.first.second) return -1;
-	}
+	if(x.second.first >= (1 + y.second.first) * (1 + y.second.first)) return +1;
+	if(y.second.first >= (1 + x.second.first) * (1 + x.second.first)) return -1;
 
 	return 0;
 }
