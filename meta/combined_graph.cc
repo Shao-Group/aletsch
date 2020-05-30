@@ -833,8 +833,8 @@ int combined_graph::compare_two_junctions(PTDI &x, PTDI &y, int xt, int yt)
 	// both are long reads
 	if(xt == -1 && yt == -1)
 	{
-		if(x.second.first >= 2 * y.second.first) return +1;
-		if(y.second.first >= 2 * x.second.first) return -1;
+		if(x.second.first >= y.second.first + 1.0) return +1;
+		if(y.second.first >= x.second.first + 1.0) return -1;
 
 		if(x.second.first <= 1.01 && y.second.first <= 1.01)
 		{
@@ -847,18 +847,18 @@ int combined_graph::compare_two_junctions(PTDI &x, PTDI &y, int xt, int yt)
 
 	if(xt == +1 && yt == -1) 
 	{
-		if(x.second.first >= y.second.first / 2.0) return +1;
+		if(x.second.first >= sqrt(y.second.first)) return +1;
 		else return 0;
 	}
 
 	if(xt == -1 && yt == +1)
 	{
-		if(y.second.first >= x.second.first / 2.0) return -1;
+		if(y.second.first >= sqrt(x.second.first)) return -1;
 		else return 0;
 	}
 
-	if(x.second.first >= (1 + y.second.first) * (1 + y.second.first)) return +1;
-	if(y.second.first >= (1 + x.second.first) * (1 + x.second.first)) return -1;
+	if(x.second.first >= y.second.first * y.second.first + 1) return +1;
+	if(y.second.first >= x.second.first * x.second.first + 1) return -1;
 
 	return 0;
 }
