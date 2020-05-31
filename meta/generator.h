@@ -23,7 +23,7 @@ using namespace std;
 class generator
 {
 public:
-	generator(sample_profile &sp, vector<combined_graph> &cbv, const parameters &c);
+	generator(sample_profile &sp, vector<combined_graph> &cbv, vector<transcript> &trsts, const parameters &c);
 	~generator();
 
 private:
@@ -34,6 +34,7 @@ private:
 	bam1_t *b1t;
 
 	vector<combined_graph> &vcb;
+	vector<transcript> trsts;
 
 	int index;
 	int qcnt;
@@ -43,9 +44,10 @@ public:
 	int resolve();
 
 private:
-	int generate(bundle *bb, mutex &mylock, int index);
+	int generate(bundle *bb, mutex &glock, mutex &tlock, int index);
 	int partition(splice_graph &gr, phase_set &hs, vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &hsv, vector< vector<pereads_cluster> > &ubv);
-	bool process_regional_graph(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc);
+	bool regional(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc);
+	bool assemble(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc, mutex &tlock);
 };
 
 #endif

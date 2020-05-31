@@ -53,6 +53,7 @@ private:
 	int assemble(vector<combined_graph*> gv, int instance, mutex &mylock);
 	int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);
 	int store_transcripts(const transcript_set &ts, mutex &mylock);
+	int store_transcripts(const vector<transcript> &v, int sid, mutex &mylock);
 };
 
 #endif
