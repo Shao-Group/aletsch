@@ -289,8 +289,8 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 
 	transcript_set ts;
 
-	assembler asmb(samples, params[DEFAULT]);
-	asmb.assemble(gv, batch, instance, ts);
+	assembler asmb(params[DEFAULT]);
+	asmb.assemble(gv, batch, instance, ts, samples);
 
 	store_transcripts(ts, mylock);
 

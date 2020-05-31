@@ -16,17 +16,16 @@ See LICENSE for licensing.
 class assembler
 {
 public:
-	assembler(vector<sample_profile> &samples, const parameters &cfg);
+	assembler(const parameters &cfg);
 
 public:
-	vector<sample_profile> &samples;				// samples
 	const parameters &cfg;							// parameters 
 
 public:
-	int assemble(vector<combined_graph*> gv, int batch, int instance, transcript_set &ts);
+	int assemble(vector<combined_graph*> gv, int batch, int instance, transcript_set &ts, vector<sample_profile> &samples);
+	int resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, vector<sample_profile> &samples);
 	int assemble(combined_graph &cb, transcript_set &ts, int mode);
 	int assemble(combined_graph &cb, vector<transcript> &vt);
-	int resolve_cluster(vector<combined_graph*> gv, combined_graph &cb);
 };
 
 #endif
