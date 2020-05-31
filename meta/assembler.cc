@@ -81,10 +81,15 @@ int assembler::assemble(combined_graph &cb, vector<transcript> &vt)
 	// rebuild splice graph
 	splice_graph gx;
 	cb.build_splice_graph(gx, cfg);
+	gx.gid = cb.gid;
+	assemble(gx, cb.ps, vt);
+	return 0;
+}
+
+int assembler::assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt)
+{
 	gx.build_vertex_index();
 	gx.extend_strands();
-
-	phase_set px = cb.ps;
 
 	map<int32_t, int32_t> smap, tmap;
 	group_start_boundaries(gx, smap, cfg.max_group_boundary_distance);
@@ -95,15 +100,6 @@ int assembler::assemble(combined_graph &cb, vector<transcript> &vt)
 
 	hyper_set hx(gx, px);
 	hx.filter_nodes(gx);
-
-	/*
-	cb.print(0);
-	printf("-----\n");
-	gx.print();
-	printf("=====\n\n");
-	*/
-
-	gx.gid = cb.gid;
 
 	/*
 	gx.print();
@@ -126,8 +122,7 @@ int assembler::assemble(combined_graph &cb, vector<transcript> &vt)
 		vt.push_back(t);
 	}
 
-	printf("assemble %s: %d transcripts, ", cb.gid.c_str(), z);
-	cb.print(0);
+	printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges, phases = %lu", gx.gid.c_str(), z, gx.num_vertices(), gx.num_edges(), px.pmap.size());
 
 	return 0;
 }

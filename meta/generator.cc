@@ -23,7 +23,7 @@ See LICENSE for licensing.
 #include "graph_reviser.h"
 #include "essential.h"
 #include "hyper_set.h"
-#include "scallop.h"
+#include "assembler.h"
 
 generator::generator(sample_profile &s, vector<combined_graph> &v, vector<transcript> &t, const parameters &c)
 	: vcb(v), trsts(t), cfg(c), sp(s)
@@ -294,24 +294,13 @@ bool generator::assemble(splice_graph &gr, phase_set &ps, vector<pereads_cluster
 {
 	if(gr.num_vertices() >= 3 && gr.num_vertices() <= 100) return false;
 
-	refine_splice_graph(gr);
-
-	hyper_set hs(gr, ps);
-	hs.filter_nodes(gr);
-
-	scallop sc(gr, hs, cfg);
-	sc.assemble();
+	vector<transcript> vt;
+	assembler asmb(cfg);
+	asmb.assemble(gr, ps, vt);
 
 	tlock.lock();
-	for(int k = 0; k < sc.trsts.size(); k++)
-	{
-		transcript &t = sc.trsts[k];
-		t.RPKM = 0;
-		trsts.push_back(t);
-	}
+	trsts.insert(trsts.end(), vt.begin(), vt.end());
 	tlock.unlock();
-
-	printf("assemble %s: %lu transcripts\n", gr.gid.c_str(), sc.trsts.size());
 
 	if(cfg.output_bridged_bam_dir != "")
 	{
