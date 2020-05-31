@@ -34,7 +34,7 @@ private:
 	bam1_t *b1t;
 
 	vector<combined_graph> &vcb;
-	vector<transcript> trsts;
+	vector<transcript> &trsts;
 
 	int index;
 	int qcnt;
