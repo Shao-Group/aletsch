@@ -253,8 +253,11 @@ int incubator::write()
 int incubator::generate(sample_profile &sp, vector<combined_group> &gv, mutex &mylock)
 {	
 	vector<combined_graph> v;
-	generator gt(sp, v, params[sp.data_type]);
+	vector<transcript> trsts;
+	generator gt(sp, v, trsts, params[sp.data_type]);
 	gt.resolve();
+
+	store_transcripts(trsts, sp.sample_id, mylock);
 
 	mylock.lock();
 	for(int k = 0; k < v.size(); k++)
@@ -371,6 +374,36 @@ int incubator::write(int id)
 	fout.write(s.c_str(), s.size());
 
 	fout.close();
+	return 0;
+}
+
+int incubator::store_transcripts(const vector<transcript> &v, int sid, mutex &mylock)
+{
+	if(v.size() == 0) return 0;
+
+	mylock.lock();
+
+	for(int k = 0; k < v.size(); k++)
+	{
+		bool found = false;
+		const transcript &ts = v[k];
+		for(int i = 0; i < tsets.size(); i++)
+		{
+			if(tsets[i].chrm != ts.seqname) continue;
+			tsets[i].add(ts, 2, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+			found = true;
+			break;
+		}
+
+		if(found == false)
+		{
+			tsets.resize(tsets.size() + 1);
+			tsets[tsets.size() - 1].add(ts, 2, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+		}
+	}
+
+	mylock.unlock();
+
 	return 0;
 }
 

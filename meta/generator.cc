@@ -22,9 +22,11 @@ See LICENSE for licensing.
 #include "graph_cluster.h"
 #include "graph_reviser.h"
 #include "essential.h"
+#include "hyper_set.h"
+#include "scallop.h"
 
-generator::generator(sample_profile &s, vector<combined_graph> &v, const parameters &c)
-	: vcb(v), cfg(c), sp(s)
+generator::generator(sample_profile &s, vector<combined_graph> &v, vector<transcript> &t, const parameters &c)
+	: vcb(v), trsts(t), cfg(c), sp(s)
 {
 	previewer pre(cfg, sp);
 	pre.infer_library_type();
@@ -51,7 +53,9 @@ int generator::resolve()
 	if(cfg.single_sample_multiple_threading) num_threads = 1;
 
 	boost::asio::thread_pool pool(num_threads);				// thread pool
-	mutex mylock;											// lock for trsts
+
+	mutex glock;											// lock for graphs
+	mutex tlock;											// lock for trsts
 
 	int index = 0;
 	bundle *bb1 = new bundle();
@@ -83,16 +87,16 @@ int generator::resolve()
 		// truncate
 		if(bb1->hits.size() >= 1 && (ht.tid != bb1->tid || ht.pos > bb1->rpos + cfg.min_bundle_gap))
 		{
-			if(cfg.single_sample_multiple_threading == false) this->generate(bb1, mylock, index);
-			else boost::asio::post(pool, [this, &mylock, bb1, index]{ this->generate(bb1, mylock, index); });
+			if(cfg.single_sample_multiple_threading == false) this->generate(bb1, glock, tlock, index);
+			else boost::asio::post(pool, [this, &glock, &tlock, bb1, index]{ this->generate(bb1, glock, tlock, index); });
 			bb1 = new bundle();
 			index++;
 		}
 
 		if(bb2->hits.size() >= 1 && (ht.tid != bb2->tid || ht.pos > bb2->rpos + cfg.min_bundle_gap))
 		{
-			if(cfg.single_sample_multiple_threading == false) this->generate(bb2, mylock, index);
-			else boost::asio::post(pool, [this, &mylock, bb2, index]{ this->generate(bb2, mylock, index); });
+			if(cfg.single_sample_multiple_threading == false) this->generate(bb2, glock, tlock, index);
+			else boost::asio::post(pool, [this, &glock, &tlock, bb2, index]{ this->generate(bb2, glock, tlock, index); });
 			bb2 = new bundle();
 			index++;
 		}
@@ -113,12 +117,12 @@ int generator::resolve()
 		*/
 	}
 
-	if(cfg.single_sample_multiple_threading == false) this->generate(bb1, mylock, index);
-	else boost::asio::post(pool, [this, &mylock, bb1, index]{ this->generate(bb1, mylock, index); });
+	if(cfg.single_sample_multiple_threading == false) this->generate(bb1, glock, tlock, index);
+	else boost::asio::post(pool, [this, &glock, &tlock, bb1, index]{ this->generate(bb1, glock, tlock, index); });
 	index++;
 
-	if(cfg.single_sample_multiple_threading == false) this->generate(bb2, mylock, index);
-	else boost::asio::post(pool, [this, &mylock, bb2, index]{ this->generate(bb2, mylock, index); });
+	if(cfg.single_sample_multiple_threading == false) this->generate(bb2, glock, tlock, index);
+	else boost::asio::post(pool, [this, &glock, &tlock, bb2, index]{ this->generate(bb2, glock, tlock, index); });
 	index++;
 
 	pool.join();
@@ -126,7 +130,7 @@ int generator::resolve()
 	return 0;
 }
 
-int generator::generate(bundle *bb, mutex &mylock, int index)
+int generator::generate(bundle *bb, mutex &glock, mutex &tlock, int index)
 {
 	if(bb == NULL) return 0;
 
@@ -224,11 +228,15 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 	vector<combined_graph> tmp;
 	for(int k = 0; k < grv.size(); k++)
 	{
-		bool b = process_regional_graph(grv[k], hsv[k], ubv[k]);
-		if(b == true) assert(grv[k].count_junctions() <= 0);
+		string gid = "gene." + tostring(sp.sample_id) + "." + tostring(index) + "." + tostring(k);
+		grv[k].gid = gid;
+
+		bool b = regional(grv[k], hsv[k], ubv[k]);
 		if(b == true) continue;
 
-		string gid = "gene." + tostring(index) + "." + tostring(k);
+		b = assemble(grv[k], hsv[k], ubv[k], tlock);
+		if(b == true) continue;
+
 		combined_graph cb(cfg);
 		cb.sid = sp.sample_id;
 		cb.gid = gid;
@@ -245,19 +253,19 @@ int generator::generate(bundle *bb, mutex &mylock, int index)
 		tmp.push_back(std::move(cb));
 	}
 
-	mylock.lock();
+	glock.lock();
 	for(int k = 0; k < tmp.size(); k++)
 	{
 		vcb.push_back(std::move(tmp[k]));
 	}
-	mylock.unlock();
+	glock.unlock();
 
 	bb->clear();
 	delete bb;
 	return 0;
 }
 
-bool generator::process_regional_graph(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc)
+bool generator::regional(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc)
 {
 	bool all_regional = true;
 	for(int i = 1; i < gr.num_vertices() - 1; i++)
@@ -278,6 +286,41 @@ bool generator::process_regional_graph(splice_graph &gr, phase_set &ps, vector<p
 	}
 
 	//gr.print(); printf("above graph is a regional graph\n\n");
+
+	return true;
+}
+
+bool generator::assemble(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc, mutex &tlock)
+{
+	if(gr.num_vertices() >= 3 && gr.num_vertices() <= 100) return false;
+
+	refine_splice_graph(gr);
+
+	hyper_set hs(gr, ps);
+	hs.filter_nodes(gr);
+
+	scallop sc(gr, hs, cfg);
+	sc.assemble();
+
+	tlock.lock();
+	for(int k = 0; k < sc.trsts.size(); k++)
+	{
+		transcript &t = sc.trsts[k];
+		t.RPKM = 0;
+		trsts.push_back(t);
+	}
+	tlock.unlock();
+
+	printf("assemble %s: %lu transcripts\n", gr.gid.c_str(), sc.trsts.size());
+
+	if(cfg.output_bridged_bam_dir != "")
+	{
+		for(int k = 0; k < vc.size(); k++)
+		{
+			write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
+			vc[k].clear();
+		}
+	}
 
 	return true;
 }
