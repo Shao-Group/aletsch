@@ -234,8 +234,10 @@ int generator::generate(bundle *bb, mutex &glock, mutex &tlock, int index)
 		bool b = regional(grv[k], hsv[k], ubv[k]);
 		if(b == true) continue;
 
+		/*
 		b = assemble(grv[k], hsv[k], ubv[k], tlock);
 		if(b == true) continue;
+		*/
 
 		combined_graph cb(cfg);
 		cb.sid = sp.sample_id;

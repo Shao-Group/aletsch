@@ -35,6 +35,7 @@ public:
 	// for meta-assembly
 	int meta_batch_size;
 	int max_merge_cluster;
+	int max_junctions_combine;
 	double min_merge_similarity;
 	bool single_sample_multiple_threading;
 

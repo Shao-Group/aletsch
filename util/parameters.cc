@@ -32,6 +32,7 @@ parameters::parameters()
 	meta_batch_size = 100;
 	max_merge_cluster = 100;
 	min_merge_similarity = 0.3;
+	max_junctions_combine = 200;
 	single_sample_multiple_threading = false;
 
 	// for bridging paired-end reads
