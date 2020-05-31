@@ -83,6 +83,7 @@ int assembler::assemble(combined_graph &cb, vector<transcript> &vt)
 	cb.build_splice_graph(gx, cfg);
 	gx.gid = cb.gid;
 	assemble(gx, cb.ps, vt, cb.num_combined);
+	cb.clear();
 	return 0;
 }
 
