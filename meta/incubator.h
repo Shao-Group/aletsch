@@ -37,13 +37,13 @@ public:
 public:
 	int resolve();
 	int read_bam_list();
-	int clear();
-	int postprocess();
 	int write();
+	int clear();
 
 	int generate(int a, int b);
 	int merge();
 	int assemble();
+	int postprocess();
 	int write(int id);
 
 	int print_groups();

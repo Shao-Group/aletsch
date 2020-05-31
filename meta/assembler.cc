@@ -21,26 +21,35 @@ See LICENSE for licensing.
 #include <boost/asio/thread_pool.hpp>
 #include <boost/pending/disjoint_sets.hpp>
 
-assembler::assembler(vector<sample_profile> &s, const parameters &p)
-	: samples(s), cfg(p)
+assembler::assembler(const parameters &p)
+	: cfg(p)
 {
 }
 
-int assembler::assemble(vector<combined_graph*> gv, int batch, int instance, transcript_set &ts)
+int assembler::assemble(vector<combined_graph*> gv, int batch, int instance, transcript_set &ts, vector<sample_profile> &samples)
 {
 	int subindex = 0;
 
 	if(gv.size() == 1)
 	{
-		gv[0]->set_gid(batch, instance, subindex++);
-		gv[0]->refine_junctions();
-		assemble(*gv[0], ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+		combined_graph &gt = *(gv[0]);
+		gt.set_gid(batch, instance, subindex++);
+		gt.refine_junctions();
+		assemble(gt, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		ts.increase_count(1);
+
+		sample_profile &sp = samples[gt.sid];
+		sp.bam_lock.lock();
+		for(int k = 0; k < gt.vc.size(); k++)
+		{
+			write_unbridged_pereads_cluster(sp.bridged_bam, gt.vc[k]);
+		}
+		sp.bam_lock.unlock();
 	}
 	else
 	{
 		combined_graph cx(cfg);
-		resolve_cluster(gv, cx);
+		resolve_cluster(gv, cx, samples);
 
 		for(int i = 0; i < gv.size(); i++)
 		{
@@ -123,7 +132,7 @@ int assembler::assemble(combined_graph &cb, vector<transcript> &vt)
 	return 0;
 }
 
-int assembler::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb)
+int assembler::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, vector<sample_profile> &samples)
 {
 	assert(gv.size() >= 2);
 
