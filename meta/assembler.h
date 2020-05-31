@@ -27,7 +27,7 @@ public:
 	int resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, vector<sample_profile> &samples);
 	int assemble(combined_graph &cb, transcript_set &ts, int mode);
 	int assemble(combined_graph &cb, vector<transcript> &vt);
-	int assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt);
+	int assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt, int combined = 1);
 };
 
 #endif

@@ -82,11 +82,11 @@ int assembler::assemble(combined_graph &cb, vector<transcript> &vt)
 	splice_graph gx;
 	cb.build_splice_graph(gx, cfg);
 	gx.gid = cb.gid;
-	assemble(gx, cb.ps, vt);
+	assemble(gx, cb.ps, vt, cb.num_combined);
 	return 0;
 }
 
-int assembler::assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt)
+int assembler::assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt, int combined)
 {
 	gx.build_vertex_index();
 	gx.extend_strands();
@@ -122,7 +122,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt)
 		vt.push_back(t);
 	}
 
-	printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges, phases = %lu\n", gx.gid.c_str(), z, gx.num_vertices(), gx.num_edges(), px.pmap.size());
+	printf("assemble %s: %d transcripts, combined = %d, graph with %lu vertices and %lu edges, phases = %lu\n", gx.gid.c_str(), z, combined, gx.num_vertices(), gx.num_edges(), px.pmap.size());
 
 	return 0;
 }
