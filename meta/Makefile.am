@@ -20,6 +20,7 @@ meta_scallop_LDADD = -lscallop -lgtf -lgraph -lutil -lrnacore -lbridge
 meta_scallop_SOURCES = combined_graph.h combined_graph.cc \
 					   combined_group.h combined_group.cc \
 					   generator.h generator.cc \
+					   assembler.h assembler.cc \
 					   previewer.h previewer.cc \
 					   sample_profile.h sample_profile.cc \
 					   incubator.h incubator.cc \

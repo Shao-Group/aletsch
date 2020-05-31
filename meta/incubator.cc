@@ -6,6 +6,7 @@ See LICENSE for licensing.
 
 #include "incubator.h"
 #include "generator.h"
+#include "assembler.h"
 #include "filter.h"
 #include "cluster.h"
 #include "parameters.h"
@@ -287,172 +288,13 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	if(gv.size() == 0) return 0;
 
 	transcript_set ts;
-	int subindex = 0;
 
-	if(gv.size() == 1)
-	{
-		gv[0]->set_gid(batch, instance, subindex++);
-		gv[0]->refine_junctions();
-		assemble(*gv[0], ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-		ts.increase_count(1);
-	}
-	else
-	{
-		combined_graph cx(params[DEFAULT]);
-		resolve_cluster(gv, cx, mylock);
-
-		for(int i = 0; i < gv.size(); i++)
-		{
-			gv[i]->set_gid(batch, instance, subindex++);
-			assemble(*gv[i], ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-		}
-
-		cx.set_gid(batch, instance, subindex++);
-		assemble(cx, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_NUL);
-	}
+	assembler asmb(samples, params[DEFAULT]);
+	asmb.assemble(gv, batch, instance, ts);
 
 	store_transcripts(ts, mylock);
+
 	for(int i = 0; i > gv.size(); i++) gv[i]->clear();
-
-	return 0;
-}
-
-int incubator::assemble(combined_graph &cb, transcript_set &ts, int mode)
-{
-	// rebuild splice graph
-	splice_graph gx;
-	cb.build_splice_graph(gx, params[DEFAULT]);
-	gx.build_vertex_index();
-	gx.extend_strands();
-
-	phase_set px = cb.ps;
-
-	map<int32_t, int32_t> smap, tmap;
-	group_start_boundaries(gx, smap, params[DEFAULT].max_group_boundary_distance);
-	group_end_boundaries(gx, tmap, params[DEFAULT].max_group_boundary_distance);
-	px.project_boundaries(smap, tmap);
-
-	refine_splice_graph(gx);
-
-	hyper_set hx(gx, px);
-	hx.filter_nodes(gx);
-
-	/*
-	cb.print(0);
-	printf("-----\n");
-	gx.print();
-	printf("=====\n\n");
-	*/
-
-	gx.gid = cb.gid;
-
-	/*
-	gx.print();
-	if(gx.num_vertices() <= 40) 
-	{
-		string texfile = "tex/" + gx.gid + ".tex";
-		gx.draw(texfile);
-	}
-	*/
-
-	scallop sx(gx, hx, params[DEFAULT]);
-	sx.assemble();
-
-	int z = 0;
-	for(int k = 0; k < sx.trsts.size(); k++)
-	{
-		transcript &t = sx.trsts[k];
-		//if(t.exons.size() <= 1) continue;
-		t.RPKM = 0;
-		z++;
-		ts.add(t, 1, cb.sid, mode);
-		//t.write(cout);
-	}
-
-	printf("assemble %s: %d transcripts, ", cb.gid.c_str(), z);
-	cb.print(0);
-
-	return 0;
-}
-
-int incubator::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, mutex &mylock)
-{
-	assert(gv.size() >= 2);
-
-	// construct combined graph
-	cb.copy_meta_information(*(gv[0]));
-	cb.combine(gv);
-	cb.sid = -1;
-
-	cb.refine_junctions(gv, samples);
-
-	// rebuild splice graph
-	splice_graph gx;
-	cb.build_splice_graph(gx, params[DEFAULT]);
-	gx.build_vertex_index();
-
-	// collect and bridge all unbridged pairs
-	vector<pereads_cluster> vc;
-	vector<PI> index(gv.size());
-	int length_low = 999;
-	int length_high = 0;
-	for(int k = 0; k < gv.size(); k++)
-	{
-		combined_graph &gt = *(gv[k]);
-		assert(gt.sid >= 0 && gt.sid < samples.size());
-		//gt.project_junctions(jm);
-		sample_profile &sp = samples[gt.sid];
-		if(sp.insertsize_low < length_low) length_low = sp.insertsize_low;
-		if(sp.insertsize_high > length_high) length_high = sp.insertsize_high;
-		index[k].first = vc.size();
-		vc.insert(vc.end(), gt.vc.begin(), gt.vc.end());
-		index[k].second = vc.size();
-	}
-
-	bridge_solver br(gx, vc, params[DEFAULT], length_low, length_high);
-	br.build_phase_set(cb.ps);
-
-	//printf("cluster-bridge, combined = %lu, ", gv.size()); br.print();
-
-	// resolve individual graphs
-	for(int i = 0; i < gv.size(); i++)
-	{
-		combined_graph g1(params[DEFAULT]);
-		for(int k = index[i].first; k < index[i].second; k++)
-		{
-			if(br.opt[k].type < 0) continue;
-			g1.append(vc[k], br.opt[k]);
-		}
-		gv[i]->combine(&g1);
-	}
-
-	// write bridged and unbridged reads
-	if(params[DEFAULT].output_bridged_bam_dir != "")
-	{
-		mylock.lock();
-		for(int i = 0; i < gv.size(); i++)
-		{
-			combined_graph &gt = *(gv[i]);
-			sample_profile &sp = samples[gt.sid];
-			for(int k = index[i].first; k < index[i].second; k++)
-			{
-				//vc[k].print(k);
-				//br.opt[k].print(k);
-				if(br.opt[k].type < 0) 
-				{
-					write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
-				}
-				else
-				{
-					write_bridged_pereads_cluster(sp.bridged_bam, vc[k], br.opt[k].whole);
-				}
-			}
-		}
-		mylock.unlock();
-	}
-
-	// clear to release memory
-	for(int i = 0; i < gv.size(); i++) gv[i]->vc.clear();
 
 	return 0;
 }

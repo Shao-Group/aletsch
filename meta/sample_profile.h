@@ -10,6 +10,7 @@ See LICENSE for licensing.
 #include <vector>
 #include <string>
 #include <htslib/sam.h>
+#include <mutex>
 
 using namespace std;
 
@@ -22,6 +23,7 @@ public:
 	int sample_id;
 	string file_name;
 	BGZF *bridged_bam;
+	static mutex bam_lock;
 	int library_type;
 	int data_type;
 	double insertsize_ave;
