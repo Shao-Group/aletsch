@@ -73,10 +73,12 @@ int combined_group::build_similarity()
 		for(int xi = 0; xi < v.size(); xi++)
 		{
 			int i = v[xi];
+			if(gset[i].junctions.size() > cfg.max_junctions_combine) continue;
 			for(int xj = 0; xj < v.size(); xj++)
 			{
 				int j = v[xj];
 				if(i >= j) continue;
+				if(gset[j].junctions.size() > cfg.max_junctions_combine) continue;
 
 				assert(gset[i].chrm == gset[j].chrm);
 				assert(gset[i].strand == gset[j].strand);

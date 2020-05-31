@@ -510,6 +510,7 @@ bool build_bam1_t(bam1_t &b1t, const hit_core &h1, const hit_core &h2, const vec
 	b1t.core.bin = 0;
 	b1t.core.n_cigar = 0;
 	b1t.core.l_qseq = 0;
+	b1t.core.mpos = 0;
 	b1t.core.isize = h2.rpos - h1.pos;
 	b1t.core.flag = h1.flag;
 	//b1t.core.flag -= b1t.core.flag & (0x1);

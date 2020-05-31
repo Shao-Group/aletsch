@@ -35,6 +35,7 @@ public:
 	// for meta-assembly
 	int meta_batch_size;
 	int max_merge_cluster;
+	int max_junctions_combine;
 	double min_merge_similarity;
 	bool single_sample_multiple_threading;
 
@@ -87,7 +88,6 @@ public:
 	int32_t min_subregion_length;
 
 	// for revising splice graph and phasing paths
-	int min_confident_phasing_path_weight;
 	int32_t max_group_boundary_distance;
 	double max_intron_contamination_coverage;
 	double min_surviving_edge_weight;

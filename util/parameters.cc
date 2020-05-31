@@ -32,6 +32,7 @@ parameters::parameters()
 	meta_batch_size = 100;
 	max_merge_cluster = 100;
 	min_merge_similarity = 0.3;
+	max_junctions_combine = 500;
 	single_sample_multiple_threading = false;
 
 	// for bridging paired-end reads
@@ -42,7 +43,7 @@ parameters::parameters()
 	min_flank_length = 3;
 	max_num_cigar = 10000;
 	min_bundle_gap = 50;
-	min_num_hits_in_bundle = 20;
+	min_num_hits_in_bundle = 10;
 	min_junction_support = 1;
 	min_mapping_quality = 1;
 	use_second_alignment = false;
@@ -53,7 +54,7 @@ parameters::parameters()
 	// for preview
 	max_preview_reads = 2000000;
 	max_preview_spliced_reads = 50000;
-	min_preview_spliced_reads = 10000;
+	min_preview_spliced_reads = 5000;
 	preview_infer_ratio = 0.8;
 	
 	// for identifying subgraphs
@@ -62,7 +63,6 @@ parameters::parameters()
 	min_subregion_length = 15;
 	
 	// for revising splice graph and phasing paths
-	min_confident_phasing_path_weight = 2;
 	max_group_boundary_distance = 10000;
 	max_intron_contamination_coverage = 2.0;
 	min_surviving_edge_weight = 1.5;
@@ -425,8 +425,9 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 int parameters::set_default(int data_type)
 {
 	if(data_type == PACBIO) min_num_hits_in_bundle = 1;
+	if(data_type == PACBIO) min_junction_support = 2;
 	if(data_type == ONT) min_num_hits_in_bundle = 1;
-	if(data_type == ONT) min_junction_support = 2;
+	if(data_type == ONT) min_junction_support = 3;
 	return 0;
 }
 

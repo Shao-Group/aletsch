@@ -241,8 +241,10 @@ int generator::generate(bundle *bb, mutex &glock, mutex &tlock, int index)
 		bool b = regional(grv[k], hsv[k], ubv[k]);
 		if(b == true) continue;
 
+		/*
 		b = assemble(grv[k], hsv[k], ubv[k], tlock);
 		if(b == true) continue;
+		*/
 
 		combined_graph cb(cfg);
 		cb.sid = sp.sample_id;
@@ -299,7 +301,8 @@ bool generator::regional(splice_graph &gr, phase_set &ps, vector<pereads_cluster
 
 bool generator::assemble(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc, mutex &tlock)
 {
-	if(gr.num_vertices() >= 3 && gr.num_vertices() <= 100) return false;
+	//if(gr.num_vertices() >= 3 && gr.num_vertices() <= 1000) return false;
+	if(gr.num_vertices() <= 1000) return false;
 
 	vector<transcript> vt;
 	assembler asmb(cfg);

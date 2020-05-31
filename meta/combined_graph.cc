@@ -722,6 +722,7 @@ int combined_graph::build_junction_map(directed_graph &gr, map<PI32, PI32> &jm)
 		PI32 pz = junctions[z].first.first;
 
 		// print
+		/*
 		if(v.size() >= 2)
 		{
 			printf("cluster junction weights: ");
@@ -733,6 +734,7 @@ int combined_graph::build_junction_map(directed_graph &gr, map<PI32, PI32> &jm)
 			}
 			printf("\n");
 		}
+		*/
 
 		for(int k = 0; k < v.size(); k++)
 		{
