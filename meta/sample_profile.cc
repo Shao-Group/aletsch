@@ -8,6 +8,8 @@ See LICENSE for licensing.
 #include "htslib/bgzf.h"
 #include "constants.h"
 
+mutex sample_profile::bam_lock;
+
 sample_profile::sample_profile()
 {
 	bridged_bam = NULL;

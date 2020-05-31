@@ -46,16 +46,13 @@ public:
 	int assemble();
 	int write(int id);
 
+	int print_groups();
+
 private:
 	int generate(sample_profile &sp, vector<combined_group> &gv, mutex &mylock);
 	int assemble(vector<combined_graph*> gv, int instance, mutex &mylock);
 	int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);
-	int init_transcript_sets();
-	int assemble(combined_graph &cb, transcript_set &ts, int mode);
-	int resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, mutex &mylock);
 	int store_transcripts(const transcript_set &ts, mutex &mylock);
-
-	int print_groups();
 };
 
 #endif
