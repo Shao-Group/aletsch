@@ -292,7 +292,8 @@ bool generator::regional(splice_graph &gr, phase_set &ps, vector<pereads_cluster
 
 bool generator::assemble(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc, mutex &tlock)
 {
-	if(gr.num_vertices() >= 3 && gr.num_vertices() <= 100) return false;
+	//if(gr.num_vertices() >= 3 && gr.num_vertices() <= 1000) return false;
+	if(gr.num_vertices() <= 1000) return false;
 
 	vector<transcript> vt;
 	assembler asmb(cfg);
