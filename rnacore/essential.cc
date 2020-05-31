@@ -617,3 +617,35 @@ int write_unbridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc)
 	}
 	return 0;
 }
+
+int write_unpaired_reads(BGZF *fout, const vector<hit> &hits, const vector<bool> &paired)
+{
+	for(int i = 0; i < hits.size(); i++)
+	{
+		if(paired[i] == true) continue;
+
+		const hit &h = hits[i];
+
+		bam1_t b1t;
+		bool b = build_bam1_t(b1t, h, hits[i].spos);
+		if(b == true) bam_write1(fout, &(b1t));
+		assert(b1t.data != NULL);
+		delete b1t.data;
+	}
+	return 0;
+}
+
+int build_phase_set_from_unpaired_reads(phase_set &ps, splice_graph &gr, const vector<hit> &hits, const vector<bool> &paired)
+{
+	for(int i = 0; i < hits.size(); i++)
+	{
+		if(paired[i] == true) continue;
+		vector<int> v;
+		bool b = align_hit_to_splice_graph(hits[i], gr, v);
+		if(b == false) continue;
+		vector<int32_t> p;
+		build_exon_coordinates_from_path(gr, v, p);
+		ps.add(p, 1);
+	}
+	return 0;
+}

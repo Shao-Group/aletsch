@@ -188,32 +188,39 @@ int generator::generate(bundle *bb, mutex &glock, mutex &tlock, int index)
 	printf("\n");
 	*/
 
-	vector<pereads_cluster> vc;
 	phase_set ps;
-
-	graph_cluster gc(gr, bb->hits, cfg.max_reads_partition_gap, store_hits);
-	gc.build_pereads_clusters(vc);
-	gc.build_phase_set_from_unpaired_reads(ps);
-
-	bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
-	bs.build_phase_set(ps);
-	//bs.print();
-
 	vector<pereads_cluster> ub;
-	bs.collect_unbridged_clusters(ub); 
 
-	if(store_hits == true)
+	if(sp.data_type != PAIRED_END)
 	{
-		gc.write_unpaired_reads(sp.bridged_bam);
-		assert(vc.size() == bs.opt.size());
-		for(int k = 0; k < vc.size(); k++)
-		{
-			if(bs.opt[k].type >= 0) write_bridged_pereads_cluster(sp.bridged_bam, vc[k], bs.opt[k].whole);
-			else write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
-		}
+		vector<bool> paired(bb->hits.size(), false);
+		build_phase_set_from_unpaired_reads(ps, gr, bb->hits, paired);
 	}
+	else
+	{
+		vector<pereads_cluster> vc;
+		graph_cluster gc(gr, bb->hits, cfg.max_reads_partition_gap, store_hits);
+		gc.build_pereads_clusters(vc);
 
-	for(int i = 0; i < vc.size(); i++) vc[i].clear();
+		vector<bool> paired = gc.get_paired();
+		build_phase_set_from_unpaired_reads(ps, gr, bb->hits, paired);
+
+		bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
+		bs.build_phase_set(ps);
+
+		bs.collect_unbridged_clusters(ub); 
+		if(store_hits == true)
+		{
+			write_unpaired_reads(sp.bridged_bam, bb->hits, paired);
+			assert(vc.size() == bs.opt.size());
+			for(int k = 0; k < vc.size(); k++)
+			{
+				if(bs.opt[k].type >= 0) write_bridged_pereads_cluster(sp.bridged_bam, vc[k], bs.opt[k].whole);
+				else write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
+			}
+		}
+		for(int i = 0; i < vc.size(); i++) vc[i].clear();
+	}
 
 	//printf("single-bridge, combined = %d, ", 1); bs.print();
 

@@ -12,6 +12,7 @@ See LICENSE for licensing.
 #include "splice_graph.h"
 #include "constants.h"
 #include "pereads_cluster.h"
+#include "phase_set.h"
 
 using namespace std;
 
@@ -41,8 +42,12 @@ bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv);
 // match paired-end reads
 int build_paired_reads(const vector<hit> &hits, vector<PI> &fs);
 
+// check consistency
 bool merge_intron_chains(const vector<int32_t> &x, const vector<int32_t> &y, vector<int32_t> &xy);
 bool consistent_intron_chains(const vector<int32_t> &x, const vector<int32_t> &y);
+
+// phase-set
+int build_phase_set_from_unpaired_reads(phase_set &ps, splice_graph &gr, const vector<hit> &hits, const vector<bool> &paired);
 
 // write bam
 int add_cigar_skip(bam1_t &b1t, int32_t p1, int32_t p2);
@@ -51,5 +56,6 @@ bool build_bam1_t(bam1_t &b1t, const hit_core &h, const vector<int32_t> &chain);
 bool build_bam1_t(bam1_t &b1t, const hit_core &h1, const hit_core &h2, const vector<int32_t> &chain);
 int write_bridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc, const vector<int32_t> &whole);
 int write_unbridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc);
+int write_unpaired_reads(BGZF *fout, const vector<hit> &hits, const vector<bool> &paired);
 
 #endif

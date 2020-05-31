@@ -223,36 +223,9 @@ vector< vector<int> > graph_cluster::partition(vector< vector<int32_t> > &fs, in
 	return vv;
 }
 
-int graph_cluster::build_phase_set_from_unpaired_reads(phase_set &ps)
+vector<bool> graph_cluster::get_paired()
 {
-	for(int i = 0; i < hits.size(); i++)
-	{
-		if(paired[i] == true) continue;
-		vector<int> v;
-		bool b = align_hit_to_splice_graph(hits[i], gr, v);
-		if(b == false) continue;
-		vector<int32_t> p;
-		build_exon_coordinates_from_path(gr, v, p);
-		ps.add(p, 1);
-	}
-	return 0;
-}
-
-int graph_cluster::write_unpaired_reads(BGZF *fout)
-{
-	for(int i = 0; i < hits.size(); i++)
-	{
-		if(paired[i] == true) continue;
-
-		hit &h = hits[i];
-
-		bam1_t b1t;
-		bool b = build_bam1_t(b1t, h, hits[i].spos);
-		if(b == true) bam_write1(fout, &(b1t));
-		assert(b1t.data != NULL);
-		delete b1t.data;
-	}
-	return 0;
+	return paired;
 }
 
 bool compare_rank0(const vector<int32_t> &x, const vector<int32_t> &y) { return x[0] < y[0]; }
