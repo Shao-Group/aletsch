@@ -30,7 +30,6 @@ incubator::incubator(const vector<parameters> &v)
 	: params(v)
 {
 	batch = 0;
-	g2g.resize(3);
 }
 
 incubator::~incubator()
@@ -130,7 +129,6 @@ int incubator::read_bam_list()
 
 int incubator::clear()
 {
-	for(int i = 0; i < 3; i++) g2g[i].clear();
 	groups.clear();
 	return 0;
 }
@@ -149,7 +147,7 @@ int incubator::generate(int a, int b)
 	for(int i = a; i < b; i++)
 	{
 		sample_profile &sp = samples[i];
-		boost::asio::post(pool, [this, &mylock, &sp]{ this->generate(sp, this->groups, mylock); });
+		boost::asio::post(pool, [this, &mylock, &sp]{ this->generate(sp, mylock); });
 	}
 
 	pool.join();
@@ -251,7 +249,7 @@ int incubator::write()
 	return 0;
 }
 
-int incubator::generate(sample_profile &sp, vector<combined_group> &gv, mutex &mylock)
+int incubator::generate(sample_profile &sp, mutex &mylock)
 {	
 	vector<combined_graph> v;
 	vector<transcript> trsts;
@@ -263,21 +261,21 @@ int incubator::generate(sample_profile &sp, vector<combined_group> &gv, mutex &m
 	mylock.lock();
 	for(int k = 0; k < v.size(); k++)
 	{
-		string chrm = v[k].chrm;
-		char c = v[k].strand;
-		int s = 0;
-		if(c == '+') s = 1;
-		if(c == '-') s = 2;
-		if(g2g[s].find(chrm) == g2g[s].end())
+		bool found = false;
+		for(int i = 0; i < groups.size(); i++)
 		{
-			combined_group gp(chrm, c, params[DEFAULT]);
-			gp.add_graph(std::move(v[k]));
-			g2g[s].insert(pair<string, int>(chrm, gv.size()));
-			gv.push_back(std::move(gp));
+			if(groups[i].chrm != v[k].chrm) continue;
+			if(groups[i].strand != v[k].strand) continue;
+			groups[i].add_graph(std::move(v[k]));
+			found = true;
+			break;
 		}
-		else
+
+		if(found == false)
 		{
-			gv[g2g[s][chrm]].add_graph(std::move(v[k]));
+			combined_group gp(v[k].chrm, v[k].strand, params[DEFAULT]);
+			gp.add_graph(std::move(v[k]));
+			groups.push_back(std::move(gp));
 		}
 	}
 	mylock.unlock();
