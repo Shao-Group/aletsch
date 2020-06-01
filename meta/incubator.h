@@ -30,7 +30,8 @@ public:
 	const vector<parameters> &params;				// parameters 
 	vector<sample_profile> samples;					// samples
 	vector<vector<transcript>> strsts;				// predicted transcripts for each sample
-	vector<transcript_set> tsets;					// assembled transcripts for all samples
+	vector<transcript_set> tsave;					// assembled transcripts for all samples
+	vector<transcript_set> tsets;					// tmp sets for each batch
 	vector<combined_group> groups;					// graph groups
 
 public:
@@ -42,6 +43,7 @@ public:
 	int generate(int a, int b);
 	int merge();
 	int assemble();
+	int rearrange();
 	int postprocess();
 	int write(int id);
 
@@ -51,8 +53,9 @@ private:
 	int generate(sample_profile &sp, mutex &mylock);
 	int assemble(vector<combined_graph*> gv, int instance, mutex &mylock);
 	int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);
-	int store_transcripts(const transcript_set &ts, mutex &mylock);
-	int store_transcripts(const vector<transcript> &v, int sid, mutex &mylock);
+	int save_transcripts(const vector<transcript> &v, int sid, mutex &mylock);
+	int save_transcript_set(const transcript_set &ts, mutex &mylock);
+	int move_transcript_set(transcript_set &ts, mutex &mylock);
 };
 
 #endif
