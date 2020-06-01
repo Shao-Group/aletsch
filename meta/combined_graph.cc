@@ -634,7 +634,8 @@ int combined_graph::classify_junctions(vector<combined_graph*> &gv, const vector
 				int type = 0;
 				if(samples[gt->sid].data_type == PAIRED_END) type = 1;
 				if(samples[gt->sid].data_type == SINGLE_END) type = 1;
-				if(samples[gt->sid].data_type == PACBIO) type = -1;
+				if(samples[gt->sid].data_type == PACBIO_CCS) type = 1;
+				if(samples[gt->sid].data_type == PACBIO_SUB) type = -1;
 				if(samples[gt->sid].data_type == ONT) type = -1;
 				mt.insert(make_pair(p.first, type));
 			}

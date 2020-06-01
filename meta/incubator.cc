@@ -109,7 +109,8 @@ int incubator::read_bam_list()
 		sp.file_name = file;
 		if(string(type) == "paired_end") sp.data_type = PAIRED_END;
 		if(string(type) == "single_end") sp.data_type = SINGLE_END;
-		if(string(type) == "pacbio") sp.data_type = PACBIO;
+		if(string(type) == "pacbio_ccb") sp.data_type = PACBIO_CCS;
+		if(string(type) == "pacbio_sub") sp.data_type = PACBIO_SUB;
 		if(string(type) == "ont") sp.data_type = ONT;
 		assert(sp.data_type != DEFAULT);
 		sp.print();
