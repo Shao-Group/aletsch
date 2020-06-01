@@ -256,7 +256,6 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 	else if(pindex.find(PI(ss, tt)) != pindex.end())
 	{
 		type = 2;
-		if(pc.chain1.size() >= 1 && pc.chain2.size() >= 1) assert(pc.chain1.back() < pc.chain2.front());
 		int k = pindex[PI(ss, tt)];
 		vector<bridge_path> &pb = piers[k].bridges;
 		for(int e = 0; e < pb.size(); e++)
