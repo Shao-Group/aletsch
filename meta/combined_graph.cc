@@ -838,14 +838,6 @@ int combined_graph::compare_two_junctions(PTDI &x, PTDI &y, int xt, int yt)
 	{
 		if(x.second.first >= y.second.first + 1.0) return +1;
 		if(y.second.first >= x.second.first + 1.0) return -1;
-
-		if(x.second.first <= 1.01 && y.second.first <= 1.01)
-		{
-			if(x.first.first < y.first.first) return +1;
-			if(y.first.first < x.first.first) return -1;
-			if(x.first.second < y.first.second) return +1;
-			if(y.first.second < x.first.second) return -1;
-		}
 	}
 
 	if(xt == +1 && yt == -1) 
