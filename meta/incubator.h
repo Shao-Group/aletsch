@@ -52,6 +52,7 @@ public:
 private:
 	int generate(sample_profile &sp, mutex &mylock);
 	int assemble(vector<combined_graph*> gv, int instance, mutex &mylock);
+	int rearrange(transcript_set &root, const vector<int> &v);
 	int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);
 	int save_transcripts(const vector<transcript> &v, int sid, mutex &mylock);
 	int save_transcript_set(const transcript_set &ts, mutex &mylock);

@@ -449,6 +449,7 @@ int incubator::rearrange()
 {
 	// build index for tsave
 	map<string, int> m;
+	vector<vector<int>> vv(tsave.size());
 	for(int i = 0; i < tsave.size(); i++)
 	{
 		transcript_set &t = tsave[i];
@@ -457,24 +458,47 @@ int incubator::rearrange()
 		m.insert(make_pair(s, i));
 	} 
 
-	// add transcript_set
+	// index transcript_set in tsets
 	for(int i = 0; i < tsets.size(); i++)
 	{
-		transcript_set &t = tsets[i];
-		string s = t.chrm;
+		string s = tsets[i].chrm;
 		if(m.find(s) == m.end())
 		{
 			m.insert(make_pair(s, tsave.size()));
 			tsave.resize(tsave.size() + 1);
-			tsave[tsave.size() - 1].add(t, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+			vv.resize(vv.size() + 1);
+			vv[vv.size() - 1].push_back(i);
 		}
 		else
 		{
 			int k = m[s];
-			tsave[k].add(t, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+			vv[k].push_back(i);
 		}
 	}
+	
+	// distribute jobs
+	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
+	assert(vv.size() == tsave.size());
+	for(int i = 0; i < tsave.size(); i++)
+	{
+		if(vv[i].size() <= 0) continue;
+		boost::asio::post(pool, [this, &vv, i]{ this->rearrange(this->tsave[i], vv[i]); });
+	}
+	pool.join();
 	tsets.clear();
+
+	return 0;
+}
+
+int incubator::rearrange(transcript_set &root, const vector<int> &v)
+{
+	for(int k = 0; k < v.size(); k++)
+	{
+		int i = v[k];
+		assert(i >= 0 && i < tsets.size());
+		transcript_set &t = tsets[i];
+		root.add(t, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+	}
 	return 0;
 }
 
