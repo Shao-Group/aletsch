@@ -38,13 +38,16 @@ int assembler::assemble(vector<combined_graph*> gv, int batch, int instance, tra
 		assemble(gt, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		ts.increase_count(1);
 
-		sample_profile &sp = samples[gt.sid];
-		sp.bam_lock.lock();
-		for(int k = 0; k < gt.vc.size(); k++)
+		if(cfg.output_bridged_bam_dir != "" && gt.vc.size() >= 1)
 		{
-			write_unbridged_pereads_cluster(sp.bridged_bam, gt.vc[k]);
+			sample_profile &sp = samples[gt.sid];
+			sp.bam_lock.lock();
+			for(int k = 0; k < gt.vc.size(); k++)
+			{
+				write_unbridged_pereads_cluster(sp.bridged_bam, gt.vc[k]);
+			}
+			sp.bam_lock.unlock();
 		}
-		sp.bam_lock.unlock();
 	}
 	else
 	{
