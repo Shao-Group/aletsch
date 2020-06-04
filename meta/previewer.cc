@@ -30,26 +30,8 @@ previewer::~previewer()
 {
 }
 
-int previewer::open_file()
-{
-    sfn = sam_open(sp.file_name.c_str(), "r");
-    hdr = sam_hdr_read(sfn);
-    b1t = bam_init1();
-	return 0;
-}
-
-int previewer::close_file()
-{
-    bam_destroy1(b1t);
-    bam_hdr_destroy(hdr);
-    sam_close(sfn);
-	return 0;
-}
-
 int previewer::infer_library_type()
 {
-	open_file();
-
 	int total = 0;
 	int single = 0;
 	int paired = 0;
@@ -60,7 +42,10 @@ int previewer::infer_library_type()
 	vector<int> spn2;
 
 	int hid = 0;
-    while(sam_read1(sfn, hdr, b1t) >= 0)
+	bam1_t *b1t = bam_init1();
+	sp.open_input_file();
+
+    while(sam_read1(sp.sfn, sp.hdr, b1t) >= 0)
 	{
 		if(total >= max_preview_reads) break;
 		if(spn1.size() >= max_preview_spliced_reads && spn2.size() >= max_preview_spliced_reads) break;
@@ -105,6 +90,9 @@ int previewer::infer_library_type()
 		if(xs == '-' && xs != ht.xs) spn2.push_back(2);
 	}
 
+    bam_destroy1(b1t);
+	sp.close_input_file();
+
 	int spn = spn1.size() < spn2.size() ? spn1.size() : spn2.size();
 
 	for(int k = 0; k < spn; k++)
@@ -129,14 +117,11 @@ int previewer::infer_library_type()
 			sp.file_name.c_str(), total, single, paired, spn, first, second, vv[s1 + 1].c_str());
 
 	sp.library_type = s1;
-	close_file();
 	return 0;
 }
 
 int previewer::infer_insertsize()
 {
-	open_file();
-
 	bundle bb1;
 	bundle bb2;
 	bb1.strand = '+';
@@ -145,7 +130,9 @@ int previewer::infer_insertsize()
 	int cnt = 0;
 	int hid = 0;
 
-    while(sam_read1(sfn, hdr, b1t) >= 0)
+	bam1_t *b1t = bam_init1();
+	sp.open_input_file();
+    while(sam_read1(sp.sfn, sp.hdr, b1t) >= 0)
 	{
 		bam1_core_t &p = b1t->core;
 
@@ -189,6 +176,9 @@ int previewer::infer_insertsize()
 		if(sp.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit_intervals(ht, b1t);
 	}
 
+    bam_destroy1(b1t);
+	sp.close_input_file();
+
 	int total = 0;
 	for(map<int, int>::iterator it = m.begin(); it != m.end(); it++)
 	{
@@ -198,7 +188,6 @@ int previewer::infer_insertsize()
 	if(total < 10000)
 	{
 		printf("not enough paired-end reads to create the profile (%d collected)\n", total);
-		close_file();
 		return 0;
 	}
 
@@ -228,7 +217,6 @@ int previewer::infer_insertsize()
 	printf("preview (%s) insertsize: sampled reads = %d, isize = %.2lf +/- %.2lf, median = %d, low = %d, high = %d\n", 
 				sp.file_name.c_str(), total, sp.insertsize_ave, sp.insertsize_std, sp.insertsize_median, sp.insertsize_low, sp.insertsize_high);
 
-	close_file();
 	return 0;
 }
 
@@ -239,7 +227,7 @@ int previewer::process(bundle &bd, map<int32_t, int> &m)
 	if(bd.tid < 0) return 0;
 
 	char buf[1024];
-	strcpy(buf, hdr->target_name[bd.tid]);
+	strcpy(buf, sp.hdr->target_name[bd.tid]);
 	bd.chrm = string(buf);
 
 	splice_graph gr;

@@ -32,20 +32,13 @@ generator::generator(sample_profile &s, vector<combined_graph> &v, vector<transc
 	pre.infer_library_type();
 	if(sp.data_type == PAIRED_END) pre.infer_insertsize();
 
-    sfn = sam_open(sp.file_name.c_str(), "r");
-    hdr = sam_hdr_read(sfn);
-    b1t = bam_init1();
 	index = 0;
 	qlen = 0;
 	qcnt = 0;
 }
 
 generator::~generator()
-{
-    bam_destroy1(b1t);
-    bam_hdr_destroy(hdr);
-    sam_close(sfn);
-}
+{}
 
 int generator::resolve()
 {
@@ -62,8 +55,10 @@ int generator::resolve()
 	bundle *bb2 = new bundle();
 
 	int hid = 0;
+    bam1_t *b1t = bam_init1();
+	sp.open_input_file();
 
-    while(sam_read1(sfn, hdr, b1t) >= 0)
+    while(sam_read1(sp.sfn, sp.hdr, b1t) >= 0)
 	{
 		bam1_core_t &p = b1t->core;
 		//if(p.tid >= 1) break;		// TODO
@@ -117,6 +112,9 @@ int generator::resolve()
 		*/
 	}
 
+    bam_destroy1(b1t);
+	sp.close_input_file();
+
 	if(cfg.single_sample_multiple_threading == false) this->generate(bb1, glock, tlock, index);
 	else boost::asio::post(pool, [this, &glock, &tlock, bb1, index]{ this->generate(bb1, glock, tlock, index); });
 	index++;
@@ -165,7 +163,7 @@ int generator::generate(bundle *bb, mutex &glock, mutex &tlock, int index)
 	}
 	
 	char buf[1024];
-	strcpy(buf, hdr->target_name[bb->tid]);
+	strcpy(buf, sp.hdr->target_name[bb->tid]);
 	bb->chrm = string(buf);
 	//bb->compute_strand(sp.library_type);
 

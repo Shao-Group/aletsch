@@ -29,9 +29,6 @@ public:
 private:
 	const parameters &cfg;
 	sample_profile &sp;
-	samFile *sfn;
-	bam_hdr_t *hdr;
-	bam1_t *b1t;
 
 	int max_preview_reads;
 	int max_preview_spliced_reads;
@@ -39,8 +36,6 @@ private:
 	double preview_infer_ratio;
 
 public:
-	int open_file();
-	int close_file();
 	int infer_library_type();
 	int infer_insertsize();
 	int process(bundle &bb, map<int32_t, int> &m);

@@ -22,6 +22,8 @@ public:
 public:
 	int sample_id;
 	string file_name;
+	samFile *sfn;
+	bam_hdr_t *hdr;
 	BGZF *bridged_bam;
 	static mutex bam_lock;
 	int library_type;
@@ -34,8 +36,10 @@ public:
 	vector<double> insertsize_profile;
 
 public:
+	int open_input_file();
 	int open_bridged_bam(const string &dir);
 	int close_bridged_bam();
+	int close_input_file();
 	int print();
 };
 

@@ -29,9 +29,6 @@ public:
 private:
 	const parameters &cfg;
 	sample_profile &sp;
-	samFile *sfn;
-	bam_hdr_t *hdr;
-	bam1_t *b1t;
 
 	vector<combined_graph> &vcb;
 	vector<transcript> &trsts;
