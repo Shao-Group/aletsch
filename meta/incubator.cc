@@ -48,7 +48,7 @@ int incubator::resolve()
 		string chrm = x.first;
 
 		// test
-		if(chrm != "1") continue;
+		//if(chrm != "1") continue;
 
 		mytime = time(NULL);
 		printf("start processing chrm %s\n", chrm.c_str());
