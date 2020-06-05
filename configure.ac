@@ -30,7 +30,7 @@ AC_ARG_ENABLE([useclp], [AS_HELP_STRING([--enable-useclp], ["use LP to decompose
 AS_IF([test "x$enable_useclp" = "xyes"], [AC_SUBST([CXXFLAGS], ["-DUSECLP $CXXFLAGS"])])
 
 #add -pg to debug
-#AC_SUBST([CXXFLAGS], ["-pg $CXXFLAGS"])
+AC_SUBST([CXXFLAGS], ["-pg $CXXFLAGS"])
 
 # Assign CXXFLAGS
 AS_IF([test "x$CLP_HOME" != "x"], [AC_SUBST([CXXFLAGS], ["-I$CLP_HOME/include/coin $CXXFLAGS"])], [])
