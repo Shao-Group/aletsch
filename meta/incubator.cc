@@ -77,11 +77,11 @@ int incubator::resolve()
 		groups.clear();
 
 		mytime = time(NULL);
-		printf("rearrange transcript sets, %s", ctime(&mytime));
+		printf("step 4: rearrange transcript sets, %s", ctime(&mytime));
 		rearrange();
 
 		mytime = time(NULL);
-		printf("postprocess and write assembled transcripts, %s", ctime(&mytime));
+		printf("step 5: postprocess and write assembled transcripts, %s", ctime(&mytime));
 		postprocess();
 
 		mytime = time(NULL);
