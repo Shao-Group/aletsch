@@ -46,9 +46,10 @@ int incubator::resolve()
 	for(auto &x: sindex)
 	{
 		string chrm = x.first;
+		tmerge.chrm = chrm;
 
 		// test
-		if(chrm != "1") continue;
+		//if(chrm != "1") continue;
 
 		mytime = time(NULL);
 		printf("start processing chrm %s\n", chrm.c_str());
@@ -68,20 +69,16 @@ int incubator::resolve()
 		groups.clear();
 
 		mytime = time(NULL);
+		printf("rearrange transcript sets, %s", ctime(&mytime));
+		rearrange();
+
+		mytime = time(NULL);
+		printf("postprocess and write assembled transcripts, %s", ctime(&mytime));
+		postprocess();
+
+		mytime = time(NULL);
 		printf("finish processing chrm %s\n", chrm.c_str());
 	}
-
-	mytime = time(NULL);
-	printf("rearrange transcript sets, %s", ctime(&mytime));
-	rearrange();
-
-	mytime = time(NULL);
-	printf("filter assembled transcripts, %s", ctime(&mytime));
-	postprocess();
-
-	mytime = time(NULL);
-	printf("write transcripts, %s", ctime(&mytime));
-	write();
 
 	close_samples();
 	return 0;
@@ -158,15 +155,18 @@ int incubator::build_sample_index()
 
 int incubator::init_sample(sample_profile &sp)
 {
-	// preview profiling
 	previewer pre(params[sp.data_type], sp);
 	pre.infer_library_type();
 	if(sp.data_type == PAIRED_END) pre.infer_insertsize();
 
-	// open bridged-bam
 	if(params[DEFAULT].output_bridged_bam_dir != "") 
 	{
 		sp.open_bridged_bam(params[DEFAULT].output_bridged_bam_dir);
+	}
+
+	if(params[DEFAULT].output_gtf_dir != "") 
+	{
+		sp.open_individual_gtf(params[DEFAULT].output_gtf_dir);
 	}
 
 	sp.open_align_file();
@@ -180,6 +180,7 @@ int incubator::close_samples()
 	for(int i = 0; i < samples.size(); i++)
 	{
 		if(params[DEFAULT].output_bridged_bam_dir != "") samples[i].close_bridged_bam();
+		if(params[DEFAULT].output_gtf_dir != "") samples[i].close_individual_gtf();
 		samples[i].destroy_index_iterators();
 		samples[i].close_align_file();
 	}
@@ -249,6 +250,19 @@ int incubator::assemble()
 	return 0;
 }
 
+int incubator::rearrange()
+{
+	tmerge.mt.clear();
+	for(int i = 0; i < tsets.size(); i++)
+	{
+		transcript_set &t = tsets[i];
+		assert(t.chrm == tmerge.chrm);
+		tmerge.add(t, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+	}
+	tsets.clear();
+	return 0;
+}
+
 int incubator::postprocess()
 {
 	ofstream fout(params[DEFAULT].output_gtf_file.c_str());
@@ -258,34 +272,43 @@ int incubator::postprocess()
 		exit(0);
 	}
 
-	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
-	mutex mylock;
+	vector<transcript> v = tmerge.get_transcripts(2);
 
-	strsts.resize(samples.size());
-	for(int i = 0; i < tsave.size(); i++)
+	// warning: ts contains mixed strands
+	//cluster cs(v, cfg);
+	//cs.solve();
+
+	filter ft(v, /*cs.cct,*/ params[DEFAULT]);
+	//ft.join_single_exon_transcripts();
+	ft.filter_length_coverage();
+
+	stringstream ss;
+	vector<vector<int>> vv(samples.size());
+	for(int i = 0; i < ft.trs.size(); i++)
 	{
-		transcript_set &ts = tsave[i];
-		boost::asio::post(pool, [this, &ts, &mylock, &fout]{ this->postprocess(ts, fout, mylock); });
+		transcript &t = ft.trs[i];
+		t.write(ss);
+		pair<bool, trans_item> p = tmerge.query(t);
+		if(p.first == false) continue;
+		for(auto &k : p.second.samples)
+		{
+			if(k < 0) continue;
+			assert(k >= 0 && k < vv.size());
+			vv[k].push_back(i);
+		}
 	}
 
-	pool.join();
+	const string &s = ss.str();
+	fout.write(s.c_str(), s.size());
 	fout.close();
 
-	return 0;
-}
-
-int incubator::write()
-{
-	if(params[DEFAULT].output_gtf_dir == "") return 0;
-
 	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
-	mutex mylock;
-
-	for(int i = 0; i < strsts.size(); i++)
+	for(int i = 0; i < vv.size(); i++)
 	{
-		boost::asio::post(pool, [this, i]{ this->write(i); });
+		const vector<transcript> &z = ft.trs;
+		const vector<int> &v = vv[i];
+		boost::asio::post(pool, [this, i, &z, &v]{ this->write_individual_gtf(i, z, v); });
 	}
-
 	pool.join();
 
 	return 0;
@@ -341,104 +364,24 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	return 0;
 }
 
-int incubator::postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock)
+int incubator::write_individual_gtf(int id, const vector<transcript> &vt, const vector<int> &v)
 {
-	vector<transcript> v = ts.get_transcripts(2);
-
-	// warning: ts contains mixed strands
-	//cluster cs(v, cfg);
-	//cs.solve();
-
-	filter ft(v, /*cs.cct,*/ params[DEFAULT]);
-	//ft.join_single_exon_transcripts();
-	ft.filter_length_coverage();
-
-	stringstream ss;
-	vector<vector<transcript>> vv(samples.size());
-	for(int i = 0; i < ft.trs.size(); i++)
-	{
-		transcript &t = ft.trs[i];
-		t.write(ss);
-		pair<bool, trans_item> p = ts.query(t);
-		if(p.first == false) continue;
-
-		for(auto &k : p.second.samples)
-		{
-			if(k < 0) continue;
-			assert(k >= 0 && k < vv.size());
-			vv[k].push_back(t);
-		}
-	}
-
-	mylock.lock();
-
-	const string &s = ss.str();
-	fout.write(s.c_str(), s.size());
-
-	for(int i = 0; i < vv.size(); i++)
-	{
-		strsts[i].insert(strsts[i].end(), vv[i].begin(), vv[i].end());
-	}
-
-	mylock.unlock();
-
-	return 0;
-}
-
-int incubator::write(int id)
-{
-	if(id < 0) return 0;
 	assert(id >= 0 && id < samples.size());
-	assert(samples.size() == strsts.size());
-
-	vector<transcript> &v = strsts[id];
 
 	stringstream ss;
 	for(int i = 0; i < v.size(); i++)
 	{
-		transcript &t = v[i];
+		int k = v[i];
+		const transcript &t = vt[k];
 		t.write(ss);
 	}
 
-	char file[10240];
-	sprintf(file, "%s/%d.gtf", params[DEFAULT].output_gtf_dir.c_str(), id);
-
-	ofstream fout(file);
-	if(fout.fail()) return 0;
-
 	const string &s = ss.str();
-	fout.write(s.c_str(), s.size());
 
-	fout.close();
-	return 0;
-}
-
-int incubator::save_transcripts(const vector<transcript> &v, int sid, mutex &mylock)
-{
-	if(v.size() == 0) return 0;
-
-	mylock.lock();
-
-	for(int k = 0; k < v.size(); k++)
-	{
-		bool found = false;
-		const transcript &ts = v[k];
-		for(int i = 0; i < tsave.size(); i++)
-		{
-			if(tsave[i].chrm != ts.seqname) continue;
-			tsave[i].add(ts, 2, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-			found = true;
-			break;
-		}
-
-		if(found == false)
-		{
-			tsave.resize(tsave.size() + 1);
-			tsave[tsave.size() - 1].add(ts, 2, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-		}
-	}
-
-	mylock.unlock();
+	sample_profile &sp = samples[id];
+	sp.gtf_lock.lock();
+	sp.individual_gtf->write(s.c_str(), s.size());
+	sp.gtf_lock.unlock();
 
 	return 0;
 }
@@ -449,89 +392,6 @@ int incubator::move_transcript_set(transcript_set &ts, mutex &mylock)
 	mylock.lock();
 	tsets.push_back(std::move(ts));
 	mylock.unlock();
-	return 0;
-}
-
-int incubator::save_transcript_set(const transcript_set &ts, mutex &mylock)
-{
-	if(ts.mt.size() == 0) return 0;
-
-	mylock.lock();
-
-	bool found = false;
-	for(int i = 0; i < tsave.size(); i++)
-	{
-		if(tsave[i].chrm != ts.chrm) continue;
-		tsave[i].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-		found = true;
-		break;
-	}
-
-	if(found == false)
-	{
-		tsave.resize(tsave.size() + 1);
-		tsave[tsave.size() - 1].add(ts, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-	}
-
-	mylock.unlock();
-
-	return 0;
-}
-
-int incubator::rearrange()
-{
-	// build index for tsave
-	map<string, int> m;
-	vector<vector<int>> vv(tsave.size());
-	for(int i = 0; i < tsave.size(); i++)
-	{
-		transcript_set &t = tsave[i];
-		string s = t.chrm;
-		assert(m.find(s) == m.end());
-		m.insert(make_pair(s, i));
-	} 
-
-	// index transcript_set in tsets
-	for(int i = 0; i < tsets.size(); i++)
-	{
-		string s = tsets[i].chrm;
-		if(m.find(s) == m.end())
-		{
-			m.insert(make_pair(s, tsave.size()));
-			tsave.resize(tsave.size() + 1);
-			vv.resize(vv.size() + 1);
-			vv[vv.size() - 1].push_back(i);
-		}
-		else
-		{
-			int k = m[s];
-			vv[k].push_back(i);
-		}
-	}
-	
-	// distribute jobs
-	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
-	assert(vv.size() == tsave.size());
-	for(int i = 0; i < tsave.size(); i++)
-	{
-		if(vv[i].size() <= 0) continue;
-		boost::asio::post(pool, [this, &vv, i]{ this->rearrange(this->tsave[i], vv[i]); });
-	}
-	pool.join();
-	tsets.clear();
-
-	return 0;
-}
-
-int incubator::rearrange(transcript_set &root, const vector<int> &v)
-{
-	for(int k = 0; k < v.size(); k++)
-	{
-		int i = v[k];
-		assert(i >= 0 && i < tsets.size());
-		transcript_set &t = tsets[i];
-		root.add(t, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-	}
 	return 0;
 }
 

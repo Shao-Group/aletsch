@@ -11,6 +11,7 @@ See LICENSE for licensing.
 #include <string>
 #include <htslib/sam.h>
 #include <mutex>
+#include <fstream>
 
 using namespace std;
 
@@ -26,7 +27,9 @@ public:
 	samFile *sfn;
 	bam_hdr_t *hdr;
 	BGZF *bridged_bam;
+	ofstream *individual_gtf;
 	static mutex bam_lock;
+	static mutex gtf_lock;
 	int library_type;
 	int data_type;
 	double insertsize_ave;
@@ -40,6 +43,8 @@ public:
 public:
 	int open_align_file();
 	int open_bridged_bam(const string &dir);
+	int open_individual_gtf(const string &dir);
+	int close_individual_gtf();
 	int close_bridged_bam();
 	int close_align_file();
 	int build_index_iterators();

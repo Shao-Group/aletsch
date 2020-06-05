@@ -9,12 +9,14 @@ See LICENSE for licensing.
 #include "constants.h"
 
 mutex sample_profile::bam_lock;
+mutex sample_profile::gtf_lock;
 
 sample_profile::sample_profile()
 {
 	sfn = NULL;
 	hdr = NULL;
 	bridged_bam = NULL;
+	individual_gtf = NULL;
 	data_type = DEFAULT;
 }
 
@@ -31,6 +33,27 @@ int sample_profile::open_bridged_bam(const string &dir)
 	sprintf(file, "%s/%d.bam", dir.c_str(), sample_id);
 	bridged_bam = bgzf_open(file, "w");
 	bam_hdr_write(bridged_bam, hdr);
+	return 0;
+}
+
+int sample_profile::open_individual_gtf(const string &dir)
+{
+	char file[10240];
+	sprintf(file, "%s/%d.gtf", dir.c_str(), sample_id);
+	individual_gtf = new ofstream;
+	individual_gtf->open(file);
+	if(individual_gtf->fail()) 
+	{
+		printf("cannot open individual gtf %s\n", file);
+		exit(0);
+	}
+	return 0;
+}
+
+int sample_profile::close_individual_gtf()
+{
+	individual_gtf->close();
+	delete individual_gtf;
 	return 0;
 }
 
