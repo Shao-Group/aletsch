@@ -1942,8 +1942,7 @@ int scallop::greedy_decompose()
 		cnt++;
 	}
 	int n2 = paths.size();
-	//if(cfg.verbose >= 2) 
-	printf("greedy decomposing produces %d / %d paths\n", n2 - n1, n2);
+	if(cfg.verbose >= 2) printf("greedy decomposing produces %d / %d paths\n", n2 - n1, n2);
 	return 0;
 }
 

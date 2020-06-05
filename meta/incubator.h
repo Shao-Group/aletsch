@@ -26,31 +26,35 @@ public:
 	~incubator();
 
 public:
-	int batch;										// batch id
 	const vector<parameters> &params;				// parameters 
 	vector<sample_profile> samples;					// samples
-	vector<vector<transcript>> strsts;				// predicted transcripts for each sample
+	map<string, vector<PI>> sindex;					// sample index
+	vector<transcript_set> tsets;					// transcript sets for instances
 	vector<transcript_set> tsave;					// assembled transcripts for all samples
-	vector<transcript_set> tsets;					// tmp sets for each batch
+	vector<vector<transcript>> strsts;				// predicted transcripts for each sample
 	vector<combined_group> groups;					// graph groups
 
 public:
 	int resolve();
-	int read_bam_list();
-	int write();
-	int clear();
 
-	int generate(int a, int b);
+	int generate(const vector<PI> &v);
 	int merge();
 	int assemble();
 	int rearrange();
 	int postprocess();
+	int write();
+
+	int read_bam_list();
+	int init_samples();
+	int build_sample_index();
+	int close_samples();
 	int write(int id);
 
 	int print_groups();
 
 private:
-	int generate(sample_profile &sp, mutex &mylock);
+	int init_sample(sample_profile &sp);
+	int generate(sample_profile &sp, int tid, mutex &mylock);
 	int assemble(vector<combined_graph*> gv, int instance, mutex &mylock);
 	int rearrange(transcript_set &root, const vector<int> &v);
 	int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);

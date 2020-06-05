@@ -23,12 +23,13 @@ using namespace std;
 class generator
 {
 public:
-	generator(sample_profile &sp, vector<combined_graph> &cbv, vector<transcript> &trsts, const parameters &c);
+	generator(sample_profile &sp, vector<combined_graph> &cbv, vector<transcript> &trsts, const parameters &c, int target_id);
 	~generator();
 
 private:
 	const parameters &cfg;
 	sample_profile &sp;
+	int target_id;
 
 	vector<combined_graph> &vcb;
 	vector<transcript> &trsts;

@@ -43,7 +43,7 @@ int previewer::infer_library_type()
 
 	int hid = 0;
 	bam1_t *b1t = bam_init1();
-	sp.open_input_file();
+	sp.open_align_file();
 
     while(sam_read1(sp.sfn, sp.hdr, b1t) >= 0)
 	{
@@ -91,7 +91,7 @@ int previewer::infer_library_type()
 	}
 
     bam_destroy1(b1t);
-	sp.close_input_file();
+	sp.close_align_file();
 
 	int spn = spn1.size() < spn2.size() ? spn1.size() : spn2.size();
 
@@ -114,7 +114,7 @@ int previewer::infer_library_type()
 	if(spn >= min_preview_spliced_reads && second > preview_infer_ratio * 2.0 * spn) s1 = FR_SECOND;
 
 	printf("infer-library-type (%s): reads = %d, single = %d, paired = %d, spliced = %d, first = %d, second = %d, inferred = %s\n",
-			sp.file_name.c_str(), total, single, paired, spn, first, second, vv[s1 + 1].c_str());
+			sp.align_file.c_str(), total, single, paired, spn, first, second, vv[s1 + 1].c_str());
 
 	sp.library_type = s1;
 	return 0;
@@ -130,8 +130,8 @@ int previewer::infer_insertsize()
 	int cnt = 0;
 	int hid = 0;
 
+	sp.open_align_file();
 	bam1_t *b1t = bam_init1();
-	sp.open_input_file();
     while(sam_read1(sp.sfn, sp.hdr, b1t) >= 0)
 	{
 		bam1_core_t &p = b1t->core;
@@ -177,7 +177,7 @@ int previewer::infer_insertsize()
 	}
 
     bam_destroy1(b1t);
-	sp.close_input_file();
+	sp.close_align_file();
 
 	int total = 0;
 	for(map<int, int>::iterator it = m.begin(); it != m.end(); it++)
@@ -215,7 +215,7 @@ int previewer::infer_insertsize()
 	sp.insertsize_std = sqrt((sx2 - n * sp.insertsize_ave * sp.insertsize_ave) * 1.0 / n);
 
 	printf("preview (%s) insertsize: sampled reads = %d, isize = %.2lf +/- %.2lf, median = %d, low = %d, high = %d\n", 
-				sp.file_name.c_str(), total, sp.insertsize_ave, sp.insertsize_std, sp.insertsize_median, sp.insertsize_low, sp.insertsize_high);
+				sp.align_file.c_str(), total, sp.insertsize_ave, sp.insertsize_std, sp.insertsize_median, sp.insertsize_low, sp.insertsize_high);
 
 	return 0;
 }

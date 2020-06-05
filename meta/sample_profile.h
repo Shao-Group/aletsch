@@ -21,7 +21,8 @@ public:
 
 public:
 	int sample_id;
-	string file_name;
+	string align_file;
+	string index_file;
 	samFile *sfn;
 	bam_hdr_t *hdr;
 	BGZF *bridged_bam;
@@ -34,12 +35,15 @@ public:
 	int insertsize_high;
 	int insertsize_median;
 	vector<double> insertsize_profile;
+	vector<hts_itr_t*> iters;
 
 public:
-	int open_input_file();
+	int open_align_file();
 	int open_bridged_bam(const string &dir);
 	int close_bridged_bam();
-	int close_input_file();
+	int close_align_file();
+	int build_index_iterators();
+	int destroy_index_iterators();
 	int print();
 };
 

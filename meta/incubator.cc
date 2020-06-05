@@ -15,6 +15,7 @@ See LICENSE for licensing.
 #include "bridge_solver.h"
 #include "essential.h"
 #include "constants.h"
+#include "previewer.h"
 
 #include <fstream>
 #include <sstream>
@@ -29,65 +30,57 @@ See LICENSE for licensing.
 incubator::incubator(const vector<parameters> &v)
 	: params(v)
 {
-	batch = 0;
 }
 
 incubator::~incubator()
 {
-	if(params[DEFAULT].output_bridged_bam_dir == "") return;
-	for(int i = 0; i < samples.size(); i++)
-	{
-		samples[i].close_bridged_bam();
-	}
 }
 
 int incubator::resolve()
 {
-	time_t mytime;
 	read_bam_list();
+	init_samples();
+	build_sample_index();
 
-	int a = 0;
-	while(true)
+	time_t mytime;
+	for(auto &x: sindex)
 	{
-		int b = a + params[DEFAULT].meta_batch_size;
-
-		if(b >= samples.size()) b = samples.size();
-		if(a >= b) break;
+		string chrm = x.first;
 
 		mytime = time(NULL);
-		printf("START PROCESSING BATCH WITH %d SAMPLES, %s\n", b - a, ctime(&mytime));
+		printf("start processing chrm %s\n", chrm.c_str());
 
 		mytime = time(NULL);
-		printf("step 1: generate graphs for individual bam/sam files, %s\n", ctime(&mytime));
-		generate(a, b);
+		printf("step 1: generate graphs for individual bam/sam files, %s", ctime(&mytime));
+		generate(x.second);
 
 		mytime = time(NULL);
-		printf("step 2: merge splice graphs, %s\n", ctime(&mytime));
+		printf("step 2: merge splice graphs, %s", ctime(&mytime));
 		merge();
 
 		mytime = time(NULL);
-		printf("step 3: assemble merged splice graphs, %s\n", ctime(&mytime));
+		printf("step 3: assemble merged splice graphs, %s", ctime(&mytime));
 		assemble();
 
-		mytime = time(NULL);
-		printf("step 4: rearrange transcript sets, %s\n", ctime(&mytime));
-		rearrange();
-
-		a = b;
-		clear();
+		groups.clear();
 
 		mytime = time(NULL);
-		printf("FINISH PROCESSING BATCH\n");
-
-		batch++;
+		printf("finish processing chrm %s\n", chrm.c_str());
 	}
 
 	mytime = time(NULL);
-	printf("\nFINAL: filter and output assembled transcripts, %s\n", ctime(&mytime));
+	printf("rearrange transcript sets, %s", ctime(&mytime));
+	rearrange();
 
+	mytime = time(NULL);
+	printf("filter assembled transcripts, %s", ctime(&mytime));
 	postprocess();
+
+	mytime = time(NULL);
+	printf("write transcripts, %s", ctime(&mytime));
 	write();
 
+	close_samples();
 	return 0;
 }
 
@@ -106,59 +99,110 @@ int incubator::read_bam_list()
 		if(strlen(line) <= 0) continue;
 		stringstream sstr(line);
 		sample_profile sp;
-		char file[10240];
+		char align_file[10240];
+		char index_file[10240];
 		char type[10240];
-		sstr >> file >> type;
-		sp.file_name = file;
+		sstr >> align_file >> index_file >> type;
+		sp.align_file = align_file;
+		sp.index_file = index_file;
 		if(string(type) == "paired_end") sp.data_type = PAIRED_END;
 		if(string(type) == "single_end") sp.data_type = SINGLE_END;
 		if(string(type) == "pacbio_ccs") sp.data_type = PACBIO_CCS;
 		if(string(type) == "pacbio_sub") sp.data_type = PACBIO_SUB;
 		if(string(type) == "ont") sp.data_type = ONT;
 		assert(sp.data_type != DEFAULT);
-		sp.print();
+		sp.sample_id = samples.size();
 		samples.push_back(sp);
 	}
+	return 0;
+}
 
+int incubator::init_samples()
+{
+	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
 	for(int i = 0; i < samples.size(); i++)
 	{
-		samples[i].sample_id = i;
-		if(params[DEFAULT].output_bridged_bam_dir == "") continue;
-		samples[i].open_bridged_bam(params[DEFAULT].output_bridged_bam_dir);
+		sample_profile &sp = samples[i];
+		boost::asio::post(pool, [this, &sp]{ this->init_sample(sp); });
+	}
+	pool.join();
+	return 0;
+}
+
+int incubator::build_sample_index()
+{
+	sindex.clear();
+	for(int i = 0; i < samples.size(); i++)
+	{
+		sample_profile &sp = samples[i];
+		for(int k = 0; k < sp.hdr->n_targets; k++)
+		{
+			string chrm(sp.hdr->target_name[k]);
+			if(sindex.find(chrm) == sindex.end())
+			{
+				vector<PI> v;
+				v.push_back(PI(i, k));
+				sindex.insert(make_pair(chrm, v));
+			}
+			else
+			{
+				sindex[chrm].push_back(PI(i, k));
+			}
+		}
+	}
+	return 0;
+}
+
+int incubator::init_sample(sample_profile &sp)
+{
+	// preview profiling
+	previewer pre(params[sp.data_type], sp);
+	pre.infer_library_type();
+	if(sp.data_type == PAIRED_END) pre.infer_insertsize();
+
+	// open bridged-bam
+	if(params[DEFAULT].output_bridged_bam_dir != "") 
+	{
+		sp.open_bridged_bam(params[DEFAULT].output_bridged_bam_dir);
 	}
 
-	fin.close();
+	sp.open_align_file();
+	sp.build_index_iterators();
+
 	return 0;
 }
 
-int incubator::clear()
+int incubator::close_samples()
 {
-	groups.clear();
+	for(int i = 0; i < samples.size(); i++)
+	{
+		if(params[DEFAULT].output_bridged_bam_dir != "") samples[i].close_bridged_bam();
+		samples[i].destroy_index_iterators();
+		samples[i].close_align_file();
+	}
 	return 0;
 }
 
-int incubator::generate(int a, int b)
+int incubator::generate(const vector<PI> &v)
 {
-	if(a >= b) return 0;
+	if(v.size() == 0) return 0;
 
 	int num_threads = params[DEFAULT].max_threads;
 	if(params[DEFAULT].single_sample_multiple_threading == true) num_threads = params[DEFAULT].max_threads / 2;
-	if(num_threads > b - a) num_threads = b - a;
 	
 	boost::asio::thread_pool pool(num_threads);			// thread pool
 	mutex mylock;										// lock for 
 
-	for(int i = a; i < b; i++)
+	for(int i = 0; i < v.size(); i++)
 	{
-		sample_profile &sp = samples[i];
-		boost::asio::post(pool, [this, &mylock, &sp]{ this->generate(sp, mylock); });
+		int sid = v[i].first;
+		int tid = v[i].second;
+		sample_profile &sp = samples[sid];
+		boost::asio::post(pool, [this, &mylock, &sp, tid]{ this->generate(sp, tid, mylock); });
 	}
 
 	pool.join();
-	print_groups();
-
-	time_t mytime = time(NULL);
-	printf("finish processing all individual samples, %s\n", ctime(&mytime));
+	//print_groups();
 
 	return 0;
 }
@@ -176,8 +220,6 @@ int incubator::merge()
 	pool.join();
 	print_groups();
 
-	time_t mytime = time(NULL);
-	printf("finish merging all splice graphs, %s\n", ctime(&mytime));
 	return 0;	
 }
 
@@ -201,8 +243,6 @@ int incubator::assemble()
 	}
 	pool.join();
 
-	time_t mytime = time(NULL);
-	printf("finish assembling all merged graphs, %s\n", ctime(&mytime));
 	return 0;
 }
 
@@ -215,8 +255,8 @@ int incubator::postprocess()
 		exit(0);
 	}
 
-	boost::asio::thread_pool pool(params[DEFAULT].max_threads); // thread pool
-	mutex mylock;									// lock for 
+	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
+	mutex mylock;
 
 	strsts.resize(samples.size());
 	for(int i = 0; i < tsave.size(); i++)
@@ -228,9 +268,6 @@ int incubator::postprocess()
 	pool.join();
 	fout.close();
 
-	time_t mytime = time(NULL);
-	printf("finish filtering and reporting final assembled transcripts, %s\n", ctime(&mytime));
-
 	return 0;
 }
 
@@ -238,8 +275,8 @@ int incubator::write()
 {
 	if(params[DEFAULT].output_gtf_dir == "") return 0;
 
-	boost::asio::thread_pool pool(params[DEFAULT].max_threads); // thread pool
-	mutex mylock;									// lock for 
+	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
+	mutex mylock;
 
 	for(int i = 0; i < strsts.size(); i++)
 	{
@@ -248,16 +285,14 @@ int incubator::write()
 
 	pool.join();
 
-	time_t mytime = time(NULL);
-	printf("finish writing individual assembled transcripts, %s\n", ctime(&mytime));
 	return 0;
 }
 
-int incubator::generate(sample_profile &sp, mutex &mylock)
+int incubator::generate(sample_profile &sp, int tid, mutex &mylock)
 {	
 	vector<combined_graph> v;
 	vector<transcript> trsts;
-	generator gt(sp, v, trsts, params[sp.data_type]);
+	generator gt(sp, v, trsts, params[sp.data_type], tid);
 	gt.resolve();
 
 	assert(trsts.size() == 0);
@@ -284,9 +319,7 @@ int incubator::generate(sample_profile &sp, mutex &mylock)
 		}
 	}
 	mylock.unlock();
-
-	time_t mytime = time(NULL);
-	printf("finish processing individual sample %s, %s", sp.file_name.c_str(), ctime(&mytime));
+	printf("finish processing tid = %d of sample %s\n", tid, sp.align_file.c_str());
 	return 0;
 }
 
@@ -297,7 +330,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	transcript_set ts;
 
 	assembler asmb(params[DEFAULT]);
-	asmb.assemble(gv, batch, instance, ts, samples);
+	asmb.assemble(gv, 0, instance, ts, samples);
 
 	move_transcript_set(ts, mylock);
 	for(int i = 0; i > gv.size(); i++) gv[i]->clear();
@@ -363,9 +396,6 @@ int incubator::write(int id)
 		transcript &t = v[i];
 		t.write(ss);
 	}
-
-	size_t p = samples[id].file_name.find_last_of("/\\");
-	string bfile = samples[id].file_name.substr(p + 1);
 
 	char file[10240];
 	sprintf(file, "%s/%d.gtf", params[DEFAULT].output_gtf_dir.c_str(), id);

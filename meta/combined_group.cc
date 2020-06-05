@@ -30,7 +30,7 @@ int combined_group::resolve()
 	build_splice_map();
 	build_similarity();
 	combine_graphs();
-	stats();
+	//stats();
 	mis.clear();
 	vpid.clear();
 	return 0;

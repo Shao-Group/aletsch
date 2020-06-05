@@ -25,23 +25,22 @@ See LICENSE for licensing.
 #include "hyper_set.h"
 #include "assembler.h"
 
-generator::generator(sample_profile &s, vector<combined_graph> &v, vector<transcript> &t, const parameters &c)
-	: vcb(v), trsts(t), cfg(c), sp(s)
+generator::generator(sample_profile &s, vector<combined_graph> &v, vector<transcript> &t, const parameters &c, int tid)
+	: vcb(v), trsts(t), cfg(c), sp(s), target_id(tid)
 {
-	previewer pre(cfg, sp);
-	pre.infer_library_type();
-	if(sp.data_type == PAIRED_END) pre.infer_insertsize();
-
 	index = 0;
 	qlen = 0;
 	qcnt = 0;
 }
 
 generator::~generator()
-{}
+{
+}
 
 int generator::resolve()
 {
+	if(target_id < 0) return 0;
+
 	int num_threads = 0;
 	if(cfg.single_sample_multiple_threading) num_threads = 1;
 
@@ -56,12 +55,13 @@ int generator::resolve()
 
 	int hid = 0;
     bam1_t *b1t = bam_init1();
-	sp.open_input_file();
 
-    while(sam_read1(sp.sfn, sp.hdr, b1t) >= 0)
+	hts_itr_t *iter = sp.iters[target_id];
+	if(iter == NULL) return 0;
+
+	while(sam_itr_next(sp.sfn, iter, b1t) >= 0)
 	{
 		bam1_core_t &p = b1t->core;
-		//if(p.tid >= 1) break;		// TODO
 
 		if((p.flag & 0x4) >= 1) continue;											// read is not mapped
 		if((p.flag & 0x100) >= 1 && cfg.use_second_alignment == false) continue;	// secondary alignment
@@ -113,7 +113,6 @@ int generator::resolve()
 	}
 
     bam_destroy1(b1t);
-	sp.close_input_file();
 
 	if(cfg.single_sample_multiple_threading == false) this->generate(bb1, glock, tlock, index);
 	else boost::asio::post(pool, [this, &glock, &tlock, bb1, index]{ this->generate(bb1, glock, tlock, index); });
