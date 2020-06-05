@@ -32,6 +32,7 @@ public:
 	vector<combined_group> groups;					// graph groups
 	vector<transcript_set> tsets;					// transcript sets for instances
 	transcript_set tmerge;							// assembled transcripts for all samples
+	ofstream meta_gtf;								// meta gtf
 
 public:
 	int resolve();

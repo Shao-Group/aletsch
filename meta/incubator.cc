@@ -30,10 +30,18 @@ See LICENSE for licensing.
 incubator::incubator(const vector<parameters> &v)
 	: params(v)
 {
+	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str());
+	if(meta_gtf.fail())
+	{
+		printf("cannot open output-get-file %s\n", params[DEFAULT].output_gtf_file.c_str());
+		exit(0);
+	}
 }
+
 
 incubator::~incubator()
 {
+	meta_gtf.close();
 }
 
 int incubator::resolve()
@@ -49,7 +57,7 @@ int incubator::resolve()
 		tmerge.chrm = chrm;
 
 		// test
-		//if(chrm != "1") continue;
+		//if(chrm != "chr1") continue;
 
 		mytime = time(NULL);
 		printf("start processing chrm %s\n", chrm.c_str());
@@ -265,13 +273,6 @@ int incubator::rearrange()
 
 int incubator::postprocess()
 {
-	ofstream fout(params[DEFAULT].output_gtf_file.c_str());
-	if(fout.fail())
-	{
-		printf("cannot open output-get-file %s\n", params[DEFAULT].output_gtf_file.c_str());
-		exit(0);
-	}
-
 	vector<transcript> v = tmerge.get_transcripts(2);
 
 	// warning: ts contains mixed strands
@@ -299,8 +300,7 @@ int incubator::postprocess()
 	}
 
 	const string &s = ss.str();
-	fout.write(s.c_str(), s.size());
-	fout.close();
+	meta_gtf.write(s.c_str(), s.size());
 
 	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
 	for(int i = 0; i < vv.size(); i++)
