@@ -42,10 +42,12 @@ int assembler::assemble(vector<combined_graph*> gv, int batch, int instance, tra
 		{
 			sample_profile &sp = samples[gt.sid];
 			sp.bam_lock.lock();
+			sp.open_bridged_bam(cfg.output_bridged_bam_dir);
 			for(int k = 0; k < gt.vc.size(); k++)
 			{
 				write_unbridged_pereads_cluster(sp.bridged_bam, gt.vc[k]);
 			}
+			sp.close_bridged_bam();
 			sp.bam_lock.unlock();
 		}
 	}
@@ -189,6 +191,7 @@ int assembler::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, v
 			combined_graph &gt = *(gv[i]);
 			sample_profile &sp = samples[gt.sid];
 			sp.bam_lock.lock();
+			sp.open_bridged_bam(cfg.output_bridged_bam_dir);
 			for(int k = index[i].first; k < index[i].second; k++)
 			{
 				//vc[k].print(k);
@@ -202,6 +205,7 @@ int assembler::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, v
 					write_bridged_pereads_cluster(sp.bridged_bam, vc[k], br.opt[k].whole);
 				}
 			}
+			sp.close_bridged_bam();
 			sp.bam_lock.unlock();
 		}
 	}

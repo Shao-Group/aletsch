@@ -46,7 +46,6 @@ public:
 private:
 	int read_bam_list();
 	int init_samples();
-	int preview_sample(sample_profile &sp);
 	int build_sample_index();
 	int close_samples();
 	int generate(sample_profile &sp, int tid, mutex &mylock);

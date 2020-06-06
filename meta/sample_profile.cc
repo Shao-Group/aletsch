@@ -41,7 +41,7 @@ int sample_profile::open_individual_gtf(const string &dir)
 	char file[10240];
 	sprintf(file, "%s/%d.gtf", dir.c_str(), sample_id);
 	individual_gtf = new ofstream;
-	individual_gtf->open(file);
+	individual_gtf->open(file, std::ofstream::app);
 	if(individual_gtf->fail()) 
 	{
 		printf("cannot open individual gtf %s\n", file);
@@ -61,7 +61,7 @@ int sample_profile::close_bridged_bam()
 {
 	if(bridged_bam == NULL) return 0;
 	int f = bgzf_close(bridged_bam);
-	printf("close bridged bam for sample %s with code %d\n", align_file.c_str(), f);
+	//printf("close bridged bam for sample %s with code %d\n", align_file.c_str(), f);
 	return 0;
 }
 
@@ -74,6 +74,7 @@ int sample_profile::close_align_file()
 
 int sample_profile::build_index_iterators()
 {
+	open_align_file();
 	hts_idx_t *idx = sam_index_load(sfn, index_file.c_str());
 
 	iters.clear();
@@ -84,6 +85,7 @@ int sample_profile::build_index_iterators()
 	}
 
 	hts_idx_destroy(idx);
+	close_align_file();
 	return 0;
 }
 

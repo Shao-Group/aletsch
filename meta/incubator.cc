@@ -127,19 +127,24 @@ int incubator::read_bam_list()
 
 int incubator::init_samples()
 {
-	/*
 	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
 	for(int i = 0; i < samples.size(); i++)
 	{
 		sample_profile &sp = samples[i];
-		boost::asio::post(pool, [this, &sp]{ this->preview_sample(sp); });
+		boost::asio::post(pool, [this, &sp] {
+				previewer pre(params[sp.data_type], sp);
+				pre.infer_library_type();
+				if(sp.data_type == PAIRED_END) pre.infer_insertsize();
+				sp.build_index_iterators(); 
+		});
 	}
 	pool.join();
-	*/
 
 	for(int i = 0; i < samples.size(); i++)
 	{
 		sample_profile &sp = samples[i];
+		printf("open file for sample %d %s\n", i, sp.align_file.c_str());
+
 		sp.open_align_file();
 
 		if(params[DEFAULT].output_bridged_bam_dir != "") 
@@ -157,7 +162,7 @@ int incubator::init_samples()
 	for(int i = 0; i < samples.size(); i++)
 	{
 		sample_profile &sp = samples[i];
-		boost::asio::post(pool2, [&sp]{ sp.build_index_iterators(); });
+		boost::asio::post(pool2, [&sp]{ });
 	}
 	pool2.join();
 
@@ -185,14 +190,6 @@ int incubator::build_sample_index()
 			}
 		}
 	}
-	return 0;
-}
-
-int incubator::preview_sample(sample_profile &sp)
-{
-	previewer pre(params[sp.data_type], sp);
-	pre.infer_library_type();
-	if(sp.data_type == PAIRED_END) pre.infer_insertsize();
 	return 0;
 }
 
@@ -393,7 +390,9 @@ int incubator::write_individual_gtf(int id, const vector<transcript> &vt, const 
 
 	sample_profile &sp = samples[id];
 	sp.gtf_lock.lock();
+	sp.open_individual_gtf(params[DEFAULT].output_gtf_dir);
 	sp.individual_gtf->write(s.c_str(), s.size());
+	sp.close_individual_gtf();
 	sp.gtf_lock.unlock();
 
 	return 0;

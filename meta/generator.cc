@@ -31,10 +31,12 @@ generator::generator(sample_profile &s, vector<combined_graph> &v, vector<transc
 	index = 0;
 	qlen = 0;
 	qcnt = 0;
+	sp.open_align_file();
 }
 
 generator::~generator()
 {
+	sp.close_align_file();
 }
 
 int generator::resolve()
@@ -144,8 +146,9 @@ int generator::generate(bundle *bb, mutex &glock, mutex &tlock, int index)
 
 	if(bb->hits.size() < cfg.min_num_hits_in_bundle) 
 	{
-		if(store_hits == true)
+		if(store_hits == true && bb->hits.size() >= 1)
 		{
+			sp.open_bridged_bam(cfg.output_bridged_bam_dir);
 			for(int i = 0; i < bb->hits.size(); i++)
 			{
 				hit &h = bb->hits[i];
@@ -155,6 +158,7 @@ int generator::generate(bundle *bb, mutex &glock, mutex &tlock, int index)
 				assert(b1t.data != NULL);
 				delete b1t.data;
 			}
+			sp.close_bridged_bam();
 		}
 		bb->clear();
 		delete bb;
@@ -208,6 +212,7 @@ int generator::generate(bundle *bb, mutex &glock, mutex &tlock, int index)
 		bs.collect_unbridged_clusters(ub); 
 		if(store_hits == true)
 		{
+			sp.open_bridged_bam(cfg.output_bridged_bam_dir);
 			write_unpaired_reads(sp.bridged_bam, bb->hits, paired);
 			assert(vc.size() == bs.opt.size());
 			for(int k = 0; k < vc.size(); k++)
@@ -215,6 +220,7 @@ int generator::generate(bundle *bb, mutex &glock, mutex &tlock, int index)
 				if(bs.opt[k].type >= 0) write_bridged_pereads_cluster(sp.bridged_bam, vc[k], bs.opt[k].whole);
 				else write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
 			}
+			sp.close_bridged_bam();
 		}
 		for(int i = 0; i < vc.size(); i++) vc[i].clear();
 	}
@@ -309,13 +315,15 @@ bool generator::assemble(splice_graph &gr, phase_set &ps, vector<pereads_cluster
 	trsts.insert(trsts.end(), vt.begin(), vt.end());
 	tlock.unlock();
 
-	if(cfg.output_bridged_bam_dir != "")
+	if(cfg.output_bridged_bam_dir != "" && vc.size() >= 1)
 	{
+		sp.open_bridged_bam(cfg.output_bridged_bam_dir);
 		for(int k = 0; k < vc.size(); k++)
 		{
 			write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
 			vc[k].clear();
 		}
+		sp.close_bridged_bam();
 	}
 
 	return true;
