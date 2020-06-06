@@ -127,6 +127,7 @@ int incubator::read_bam_list()
 
 int incubator::init_samples()
 {
+	/*
 	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
 	for(int i = 0; i < samples.size(); i++)
 	{
@@ -134,6 +135,7 @@ int incubator::init_samples()
 		boost::asio::post(pool, [this, &sp]{ this->preview_sample(sp); });
 	}
 	pool.join();
+	*/
 
 	for(int i = 0; i < samples.size(); i++)
 	{
@@ -155,9 +157,9 @@ int incubator::init_samples()
 	for(int i = 0; i < samples.size(); i++)
 	{
 		sample_profile &sp = samples[i];
-		boost::asio::post(pool, [&sp]{ sp.build_index_iterators(); });
+		boost::asio::post(pool2, [&sp]{ sp.build_index_iterators(); });
 	}
-	pool.join();
+	pool2.join();
 
 	return 0;
 }
