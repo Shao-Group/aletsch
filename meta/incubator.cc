@@ -60,7 +60,7 @@ int incubator::resolve()
 		//if(chrm != "chr1") continue;
 
 		mytime = time(NULL);
-		printf("start processing chrm %s\n", chrm.c_str());
+		printf("start processing chrm %s, %s\n", chrm.c_str(), ctime(&mytime));
 
 		mytime = time(NULL);
 		printf("step 1: generate graphs for individual bam/sam files, %s", ctime(&mytime));
@@ -85,7 +85,7 @@ int incubator::resolve()
 		postprocess();
 
 		mytime = time(NULL);
-		printf("finish processing chrm %s\n", chrm.c_str());
+		printf("finish processing chrm %s, %s\n", chrm.c_str(), ctime(&mytime));
 	}
 
 	close_samples();
