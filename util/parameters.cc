@@ -25,7 +25,7 @@ parameters::parameters()
 	output_bridged_bam_dir = "";
 	verbose = 1;
 	algo = "meta-scallop";
-	version = "0.1.4";
+	version = "0.1.5";
 	max_threads = 10;
 
 	// for meta-assembly
