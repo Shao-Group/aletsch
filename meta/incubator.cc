@@ -27,7 +27,7 @@ See LICENSE for licensing.
 #include <boost/asio/thread_pool.hpp>
 #include <boost/pending/disjoint_sets.hpp>
 
-incubator::incubator(const vector<parameters> &v)
+incubator::incubator(vector<parameters> &v)
 	: params(v)
 {
 	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str());
@@ -38,7 +38,6 @@ incubator::incubator(const vector<parameters> &v)
 	}
 }
 
-
 incubator::~incubator()
 {
 	meta_gtf.close();
@@ -47,6 +46,7 @@ incubator::~incubator()
 int incubator::resolve()
 {
 	read_bam_list();
+	set_threading();
 	init_samples();
 	build_sample_index();
 
@@ -121,6 +121,17 @@ int incubator::read_bam_list()
 		assert(sp.data_type != DEFAULT);
 		sp.sample_id = samples.size();
 		samples.push_back(sp);
+	}
+	return 0;
+}
+
+int incubator::set_threading()
+{
+	if(params[DEFAULT].single_sample_multiple_threading == true) return 0;
+	if(params[DEFAULT].max_threads <= samples.size()) return 0;
+	for(int i = 0; i < params.size(); i++)
+	{
+		params[i].single_sample_multiple_threading = true;
 	}
 	return 0;
 }

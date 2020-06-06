@@ -22,11 +22,11 @@ typedef pair<int, int> PI;
 class incubator
 {
 public:
-	incubator(const vector<parameters> &v);
+	incubator(vector<parameters> &v);
 	~incubator();
 
 public:
-	const vector<parameters> &params;				// parameters 
+	vector<parameters> &params;						// parameters 
 	vector<sample_profile> samples;					// samples
 	map<string, vector<PI>> sindex;					// sample index
 	vector<combined_group> groups;					// graph groups
@@ -45,6 +45,7 @@ public:
 
 private:
 	int read_bam_list();
+	int set_threading();
 	int init_samples();
 	int free_samples();
 	int build_sample_index();
