@@ -30,11 +30,6 @@ private:
 	const parameters &cfg;
 	sample_profile &sp;
 
-	int max_preview_reads;
-	int max_preview_spliced_reads;
-	int min_preview_spliced_reads;
-	double preview_infer_ratio;
-
 public:
 	int infer_library_type();
 	int infer_insertsize();

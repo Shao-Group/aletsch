@@ -20,10 +20,6 @@ See LICENSE for licensing.
 previewer::previewer(const parameters &c, sample_profile &s)
 	: cfg(c), sp(s)
 {
-	max_preview_reads = 2000000;
-	max_preview_spliced_reads = 50000;
-	min_preview_spliced_reads = 10000;
-	preview_infer_ratio = 0.8;
 }
 
 previewer::~previewer()
@@ -47,8 +43,8 @@ int previewer::infer_library_type()
 
     while(sam_read1(sp.sfn, sp.hdr, b1t) >= 0)
 	{
-		if(total >= max_preview_reads) break;
-		if(spn1.size() >= max_preview_spliced_reads && spn2.size() >= max_preview_spliced_reads) break;
+		if(total >= cfg.max_preview_reads) break;
+		if(spn1.size() >= cfg.max_preview_spliced_reads && spn2.size() >= cfg.max_preview_spliced_reads) break;
 
 		bam1_core_t &p = b1t->core;
 
@@ -68,8 +64,8 @@ int previewer::infer_library_type()
 		if((ht.flag & 0x1) <= 0) single ++;
 
 		if(ht.xs == '.') continue;
-		if(ht.xs == '+' && spn1.size() >= max_preview_spliced_reads) continue;
-		if(ht.xs == '-' && spn2.size() >= max_preview_spliced_reads) continue;
+		if(ht.xs == '+' && spn1.size() >= cfg.max_preview_spliced_reads) continue;
+		if(ht.xs == '-' && spn2.size() >= cfg.max_preview_spliced_reads) continue;
 
 		// predicted strand
 		char xs = '.';
@@ -110,8 +106,8 @@ int previewer::infer_library_type()
 	vv.push_back("second");
 
 	int s1 = UNSTRANDED;
-	if(spn >= min_preview_spliced_reads && first > preview_infer_ratio * 2.0 * spn) s1 = FR_FIRST;
-	if(spn >= min_preview_spliced_reads && second > preview_infer_ratio * 2.0 * spn) s1 = FR_SECOND;
+	if(spn >= cfg.min_preview_spliced_reads && first > cfg.preview_infer_ratio * 2.0 * spn) s1 = FR_FIRST;
+	if(spn >= cfg.min_preview_spliced_reads && second > cfg.preview_infer_ratio * 2.0 * spn) s1 = FR_SECOND;
 
 	printf("infer-library-type (%s): reads = %d, single = %d, paired = %d, spliced = %d, first = %d, second = %d, inferred = %s\n",
 			sp.align_file.c_str(), total, single, paired, spn, first, second, vv[s1 + 1].c_str());

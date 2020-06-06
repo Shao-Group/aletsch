@@ -167,6 +167,8 @@ int incubator::init_sample(sample_profile &sp)
 	pre.infer_library_type();
 	if(sp.data_type == PAIRED_END) pre.infer_insertsize();
 
+	sp.open_align_file();
+
 	if(params[DEFAULT].output_bridged_bam_dir != "") 
 	{
 		sp.open_bridged_bam(params[DEFAULT].output_bridged_bam_dir);
@@ -177,7 +179,6 @@ int incubator::init_sample(sample_profile &sp)
 		sp.open_individual_gtf(params[DEFAULT].output_gtf_dir);
 	}
 
-	sp.open_align_file();
 	sp.build_index_iterators();
 
 	return 0;
