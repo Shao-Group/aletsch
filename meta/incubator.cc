@@ -131,9 +131,34 @@ int incubator::init_samples()
 	for(int i = 0; i < samples.size(); i++)
 	{
 		sample_profile &sp = samples[i];
-		boost::asio::post(pool, [this, &sp]{ this->init_sample(sp); });
+		boost::asio::post(pool, [this, &sp]{ this->preview_sample(sp); });
 	}
 	pool.join();
+
+	for(int i = 0; i < samples.size(); i++)
+	{
+		sample_profile &sp = samples[i];
+		sp.open_align_file();
+
+		if(params[DEFAULT].output_bridged_bam_dir != "") 
+		{
+			sp.open_bridged_bam(params[DEFAULT].output_bridged_bam_dir);
+		}
+
+		if(params[DEFAULT].output_gtf_dir != "") 
+		{
+			sp.open_individual_gtf(params[DEFAULT].output_gtf_dir);
+		}
+	}
+
+	boost::asio::thread_pool pool2(params[DEFAULT].max_threads);
+	for(int i = 0; i < samples.size(); i++)
+	{
+		sample_profile &sp = samples[i];
+		boost::asio::post(pool, [&sp]{ sp.build_index_iterators(); });
+	}
+	pool.join();
+
 	return 0;
 }
 
@@ -161,26 +186,11 @@ int incubator::build_sample_index()
 	return 0;
 }
 
-int incubator::init_sample(sample_profile &sp)
+int incubator::preview_sample(sample_profile &sp)
 {
 	previewer pre(params[sp.data_type], sp);
 	pre.infer_library_type();
 	if(sp.data_type == PAIRED_END) pre.infer_insertsize();
-
-	sp.open_align_file();
-
-	if(params[DEFAULT].output_bridged_bam_dir != "") 
-	{
-		sp.open_bridged_bam(params[DEFAULT].output_bridged_bam_dir);
-	}
-
-	if(params[DEFAULT].output_gtf_dir != "") 
-	{
-		sp.open_individual_gtf(params[DEFAULT].output_gtf_dir);
-	}
-
-	sp.build_index_iterators();
-
 	return 0;
 }
 
