@@ -46,8 +46,8 @@ public:
 private:
 	int read_bam_list();
 	int init_samples();
+	int free_samples();
 	int build_sample_index();
-	int close_samples();
 	int generate(sample_profile &sp, int tid, mutex &mylock);
 	int assemble(vector<combined_graph*> gv, int instance, mutex &mylock);
 	int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);

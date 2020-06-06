@@ -288,13 +288,15 @@ bool generator::regional(splice_graph &gr, phase_set &ps, vector<pereads_cluster
 
 	if(all_regional == false && gr.num_edges() >= 1) return false;
 
-	if(cfg.output_bridged_bam_dir != "")
+	if(cfg.output_bridged_bam_dir != "" && vc.size() >= 1)
 	{
+		sp.open_bridged_bam(cfg.output_bridged_bam_dir);
 		for(int k = 0; k < vc.size(); k++)
 		{
 			write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
 			vc[k].clear();
 		}
+		sp.close_bridged_bam();
 	}
 
 	//gr.print(); printf("above graph is a regional graph\n\n");

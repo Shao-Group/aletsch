@@ -43,12 +43,15 @@ public:
 public:
 	int open_align_file();
 	int open_bridged_bam(const string &dir);
+	int init_bridged_bam(const string &dir);
 	int open_individual_gtf(const string &dir);
+	int read_align_headers();
+	int read_index_iterators();
+	int free_align_headers();
+	int free_index_iterators();
 	int close_individual_gtf();
 	int close_bridged_bam();
 	int close_align_file();
-	int build_index_iterators();
-	int destroy_index_iterators();
 	int print();
 };
 

@@ -20,6 +20,20 @@ sample_profile::sample_profile()
 	data_type = DEFAULT;
 }
 
+int sample_profile::read_align_headers()
+{
+	open_align_file();
+	hdr = sam_hdr_read(sfn);
+	close_align_file();
+	return 0;
+}
+
+int sample_profile::free_align_headers()
+{
+    if(hdr != NULL) bam_hdr_destroy(hdr);
+	return 0;
+}
+
 int sample_profile::open_align_file()
 {
 	sfn = sam_open(align_file.c_str(), "r");
@@ -27,12 +41,23 @@ int sample_profile::open_align_file()
 	return 0;
 }
 
+int sample_profile::init_bridged_bam(const string &dir)
+{
+	char file[10240];
+	sprintf(file, "%s/%d.bam", dir.c_str(), sample_id);
+	open_align_file();
+	bridged_bam = bgzf_open(file, "w");
+	bam_hdr_write(bridged_bam, hdr);
+	close_bridged_bam();
+	close_align_file();
+	return 0;
+}
+
 int sample_profile::open_bridged_bam(const string &dir)
 {
 	char file[10240];
 	sprintf(file, "%s/%d.bam", dir.c_str(), sample_id);
-	bridged_bam = bgzf_open(file, "w");
-	bam_hdr_write(bridged_bam, hdr);
+	bridged_bam = bgzf_open(file, "a");
 	return 0;
 }
 
@@ -59,9 +84,7 @@ int sample_profile::close_individual_gtf()
 
 int sample_profile::close_bridged_bam()
 {
-	if(bridged_bam == NULL) return 0;
-	int f = bgzf_close(bridged_bam);
-	//printf("close bridged bam for sample %s with code %d\n", align_file.c_str(), f);
+	if(bridged_bam != NULL) bgzf_close(bridged_bam);
 	return 0;
 }
 
@@ -72,7 +95,7 @@ int sample_profile::close_align_file()
 	return 0;
 }
 
-int sample_profile::build_index_iterators()
+int sample_profile::read_index_iterators()
 {
 	open_align_file();
 	hts_idx_t *idx = sam_index_load(sfn, index_file.c_str());
@@ -89,7 +112,7 @@ int sample_profile::build_index_iterators()
 	return 0;
 }
 
-int sample_profile::destroy_index_iterators()
+int sample_profile::free_index_iterators()
 {
 	for(int i = 0; i < iters.size(); i++)
 	{

@@ -88,7 +88,7 @@ int incubator::resolve()
 		printf("finish processing chrm %s, %s\n", chrm.c_str(), ctime(&mytime));
 	}
 
-	close_samples();
+	free_samples();
 	return 0;
 }
 
@@ -132,13 +132,27 @@ int incubator::init_samples()
 	{
 		sample_profile &sp = samples[i];
 		boost::asio::post(pool, [this, &sp] {
+				//sp.read_align_headers();
+				//printf("sp.hdr->n_targets = %d\n", sp.hdr->n_targets);
+				sp.read_index_iterators(); 
 				previewer pre(params[sp.data_type], sp);
 				pre.infer_library_type();
 				if(sp.data_type == PAIRED_END) pre.infer_insertsize();
-				sp.build_index_iterators(); 
+				string bdir = params[DEFAULT].output_bridged_bam_dir;
+				if(bdir != "") sp.init_bridged_bam(bdir);
 		});
 	}
 	pool.join();
+	return 0;
+}
+
+int incubator::free_samples()
+{
+	for(int i = 0; i < samples.size(); i++) 
+	{
+		samples[i].free_index_iterators();
+		//samples[i].free_align_headers();
+	}
 	return 0;
 }
 
@@ -148,6 +162,7 @@ int incubator::build_sample_index()
 	for(int i = 0; i < samples.size(); i++)
 	{
 		sample_profile &sp = samples[i];
+		sp.open_align_file();
 		for(int k = 0; k < sp.hdr->n_targets; k++)
 		{
 			string chrm(sp.hdr->target_name[k]);
@@ -162,18 +177,7 @@ int incubator::build_sample_index()
 				sindex[chrm].push_back(PI(i, k));
 			}
 		}
-	}
-	return 0;
-}
-
-int incubator::close_samples()
-{
-	for(int i = 0; i < samples.size(); i++)
-	{
-		if(params[DEFAULT].output_bridged_bam_dir != "") samples[i].close_bridged_bam();
-		if(params[DEFAULT].output_gtf_dir != "") samples[i].close_individual_gtf();
-		samples[i].destroy_index_iterators();
-		samples[i].close_align_file();
+		sp.close_align_file();
 	}
 	return 0;
 }
@@ -285,14 +289,17 @@ int incubator::postprocess()
 	const string &s = ss.str();
 	meta_gtf.write(s.c_str(), s.size());
 
-	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
-	for(int i = 0; i < vv.size(); i++)
+	if(params[DEFAULT].output_gtf_dir != "")
 	{
-		const vector<transcript> &z = ft.trs;
-		const vector<int> &v = vv[i];
-		boost::asio::post(pool, [this, i, &z, &v]{ this->write_individual_gtf(i, z, v); });
+		boost::asio::thread_pool pool(params[DEFAULT].max_threads);
+		for(int i = 0; i < vv.size(); i++)
+		{
+			const vector<transcript> &z = ft.trs;
+			const vector<int> &v = vv[i];
+			boost::asio::post(pool, [this, i, &z, &v]{ this->write_individual_gtf(i, z, v); });
+		}
+		pool.join();
 	}
-	pool.join();
 
 	return 0;
 }
