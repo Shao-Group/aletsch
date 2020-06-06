@@ -139,33 +139,6 @@ int incubator::init_samples()
 		});
 	}
 	pool.join();
-
-	for(int i = 0; i < samples.size(); i++)
-	{
-		sample_profile &sp = samples[i];
-		printf("open file for sample %d %s\n", i, sp.align_file.c_str());
-
-		sp.open_align_file();
-
-		if(params[DEFAULT].output_bridged_bam_dir != "") 
-		{
-			sp.open_bridged_bam(params[DEFAULT].output_bridged_bam_dir);
-		}
-
-		if(params[DEFAULT].output_gtf_dir != "") 
-		{
-			sp.open_individual_gtf(params[DEFAULT].output_gtf_dir);
-		}
-	}
-
-	boost::asio::thread_pool pool2(params[DEFAULT].max_threads);
-	for(int i = 0; i < samples.size(); i++)
-	{
-		sample_profile &sp = samples[i];
-		boost::asio::post(pool2, [&sp]{ });
-	}
-	pool2.join();
-
 	return 0;
 }
 
