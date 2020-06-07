@@ -58,10 +58,7 @@ int combined_group::build_splice_map()
 		}
 	}
 
-	for(auto &x : mis)
-	{
-		printf("splice map %d => %lu elements\n", x.first, x.second.size());
-	}
+	//for(auto &x : mis) printf("splice map %d => %lu elements\n", x.first, x.second.size());
 
 	return 0;
 }

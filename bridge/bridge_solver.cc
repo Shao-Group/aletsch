@@ -460,6 +460,7 @@ vector<int> bridge_solver::update_stack(const vector<int> &v, int s)
 		{
 			stack[j] = s;
 			j++;
+			if(j >= stack.size()) break;
 		}
 		stack[j] = v[i];
 	}
