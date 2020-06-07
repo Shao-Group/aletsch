@@ -102,12 +102,10 @@ int transcript_set::add(const transcript_set &ts, int mode)
 		auto z = mt.find(x.first);
 		if(z == mt.end())
 		{
-			printf("not found\n");
 			mt.insert(x);
 		}
 		else
 		{
-			printf("found, list = %lu, %lu\n", z->second.size(), x.second.size());
 			z->second = merge_sorted_trans_items(z->second, x.second, mode);
 		}
 	}
