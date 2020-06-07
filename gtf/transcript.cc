@@ -172,7 +172,12 @@ vector<PI32> transcript::get_intron_chain() const
 
 size_t transcript::get_intron_chain_hashing() const
 {
-	if(exons.size() <= 1) return 0;
+	if(exons.size() <= 1)
+	{
+		size_t p = (exons[0].first + exons[0].second) / 10000;
+		return p + 1;
+	}
+
 	vector<int32_t> vv;
 	vector<PI32> v = get_intron_chain();
 	for(int i = 0; i < v.size(); i++) 
