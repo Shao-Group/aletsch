@@ -28,7 +28,7 @@ See LICENSE for licensing.
 #include <boost/pending/disjoint_sets.hpp>
 
 incubator::incubator(vector<parameters> &v)
-	: params(v)
+	: params(v), tmerge("")
 {
 	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str());
 	if(meta_gtf.fail())
@@ -355,7 +355,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 {
 	if(gv.size() == 0) return 0;
 
-	transcript_set ts;
+	transcript_set ts(gv.front()->chrm);
 
 	assembler asmb(params[DEFAULT]);
 	asmb.assemble(gv, 0, instance, ts, samples);

@@ -35,7 +35,7 @@ int trans_item::merge(const trans_item &ti, int mode)
 	return 0;
 }
 
-vector<trans_item> && merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &vy, int mode)
+vector<trans_item> merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &vy, int mode)
 {
 	vector<trans_item> vz;
 	int kx = 0, ky = 0;
@@ -45,18 +45,18 @@ vector<trans_item> && merge_sorted_trans_items(vector<trans_item> &vx, const vec
 		if(b == 0)
 		{
 			vx[kx].merge(vy[ky], mode);
-			vz.push_back(std::move(vx[kx]));
+			vz.push_back(vx[kx]);
 			kx++;
 			ky++;
 		}
 		else if(b == 1)
 		{
-			vz.push_back(std::move(vx[kx]));
+			vz.push_back(vx[kx]);
 			kx++;
 		}
 		else if(b == -1)
 		{
-			vz.push_back(std::move(vy[ky]));
+			vz.push_back(vy[ky]);
 			ky++;
 		}
 		else assert(false);
@@ -64,15 +64,16 @@ vector<trans_item> && merge_sorted_trans_items(vector<trans_item> &vx, const vec
 
 	assert(kx == vx.size() || ky == vy.size());
 
-	for(int i = kx; i < vx.size(); i++) vz.push_back(std::move(vx[i]));
-	for(int i = ky; i < vy.size(); i++) vz.push_back(std::move(vy[i]));
+	for(int i = kx; i < vx.size(); i++) vz.push_back(vx[i]);
+	for(int i = ky; i < vy.size(); i++) vz.push_back(vy[i]);
 
-	return std::move(vz);
+	return vz;
+	//return std::move(vz);
 }
 
-
-transcript_set::transcript_set()
+transcript_set::transcript_set(const string &c)
 {
+	chrm = c;
 }
 
 transcript_set::transcript_set(const transcript &t, int count, int sid)
@@ -122,7 +123,7 @@ int transcript_set::filter(int min_count)
 		for(auto &z: x.second)
 		{
 			if(z.count < min_count) continue;
-			v.push_back(std::move(z));
+			v.push_back(z);
 		}
 		x.second = std::move(v);
 	}
@@ -147,7 +148,7 @@ int transcript_set::print() const
 	return 0;
 }
 
-vector<transcript> && transcript_set::get_transcripts(int min_count) const
+vector<transcript> transcript_set::get_transcripts(int min_count) const
 {
 	vector<transcript> v;
 	for(auto &x : mt)
@@ -158,10 +159,10 @@ vector<transcript> && transcript_set::get_transcripts(int min_count) const
 			v.push_back(z.trst);
 		}
 	}
-	return std::move(v);
+	return v;
 }
 
-pair<bool, trans_item> && transcript_set::query(const transcript &t) const
+pair<bool, trans_item> transcript_set::query(const transcript &t) const
 {
 	pair<bool, trans_item> p;
 	size_t h = t.get_intron_chain_hashing();
@@ -169,7 +170,7 @@ pair<bool, trans_item> && transcript_set::query(const transcript &t) const
 	if(it == mt.end()) 
 	{
 		p.first = false;
-		return std::move(p);
+		return p;
 	}
 
 	auto &v = it->second;
@@ -182,9 +183,9 @@ pair<bool, trans_item> && transcript_set::query(const transcript &t) const
 		{
 			p.first = true;
 			p.second = v[k];
-			return std::move(p);
+			return p;
 		}
 	}
 	p.first = true;
-	return std::move(p);
+	return p;
 }

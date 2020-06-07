@@ -31,12 +31,12 @@ public:
 	int merge(const trans_item &ti, int mode);
 };
 
-vector<trans_item> && merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &vy, int mode);
+vector<trans_item> merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &vy, int mode);
 
 class transcript_set
 {
 public:
-	transcript_set();
+	transcript_set(const string &c);
 	transcript_set(const transcript &t, int count, int sid);
 
 public:
@@ -49,8 +49,8 @@ public:
 	int increase_count(int count);
 	int filter(int min_count);
 	int print() const;
-	vector<transcript> && get_transcripts(int min_count) const;
-	pair<bool, trans_item> && query(const transcript &t) const;
+	pair<bool, trans_item> query(const transcript &t) const;
+	vector<transcript> get_transcripts(int min_count) const;
 };
 
 #endif
