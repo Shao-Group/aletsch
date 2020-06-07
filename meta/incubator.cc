@@ -10,7 +10,6 @@ See LICENSE for licensing.
 #include "filter.h"
 #include "cluster.h"
 #include "parameters.h"
-#include "scallop.h"
 #include "graph_reviser.h"
 #include "bridge_solver.h"
 #include "essential.h"
@@ -57,7 +56,7 @@ int incubator::resolve()
 		tmerge.chrm = chrm;
 
 		// test
-		if(chrm != "1") continue;
+		//if(chrm != "1") continue;
 
 		mytime = time(NULL);
 		printf("start processing chrm %s, %s", chrm.c_str(), ctime(&mytime));
@@ -198,8 +197,6 @@ int incubator::generate(const vector<PI> &v)
 	if(v.size() == 0) return 0;
 
 	int num_threads = params[DEFAULT].max_threads;
-	if(params[DEFAULT].single_sample_multiple_threading == true) num_threads = params[DEFAULT].max_threads / 2;
-	
 	boost::asio::thread_pool pool(num_threads);			// thread pool
 	mutex mylock;										// lock for 
 

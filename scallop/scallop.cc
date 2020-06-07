@@ -15,8 +15,8 @@ See LICENSE for licensing.
 #include <cfloat>
 #include <algorithm>
 
-scallop::scallop(const splice_graph &g, const hyper_set &h1, const parameters &c)
-	: gr(g), hs(h1), cfg(c)
+scallop::scallop(splice_graph &g, hyper_set &h, const parameters &c)
+	: gr(g), hs(h), cfg(c)
 {
 	round = 0;
 	//gr.draw(gr.gid + "." + tostring(round++) + ".tex");

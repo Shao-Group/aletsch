@@ -30,7 +30,7 @@ typedef map<int, int> MI;
 class scallop
 {
 public:
-	scallop(const splice_graph &gr, const hyper_set &hs, const parameters &c);
+	scallop(splice_graph &gr, hyper_set &hs, const parameters &c);
 	virtual ~scallop();
 
 public:
@@ -39,14 +39,14 @@ public:
 
 public:
 	const parameters &cfg;				// parameters
-	splice_graph gr;					// splice graph
+	splice_graph &gr;					// splice graph
+	hyper_set &hs;						// hyper edges
 	MEI e2i;							// edge map, from edge to index
 	VE i2e;								// edge map, from index to edge
 	MEV mev;							// super edges
 	MED med;							// map from super edges to ave-reads
 	MEI mei;							// map from super edges to length
 	vector<int> v2v;					// vertex map
-	hyper_set hs;						// hyper edges
 	int round;							// iteration
 	set<int> nonzeroset;				// vertices with degree >= 1
 	vector<path> paths;					// predicted paths

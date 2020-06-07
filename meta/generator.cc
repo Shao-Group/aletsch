@@ -43,17 +43,9 @@ int generator::resolve()
 {
 	if(target_id < 0) return 0;
 
-	int num_threads = 0;
-	if(cfg.single_sample_multiple_threading) num_threads = 1;
-
-	boost::asio::thread_pool pool(num_threads);				// thread pool
-
-	mutex glock;											// lock for graphs
-	mutex tlock;											// lock for trsts
-
 	int index = 0;
-	bundle *bb1 = new bundle();
-	bundle *bb2 = new bundle();
+	bundle bb1;
+	bundle bb2;
 
 	int hid = 0;
     bam1_t *b1t = bam_init1();
@@ -82,19 +74,17 @@ int generator::resolve()
 		qcnt += 1;
 
 		// truncate
-		if(bb1->hits.size() >= 1 && (ht.tid != bb1->tid || ht.pos > bb1->rpos + cfg.min_bundle_gap))
+		if(bb1.hits.size() >= 1 && (ht.tid != bb1.tid || ht.pos > bb1.rpos + cfg.min_bundle_gap))
 		{
-			if(cfg.single_sample_multiple_threading == false) this->generate(bb1, glock, tlock, index);
-			else boost::asio::post(pool, [this, &glock, &tlock, bb1, index]{ this->generate(bb1, glock, tlock, index); });
-			bb1 = new bundle();
+			generate(bb1, index);
+			bb1.clear();
 			index++;
 		}
 
-		if(bb2->hits.size() >= 1 && (ht.tid != bb2->tid || ht.pos > bb2->rpos + cfg.min_bundle_gap))
+		if(bb2.hits.size() >= 1 && (ht.tid != bb2.tid || ht.pos > bb2.rpos + cfg.min_bundle_gap))
 		{
-			if(cfg.single_sample_multiple_threading == false) this->generate(bb2, glock, tlock, index);
-			else boost::asio::post(pool, [this, &glock, &tlock, bb2, index]{ this->generate(bb2, glock, tlock, index); });
-			bb2 = new bundle();
+			generate(bb2, index);
+			bb2.clear();
 			index++;
 		}
 
@@ -103,77 +93,58 @@ int generator::resolve()
 		if(sp.library_type != UNSTRANDED && ht.strand == '+' && ht.xs == '-') continue;
 		if(sp.library_type != UNSTRANDED && ht.strand == '-' && ht.xs == '+') continue;
 		if(sp.library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
-		if(sp.library_type != UNSTRANDED && ht.strand == '+') bb1->add_hit_intervals(ht, b1t);
-		if(sp.library_type != UNSTRANDED && ht.strand == '-') bb2->add_hit_intervals(ht, b1t);
-		if(sp.library_type == UNSTRANDED) bb1->add_hit_intervals(ht, b1t);
+		if(sp.library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit_intervals(ht, b1t);
+		if(sp.library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED) bb1.add_hit_intervals(ht, b1t);
 		/*
-		if(sp.library_type == UNSTRANDED && ht.xs == '+') bb1->add_hit_intervals(ht, b1t);
-		if(sp.library_type == UNSTRANDED && ht.xs == '-') bb2->add_hit_intervals(ht, b1t);
-		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb1->add_hit_intervals(ht, b1t);
-		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb2->add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb1.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit_intervals(ht, b1t);
 		*/
 	}
 
     bam_destroy1(b1t);
 
-	if(cfg.single_sample_multiple_threading == false) this->generate(bb1, glock, tlock, index);
-	else boost::asio::post(pool, [this, &glock, &tlock, bb1, index]{ this->generate(bb1, glock, tlock, index); });
-	index++;
-
-	if(cfg.single_sample_multiple_threading == false) this->generate(bb2, glock, tlock, index);
-	else boost::asio::post(pool, [this, &glock, &tlock, bb2, index]{ this->generate(bb2, glock, tlock, index); });
-	index++;
-
-	pool.join();
+	generate(bb1, index++);
+	generate(bb2, index++);
+	bb1.clear();
+	bb2.clear();
 
 	return 0;
 }
 
-int generator::generate(bundle *bb, mutex &glock, mutex &tlock, int index)
+int generator::generate(bundle &bb, int index)
 {
-	if(bb == NULL) return 0;
-
-	if(bb->tid < 0)
-	{
-		bb->clear();
-		delete bb;
-		return 0;
-	}
+	if(bb.tid < 0) return 0;
 
 	bool store_hits = true;
 	if(cfg.output_bridged_bam_dir == "") store_hits = false;
 	if(sp.data_type != PAIRED_END) store_hits = false;
 
-	if(bb->hits.size() < cfg.min_num_hits_in_bundle) 
+	if(bb.hits.size() < cfg.min_num_hits_in_bundle && store_hits == true && bb.hits.size() >= 1)
 	{
-		if(store_hits == true && bb->hits.size() >= 1)
+		sp.open_bridged_bam(cfg.output_bridged_bam_dir);
+		for(int i = 0; i < bb.hits.size(); i++)
 		{
-			sp.open_bridged_bam(cfg.output_bridged_bam_dir);
-			for(int i = 0; i < bb->hits.size(); i++)
-			{
-				hit &h = bb->hits[i];
-				bam1_t b1t;
-				bool b = build_bam1_t(b1t, h, bb->hits[i].spos);
-				if(b == true) bam_write1(sp.bridged_bam, &(b1t));
-				assert(b1t.data != NULL);
-				delete b1t.data;
-			}
-			sp.close_bridged_bam();
+			hit &h = bb.hits[i];
+			bam1_t b1t;
+			bool b = build_bam1_t(b1t, h, bb.hits[i].spos);
+			if(b == true) bam_write1(sp.bridged_bam, &(b1t));
+			assert(b1t.data != NULL);
+			delete b1t.data;
 		}
-		bb->clear();
-		delete bb;
+		sp.close_bridged_bam();
 		return 0;
 	}
-	
-	char buf[1024];
-	strcpy(buf, sp.hdr->target_name[bb->tid]);
-	bb->chrm = string(buf);
-	//bb->compute_strand(sp.library_type);
 
-	//bb->print(index);
+	char buf[1024];
+	strcpy(buf, sp.hdr->target_name[bb.tid]);
+	bb.chrm = string(buf);
+	//bb.compute_strand(sp.library_type);
 
 	splice_graph gr;
-	graph_builder gb(*bb, cfg);
+	graph_builder gb(bb, cfg);
 	gb.build(gr);
 	gr.extend_strands();
 	gr.build_vertex_index();
@@ -194,17 +165,17 @@ int generator::generate(bundle *bb, mutex &glock, mutex &tlock, int index)
 
 	if(sp.data_type != PAIRED_END)
 	{
-		vector<bool> paired(bb->hits.size(), false);
-		build_phase_set_from_unpaired_reads(ps, gr, bb->hits, paired);
+		vector<bool> paired(bb.hits.size(), false);
+		build_phase_set_from_unpaired_reads(ps, gr, bb.hits, paired);
 	}
 	else
 	{
 		vector<pereads_cluster> vc;
-		graph_cluster gc(gr, bb->hits, cfg.max_reads_partition_gap, store_hits);
+		graph_cluster gc(gr, bb.hits, cfg.max_reads_partition_gap, store_hits);
 		gc.build_pereads_clusters(vc);
 
 		vector<bool> paired = gc.get_paired();
-		build_phase_set_from_unpaired_reads(ps, gr, bb->hits, paired);
+		build_phase_set_from_unpaired_reads(ps, gr, bb.hits, paired);
 
 		bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
 		bs.build_phase_set(ps);
@@ -213,7 +184,7 @@ int generator::generate(bundle *bb, mutex &glock, mutex &tlock, int index)
 		if(store_hits == true)
 		{
 			sp.open_bridged_bam(cfg.output_bridged_bam_dir);
-			write_unpaired_reads(sp.bridged_bam, bb->hits, paired);
+			write_unpaired_reads(sp.bridged_bam, bb.hits, paired);
 			assert(vc.size() == bs.opt.size());
 			for(int k = 0; k < vc.size(); k++)
 			{
@@ -235,7 +206,6 @@ int generator::generate(bundle *bb, mutex &glock, mutex &tlock, int index)
 	assert(grv.size() == hsv.size());
 	assert(grv.size() == ubv.size());
 
-	vector<combined_graph> tmp;
 	for(int k = 0; k < grv.size(); k++)
 	{
 		string gid = "gene." + tostring(sp.sample_id) + "." + tostring(index) + "." + tostring(k);
@@ -262,18 +232,9 @@ int generator::generate(bundle *bb, mutex &glock, mutex &tlock, int index)
 		printf("\n");
 		*/
 
-		tmp.push_back(std::move(cb));
+		vcb.push_back(std::move(cb));
 	}
 
-	glock.lock();
-	for(int k = 0; k < tmp.size(); k++)
-	{
-		vcb.push_back(std::move(tmp[k]));
-	}
-	glock.unlock();
-
-	bb->clear();
-	delete bb;
 	return 0;
 }
 
