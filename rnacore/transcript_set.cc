@@ -81,9 +81,6 @@ transcript_set::transcript_set(const transcript &t, int count, int sid)
 	chrm = t.seqname;
 
 	size_t h = t.get_intron_chain_hashing();
-	if(t.exons.size() <= 1) assert(h == 0);
-	if(t.exons.size() >= 2) assert(h >= 1);
-
 	trans_item ti(t, count, sid);
 	vector<trans_item> v;
 	v.push_back(std::move(ti));
