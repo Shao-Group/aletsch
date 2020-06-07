@@ -261,6 +261,7 @@ int incubator::rearrange()
 	tmerge.mt.clear();
 	for(int i = 0; i < tsets.size(); i++)
 	{
+		printf("rearrange %d transcript-set with %lu elements\n", i, tsets[i].mt.size());
 		transcript_set &t = tsets[i];
 		assert(t.chrm == tmerge.chrm);
 		t.filter(2);
