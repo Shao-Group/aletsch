@@ -8,76 +8,123 @@ See LICENSE for licensing.
 #include "transcript_set.h"
 #include "constants.h"
 
-int transcript_set::add(const trans_item &ti, int mode)
-{
-	transcript t = ti.trst;
+trans_item::trans_item()
+{}
 
-	if(mt.size() == 0) chrm = t.seqname;
-	assert(t.seqname == chrm);
+trans_item::trans_item(const transcript &t, int c, int s)
+{
+	trst = t;
+	count = c;
+	samples.insert(s);
+}
+
+int trans_item::merge(const trans_item &ti, int mode)
+{
+	if(mode == TRANSCRIPT_COUNT_ADD_COVERAGE_ADD) 
+	{
+		trst.coverage += ti.trst.coverage;
+		trst.extend_bounds(ti.trst);
+		count += ti.count;
+		samples.insert(ti.samples.begin(), ti.samples.end());
+	}
+	else if(mode == TRANSCRIPT_COUNT_ADD_COVERAGE_NUL) 
+	{
+		count += ti.count;
+	}
+	else assert(false);
+	return 0;
+}
+
+vector<trans_item> && merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &vy, int mode)
+{
+	vector<trans_item> vz;
+	int kx = 0, ky = 0;
+	while(kx < vx.size() && ky < vy.size())
+	{
+		int b = vx[kx].trst.compare1(vy[ky].trst);
+		if(b == 0)
+		{
+			vx[kx].merge(vy[ky], mode);
+			vz.push_back(std::move(vx[kx]));
+			kx++;
+			ky++;
+		}
+		else if(b == 1)
+		{
+			vz.push_back(std::move(vx[kx]));
+			kx++;
+		}
+		else if(b == -1)
+		{
+			vz.push_back(std::move(vy[ky]));
+			ky++;
+		}
+		else assert(false);
+	}
+
+	assert(kx == vx.size() || ky == vy.size());
+
+	for(int i = kx; i < vx.size(); i++) vz.push_back(std::move(vx[i]));
+	for(int i = ky; i < vy.size(); i++) vz.push_back(std::move(vy[i]));
+
+	return std::move(vz);
+}
+
+
+transcript_set::transcript_set()
+{
+}
+
+transcript_set::transcript_set(const transcript &t, int count, int sid)
+{
+	chrm = t.seqname;
 
 	size_t h = t.get_intron_chain_hashing();
 	if(t.exons.size() <= 1) assert(h == 0);
 	if(t.exons.size() >= 2) assert(h >= 1);
 
-	//if(t.exons.size() == 1) printf("add single-exon transcript: %d-%d, cov = %.1lf\n",  t.exons[0].first, t.exons[0].second, t.coverage);
+	trans_item ti(t, count, sid);
+	vector<trans_item> v;
+	v.push_back(std::move(ti));
 
-	auto it = mt.find(h);
-	if(it == mt.end())
-	{
-		vector<trans_item> v;
-		v.push_back(ti);
-		mt.insert(make_pair(h, v));
-	}
-	else
-	{
-		auto &v = it->second;
-		bool found = false;
-		for(int k = 0; k < v.size(); k++)
-		{
-			if(v[k].trst.strand != t.strand) continue;
-
-			bool b = v[k].trst.equal1(t);
-			if(b == false) continue;
-
-			if(mode == TRANSCRIPT_COUNT_ADD_COVERAGE_ADD) 
-			{
-				v[k].trst.coverage += t.coverage;
-				v[k].trst.extend_bounds(t);
-				v[k].count += ti.count;
-				v[k].samples.insert(ti.samples.begin(), ti.samples.end());
-			}
-			else if(mode == TRANSCRIPT_COUNT_ADD_COVERAGE_NUL) 
-			{
-				v[k].count += ti.count;
-			}
-			else assert(false);
-
-			found = true;
-			break;
-		}
-		if(found == false) v.push_back(ti);
-	}
-	return 0;
+	mt.insert(make_pair(h, v));
 }
 
 int transcript_set::add(const transcript &t, int count, int sid, int mode)
 {
-	trans_item ti;
-	ti.trst = t;
-	ti.count = count;
-	ti.samples.insert(sid);
-	add(ti, mode);
+	transcript_set ts(t, count, sid);
+	add(ts, mode);
 	return 0;
 }
 
-int transcript_set::add(const transcript_set &ts, int min_count, int mode)
+int transcript_set::add(const transcript_set &ts, int mode)
 {
 	for(auto &x : ts.mt)
 	{
-		for(auto &z : x.second)
+		auto z = mt.find(x.first);
+		if(z == mt.end())
 		{
-			if(z.count >= min_count) add(z, mode);
+			mt.insert(x);
 		}
+		else
+		{
+			z->second = merge_sorted_trans_items(z->second, x.second, mode);
+		}
+	}
+	return 0;
+}
+
+int transcript_set::filter(int min_count)
+{
+	for(auto &x: mt)
+	{
+		vector<trans_item> v;
+		for(auto &z: x.second)
+		{
+			if(z.count < min_count) continue;
+			v.push_back(std::move(z));
+		}
+		x.second = std::move(v);
 	}
 	return 0;
 }
@@ -100,7 +147,7 @@ int transcript_set::print() const
 	return 0;
 }
 
-vector<transcript> transcript_set::get_transcripts(int min_count) const
+vector<transcript> && transcript_set::get_transcripts(int min_count) const
 {
 	vector<transcript> v;
 	for(auto &x : mt)
@@ -111,10 +158,10 @@ vector<transcript> transcript_set::get_transcripts(int min_count) const
 			v.push_back(z.trst);
 		}
 	}
-	return v;
+	return std::move(v);
 }
 
-pair<bool, trans_item> transcript_set::query(const transcript &t) const
+pair<bool, trans_item> && transcript_set::query(const transcript &t) const
 {
 	pair<bool, trans_item> p;
 	size_t h = t.get_intron_chain_hashing();
@@ -122,22 +169,22 @@ pair<bool, trans_item> transcript_set::query(const transcript &t) const
 	if(it == mt.end()) 
 	{
 		p.first = false;
-		return p;
+		return std::move(p);
 	}
 
 	auto &v = it->second;
 	for(int k = 0; k < v.size(); k++)
 	{
-		transcript x = v[k].trst;
+		const transcript &x = v[k].trst;
 		if(x.strand != t.strand) continue;
 		bool b = x.equal1(t);
 		if(b == true) 
 		{
 			p.first = true;
 			p.second = v[k];
-			return p;
+			return std::move(p);
 		}
 	}
 	p.first = true;
-	return p;
+	return std::move(p);
 }

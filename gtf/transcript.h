@@ -63,7 +63,9 @@ public:
 	vector<PI32> get_intron_chain() const;
 	size_t get_intron_chain_hashing() const;
 	bool intron_chain_match(const transcript &t) const;
+	int intron_chain_compare(const transcript &t) const;
 	bool equal1(const transcript &t) const;
+	int compare1(const transcript &t) const;
 	int extend_bounds(const transcript &t);
 	string label() const;
 	int write(ostream &fout) const;

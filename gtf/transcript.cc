@@ -198,6 +198,27 @@ bool transcript::intron_chain_match(const transcript &t) const
 	return true;
 }
 
+int transcript::intron_chain_compare(const transcript &t) const
+{
+	if(exons.size() < t.exons.size()) return +1;
+	if(exons.size() > t.exons.size()) return -1;
+	if(exons.size() <= 1) return 0;
+
+	int n = exons.size() - 1;
+	if(exons[0].second < t.exons[0].second) return +1;
+	if(exons[0].second > t.exons[0].second) return -1;
+	for(int k = 1; k < n - 1; k++)
+	{
+		if(exons[k].first < t.exons[k].first) return +1;
+		if(exons[k].first > t.exons[k].first) return -1;
+		if(exons[k].second < t.exons[k].second) return +1;
+		if(exons[k].second > t.exons[k].second) return -1;
+	}
+	if(exons[n].first < t.exons[n].first) return +1;
+	if(exons[n].first > t.exons[n].first) return -1;
+	return 0;
+}
+
 bool transcript::equal1(const transcript &t) const
 {
 	if(exons.size() != t.exons.size()) return false;
@@ -219,6 +240,35 @@ bool transcript::equal1(const transcript &t) const
 	}
 
 	return intron_chain_match(t);
+}
+
+int transcript::compare1(const transcript &t) const
+{
+	if(exons.size() < t.exons.size()) return +1;
+	if(exons.size() > t.exons.size()) return -1;
+
+	if(seqname < t.seqname) return +1;
+	if(seqname > t.seqname) return -1;
+	if(strand < t.strand) return +1;
+	if(strand > t.strand) return -1;
+
+	if(exons.size() == 1)
+	{
+		int32_t p1 = exons[0].first < t.exons[0].first ? exons[0].first : t.exons[0].first;
+		int32_t p2 = exons[0].first < t.exons[0].first ? t.exons[0].first : exons[0].first;
+		int32_t q1 = exons[0].second > t.exons[0].second ? exons[0].second : t.exons[0].second;
+		int32_t q2 = exons[0].second > t.exons[0].second ? t.exons[0].second : exons[0].second;
+
+		double overlap = (q2 - p2) * 1.0 / (q1 - p1);
+		if(overlap >= 0.8) return 0;
+
+		if(exons[0].first < t.exons[0].first) return +1;
+		if(exons[0].first > t.exons[0].first) return -1;
+		if(exons[0].second < t.exons[0].second) return +1;
+		if(exons[0].second > t.exons[0].second) return -1;
+	}
+
+	return intron_chain_compare(t);
 }
 
 int transcript::extend_bounds(const transcript &t)

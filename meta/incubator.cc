@@ -263,7 +263,8 @@ int incubator::rearrange()
 	{
 		transcript_set &t = tsets[i];
 		assert(t.chrm == tmerge.chrm);
-		tmerge.add(t, 2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+		t.filter(2);
+		tmerge.add(t, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	}
 	tsets.clear();
 	return 0;
