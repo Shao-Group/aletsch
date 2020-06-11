@@ -11,6 +11,9 @@ See LICENSE for licensing.
 #include "combined_graph.h"
 #include "constants.h"
 #include <mutex>
+#include "boost/pending/disjoint_sets.hpp"
+
+typedef disjoint_sets<int*, int*> dss;
 
 class combined_group
 {
@@ -19,14 +22,20 @@ public:
 
 public:
 	const parameters &cfg;
-	vector<combined_graph> gset;		// given graphs
+	vector<combined_graph> gset;	// given graphs
 	vector< vector<int> > gvv;		// merged graphs
 	string chrm;
 	char strand;
 
 private:
-	MISI mis;
-	vector<PPID> vpid;
+	int divisors;
+	MISI sindex;				// splicindex
+	vector<int*> sizes;			// size for dss
+	vector<int*> ranks;			// rank for dss
+	vector<int*> parents;		// parent for dss
+	vector<dss*> dsss;			// list of dss
+	vector<bool> bmap;			// if a graph is clustered
+	static mutex gmutex;		// global mutex
 
 public:
 	int add_graph(const combined_graph &gr);
@@ -35,11 +44,13 @@ public:
 	int print();
 
 private:
-	int build_splice_map();
-	int build_similarity();
-	int combine_graphs();
-};
+	int init_disjoint_sets();
+	int build_splice_index();
+	int build_disjoint_sets();
+	int process_subset(const vector<int> &ss);
+	int build_similarity(const vector<int> &ss, vector<PPID> &vpid);
+	int build_clusters(const vector<int> &ss, const vector<PPID> &vpid);
 
-bool compare_graph_similarity(const PPID &x, const PPID &y);
+};
 
 #endif
