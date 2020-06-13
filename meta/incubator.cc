@@ -209,13 +209,17 @@ int incubator::generate(const vector<PI> &v)
 	}
 
 	pool.join();
-	//print_groups();
+
+	print_groups();
 
 	return 0;
 }
 
 int incubator::merge()
 {
+	for(int k = 0; k < groups.size(); k++) groups[k].resolve();
+	return 0;
+
 	boost::asio::thread_pool pool(params[DEFAULT].max_threads); // thread pool
 
 	for(int k = 0; k < groups.size(); k++)
