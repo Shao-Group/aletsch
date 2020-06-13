@@ -38,7 +38,7 @@ parameters::parameters()
 	// for bridging paired-end reads
 	bridge_dp_solution_size = 10;
 	bridge_dp_stack_size = 5;
-	min_bridging_score = 0.5;
+	min_bridging_score = 1.5;
 
 	// for loading bam file and reads
 	min_flank_length = 3;
