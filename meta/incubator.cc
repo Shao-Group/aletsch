@@ -220,7 +220,7 @@ int incubator::merge()
 
 	for(int k = 0; k < groups.size(); k++)
 	{
-		combined_group &gp = groups[k];
+		graph_group &gp = groups[k];
 		boost::asio::post(pool, [&gp]{ gp.resolve(); });
 	}
 
@@ -338,7 +338,7 @@ int incubator::generate(sample_profile &sp, int tid, mutex &mylock)
 
 		if(found == false)
 		{
-			combined_group gp(v[k].chrm, v[k].strand, params[DEFAULT]);
+			graph_group gp(v[k].chrm, v[k].strand, params[DEFAULT]);
 			gp.add_graph(std::move(v[k]));
 			groups.push_back(std::move(gp));
 		}

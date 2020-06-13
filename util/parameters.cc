@@ -30,8 +30,8 @@ parameters::parameters()
 
 	// for meta-assembly
 	meta_batch_size = 100;
-	max_merge_cluster = 100;
-	min_merge_similarity = 0.3;
+	max_group_size = 100;
+	min_grouping_similarity = 0.3;
 	max_junctions_combine = 500;
 	single_sample_multiple_threading = false;
 
@@ -138,22 +138,22 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 		}
 		else if(string(argv[i]) == "-s")
 		{
-			min_merge_similarity = atof(argv[i + 1]);
+			min_grouping_similarity = atof(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "--min_merge_similarity")
+		else if(string(argv[i]) == "--min_grouping_similarity")
 		{
-			min_merge_similarity = atof(argv[i + 1]);
+			min_grouping_similarity = atof(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "-c")
 		{
-			max_merge_cluster = atoi(argv[i + 1]);
+			max_group_size = atoi(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "--max_merge_cluster")
+		else if(string(argv[i]) == "--max_group_size")
 		{
-			max_merge_cluster = atoi(argv[i + 1]);
+			max_group_size = atoi(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "-m")
@@ -462,8 +462,8 @@ int parameters::print_help()
 	printf(" %-42s  %s\n", "-D <string>",  "existing directory for individual bridged alignments, default: N/A");
 	printf(" %-42s  %s\n", "-t/--max_threads <integer>",  "maximized number of threads, default: 10");
 	printf(" %-42s  %s\n", "-b/--meta_batch_size <integer>",  "process this number of samples at one time, default: 100");
-	printf(" %-42s  %s\n", "-c/--max_merge_cluster <integer>",  "the maximized number of splice graphs that will be combined, default: 100");
-	printf(" %-42s  %s\n", "-s/--min_merge_similarity <float>",  "the minimized similarity for two graphs to be combined, default: 0.3");
+	printf(" %-42s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 100");
+	printf(" %-42s  %s\n", "-s/--min_grouping_similarity <float>",  "the minimized similarity for two graphs to be combined, default: 0.3");
 	printf(" %-42s  %s\n", "--min_splice_bundary_hits <integer>",  "the minimum number of spliced reads required to support a junction, default: 1");
 	printf(" %-42s  %s\n", "--min_transcript_coverage <float>",  "minimum coverage required for a multi-exon transcript, default: 1.0");
 	printf(" %-42s  %s\n", "--min_single_exon_coverage <float>",  "minimum coverage required for a single-exon transcript, default: 20");

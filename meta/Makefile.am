@@ -18,7 +18,7 @@ meta_scallop_CPPFLAGS = -std=c++11 -I$(GTF_INCLUDE) -I$(GRAPH_INCLUDE) -I$(UTIL_
 meta_scallop_LDFLAGS = -pthread -L$(GTF_LIB) -L$(GRAPH_LIB) -L$(UTIL_LIB) -L$(SCALLOP_LIB) -L$(RNACORE_LIB) -L$(BRIDGE_LIB)
 meta_scallop_LDADD = -lscallop -lgtf -lgraph -lutil -lrnacore -lbridge
 meta_scallop_SOURCES = combined_graph.h combined_graph.cc \
-					   combined_group.h combined_group.cc \
+					   graph_group.h graph_group.cc \
 					   generator.h generator.cc \
 					   assembler.h assembler.cc \
 					   previewer.h previewer.cc \

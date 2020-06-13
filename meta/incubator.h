@@ -10,7 +10,7 @@ See LICENSE for licensing.
 #include "splice_graph.h"
 #include "interval_map.h"
 #include "combined_graph.h"
-#include "combined_group.h"
+#include "graph_group.h"
 #include "parameters.h"
 #include "transcript_set.h"
 #include <mutex>
@@ -29,7 +29,7 @@ public:
 	vector<parameters> &params;						// parameters 
 	vector<sample_profile> samples;					// samples
 	map<string, vector<PI>> sindex;					// sample index
-	vector<combined_group> groups;					// graph groups
+	vector<graph_group> groups;						// graph groups
 	vector<transcript_set> tsets;					// transcript sets for instances
 	transcript_set tmerge;							// assembled transcripts for all samples
 	ofstream meta_gtf;								// meta gtf
