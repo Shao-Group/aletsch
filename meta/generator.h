@@ -16,6 +16,7 @@ See LICENSE for licensing.
 #include "pereads_cluster.h"
 #include "combined_graph.h"
 #include "sample_profile.h"
+#include "transcript_set.h"
 #include "parameters.h"
 
 using namespace std;
@@ -23,7 +24,7 @@ using namespace std;
 class generator
 {
 public:
-	generator(sample_profile &sp, vector<combined_graph> &cbv, vector<transcript> &trsts, const parameters &c, int target_id);
+	generator(sample_profile &sp, vector<combined_graph> &cbv, transcript_set &ts, const parameters &c, int target_id);
 	~generator();
 
 private:
@@ -32,7 +33,7 @@ private:
 	int target_id;
 
 	vector<combined_graph> &vcb;
-	vector<transcript> &trsts;
+	transcript_set &ts;
 
 	int index;
 	int qcnt;
@@ -45,7 +46,7 @@ private:
 	int generate(bundle &bb, int index);
 	int partition(splice_graph &gr, phase_set &hs, vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &hsv, vector< vector<pereads_cluster> > &ubv);
 	bool regional(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc);
-	bool assemble(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc, mutex &tlock);
+	bool assemble(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc);
 };
 
 #endif

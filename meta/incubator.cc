@@ -63,7 +63,7 @@ int incubator::resolve()
 
 		mytime = time(NULL);
 		printf("step 1: generate graphs for individual bam/sam files, %s", ctime(&mytime));
-		generate(x.second);
+		generate(chrm);
 
 		mytime = time(NULL);
 		printf("step 2: merge splice graphs, %s", ctime(&mytime));
@@ -192,8 +192,10 @@ int incubator::build_sample_index()
 	return 0;
 }
 
-int incubator::generate(const vector<PI> &v)
+int incubator::generate(string chrm)
 {
+	if(sindex.find(chrm) == sindex.end()) return 0;
+	const vector<PI> &v = sindex[chrm];
 	if(v.size() == 0) return 0;
 
 	int num_threads = params[DEFAULT].max_threads;
@@ -205,11 +207,10 @@ int incubator::generate(const vector<PI> &v)
 		int sid = v[i].first;
 		int tid = v[i].second;
 		sample_profile &sp = samples[sid];
-		boost::asio::post(pool, [this, &mylock, &sp, tid]{ this->generate(sp, tid, mylock); });
+		boost::asio::post(pool, [this, &mylock, &sp, chrm, tid]{ this->generate(sp, tid, chrm, mylock); });
 	}
 
 	pool.join();
-
 	print_groups();
 
 	return 0;
@@ -317,15 +318,13 @@ int incubator::postprocess()
 	return 0;
 }
 
-int incubator::generate(sample_profile &sp, int tid, mutex &mylock)
+int incubator::generate(sample_profile &sp, int tid, string chrm, mutex &mylock)
 {	
 	vector<combined_graph> v;
-	vector<transcript> trsts;
-	generator gt(sp, v, trsts, params[sp.data_type], tid);
+	transcript_set ts(chrm);
+	generator gt(sp, v, ts, params[sp.data_type], tid);
 	gt.resolve();
-
-	assert(trsts.size() == 0);
-	//save_transcripts(trsts, sp.sample_id, mylock);
+	save_transcript_set(ts, mylock);
 
 	mylock.lock();
 	for(int k = 0; k < v.size(); k++)
@@ -361,7 +360,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	assembler asmb(params[DEFAULT]);
 	asmb.assemble(gv, 0, instance, ts, samples);
 
-	move_transcript_set(ts, mylock);
+	save_transcript_set(ts, mylock);
 	for(int i = 0; i > gv.size(); i++) gv[i]->clear();
 
 	return 0;
@@ -391,11 +390,11 @@ int incubator::write_individual_gtf(int id, const vector<transcript> &vt, const 
 	return 0;
 }
 
-int incubator::move_transcript_set(transcript_set &ts, mutex &mylock)
+int incubator::save_transcript_set(const transcript_set &ts, mutex &mylock)
 {
 	if(ts.mt.size() == 0) return 0;
 	mylock.lock();
-	tsets.push_back(std::move(ts));
+	tsets.push_back(ts);
 	mylock.unlock();
 	return 0;
 }

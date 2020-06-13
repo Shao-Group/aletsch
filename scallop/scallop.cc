@@ -6,7 +6,7 @@ See LICENSE for licensing.
 
 #include "scallop.h"
 #include "constants.h"
-#include "interval_map.h"
+#include "essential.h"
 
 #include <cstdio>
 #include <cstdio>
@@ -130,7 +130,7 @@ int scallop::assemble()
 
 	greedy_decompose();
 
-	output_transcripts();
+	build_transcripts();
 
 	if(cfg.verbose >= 2) 
 	{
@@ -1867,7 +1867,7 @@ int scallop::collect_path(int e)
 
 	path p;
 	p.length = mi;
-	p.abd = log(1.0 + gr.get_edge_weight(i2e[e]));
+	p.abd = gr.get_edge_weight(i2e[e]);
 	p.reads = med[i2e[e]];
 	//p.abd = med[i2e[e]] / mi;
 	//p.reads = gr.get_edge_weight(i2e[e]);
@@ -2094,40 +2094,16 @@ int scallop::draw_splice_graph(const string &file)
 	return 0;
 }
 
-int scallop::output_transcripts()
+int scallop::build_transcripts()
 {
 	trsts.clear();
 	for(int i = 0; i < paths.size(); i++)
 	{
 		string tid = gr.gid + "." + tostring(i);
 		transcript trst;
-		output_transcript(trst, paths[i], tid);
+		path &p = paths[i];
+		build_transcript(gr, trst, p.v, p.strand, p.abd, tid);
 		trsts.push_back(trst);
-	}
-	return 0;
-}
-
-int scallop::output_transcript(transcript &trst, const path &p, const string &tid) const
-{
-	trst.seqname = gr.chrm;
-	trst.source = "scallop";
-	trst.gene_id = gr.gid;
-	trst.transcript_id = tid;
-	trst.coverage = p.abd;
-	trst.strand = p.strand;
-
-	const vector<int> &v = p.v;
-	join_interval_map jmap;
-	for(int k = 1; k < v.size() - 1; k++)
-	{
-		int32_t p1 = gr.get_vertex_info(v[k]).lpos;
-		int32_t p2 = gr.get_vertex_info(v[k]).rpos;
-		jmap += make_pair(ROI(p1, p2), 1);
-	}
-
-	for(JIMI it = jmap.begin(); it != jmap.end(); it++)
-	{
-		trst.add_exon(lower(it->first), upper(it->first));
 	}
 	return 0;
 }

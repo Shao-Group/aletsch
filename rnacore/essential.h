@@ -13,6 +13,7 @@ See LICENSE for licensing.
 #include "constants.h"
 #include "pereads_cluster.h"
 #include "phase_set.h"
+#include "interval_map.h"
 
 using namespace std;
 
@@ -57,5 +58,9 @@ bool build_bam1_t(bam1_t &b1t, const hit_core &h1, const hit_core &h2, const vec
 int write_bridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc, const vector<int32_t> &whole);
 int write_unbridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc);
 int write_unpaired_reads(BGZF *fout, const vector<hit> &hits, const vector<bool> &paired);
+
+// build transcript(s)
+int build_transcript(splice_graph &gr, transcript &trst, const vector<int> &v, char strand, double abd, const string &tid);
+bool build_single_exon_transcript(splice_graph &gr, transcript &trst);
 
 #endif

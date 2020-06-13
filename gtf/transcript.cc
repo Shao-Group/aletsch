@@ -172,7 +172,9 @@ vector<PI32> transcript::get_intron_chain() const
 
 size_t transcript::get_intron_chain_hashing() const
 {
-	if(exons.size() <= 1)
+	if(exons.size() == 0) return 0;
+
+	if(exons.size() == 1)
 	{
 		size_t p = (exons[0].first + exons[0].second) / 10000;
 		return p + 1;
@@ -239,9 +241,16 @@ bool transcript::equal1(const transcript &t) const
 		int32_t q1 = exons[0].second > t.exons[0].second ? exons[0].second : t.exons[0].second;
 		int32_t q2 = exons[0].second > t.exons[0].second ? t.exons[0].second : exons[0].second;
 
+		int32_t overlap = q2 - p2;
+		if(overlap >= 0.8 * length()) return true;
+		if(overlap >= 0.8 * t.length()) return true;
+		return false;
+
+		/*
 		double overlap = (q2 - p2) * 1.0 / (q1 - p1);
 		if(overlap < 0.8) return false;
 		else return true;
+		*/
 	}
 
 	return intron_chain_match(t);
@@ -264,8 +273,12 @@ int transcript::compare1(const transcript &t) const
 		int32_t q1 = exons[0].second > t.exons[0].second ? exons[0].second : t.exons[0].second;
 		int32_t q2 = exons[0].second > t.exons[0].second ? t.exons[0].second : exons[0].second;
 
-		double overlap = (q2 - p2) * 1.0 / (q1 - p1);
-		if(overlap >= 0.8) return 0;
+		int32_t overlap = q2 - p2;
+		if(overlap >= 0.8 * length()) return 0;
+		if(overlap >= 0.8 * t.length()) return 0;
+
+		//double overlap = (q2 - p2) * 1.0 / (q1 - p1);
+		//if(overlap >= 0.8) return 0;
 
 		if(exons[0].first < t.exons[0].first) return +1;
 		if(exons[0].first > t.exons[0].first) return -1;

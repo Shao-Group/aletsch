@@ -25,8 +25,8 @@ See LICENSE for licensing.
 #include "hyper_set.h"
 #include "assembler.h"
 
-generator::generator(sample_profile &s, vector<combined_graph> &v, vector<transcript> &t, const parameters &c, int tid)
-	: vcb(v), trsts(t), cfg(c), sp(s), target_id(tid)
+generator::generator(sample_profile &s, vector<combined_graph> &v, transcript_set &t, const parameters &c, int tid)
+	: vcb(v), ts(t), cfg(c), sp(s), target_id(tid)
 {
 	index = 0;
 	qlen = 0;
@@ -216,10 +216,8 @@ int generator::generate(bundle &bb, int index)
 		bool b = regional(grv[k], hsv[k], ubv[k]);
 		if(b == true) continue;
 
-		/*
-		b = assemble(grv[k], hsv[k], ubv[k], tlock);
+		b = assemble(grv[k], hsv[k], ubv[k]);
 		if(b == true) continue;
-		*/
 
 		combined_graph cb(cfg);
 		cb.sid = sp.sample_id;
@@ -267,30 +265,16 @@ bool generator::regional(splice_graph &gr, phase_set &ps, vector<pereads_cluster
 	return true;
 }
 
-bool generator::assemble(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc, mutex &tlock)
+bool generator::assemble(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc)
 {
-	//if(gr.num_vertices() >= 3 && gr.num_vertices() <= 1000) return false;
-	if(gr.num_vertices() <= 1000) return false;
+	transcript t;
+	bool b = build_single_exon_transcript(gr, t);
+	if(b == false) return false;
 
-	vector<transcript> vt;
-	assembler asmb(cfg);
-	asmb.assemble(gr, ps, vt);
+	if(t.coverage < cfg.min_single_exon_transcript_coverage) return false;
+	if(t.length() < cfg.min_single_exon_transcript_length) return false;
 
-	tlock.lock();
-	trsts.insert(trsts.end(), vt.begin(), vt.end());
-	tlock.unlock();
-
-	if(cfg.output_bridged_bam_dir != "" && vc.size() >= 1)
-	{
-		sp.open_bridged_bam(cfg.output_bridged_bam_dir);
-		for(int k = 0; k < vc.size(); k++)
-		{
-			write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
-			vc[k].clear();
-		}
-		sp.close_bridged_bam();
-	}
-
+	ts.add(t, 2, sp.sample_id, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	return true;
 }
 

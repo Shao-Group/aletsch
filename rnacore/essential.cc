@@ -650,3 +650,42 @@ int build_phase_set_from_unpaired_reads(phase_set &ps, splice_graph &gr, const v
 	}
 	return 0;
 }
+
+int build_transcript(splice_graph &gr, transcript &trst, const vector<int> &v, char strand, double abd, const string &tid)
+{
+	trst.seqname = gr.chrm;
+	trst.source = "scallop";
+	trst.gene_id = gr.gid;
+	trst.transcript_id = tid;
+	trst.coverage = log(1.0 + abd);
+	trst.strand = strand;
+
+	join_interval_map jmap;
+	for(int k = 1; k < v.size() - 1; k++)
+	{
+		int32_t p1 = gr.get_vertex_info(v[k]).lpos;
+		int32_t p2 = gr.get_vertex_info(v[k]).rpos;
+		jmap += make_pair(ROI(p1, p2), 1);
+	}
+
+	for(JIMI it = jmap.begin(); it != jmap.end(); it++)
+	{
+		trst.add_exon(lower(it->first), upper(it->first));
+	}
+	return 0;
+}
+
+bool build_single_exon_transcript(splice_graph &gr, transcript &trst)
+{
+	if(gr.num_vertices() != 3) return false;
+	if(gr.edge(0, 1).second != true) return false;
+	if(gr.edge(1, 2).second != true) return false;
+
+	string tid = gr.gid + ".0";
+	double abd = gr.get_vertex_weight(1);
+	char strand = gr.strand;
+	vector<int> v;
+	v.push_back(1);
+	build_transcript(gr, trst, v, strand, abd, tid);
+	return true;
+}

@@ -37,7 +37,7 @@ public:
 public:
 	int resolve();
 
-	int generate(const vector<PI> &v);
+	int generate(string chrm);
 	int merge();
 	int assemble();
 	int rearrange();
@@ -49,10 +49,10 @@ private:
 	int init_samples();
 	int free_samples();
 	int build_sample_index();
-	int generate(sample_profile &sp, int tid, mutex &mylock);
+	int generate(sample_profile &sp, int tid, string chrm, mutex &mylock);
 	int assemble(vector<combined_graph*> gv, int instance, mutex &mylock);
 	int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);
-	int move_transcript_set(transcript_set &ts, mutex &mylock);
+	int save_transcript_set(const transcript_set &ts, mutex &mylock);
 	int write_individual_gtf(int id, const vector<transcript> &vt, const vector<int> &v);
 	int print_groups();
 };
