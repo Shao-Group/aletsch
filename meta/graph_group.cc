@@ -84,15 +84,14 @@ int graph_group::process_subset1(const set<int> &s)
 
 int graph_group::process_subset2(const set<int> &s, disjoint_set &ds)
 {
-	gmutex.lock();
 	vector<int> ss = filter(s);
-	gmutex.unlock();
 
 	vector<PPID> vpid;
 	build_similarity(ss, vpid, false);
 
-	gmutex.lock();
 	vector<PPID> v = filter(vpid);
+
+	gmutex.lock();
 	augment_disjoint_set(v, ds);
 	gmutex.unlock();
 

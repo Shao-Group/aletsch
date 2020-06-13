@@ -293,6 +293,7 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 		if(length < length_low) continue;
 		if(length > length_high) continue;
 		if(strands[e] < 0) continue;
+		if(scores[e] < cfg.min_bridging_score) continue;
 
 		if(be < 0) be = e;
 		choices++;

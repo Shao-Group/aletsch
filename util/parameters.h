@@ -42,6 +42,7 @@ public:
 	// for bridging paired-end reads
 	int bridge_dp_solution_size;
 	int bridge_dp_stack_size;
+	double min_bridging_score;
 
 	// for decomposing splice graph
 	double max_decompose_error_ratio[7];

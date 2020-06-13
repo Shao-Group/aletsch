@@ -38,6 +38,7 @@ parameters::parameters()
 	// for bridging paired-end reads
 	bridge_dp_solution_size = 10;
 	bridge_dp_stack_size = 5;
+	min_bridging_score = 0.5;
 
 	// for loading bam file and reads
 	min_flank_length = 3;
@@ -185,6 +186,11 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			exit(0);
 		}
 
+		else if(string(argv[i]) == "--min_bridging_score")
+		{
+			min_bridging_score = atof(argv[i + 1]);
+			i++;
+		}
 		else if(string(argv[i]) == "--bridge_dp_solution_size")
 		{
 			bridge_dp_solution_size = atoi(argv[i + 1]);
