@@ -118,18 +118,18 @@ int hit::set_tags(bam1_t *b)
 
 	hi = -1;
 	uint8_t *p2 = bam_aux_get(b, "HI");
-	if(p2 && (*p2) == 'C') hi = bam_aux2i(p2);
+	if(p2) hi = bam_aux2i(p2);
 
 	nh = -1;
 	uint8_t *p3 = bam_aux_get(b, "NH");
-	if(p3 && (*p3) == 'C') nh = bam_aux2i(p3);
+	if(p3) nh = bam_aux2i(p3);
 
 	nm = 0;
 	uint8_t *p4 = bam_aux_get(b, "nM");
-	if(p4 && (*p4) == 'C') nm = bam_aux2i(p4);
+	if(p4) nm = bam_aux2i(p4);
 
 	uint8_t *p5 = bam_aux_get(b, "NM");
-	if(p5 && (*p5) == 'C') nm = bam_aux2i(p5);
+	if(p5) nm = bam_aux2i(p5);
 
 	return 0;
 }
