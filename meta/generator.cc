@@ -275,6 +275,17 @@ bool generator::assemble(splice_graph &gr, phase_set &ps, vector<pereads_cluster
 	//if(t.length() < cfg.min_single_exon_transcript_length) return true;
 	ts.add(t, 2, sp.sample_id, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 
+	if(cfg.output_bridged_bam_dir != "" && vc.size() >= 1)
+	{
+		sp.open_bridged_bam(cfg.output_bridged_bam_dir);
+		for(int k = 0; k < vc.size(); k++)
+		{
+			write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
+			vc[k].clear();
+		}
+		sp.close_bridged_bam();
+	}
+
 	return true;
 }
 
