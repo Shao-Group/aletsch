@@ -218,20 +218,20 @@ int incubator::generate(const vector<PI> &v)
 int incubator::merge()
 {
 	for(int k = 0; k < groups.size(); k++) groups[k].resolve();
+	print_groups();
 	return 0;
 
+	/*
 	boost::asio::thread_pool pool(params[DEFAULT].max_threads); // thread pool
-
 	for(int k = 0; k < groups.size(); k++)
 	{
 		graph_group &gp = groups[k];
 		boost::asio::post(pool, [&gp]{ gp.resolve(); });
 	}
-
 	pool.join();
 	print_groups();
-
 	return 0;	
+	*/
 }
 
 int incubator::assemble()
