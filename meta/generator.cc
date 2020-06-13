@@ -122,8 +122,10 @@ int generator::generate(bundle &bb, int index)
 	if(cfg.output_bridged_bam_dir == "") store_hits = false;
 	if(sp.data_type != PAIRED_END) store_hits = false;
 
-	if(bb.hits.size() < cfg.min_num_hits_in_bundle && store_hits == true && bb.hits.size() >= 1)
+	if(bb.hits.size() < cfg.min_num_hits_in_bundle)
 	{
+		if(store_hits == false || bb.hits.size() <= 0) return 0;
+
 		sp.open_bridged_bam(cfg.output_bridged_bam_dir);
 		for(int i = 0; i < bb.hits.size(); i++)
 		{
@@ -232,7 +234,7 @@ int generator::generate(bundle &bb, int index)
 		printf("\n");
 		*/
 
-		vcb.push_back(std::move(cb));
+		vcb.push_back(cb);
 	}
 
 	return 0;
