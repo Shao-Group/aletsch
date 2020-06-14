@@ -283,7 +283,7 @@ bool generator::assemble(splice_graph &gr, phase_set &ps, vector<pereads_cluster
 	}
 
 	//if(t.coverage < cfg.min_single_exon_transcript_coverage) return true;
-	//if(t.length() < cfg.min_single_exon_transcript_length) return true;
+	if(t.length() < cfg.min_single_exon_transcript_length) return true;
 
 	ts.add(t, 2, sp.sample_id, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	return true;
