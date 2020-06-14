@@ -29,8 +29,8 @@ parameters::parameters()
 	max_threads = 10;
 
 	// for meta-assembly
-	max_group_size = 100;
-	min_grouping_similarity = 0.30;
+	max_group_size = 20;
+	min_grouping_similarity = 0.20;
 	max_grouping_similarity = 0.90;
 	max_junctions_combine = 500;
 
