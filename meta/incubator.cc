@@ -282,10 +282,10 @@ int incubator::rearrange()
 	int n = ceil(1.0 * tsets.size() / t);
 
 	tmerge.mt.clear();
-	for(int i = 0; i < n; i++)
+	for(int i = 0; i < t; i++)
 	{
-		int a = (i + 0) * t;
-		int b = (i + 1) * t;
+		int a = (i + 0) * n;
+		int b = (i + 1) * n;
 		if(b >= tsets.size()) b = tsets.size();
 		boost::asio::post(pool2, [this, &mylock, a, b]{ 
 				transcript_set ts(this->tmerge.chrm);
