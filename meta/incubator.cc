@@ -45,7 +45,6 @@ incubator::~incubator()
 int incubator::resolve()
 {
 	read_bam_list();
-	set_threading();
 	init_samples();
 	build_sample_index();
 
@@ -120,17 +119,6 @@ int incubator::read_bam_list()
 		assert(sp.data_type != DEFAULT);
 		sp.sample_id = samples.size();
 		samples.push_back(sp);
-	}
-	return 0;
-}
-
-int incubator::set_threading()
-{
-	if(params[DEFAULT].single_sample_multiple_threading == true) return 0;
-	if(params[DEFAULT].max_threads <= samples.size()) return 0;
-	for(int i = 0; i < params.size(); i++)
-	{
-		params[i].single_sample_multiple_threading = true;
 	}
 	return 0;
 }

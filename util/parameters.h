@@ -33,12 +33,10 @@ public:
 	int max_threads;
 
 	// for meta-assembly
-	int meta_batch_size;
 	int max_group_size;
 	int max_junctions_combine;
 	double min_grouping_similarity;
 	double max_grouping_similarity;
-	bool single_sample_multiple_threading;
 
 	// for bridging paired-end reads
 	int bridge_dp_solution_size;

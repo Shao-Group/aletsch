@@ -29,12 +29,10 @@ parameters::parameters()
 	max_threads = 10;
 
 	// for meta-assembly
-	meta_batch_size = 100;
 	max_group_size = 100;
 	min_grouping_similarity = 0.30;
 	max_grouping_similarity = 0.90;
 	max_junctions_combine = 500;
-	single_sample_multiple_threading = false;
 
 	// for bridging paired-end reads
 	bridge_dp_solution_size = 10;
@@ -128,16 +126,6 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			max_threads = atoi(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "-b")
-		{
-			meta_batch_size = atof(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "-meta_batch_size")
-		{
-			meta_batch_size = atof(argv[i + 1]);
-			i++;
-		}
 		else if(string(argv[i]) == "-s")
 		{
 			min_grouping_similarity = atof(argv[i + 1]);
@@ -158,16 +146,6 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			max_group_size = atoi(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "-m")
-		{
-			single_sample_multiple_threading = true;
-		}
-
-		else if(string(argv[i]) == "--single_sample_multiple_threading")
-		{
-			single_sample_multiple_threading = true;
-		}
-
 		else if(string(argv[i]) == "--version")
 		{
 			printf("%s\n", version.c_str());
@@ -468,7 +446,6 @@ int parameters::print_help()
 	printf(" %-42s  %s\n", "-d <string>",  "existing directory for individual transcripts, default: N/A");
 	printf(" %-42s  %s\n", "-D <string>",  "existing directory for individual bridged alignments, default: N/A");
 	printf(" %-42s  %s\n", "-t/--max_threads <integer>",  "maximized number of threads, default: 10");
-	printf(" %-42s  %s\n", "-b/--meta_batch_size <integer>",  "process this number of samples at one time, default: 100");
 	printf(" %-42s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 100");
 	printf(" %-42s  %s\n", "-s/--min_grouping_similarity <float>",  "the minimized similarity for two graphs to be combined, default: 0.3");
 	printf(" %-42s  %s\n", "--min_splice_bundary_hits <integer>",  "the minimum number of spliced reads required to support a junction, default: 1");

@@ -45,7 +45,6 @@ public:
 
 private:
 	int read_bam_list();
-	int set_threading();
 	int init_samples();
 	int free_samples();
 	int build_sample_index();
