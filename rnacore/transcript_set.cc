@@ -24,7 +24,9 @@ int trans_item::merge(const trans_item &ti, int mode)
 {
 	if(mode == TRANSCRIPT_COUNT_ADD_COVERAGE_ADD) 
 	{
-		trst.coverage += ti.trst.coverage;
+		if(trst.exons.size() >= 2) trst.coverage += ti.trst.coverage;
+		else if(trst.coverage < ti.trst.coverage) trst.coverage = ti.trst.coverage;
+
 		trst.extend_bounds(ti.trst);
 		count += ti.count;
 		samples.insert(ti.samples.begin(), ti.samples.end());
