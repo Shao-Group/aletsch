@@ -583,7 +583,6 @@ int write_bridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc, const v
 
 		bool b = build_bam1_t(b1t, h1, h2, whole);
 		if(b == true) bam_write1(fout, &(b1t));
-		// TODO, handle false
 		assert(b1t.data != NULL);
 		delete b1t.data;
 	}

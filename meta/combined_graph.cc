@@ -444,7 +444,7 @@ int combined_graph::build_splice_graph(splice_graph &gr, const parameters &cfg)
 		double w = junctions[i].second.first;
 		int c = junctions[i].second.second;
 
-		// TODO, should be asserted
+		// asserted?
 		if(gr.rindex.find(p.first) == gr.rindex.end()) continue;
 		if(gr.lindex.find(p.second) == gr.lindex.end()) continue;
 		int s = gr.rindex[p.first];
@@ -472,7 +472,7 @@ int combined_graph::build_splice_graph(splice_graph &gr, const parameters &cfg)
 		PPDI tt = regions[i - 0];
 		if(ss.first.second != tt.first.first) continue;
 
-		// TODO
+		// another option
 		/*
 		double w1 = gr.get_out_weights(i + 0);
 		double w2 = gr.get_in_weights(i + 1);

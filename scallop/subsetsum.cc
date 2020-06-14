@@ -57,9 +57,10 @@ int subsetsum::rescale()
 	for(int i = 0; i < target.size(); i++) s2 += target[i].first;
 
 	/*
-	ubound1 = s1;		// TODO -1
-	ubound2 = s2;		// TODO -1
+	ubound1 = s1;
+	ubound2 = s2;
 	*/
+
 	ubound1 = s1 - 1;
 	ubound2 = s2 - 1;
 

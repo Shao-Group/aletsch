@@ -188,7 +188,6 @@ int undirected_graph::draw(const string &file, const MIS &mis, const MES &mes, d
 		set<int> ss = adjacent_vertices(i);
 		for(set<int>::iterator it = ss.begin(); it != ss.end(); it++)
 		{
-			// TODO
 			int j = (*it);
 			if(i >= j) continue;
 			//assert(i < j);

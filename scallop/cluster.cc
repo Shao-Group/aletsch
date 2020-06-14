@@ -89,7 +89,7 @@ int cluster::clustering()
 
 		if(k == -1) continue;
 		transcript cc = trs[k];
-		cc.coverage = cov;		// TODO
+		cc.coverage = cov;
 		cc.exons[0].first = lpos;
 		cc.exons[cc.exons.size() - 1].second = rpos;
 

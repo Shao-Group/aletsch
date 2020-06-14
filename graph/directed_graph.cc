@@ -567,7 +567,7 @@ int directed_graph::compute_out_partner(int x)
 
 int directed_graph::compute_out_equivalent_vertex(int x)
 {
-	// TODO: Assume that [0, gr.num_vertices() - 1] is a TPO
+	// Assume that [0, gr.num_vertices() - 1] is a TPO
 	vector<int> q;
 	set<int> s;
 	int k = 0;
@@ -617,7 +617,7 @@ int directed_graph::compute_out_equivalent_vertex(int x)
 
 int directed_graph::compute_in_equivalent_vertex(int x)
 {
-	// TODO: Assume that [0, gr.num_vertices() - 1] is a TPO
+	// Assume that [0, gr.num_vertices() - 1] is a TPO
 	vector<int> q;
 	set<int> s;
 	int k = 0;
@@ -821,7 +821,6 @@ int directed_graph::draw(const string &file, const MIS &mis, const MES &mes, dou
 		set<int> ss = adjacent_vertices(i);
 		for(set<int>::iterator it = ss.begin(); it != ss.end(); it++)
 		{
-			// TODO
 			int j = (*it);
 			//assert(i < j);
 

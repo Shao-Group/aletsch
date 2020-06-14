@@ -131,7 +131,7 @@ int hyper_set::merge_node_list(const vector<int> &s, int c)
 		if(z == 6) useful = true;
 		if(z == 7) continue;
 		if(z == 8) continue;
-		if(z == 9) continue;	// TODO
+		if(z == 9) continue;
 	}
 
 	if(useful == false) return 0;
