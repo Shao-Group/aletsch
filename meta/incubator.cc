@@ -363,7 +363,7 @@ int incubator::generate(sample_profile &sp, int tid, string chrm, mutex &mylock)
 		{
 			if(groups[i].chrm != v[k].chrm) continue;
 			if(groups[i].strand != v[k].strand) continue;
-			groups[i].add_graph(std::move(v[k]));
+			groups[i].gset.push_back(std::move(v[k]));
 			found = true;
 			break;
 		}
@@ -371,7 +371,7 @@ int incubator::generate(sample_profile &sp, int tid, string chrm, mutex &mylock)
 		if(found == false)
 		{
 			graph_group gp(v[k].chrm, v[k].strand, params[DEFAULT]);
-			gp.add_graph(std::move(v[k]));
+			gp.gset.push_back(std::move(v[k]));
 			groups.push_back(std::move(gp));
 		}
 	}

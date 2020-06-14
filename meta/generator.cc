@@ -222,7 +222,7 @@ int generator::generate(bundle &bb, int index)
 		combined_graph cb(cfg);
 		cb.sid = sp.sample_id;
 		cb.gid = gid;
-		cb.build(grv[k], hsv[k], ubv[k]);
+		cb.build(grv[k], std::move(hsv[k]), std::move(ubv[k]));
 		//cb.refine_junctions();
 
 		// print

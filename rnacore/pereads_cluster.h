@@ -19,6 +19,10 @@ class pereads_cluster
 {
 public:
 	pereads_cluster();
+	pereads_cluster(const pereads_cluster &pc) = default;
+	pereads_cluster(pereads_cluster &&pc) = default;
+	pereads_cluster& operator=(pereads_cluster &&pc) = default;
+	pereads_cluster& operator=(const pereads_cluster &pc) = default;
 
 public:
 	vector<int32_t> chain1;			// list of intron-chain coordinates

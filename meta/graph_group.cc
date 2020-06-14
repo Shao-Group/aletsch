@@ -21,12 +21,14 @@ graph_group::graph_group(string c, char s, const parameters &f)
 	strand = s;
 }
 
+/*
 int graph_group::add_graph(const combined_graph &gr)
 {
 	assert(gr.chrm == chrm);
 	gset.push_back(gr);
 	return 0;
 }
+*/
 
 int graph_group::resolve()
 {
@@ -34,7 +36,7 @@ int graph_group::resolve()
 	build_splice_index();
 
 	// round one
-	min_similarity = 0.9;
+	min_similarity = cfg.max_grouping_similarity;
 	min_group_size = cfg.max_group_size;
 	boost::asio::thread_pool pool1(cfg.max_threads);
 	for(auto &z: sindex)

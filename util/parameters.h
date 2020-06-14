@@ -37,6 +37,7 @@ public:
 	int max_group_size;
 	int max_junctions_combine;
 	double min_grouping_similarity;
+	double max_grouping_similarity;
 	bool single_sample_multiple_threading;
 
 	// for bridging paired-end reads

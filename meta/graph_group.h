@@ -17,6 +17,8 @@ class graph_group
 {
 public:
 	graph_group(string c, char s, const parameters &cfg);
+	graph_group(const graph_group &p) = default;
+	graph_group(graph_group &&p) = default;
 
 public:
 	const parameters &cfg;
@@ -33,7 +35,7 @@ private:
 	int min_group_size;			// minimum #graphs to form a group
 
 public:
-	int add_graph(const combined_graph &gr);
+	//int add_graph(const combined_graph &gr);
 	int resolve();
 	int print();
 	int stats(int k);
