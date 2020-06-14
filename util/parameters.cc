@@ -85,7 +85,7 @@ parameters::parameters()
 	min_transcript_coverage = 1.0;
 	min_transcript_length_base = 150;
 	min_transcript_length_increase = 50;
-	min_single_exon_transcript_coverage = 4.0;
+	min_single_exon_transcript_coverage = 5.0;
 	min_single_exon_transcript_length = 250;
 	min_exon_length = 20;
 	max_num_exons = 10000;

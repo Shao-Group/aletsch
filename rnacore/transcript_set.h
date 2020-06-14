@@ -31,7 +31,7 @@ public:
 	int merge(const trans_item &ti, int mode);
 };
 
-vector<trans_item> merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &vy, int mode);
+int merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &vy, int mode);
 
 class transcript_set
 {
@@ -45,7 +45,7 @@ public:
 
 public:
 	int add(const transcript &t, int count, int sid, int mode);
-	int add(const transcript_set &ts, int mode);
+	int add(const transcript_set &ts, int mode, int threads = 0);
 	int increase_count(int count);
 	int filter(int min_count);
 	int print() const;

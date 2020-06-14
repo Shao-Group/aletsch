@@ -7,6 +7,8 @@ See LICENSE for licensing.
 #include <cassert>
 #include "transcript_set.h"
 #include "constants.h"
+#include <boost/asio/post.hpp>
+#include <boost/asio/thread_pool.hpp>
 
 trans_item::trans_item()
 {}
@@ -35,7 +37,7 @@ int trans_item::merge(const trans_item &ti, int mode)
 	return 0;
 }
 
-vector<trans_item> merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &vy, int mode)
+int merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &vy, int mode)
 {
 	vector<trans_item> vz;
 	int kx = 0, ky = 0;
@@ -67,8 +69,9 @@ vector<trans_item> merge_sorted_trans_items(vector<trans_item> &vx, const vector
 	for(int i = kx; i < vx.size(); i++) vz.push_back(vx[i]);
 	for(int i = ky; i < vy.size(); i++) vz.push_back(vy[i]);
 
-	return vz;
-	//return std::move(vz);
+	vx.clear();
+	vx = vz;
+	return 0;
 }
 
 transcript_set::transcript_set(const string &c)
@@ -95,8 +98,9 @@ int transcript_set::add(const transcript &t, int count, int sid, int mode)
 	return 0;
 }
 
-int transcript_set::add(const transcript_set &ts, int mode)
+int transcript_set::add(const transcript_set &ts, int mode, int threads)
 {
+	boost::asio::thread_pool pool(threads);
 	for(auto &x : ts.mt)
 	{
 		auto z = mt.find(x.first);
@@ -106,9 +110,11 @@ int transcript_set::add(const transcript_set &ts, int mode)
 		}
 		else
 		{
-			z->second = merge_sorted_trans_items(z->second, x.second, mode);
+			if(threads <= 0) merge_sorted_trans_items(z->second, x.second, mode);
+			else boost::asio::post(pool, [&z, &x, mode] { merge_sorted_trans_items(z->second, x.second, mode); });
 		}
 	}
+	pool.join();
 	return 0;
 }
 

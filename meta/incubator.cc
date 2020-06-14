@@ -260,14 +260,24 @@ int incubator::assemble()
 
 int incubator::rearrange()
 {
-	tmerge.mt.clear();
+	// filtering
+	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
 	for(int i = 0; i < tsets.size(); i++)
 	{
 		transcript_set &t = tsets[i];
 		assert(t.chrm == tmerge.chrm);
-		t.filter(2);
-		tmerge.add(t, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+		boost::asio::post(pool, [&t]{ t.filter(2); });
 	}
+	pool.join();
+
+	// merge
+	tmerge.mt.clear();
+	for(int i = 0; i < tsets.size(); i++)
+	{
+		transcript_set &t = tsets[i];
+		tmerge.add(t, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD, params[DEFAULT].max_threads);
+	}
+
 	tsets.clear();
 	return 0;
 }
