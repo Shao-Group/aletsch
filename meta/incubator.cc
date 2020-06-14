@@ -286,6 +286,7 @@ int incubator::rearrange()
 	{
 		int a = (i + 0) * t;
 		int b = (i + 1) * t;
+		if(b >= tsets.size()) b = tsets.size();
 		boost::asio::post(pool2, [this, &mylock, a, b]{ 
 				transcript_set ts(this->tmerge.chrm);
 				for(int k = a; k < b; k++) ts.add(this->tsets[k], TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
