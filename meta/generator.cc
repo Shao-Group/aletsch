@@ -232,7 +232,7 @@ int generator::generate(bundle &bb, int index)
 		printf("\n");
 		*/
 
-		vcb.push_back(cb);
+		vcb.push_back(std::move(cb));
 	}
 
 	return 0;

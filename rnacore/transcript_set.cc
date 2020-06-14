@@ -103,15 +103,18 @@ int transcript_set::add(const transcript_set &ts, int mode, int threads)
 	boost::asio::thread_pool pool(threads);
 	for(auto &x : ts.mt)
 	{
-		auto z = mt.find(x.first);
+		map<size_t, vector<trans_item>>::iterator z = mt.find(x.first);
 		if(z == mt.end())
 		{
 			mt.insert(x);
 		}
 		else
 		{
-			if(threads <= 0) merge_sorted_trans_items(z->second, x.second, mode);
-			else boost::asio::post(pool, [&z, &x, mode] { merge_sorted_trans_items(z->second, x.second, mode); });
+			vector<trans_item> &zz = z->second;
+			const vector<trans_item> &xx = x.second;
+			//merge_sorted_trans_items(z->second, x.second, mode);
+			if(threads <= 0) merge_sorted_trans_items(zz, xx, mode);
+			else boost::asio::post(pool, [&zz, &xx, mode] { merge_sorted_trans_items(zz, xx, mode); });
 		}
 	}
 	pool.join();
