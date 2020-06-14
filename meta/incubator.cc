@@ -270,13 +270,31 @@ int incubator::rearrange()
 	}
 	pool.join();
 
+	// random sort
+	std::random_shuffle(tsets.begin(), tsets.end());
+
 	// merge
+	mutex mylock;
+	boost::asio::thread_pool pool2(params[DEFAULT].max_threads);
+
+	int t = params[DEFAULT].max_threads;
+	if(t <= 0) t = 1;
+	int n = ceil(1.0 * tsets.size() / t);
+
 	tmerge.mt.clear();
-	for(int i = 0; i < tsets.size(); i++)
+	for(int i = 0; i < n; i++)
 	{
-		transcript_set &t = tsets[i];
-		tmerge.add(t, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD, params[DEFAULT].max_threads);
+		int a = (i + 0) * t;
+		int b = (i + 1) * t;
+		boost::asio::post(pool2, [this, &mylock, a, b]{ 
+				transcript_set ts(this->tmerge.chrm);
+				for(int k = a; k < b; k++) ts.add(this->tsets[k], TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+				mylock.lock();
+				this->tmerge.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+				mylock.unlock();
+			});
 	}
+	pool2.join();
 
 	tsets.clear();
 	return 0;

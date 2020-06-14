@@ -7,8 +7,8 @@ See LICENSE for licensing.
 #include <cassert>
 #include "transcript_set.h"
 #include "constants.h"
-#include <boost/asio/post.hpp>
-#include <boost/asio/thread_pool.hpp>
+//#include <boost/asio/post.hpp>
+//#include <boost/asio/thread_pool.hpp>
 
 trans_item::trans_item()
 {}
@@ -100,9 +100,9 @@ int transcript_set::add(const transcript &t, int count, int sid, int mode)
 	return 0;
 }
 
-int transcript_set::add(const transcript_set &ts, int mode, int threads)
+int transcript_set::add(const transcript_set &ts, int mode)
 {
-	boost::asio::thread_pool pool(threads);
+	//boost::asio::thread_pool pool(threads);
 	for(auto &x : ts.mt)
 	{
 		map<size_t, vector<trans_item>>::iterator z = mt.find(x.first);
@@ -112,14 +112,16 @@ int transcript_set::add(const transcript_set &ts, int mode, int threads)
 		}
 		else
 		{
+			merge_sorted_trans_items(z->second, x.second, mode);
+			/*
 			vector<trans_item> &zz = z->second;
 			const vector<trans_item> &xx = x.second;
-			//merge_sorted_trans_items(z->second, x.second, mode);
 			if(threads <= 0) merge_sorted_trans_items(zz, xx, mode);
 			else boost::asio::post(pool, [&zz, &xx, mode] { merge_sorted_trans_items(zz, xx, mode); });
+			*/
 		}
 	}
-	pool.join();
+	//pool.join();
 	return 0;
 }
 

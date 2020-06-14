@@ -45,7 +45,7 @@ public:
 
 public:
 	int add(const transcript &t, int count, int sid, int mode);
-	int add(const transcript_set &ts, int mode, int threads = 0);
+	int add(const transcript_set &ts, int mode);
 	int increase_count(int count);
 	int filter(int min_count);
 	int print() const;
