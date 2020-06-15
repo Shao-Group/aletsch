@@ -8,11 +8,11 @@ at overlapped gene loci. Eventually, the core algorithm used in Scallop (i.e., p
 is employed to decompose the combined splice graphs to transcripts.
 
 # Release
-Latest release of meta-scallop is [v0.1.5](https://github.com/Shao-Group/meta-scallop/releases/tag/v0.1.5).
+Latest release of meta-scallop is [v0.1.6](https://github.com/Shao-Group/meta-scallop/releases/tag/v0.1.6).
 
 # Installation
 Download the source code of meta-scallop from
-[here](https://github.com/Shao-Group/meta-scallop/releases/download/v0.1.5/meta-scallop-0.1.5.tar.gz).
+[here](https://github.com/Shao-Group/meta-scallop/releases/download/v0.1.6/meta-scallop-0.1.6.tar.gz).
 meta-scallop uses additional libraries of Boost and htslib. 
 If they have not been installed in your system, you first
 need to download and install them. You might also need to
@@ -73,18 +73,25 @@ The usage of `meta-scallop` is:
 ./meta-scallop -i <input-bam-list> -o <output.gtf> [options]
 ```
 
-The `input-bam-list` specifies the list of aligned samples (in .bam format).
-Note meta-scallop will try to infer the `library_type` of each individual sample
+## Format of Input and Output
+Each line of `input-bam-list` describes a single sample, with 3 fields separated by space.
+The 3 fields are: `alignment-file` (in .bam format), `index-alignment-file` (in. bai format), and `protocol`.
+The `index-file` can be generated using samtools (e.g., `samtools index ...`).
+The `protocol` is chosen from the 5 options: `single_end` (for illumina single-end RNA-seq protocol),
+`paired_end` (for illumina paired-end RNA-seq protocol), 
+`pacbio_ccs` (for PacBio Iso-Seq CCS reads),
+`pacbio_sub` (for PacBio Iso-Seq sub-reads),
+`ont` (for Oxford Nanopore RNA-seq).
+Meta-Scallop will use different parameters / algorithms to process different data types.
+
+Meta-Scallop will try to infer the `library_type` of each individual sample
 using the `XS` tag stored in the input bam files. 
 Also make sure that they are sorted; otherwise run `samtools` to sort it (`samtools sort input.bam > input.sort.bam`).
 The assembled transcripts from all these samples will be written to `output.gtf`.
-If `-d directory` option is provided, the assembled transcripts for each individual
-sample will be generated under the specified directory. 
-If `-D directory` option is provided, the bridged alignment files for each individual
-sample will be generated under the specified directory. NOTE: make sure the specified
-directory exists, both for `-d` and `-D`, as `meta-scallop` will NOT create them in the program.
 
-meta-scallop support the following parameters. It also supports all parameters
+## Options
+
+Meta-Scallop support the following parameters. It also supports all parameters
 that needed in the core algorithm of Scallop. Dry run `meta-scallop` for more
 details.
 
@@ -93,7 +100,13 @@ details.
  --help  | | print usage of meta-scallop and exit
  --version | | print version of meta-scallop and exit
  -t | 10  | number of threads
- -c | 100 | the maximized number of splice graphs that will be combined
- -s | 0.3 | the minimized similarity between two splice graphs that will be combined
+ -c | 20  | the maximized number of splice graphs that will be combined into a cluster
+ -s | 0.2 | the minimized similarity between two splice graphs that will be combined
  -d |     | the directory in which assembled transcripts for individual sample will be generated
  -D |     | the directory in which bridged alignments for individual sample will be generated
+
+If `-d directory` option is provided, the assembled transcripts for each individual
+sample will be generated under the specified directory. 
+If `-D directory` option is provided, the bridged alignment files for each individual
+sample will be generated under the specified directory. NOTE: make sure the specified
+directory exists, both for `-d` and `-D`, as `meta-scallop` will NOT create them in the program.

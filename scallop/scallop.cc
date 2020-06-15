@@ -1022,6 +1022,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 	{
 		PI p = it->first;
 		double w = it->second;
+		assert(w >= cfg.min_guaranteed_edge_weight);
 		total_weight += w;
 		if(mdegree.find(p.first) == mdegree.end()) mdegree.insert(PI(p.first, w));
 		else mdegree[p.first] += w;
@@ -1110,6 +1111,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		int e2 = it->first.second;
 		assert(consistent_strands(e1, e2));
 		double w = it->second;
+		assert(w >= cfg.min_guaranteed_edge_weight);
 
 		if(mdegree[e1] == 1)
 		{
@@ -1241,6 +1243,7 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 	{
 		edge_descriptor e = i2e[it->first];
 		double w = it->second;
+		assert(w >= cfg.min_guaranteed_edge_weight);
 		gr.set_edge_weight(e, w);
 	}
 

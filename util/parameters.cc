@@ -25,7 +25,7 @@ parameters::parameters()
 	output_bridged_bam_dir = "";
 	verbose = 1;
 	algo = "meta-scallop";
-	version = "0.1.5";
+	version = "0.1.6";
 	max_threads = 10;
 
 	// for meta-assembly
@@ -450,8 +450,8 @@ int parameters::print_help()
 	printf(" %-42s  %s\n", "-d <string>",  "existing directory for individual transcripts, default: N/A");
 	printf(" %-42s  %s\n", "-D <string>",  "existing directory for individual bridged alignments, default: N/A");
 	printf(" %-42s  %s\n", "-t/--max_threads <integer>",  "maximized number of threads, default: 10");
-	printf(" %-42s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 100");
-	printf(" %-42s  %s\n", "-s/--min_grouping_similarity <float>",  "the minimized similarity for two graphs to be combined, default: 0.3");
+	printf(" %-42s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 20");
+	printf(" %-42s  %s\n", "-s/--min_grouping_similarity <float>",  "the minimized similarity for two graphs to be combined, default: 0.2");
 	printf(" %-42s  %s\n", "--min_bridging_score <float>",  "the minimum score for bridging a paired-end reads, default: 1.5");
 	printf(" %-42s  %s\n", "--min_splice_bundary_hits <integer>",  "the minimum number of spliced reads required to support a junction, default: 1");
 	printf(" %-42s  %s\n", "--min_transcript_coverage <float>",  "minimum coverage required for a multi-exon transcript, default: 1.0");
