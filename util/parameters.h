@@ -34,9 +34,9 @@ public:
 
 	// for meta-assembly
 	int max_group_size;
-	int max_junctions_combine;
 	double min_grouping_similarity;
 	double max_grouping_similarity;
+	int max_num_junctions_to_combine;
 
 	// for bridging paired-end reads
 	int bridge_dp_solution_size;

@@ -32,7 +32,7 @@ parameters::parameters()
 	max_group_size = 20;
 	min_grouping_similarity = 0.20;
 	max_grouping_similarity = 0.90;
-	max_junctions_combine = 500;
+	max_num_junctions_to_combine = 500;
 
 	// for bridging paired-end reads
 	bridge_dp_solution_size = 10;
@@ -84,7 +84,7 @@ parameters::parameters()
 	min_transcript_coverage = 1.0;
 	min_transcript_length_base = 150;
 	min_transcript_length_increase = 50;
-	min_single_exon_transcript_coverage = 3.0;
+	min_single_exon_transcript_coverage = 3.5;
 	min_single_exon_transcript_length = 250;
 	min_exon_length = 20;
 	max_num_exons = 10000;
@@ -164,7 +164,6 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			print_logo();
 			exit(0);
 		}
-
 		else if(string(argv[i]) == "--min_bridging_score")
 		{
 			min_bridging_score = atof(argv[i + 1]);
@@ -448,12 +447,14 @@ int parameters::print_help()
 	printf(" %-42s  %s\n", "-t/--max_threads <integer>",  "maximized number of threads, default: 10");
 	printf(" %-42s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 100");
 	printf(" %-42s  %s\n", "-s/--min_grouping_similarity <float>",  "the minimized similarity for two graphs to be combined, default: 0.3");
+	printf(" %-42s  %s\n", "--min_bridging_score <float>",  "the minimum score for bridging a paired-end reads, default: 1.5");
 	printf(" %-42s  %s\n", "--min_splice_bundary_hits <integer>",  "the minimum number of spliced reads required to support a junction, default: 1");
 	printf(" %-42s  %s\n", "--min_transcript_coverage <float>",  "minimum coverage required for a multi-exon transcript, default: 1.0");
-	printf(" %-42s  %s\n", "--min_single_exon_coverage <float>",  "minimum coverage required for a single-exon transcript, default: 20");
 	printf(" %-42s  %s\n", "--min_transcript_length_increase <integer>",  "default: 50");
 	printf(" %-42s  %s\n", "--min_transcript_length_base <integer>",  "default: 150, minimum length of a transcript would be");
 	printf(" %-42s  %s\n", "",  "--min_transcript_length_base + --min_transcript_length_increase * num-of-exons");
+	printf(" %-42s  %s\n", "--min_single_exon_coverage <float>",  "minimum coverage required for a single-exon transcript, default: 20");
+	printf(" %-42s  %s\n", "--min_single_exon_transcript_length <integer>",  "minimum length of single-exon transcript, default: 250");
 	printf(" %-42s  %s\n", "--min_mapping_quality <integer>",  "ignore reads with mapping quality less than this value, default: 1");
 	printf(" %-42s  %s\n", "--max_num_cigar <integer>",  "ignore reads with CIGAR size larger than this value, default: 1000");
 	printf(" %-42s  %s\n", "--min_bundle_gap <integer>",  "minimum distances required to start a new bundle, default: 50");
