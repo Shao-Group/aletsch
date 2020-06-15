@@ -31,17 +31,18 @@ public:
 	int merge(const trans_item &ti, int mode);
 };
 
-int merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &vy, int mode);
+int merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &vy, int mode, double single_exon_overlap);
 
 class transcript_set
 {
 public:
-	transcript_set(const string &c);
-	transcript_set(const transcript &t, int count, int sid);
+	transcript_set(const string &c, double single_exon_overlap);
+	transcript_set(const transcript &t, int count, int sid, double single_exon_overlap);
 
 public:
 	string chrm;
 	map<size_t, vector<trans_item>> mt;
+	double single_exon_overlap;
 
 public:
 	int add(const transcript &t, int count, int sid, int mode);

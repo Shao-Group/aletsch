@@ -27,7 +27,7 @@ See LICENSE for licensing.
 #include <boost/pending/disjoint_sets.hpp>
 
 incubator::incubator(vector<parameters> &v)
-	: params(v), tmerge("")
+	: params(v), tmerge("", params[DEFAULT].min_single_exon_clustering_overlap)
 {
 	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str());
 	if(meta_gtf.fail())
@@ -276,7 +276,7 @@ int incubator::rearrange()
 		int b = (i + 1) * n;
 		if(b >= tsets.size()) b = tsets.size();
 		boost::asio::post(pool2, [this, &mylock, a, b]{ 
-				transcript_set ts(this->tmerge.chrm);
+				transcript_set ts(this->tmerge.chrm, params[DEFAULT].min_single_exon_clustering_overlap);
 				for(int k = a; k < b; k++) ts.add(this->tsets[k], TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 				mylock.lock();
 				this->tmerge.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
@@ -338,7 +338,7 @@ int incubator::postprocess()
 int incubator::generate(sample_profile &sp, int tid, string chrm, mutex &mylock)
 {	
 	vector<combined_graph> v;
-	transcript_set ts(chrm);
+	transcript_set ts(chrm, params[DEFAULT].min_single_exon_clustering_overlap);
 	generator gt(sp, v, ts, params[sp.data_type], tid);
 	gt.resolve();
 	save_transcript_set(ts, mylock);
@@ -372,7 +372,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 {
 	if(gv.size() == 0) return 0;
 
-	transcript_set ts(gv.front()->chrm);
+	transcript_set ts(gv.front()->chrm, params[DEFAULT].min_single_exon_clustering_overlap);
 
 	assembler asmb(params[DEFAULT]);
 	asmb.assemble(gv, 0, instance, ts, samples);

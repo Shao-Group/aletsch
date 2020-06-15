@@ -226,7 +226,7 @@ int transcript::intron_chain_compare(const transcript &t) const
 	return 0;
 }
 
-bool transcript::equal1(const transcript &t) const
+bool transcript::equal1(const transcript &t, double single_exon_overlap) const
 {
 	if(exons.size() != t.exons.size()) return false;
 
@@ -242,8 +242,8 @@ bool transcript::equal1(const transcript &t) const
 		int32_t q2 = exons[0].second > t.exons[0].second ? t.exons[0].second : exons[0].second;
 
 		int32_t overlap = q2 - p2;
-		if(overlap >= 0.8 * length()) return true;
-		if(overlap >= 0.8 * t.length()) return true;
+		if(overlap >= single_exon_overlap * length()) return true;
+		if(overlap >= single_exon_overlap * t.length()) return true;
 		return false;
 
 		/*
@@ -256,7 +256,7 @@ bool transcript::equal1(const transcript &t) const
 	return intron_chain_match(t);
 }
 
-int transcript::compare1(const transcript &t) const
+int transcript::compare1(const transcript &t, double single_exon_overlap) const
 {
 	if(exons.size() < t.exons.size()) return +1;
 	if(exons.size() > t.exons.size()) return -1;
@@ -274,8 +274,8 @@ int transcript::compare1(const transcript &t) const
 		int32_t q2 = exons[0].second > t.exons[0].second ? t.exons[0].second : exons[0].second;
 
 		int32_t overlap = q2 - p2;
-		if(overlap >= 0.8 * length()) return 0;
-		if(overlap >= 0.8 * t.length()) return 0;
+		if(overlap >= single_exon_overlap * length()) return 0;
+		if(overlap >= single_exon_overlap * t.length()) return 0;
 
 		//double overlap = (q2 - p2) * 1.0 / (q1 - p1);
 		//if(overlap >= 0.8) return 0;

@@ -64,8 +64,8 @@ public:
 	size_t get_intron_chain_hashing() const;
 	bool intron_chain_match(const transcript &t) const;
 	int intron_chain_compare(const transcript &t) const;
-	bool equal1(const transcript &t) const;
-	int compare1(const transcript &t) const;
+	bool equal1(const transcript &t, double single_exon_overlap) const;
+	int compare1(const transcript &t, double single_exon_overlap) const;
 	int extend_bounds(const transcript &t);
 	string label() const;
 	int write(ostream &fout) const;

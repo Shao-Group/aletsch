@@ -62,7 +62,7 @@ public:
 	int32_t max_cluster_intron_distance;
 	int32_t max_cluster_intron_shifting;
 	double long_reads_cluster_boosting;
-	double min_cluster_single_exon_ratio;
+	double min_single_exon_clustering_overlap;
 
 	// for loading bam file and reads
 	int min_flank_length;
