@@ -492,17 +492,25 @@ bool scallop::resolve_hyper_edge(int fsize)
 	{
 		for(int j = 0; j < w2.size(); j++)
 		{
-			double w = (w1[i] < w2[j]) ? w1[i] : w2[j];
-			if(w >= cfg.min_guaranteed_edge_weight) continue;
+			if(w1[i] < cfg.min_guaranteed_edge_weight)
+			{
+				double e1 = gr.get_edge_weight(i2e[v1[i]]) + cfg.min_guaranteed_edge_weight - w1[i];
+				double e2 = gr.get_edge_weight(i2e[v2[j]]) + cfg.min_guaranteed_edge_weight - w1[i];
+				w2[j] = w2[j] + cfg.min_guaranteed_edge_weight - w1[i];
+				w1[i] = cfg.min_guaranteed_edge_weight;
+				gr.set_edge_weight(i2e[v1[i]], e1);
+				gr.set_edge_weight(i2e[v2[j]], e2);
+			}
 
-			double z = cfg.min_guaranteed_edge_weight - w;
-			w += z;
-			w1[i] += z;
-			w2[j] += z;
-			assert(w1[i] >= cfg.min_guaranteed_edge_weight);
-			assert(w2[j] >= cfg.min_guaranteed_edge_weight);
-			gr.set_edge_weight(i2e[v1[i]], z + gr.get_edge_weight(i2e[v1[i]]));
-			gr.set_edge_weight(i2e[v2[j]], z + gr.get_edge_weight(i2e[v2[j]]));
+			if(w2[j] < cfg.min_guaranteed_edge_weight)
+			{
+				double e1 = gr.get_edge_weight(i2e[v1[i]]) + cfg.min_guaranteed_edge_weight - w2[j];
+				double e2 = gr.get_edge_weight(i2e[v2[j]]) + cfg.min_guaranteed_edge_weight - w2[j];
+				w1[i] = w1[i] + cfg.min_guaranteed_edge_weight - w2[j];
+				w2[j] = cfg.min_guaranteed_edge_weight;
+				gr.set_edge_weight(i2e[v1[i]], e1);
+				gr.set_edge_weight(i2e[v2[j]], e2);
+			}
 		}
 	}
 
@@ -513,12 +521,7 @@ bool scallop::resolve_hyper_edge(int fsize)
 		for(int j = 0; j < w2.size(); j++)
 		{
 			double w = (w1[i] < w2[j]) ? w1[i] : w2[j];
-
-			if(w < cfg.min_guaranteed_edge_weight)
-			{
-				printf("i = %d, j = %d, w1 = %lf, w2 = %lf, w = %lf, min = %lf\n", i, j, w1[i], w2[j], w, cfg.min_guaranteed_edge_weight);
-				assert(w >= cfg.min_guaranteed_edge_weight);
-			}
+			assert(w >= cfg.min_guaranteed_edge_weight - SMIN);
 
 			flag = true;
 			int k1 = split_edge(v1[i], w);
@@ -1044,7 +1047,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 	{
 		PI p = it->first;
 		double w = it->second;
-		assert(w >= cfg.min_guaranteed_edge_weight);
+		assert(w >= cfg.min_guaranteed_edge_weight - SMIN);
 		total_weight += w;
 		if(mdegree.find(p.first) == mdegree.end()) mdegree.insert(PI(p.first, w));
 		else mdegree[p.first] += w;
@@ -1133,7 +1136,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		int e2 = it->first.second;
 		assert(consistent_strands(e1, e2));
 		double w = it->second;
-		assert(w >= cfg.min_guaranteed_edge_weight);
+		assert(w >= cfg.min_guaranteed_edge_weight - SMIN);
 
 		if(mdegree[e1] == 1)
 		{
@@ -1256,7 +1259,7 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 		int e1 = it->first.first;
 		int e2 = it->first.second;
 		double w = it->second;
-		assert(w >= cfg.min_guaranteed_edge_weight);
+		assert(w >= cfg.min_guaranteed_edge_weight - SMIN);
 		if(md.find(e1) == md.end()) md.insert(PID(e1, w));
 		else md[e1] += w;
 		if(md.find(e2) == md.end()) md.insert(PID(e2, w));
@@ -1310,7 +1313,7 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 		int e1 = it->first.first;
 		int e2 = it->first.second;
 		double w = it->second;
-		assert(w >= cfg.min_guaranteed_edge_weight);
+		assert(w >= cfg.min_guaranteed_edge_weight - SMIN);
 
 		int e = merge_adjacent_edges(e1, e2, w);
 
@@ -1567,7 +1570,7 @@ int scallop::remove_edge(int e)
 
 int scallop::merge_adjacent_edges(int x, int y, double ww)
 {
-	assert(ww >= cfg.min_guaranteed_edge_weight);
+	assert(ww >= cfg.min_guaranteed_edge_weight - SMIN);
 	if(i2e[x] == null_edge) return -1;
 	if(i2e[y] == null_edge) return -1;
 
@@ -1607,7 +1610,7 @@ int scallop::merge_adjacent_edges(int x, int y)
 
 int scallop::split_edge(int ei, double w)
 {
-	assert(w >= cfg.min_guaranteed_edge_weight);
+	assert(w >= cfg.min_guaranteed_edge_weight - SMIN);
 	assert(i2e[ei] != null_edge);
 	edge_descriptor ee = i2e[ei];
 
@@ -1668,14 +1671,14 @@ int scallop::balance_vertex(int v, const vector<int> &ve1, const vector<int> &ve
 	for(int i = 0; i < ve1.size(); i++)
 	{
 		double w = gr.get_edge_weight(i2e[ve1[i]]);
-		assert(w >= cfg.min_guaranteed_edge_weight);
+		assert(w >= cfg.min_guaranteed_edge_weight - SMIN);
 		v1.push_back(w);
 		w1 += w;
 	}
 	for(int i = 0; i < ve2.size(); i++)
 	{
 		double w = gr.get_edge_weight(i2e[ve2[i]]);
-		assert(w >= cfg.min_guaranteed_edge_weight);
+		assert(w >= cfg.min_guaranteed_edge_weight - SMIN);
 		v2.push_back(w);
 		w2 += w;
 	}

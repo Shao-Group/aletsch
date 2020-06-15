@@ -55,7 +55,7 @@ int incubator::resolve()
 		tmerge.chrm = chrm;
 
 		// test
-		if(chrm != "chrm19") continue;
+		//if(chrm != "19") continue;
 
 		mytime = time(NULL);
 		printf("start processing chrm %s, %s", chrm.c_str(), ctime(&mytime));
