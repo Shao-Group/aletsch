@@ -76,6 +76,7 @@ private:
 
 	// smooth vertex
 	int balance_vertex(int x);
+	int balance_vertex(int v, const vector<int> &ve1, const vector<int> &ve2);
 	double compute_balance_ratio(int x);
 
 	// decomposing subroutines

@@ -467,8 +467,7 @@ bool scallop::resolve_hyper_edge(int fsize)
 
 	balance_vertex(root);
 
-	vector<double> w1;
-	vector<double> w2;
+	vector<double> w1, w2;
 	double sum1 = 0, sum2 = 0;
 	for(int i = 0; i < v1.size(); i++)
 	{
@@ -489,6 +488,22 @@ bool scallop::resolve_hyper_edge(int fsize)
 	for(int i = 0; i < w1.size(); i++) w1[i] *= r1;
 	for(int i = 0; i < w2.size(); i++) w2[i] *= r2;
 
+	for(int i = 0; i < w1.size(); i++)
+	{
+		for(int j = 0; j < w2.size(); j++)
+		{
+			double w = (w1[i] < w2[j]) ? w1[i] : w2[j];
+			if(w >= cfg.min_guaranteed_edge_weight) continue;
+
+			double z = cfg.min_guaranteed_edge_weight - w;
+			w += z;
+			w1[i] += z;
+			w2[j] += z;
+			gr.set_edge_weight(i2e[v1[i]], z + gr.get_edge_weight(i2e[v1[i]]));
+			gr.set_edge_weight(i2e[v2[j]], z + gr.get_edge_weight(i2e[v2[j]]));
+		}
+	}
+
 	set<int> ss;
 	bool flag = false;
 	for(int i = 0; i < w1.size(); i++)
@@ -496,7 +511,7 @@ bool scallop::resolve_hyper_edge(int fsize)
 		for(int j = 0; j < w2.size(); j++)
 		{
 			double w = (w1[i] < w2[j]) ? w1[i] : w2[j];
-			if(w < cfg.min_guaranteed_edge_weight) continue;
+			assert(w >= cfg.min_guaranteed_edge_weight);
 
 			flag = true;
 			int k1 = split_edge(v1[i], w);
@@ -1288,6 +1303,7 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 		int e1 = it->first.first;
 		int e2 = it->first.second;
 		double w = it->second;
+		assert(w >= cfg.min_guaranteed_edge_weight);
 
 		int e = merge_adjacent_edges(e1, e2, w);
 
@@ -1544,6 +1560,7 @@ int scallop::remove_edge(int e)
 
 int scallop::merge_adjacent_edges(int x, int y, double ww)
 {
+	assert(ww >= cfg.min_guaranteed_edge_weight);
 	if(i2e[x] == null_edge) return -1;
 	if(i2e[y] == null_edge) return -1;
 
@@ -1583,16 +1600,20 @@ int scallop::merge_adjacent_edges(int x, int y)
 
 int scallop::split_edge(int ei, double w)
 {
+	assert(w >= cfg.min_guaranteed_edge_weight);
 	assert(i2e[ei] != null_edge);
 	edge_descriptor ee = i2e[ei];
 
 	double ww = gr.get_edge_weight(ee);
+	if(fabs(ww - w) <= SMIN) return ei;
 
+	/*
 	if(ww <= w + cfg.min_guaranteed_edge_weight)
 	{
 		gr.set_edge_weight(ee, w);
 		return ei;
 	}
+	*/
 
 	int s = ee->source();
 	int t = ee->target();
@@ -1600,7 +1621,10 @@ int scallop::split_edge(int ei, double w)
 	edge_descriptor p2 = gr.add_edge(s, t);
 	edge_info eif = gr.get_edge_info(ee);
 
-	gr.set_edge_weight(ee, ww - w);		// old edge
+	double www = ww - w;
+	if(www <= cfg.min_guaranteed_edge_weight) www = cfg.min_guaranteed_edge_weight;
+
+	gr.set_edge_weight(ee, www);		// old edge
 	gr.set_edge_info(ee, eif);			// old edge
 	gr.set_edge_weight(p2, w);			// new edge
 	gr.set_edge_info(p2, eif);			// new edge
@@ -1625,78 +1649,95 @@ int scallop::split_edge(int ei, double w)
 	return n;
 }
 
-int scallop::balance_vertex(int v)
+int scallop::balance_vertex(int v, const vector<int> &ve1, const vector<int> &ve2)
 {
 	if(gr.degree(v) <= 0) return 0;
+	assert(ve1.size() >= 1);
+	assert(ve2.size() >= 1);
 
-	edge_iterator it1, it2;
-	PEEI pei;
+	vector<double> v1;
+	vector<double> v2;
 	double w1 = 0, w2 = 0;
-	for(pei = gr.in_edges(v), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	for(int i = 0; i < ve1.size(); i++)
 	{
-		double w = gr.get_edge_weight(*it1);
+		double w = gr.get_edge_weight(i2e[ve1[i]]);
+		assert(w >= cfg.min_guaranteed_edge_weight);
+		v1.push_back(w);
 		w1 += w;
 	}
-	for(pei = gr.out_edges(v), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	for(int i = 0; i < ve2.size(); i++)
 	{
-		double w = gr.get_edge_weight(*it1);
+		double w = gr.get_edge_weight(i2e[ve2[i]]);
+		assert(w >= cfg.min_guaranteed_edge_weight);
+		v2.push_back(w);
 		w2 += w;
 	}
 
-	assert(w1 >= SMIN);
-	assert(w2 >= SMIN);
-
-	// use max-meature
-	//double ww = (wv >= w1 && wv >= w2) ? wv : (w1 >= w2 ? w1 : w2);
-	//assert(ww >= w1 && ww >= w2);
-
 	// use sqrt-meature
 	double ww = sqrt(w1 * w2);
-
-	// use convex combination
-	//double ww = sqrt(0.5 * w1 * w1 + 0.5 * w2 * w2);
 
 	double r1 = ww / w1;
 	double r2 = ww / w2;
 
 	double m1 = 0, m2 = 0;
-	for(pei = gr.in_edges(v), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	for(int i = 0; i < v1.size(); i++)
 	{
-		double wx = gr.get_edge_weight(*it1);
+		edge_descriptor e = i2e[ve1[i]];
+		double wx = gr.get_edge_weight(e);
 		double wy = wx * r1;
 		if(wy < cfg.min_guaranteed_edge_weight)
 		{
 			m1 += cfg.min_guaranteed_edge_weight - wy;
 			wy = cfg.min_guaranteed_edge_weight;
 		}
-		gr.set_edge_weight(*it1, wy);
+		gr.set_edge_weight(e, wy);
 	}
-	for(pei = gr.out_edges(v), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	for(int i = 0; i < v2.size(); i++)
 	{
-		double wx = gr.get_edge_weight(*it1);
+		edge_descriptor e = i2e[ve2[i]];
+		double wx = gr.get_edge_weight(e);
 		double wy = wx * r2;
 		if(wy < cfg.min_guaranteed_edge_weight)
 		{
 			m2 += cfg.min_guaranteed_edge_weight - wy;
 			wy = cfg.min_guaranteed_edge_weight;
 		}
-		gr.set_edge_weight(*it1, wy);
+		gr.set_edge_weight(e, wy);
 	}
 
 	if(m1 > m2)
 	{
-		edge_descriptor e = gr.max_out_edge(v);
+		edge_descriptor e = i2e[ve2.front()];
 		double w = gr.get_edge_weight(e);
 		gr.set_edge_weight(e, w + m1 - m2);
 	}
 	else if(m1 < m2)
 	{
-		edge_descriptor e = gr.max_in_edge(v);
+		edge_descriptor e = i2e[ve1.front()];
 		double w = gr.get_edge_weight(e);
 		gr.set_edge_weight(e, w + m2 - m1);
 	}
 
 	return 0;
+}
+
+int scallop::balance_vertex(int v)
+{
+	if(gr.degree(v) <= 0) return 0;
+
+	PEEI pei;
+	edge_iterator it1, it2;
+	vector<int> ve1;
+	vector<int> ve2;
+	for(pei = gr.in_edges(v), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	{
+		ve1.push_back(e2i[*it1]);
+	}
+	for(pei = gr.out_edges(v), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	{
+		ve2.push_back(e2i[*it1]);
+	}
+	return balance_vertex(v, ve1, ve2);
 }
 
 double scallop::compute_balance_ratio(int v)
