@@ -86,6 +86,7 @@ parameters::parameters()
 	min_transcript_length_increase = 50;
 	min_single_exon_transcript_coverage = 3.5;
 	min_single_exon_transcript_length = 250;
+	min_single_exon_clustering_overlap = 0.8;
 	min_exon_length = 20;
 	max_num_exons = 10000;
 
@@ -94,7 +95,6 @@ parameters::parameters()
 	max_cluster_intron_distance = 5;
 	max_cluster_intron_shifting = 10;
 	long_reads_cluster_boosting = 5;
-	min_single_exon_clustering_overlap = 0.8;
 }
 
 int parameters::parse_arguments(int argc, const char ** argv, int data_type)
@@ -460,6 +460,7 @@ int parameters::print_help()
 	printf(" %-42s  %s\n", "",  "--min_transcript_length_base + --min_transcript_length_increase * num-of-exons");
 	printf(" %-42s  %s\n", "--min_single_exon_coverage <float>",  "minimum coverage required for a single-exon transcript, default: 20");
 	printf(" %-42s  %s\n", "--min_single_exon_transcript_length <integer>",  "minimum length of single-exon transcript, default: 250");
+	printf(" %-42s  %s\n", "--min_single_exon_clustering_overlap <float>",  "minimum overlaping ratio to merge two single-exon transcripts, default: 0.8");
 	printf(" %-42s  %s\n", "--min_mapping_quality <integer>",  "ignore reads with mapping quality less than this value, default: 1");
 	printf(" %-42s  %s\n", "--max_num_cigar <integer>",  "ignore reads with CIGAR size larger than this value, default: 1000");
 	printf(" %-42s  %s\n", "--min_bundle_gap <integer>",  "minimum distances required to start a new bundle, default: 50");
