@@ -94,7 +94,7 @@ parameters::parameters()
 	max_cluster_intron_distance = 5;
 	max_cluster_intron_shifting = 10;
 	long_reads_cluster_boosting = 5;
-	min_cluster_single_exon_ratio = 0.8;
+	min_single_exon_clustering_overlap = 0.8;
 }
 
 int parameters::parse_arguments(int argc, const char ** argv, int data_type)
@@ -193,6 +193,11 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 		else if(string(argv[i]) == "--min_single_exon_transcript_length")
 		{
 			min_single_exon_transcript_length = atoi(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "--min_single_exon_clustering_overlap")
+		{
+			min_single_exon_clustering_overlap = atof(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "--min_transcript_length_base")

@@ -131,7 +131,7 @@ bool cluster::verify_equal(int x, int y)
 			double r1 = (px.second - py.first) * 1.0 / (px.second - px.first);
 			double r2 = (px.second - py.first) * 1.0 / (py.second - py.first);
 			double r = r1 > r2 ? r1 : r2;
-			if(r >= cfg.min_cluster_single_exon_ratio) return true;
+			if(r >= cfg.min_single_exon_clustering_overlap) return true;
 			else return false;
 		}
 		else
@@ -141,7 +141,7 @@ bool cluster::verify_equal(int x, int y)
 			double r1 = (py.second - px.first) * 1.0 / (py.second - py.first);
 			double r2 = (py.second - px.first) * 1.0 / (px.second - px.first);
 			double r = r1 > r2 ? r1 : r2;
-			if(r >= cfg.min_cluster_single_exon_ratio) return true;
+			if(r >= cfg.min_single_exon_clustering_overlap) return true;
 			else return false;
 		}
 	}
