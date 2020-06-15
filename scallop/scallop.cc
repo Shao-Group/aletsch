@@ -1234,6 +1234,7 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 		int e1 = it->first.first;
 		int e2 = it->first.second;
 		double w = it->second;
+		assert(w >= cfg.min_guaranteed_edge_weight);
 		if(md.find(e1) == md.end()) md.insert(PID(e1, w));
 		else md[e1] += w;
 		if(md.find(e2) == md.end()) md.insert(PID(e2, w));
@@ -1243,7 +1244,6 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 	{
 		edge_descriptor e = i2e[it->first];
 		double w = it->second;
-		assert(w >= cfg.min_guaranteed_edge_weight);
 		gr.set_edge_weight(e, w);
 	}
 
