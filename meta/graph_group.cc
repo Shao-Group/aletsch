@@ -129,12 +129,12 @@ int graph_group::build_similarity(const vector<int> &ss, vector<PPID> &vpid, boo
 	for(int xi = 0; xi < ss.size(); xi++)
 	{
 		int i = ss[xi];
-		if(gset[i].junctions.size() > cfg.max_junctions_combine) continue;
+		if(gset[i].junctions.size() > cfg.max_num_junctions_to_combine) continue;
 		for(int xj = 0; xj < ss.size(); xj++)
 		{
 			int j = ss[xj];
 			if(i >= j) continue;
-			if(gset[j].junctions.size() > cfg.max_junctions_combine) continue;
+			if(gset[j].junctions.size() > cfg.max_num_junctions_to_combine) continue;
 
 			assert(gset[i].chrm == gset[j].chrm);
 			assert(gset[i].strand == gset[j].strand);
