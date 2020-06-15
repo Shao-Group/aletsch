@@ -499,6 +499,8 @@ bool scallop::resolve_hyper_edge(int fsize)
 			w += z;
 			w1[i] += z;
 			w2[j] += z;
+			assert(w1[i] >= cfg.min_guaranteed_edge_weight);
+			assert(w2[j] >= cfg.min_guaranteed_edge_weight);
 			gr.set_edge_weight(i2e[v1[i]], z + gr.get_edge_weight(i2e[v1[i]]));
 			gr.set_edge_weight(i2e[v2[j]], z + gr.get_edge_weight(i2e[v2[j]]));
 		}
@@ -511,7 +513,12 @@ bool scallop::resolve_hyper_edge(int fsize)
 		for(int j = 0; j < w2.size(); j++)
 		{
 			double w = (w1[i] < w2[j]) ? w1[i] : w2[j];
-			assert(w >= cfg.min_guaranteed_edge_weight);
+
+			if(w < cfg.min_guaranteed_edge_weight)
+			{
+				printf("i = %d, j = %d, w1 = %lf, w2 = %lf, w = %lf, min = %lf\n", i, j, w1[i], w2[j], w, cfg.min_guaranteed_edge_weight);
+				assert(w >= cfg.min_guaranteed_edge_weight);
+			}
 
 			flag = true;
 			int k1 = split_edge(v1[i], w);
