@@ -1585,8 +1585,11 @@ int scallop::split_edge(int ei, double w)
 
 	double ww = gr.get_edge_weight(ee);
 
-	if(fabs(ww - w) <= SMIN) return ei;
-	assert(ww >= w + SMIN);
+	if(ww <= w + cfg.min_guaranteed_edge_weight)
+	{
+		gr.set_edge_weight(ee, w);
+		return ei;
+	}
 
 	int s = ee->source();
 	int t = ee->target();
