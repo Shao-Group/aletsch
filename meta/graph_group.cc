@@ -197,6 +197,7 @@ int graph_group::build_groups(const vector<int> &ss, disjoint_set &ds)
 		int p = ds.find_set(i);
 		int s = ds.get_size(p);
 		if(s < min_group_size) continue;
+		if(grouped[ss[i]] == true) continue;
 
 		grouped[ss[i]] = true;
 		if(mm.find(p) == mm.end())
@@ -273,7 +274,7 @@ int graph_group::print()
 		for(int i = 0; i < gvv[k].size(); i++)
 		{
 			int g = gvv[k][i];
-			printf("%s, ", gset[g].gid.c_str());
+			printf("(%d, %s), ", g, gset[g].gid.c_str());
 		}
 		printf("\n");
 	}

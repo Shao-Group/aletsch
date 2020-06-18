@@ -9,12 +9,6 @@ See LICENSE for licensing.
 #include "constants.h"
 #include "phase_set.h"
 
-int phase_set::clear()
-{
-	pmap.clear();
-	return 0;
-}
-
 int phase_set::add(const vector<int32_t> &v, int c)
 {
 	if(v.size() <= 0)
@@ -56,7 +50,7 @@ int phase_set::combine(const phase_set &ps)
 int phase_set::project_boundaries(const map<int32_t, int32_t> &smap, const map<int32_t, int32_t> &tmap)
 {
 	phase_set ps;
-	for(auto x = pmap.begin(); x != pmap.end(); x++)
+	for(MVII::iterator x = pmap.begin(); x != pmap.end(); x++)
 	{
 		vector<int32_t> v = x->first;
 		int c = x->second;
@@ -68,8 +62,7 @@ int phase_set::project_boundaries(const map<int32_t, int32_t> &smap, const map<i
 		if(it != tmap.end()) v[v.size() - 1] = it->second;
 		ps.add(v, c);
 	}
-	pmap = ps.pmap;
-	//pmap = std::move(ps.pmap);
+	pmap = std::move(ps.pmap);
 	return 0;
 }
 
@@ -107,7 +100,6 @@ int phase_set::project_junctions(const map<PI32, PI32> &jm)
 		if(succeed == true) ps.add(vv, c);
 		//else ps.add(v, c);
 	}
-	//pmap = std::move(ps.pmap);
-	pmap = ps.pmap;
+	pmap = std::move(ps.pmap);
 	return 0;
 }

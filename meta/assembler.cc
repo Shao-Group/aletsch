@@ -37,7 +37,6 @@ int assembler::assemble(vector<combined_graph*> gv, int batch, int instance, tra
 		gt.refine_junctions();
 		assemble(gt, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		ts.increase_count(1);
-
 		if(cfg.output_bridged_bam_dir != "" && gt.vc.size() >= 1)
 		{
 			sample_profile &sp = samples[gt.sid];
@@ -102,7 +101,6 @@ int assembler::assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt,
 	px.project_boundaries(smap, tmap);
 
 	refine_splice_graph(gx);
-
 	hyper_set hx(gx, px);
 	hx.filter_nodes(gx);
 

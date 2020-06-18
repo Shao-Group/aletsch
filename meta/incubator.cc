@@ -58,9 +58,8 @@ int incubator::resolve()
 		if(found == string::npos) continue;
 
 		// test
-		//if(chrm != "chr11_KI270721v1_random") continue;
-
 		/*
+		//if(chrm != "chr11_KI270721v1_random") continue;
 		if(chrm == "chr1") continue;
 		if(chrm == "chr10") continue;
 		if(chrm == "chr11") continue;
@@ -147,15 +146,9 @@ int incubator::init_samples()
 				//sp.read_align_headers();
 				//printf("sp.hdr->n_targets = %d\n", sp.hdr->n_targets);
 				sp.read_index_iterators(); 
-
-
-				// TODO
-				/*
 				previewer pre(params[sp.data_type], sp);
 				pre.infer_library_type();
 				if(sp.data_type == PAIRED_END) pre.infer_insertsize();
-				*/
-
 				string bdir = params[DEFAULT].output_bridged_bam_dir;
 				if(bdir != "") sp.init_bridged_bam(bdir);
 		});
@@ -229,18 +222,6 @@ int incubator::merge()
 	for(int k = 0; k < groups.size(); k++) groups[k].resolve();
 	print_groups();
 	return 0;
-
-	/*
-	boost::asio::thread_pool pool(params[DEFAULT].max_threads); // thread pool
-	for(int k = 0; k < groups.size(); k++)
-	{
-		graph_group &gp = groups[k];
-		boost::asio::post(pool, [&gp]{ gp.resolve(); });
-	}
-	pool.join();
-	print_groups();
-	return 0;	
-	*/
 }
 
 int incubator::assemble()
@@ -251,12 +232,18 @@ int incubator::assemble()
 	int instance = 0;
 	for(int i = 0; i < groups.size(); i++)
 	{
+		vector<bool> vb(groups[i].gset.size(), false);
 		for(int k = 0; k < groups[i].gvv.size(); k++)
 		{
 			const vector<int> &v = groups[i].gvv[k];
 			if(v.size() == 0) continue;
 			vector<combined_graph*> gv;
-			for(int j = 0; j < v.size(); j++) gv.push_back(&(groups[i].gset[v[j]]));
+			for(int j = 0; j < v.size(); j++)
+			{
+				gv.push_back(&(groups[i].gset[v[j]]));
+				assert(vb[v[j]] == false);
+				vb[v[j]] = true;
+			}
 			boost::asio::post(pool, [this, gv, instance, &mylock]{ this->assemble(gv, instance, mylock); });
 			instance++;
 		}
@@ -393,6 +380,9 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	if(gv.size() == 0) return 0;
 
 	transcript_set ts(gv.front()->chrm, params[DEFAULT].min_single_exon_clustering_overlap);
+
+	//printf("assemble instance %d with %lu graphs\n", instance, gv.size());
+	//for(int k = 0; k < gv.size(); k++) gv[k]->print(k);
 
 	assembler asmb(params[DEFAULT]);
 	asmb.assemble(gv, 0, instance, ts, samples);

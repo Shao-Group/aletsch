@@ -22,13 +22,6 @@ typedef map<vector<int32_t>, int> MVII;
 class phase_set
 {
 public:
-	phase_set() {}
-	phase_set(const phase_set &pc) = default;
-	phase_set(phase_set &&pc) = default;
-	phase_set& operator=(phase_set &&pc) = default;
-	phase_set& operator=(const phase_set &pc) = default;
-
-public:
 	MVII pmap;			// hyper-edges using list-of-coordinates
 
 public:
@@ -36,7 +29,6 @@ public:
 	int combine(const phase_set &ps);
 	int project_boundaries(const map<int32_t, int32_t> &smap, const map<int32_t, int32_t> &tmap);
 	int project_junctions(const map<PI32, PI32> &jm);
-	int clear();
 	int print();
 };
 
