@@ -53,7 +53,7 @@ public:
 	int set_gid(int batch, int instance, int subindex);
 
 	// build from gr, hs, and ub
-	int build(splice_graph &gr, phase_set &&ps, vector<pereads_cluster> &&ub);
+	int build(splice_graph &gr, const phase_set &ps, vector<pereads_cluster> &&ub);
 	int build_regions(splice_graph &gr);
 	int build_start_bounds(splice_graph &gr);
 	int build_end_bounds(splice_graph &gr);

@@ -36,7 +36,7 @@ int combined_graph::set_gid(int batch, int instance, int subindex)
 	return 0;
 }
 
-int combined_graph::build(splice_graph &gr, phase_set &&p, vector<pereads_cluster> &&ub)
+int combined_graph::build(splice_graph &gr, const phase_set &p, vector<pereads_cluster> &&ub)
 {
 	chrm = gr.chrm;
 	strand = gr.strand;
@@ -46,7 +46,8 @@ int combined_graph::build(splice_graph &gr, phase_set &&p, vector<pereads_cluste
 	build_start_bounds(gr);
 	build_end_bounds(gr);
 	build_splices_junctions(gr);
-	ps = std::move(p);
+	//ps = std::move(p);
+	ps = p;
 	vc = std::move(ub);
 	return 0;
 }
