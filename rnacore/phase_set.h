@@ -22,7 +22,7 @@ typedef map<vector<int32_t>, int> MVII;
 class phase_set
 {
 public:
-	phase_set();
+	phase_set() {}
 	phase_set(const phase_set &pc) = default;
 	phase_set(phase_set &&pc) = default;
 	phase_set& operator=(phase_set &&pc) = default;
