@@ -55,7 +55,7 @@ int incubator::resolve()
 		tmerge.chrm = chrm;
 
 		// test
-		if(chrm != "chr11_KI270721v1_random") continue;
+		//if(chrm != "chr11_KI270721v1_random") continue;
 
 		/*
 		if(chrm == "chr1") continue;

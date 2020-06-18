@@ -68,7 +68,8 @@ int phase_set::project_boundaries(const map<int32_t, int32_t> &smap, const map<i
 		if(it != tmap.end()) v[v.size() - 1] = it->second;
 		ps.add(v, c);
 	}
-	pmap = std::move(ps.pmap);
+	pmap = ps.pmap;
+	//pmap = std::move(ps.pmap);
 	return 0;
 }
 
@@ -106,7 +107,7 @@ int phase_set::project_junctions(const map<PI32, PI32> &jm)
 		if(succeed == true) ps.add(vv, c);
 		//else ps.add(v, c);
 	}
-
-	pmap = std::move(ps.pmap);
+	//pmap = std::move(ps.pmap);
+	pmap = ps.pmap;
 	return 0;
 }
