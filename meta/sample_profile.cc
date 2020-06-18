@@ -18,6 +18,10 @@ sample_profile::sample_profile()
 	bridged_bam = NULL;
 	individual_gtf = NULL;
 	data_type = DEFAULT;
+	insertsize_low = 80;
+	insertsize_high = 500;
+	insertsize_median = 250;
+	library_type == UNSTRANDED;
 }
 
 int sample_profile::read_align_headers()

@@ -147,9 +147,15 @@ int incubator::init_samples()
 				//sp.read_align_headers();
 				//printf("sp.hdr->n_targets = %d\n", sp.hdr->n_targets);
 				sp.read_index_iterators(); 
+
+
+				// TODO
+				/*
 				previewer pre(params[sp.data_type], sp);
 				pre.infer_library_type();
 				if(sp.data_type == PAIRED_END) pre.infer_insertsize();
+				*/
+
 				string bdir = params[DEFAULT].output_bridged_bam_dir;
 				if(bdir != "") sp.init_bridged_bam(bdir);
 		});
