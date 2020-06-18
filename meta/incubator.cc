@@ -54,6 +54,9 @@ int incubator::resolve()
 		string chrm = x.first;
 		tmerge.chrm = chrm;
 
+		size_t found = chrm.find("_");
+		if(found == string::npos) continue;
+
 		// test
 		//if(chrm != "chr11_KI270721v1_random") continue;
 
