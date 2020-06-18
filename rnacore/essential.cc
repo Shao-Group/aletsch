@@ -207,6 +207,14 @@ bool build_path_from_exon_coordinates(splice_graph &gr, const vector<int32_t> &v
 	{
 		int32_t p = v[2 * k + 0];
 		int32_t q = v[2 * k + 1];
+		if(p < 0 || q < 0)
+		{
+			printf("negative build-path-from-exon-coordinates: ");
+			printv(v);
+			printf("\n");
+			return false;
+		}
+
 		assert(p >= 0 && q >= 0);
 		if(p >= q) return false;
 		if(gr.lindex.find(p) == gr.lindex.end()) return false;
