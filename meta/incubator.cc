@@ -55,7 +55,16 @@ int incubator::resolve()
 		tmerge.chrm = chrm;
 
 		// test
-		//if(chrm != "19") continue;
+		/*
+		if(chrm == "chr1") continue;
+		if(chrm == "chr10") continue;
+		if(chrm == "chr11") continue;
+		if(chrm == "chr12") continue;
+		if(chrm == "chr13") continue;
+		if(chrm == "chr14") continue;
+		if(chrm == "chr11_KI270721v1_random") continue;
+		if(chrm == "chr14_GL000009v2_random") continue;
+		*/
 
 		mytime = time(NULL);
 		printf("start processing chrm %s, %s", chrm.c_str(), ctime(&mytime));

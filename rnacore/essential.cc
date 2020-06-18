@@ -118,10 +118,6 @@ int build_exon_coordinates_from_path(splice_graph &gr, const vector<int> &v, vec
 
 	int n = gr.num_vertices() - 1;
 	int32_t pre = -99999;
-
-	if(v.front() == 0) vv.push_back(-1);
-	if(v.front() == 0) vv.push_back(-1);
-
 	for(int i = 0; i < v.size(); i++)
 	{
 		int p = v[i];
@@ -143,10 +139,7 @@ int build_exon_coordinates_from_path(splice_graph &gr, const vector<int> &v, vec
 
 		pre = qq;
 	}
-
 	if(pre >= 0) vv.push_back(pre);
-	if(v.back() == n) vv.push_back(-2);
-	if(v.back() == n) vv.push_back(-2);
 
 	return 0;
 }
@@ -282,12 +275,13 @@ bool build_path_from_mixed_coordinates(splice_graph &gr, const vector<int32_t> &
 	// assume v[1..n-1] encodes intron-chain coordinates
 	vv.clear();
 	assert(v.size() % 2 == 0);
-	if(v.size() <= 0) return true;
+	if(v.size() <= 0) return false;
 
 	int u1 = gr.locate_vertex(v.front());
 	int u2 = gr.locate_vertex(v.back() - 1);
 
 	if(u1 < 0 || u2 < 0) return false;
+	if(u1 > u2) return false;
 
 	if(v.size() == 2)
 	{
@@ -298,7 +292,6 @@ bool build_path_from_mixed_coordinates(splice_graph &gr, const vector<int32_t> &
 	vector<int> uu;
 	vector<int32_t> u(v.begin() + 1, v.end() - 1);
 	bool b = build_path_from_intron_coordinates(gr, u, uu);
-	
 	if(b == false) return false;
 
 	for(int i = u1; i < uu.front(); i++) vv.push_back(i);

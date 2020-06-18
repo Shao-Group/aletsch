@@ -389,7 +389,7 @@ int generator::partition(splice_graph &gr, phase_set &ps, vector<pereads_cluster
 	}
 
 	psv.resize(vv.size());
-	for(MVII::const_iterator it = ps.pmap.begin(); it != ps.pmap.end(); it++)
+	for(MVII::iterator it = ps.pmap.begin(); it != ps.pmap.end(); it++)
 	{
 		const vector<int> &v = it->first;
 		assert(v.size() % 2 == 0);
