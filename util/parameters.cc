@@ -25,7 +25,7 @@ parameters::parameters()
 	output_bridged_bam_dir = "";
 	profile_dir = "";
 	verbose = 1;
-	algo = "meta-scallop";
+	algo = "aletsch";
 	version = "0.1.8";
 	max_threads = 10;
 	profile_only = false;
