@@ -11,8 +11,9 @@ See LICENSE for licensing.
 mutex sample_profile::bam_lock;
 mutex sample_profile::gtf_lock;
 
-sample_profile::sample_profile()
+sample_profile::sample_profile(int id)
 {
+	sample_id = id;
 	sfn = NULL;
 	hdr = NULL;
 	bridged_bam = NULL;
@@ -22,6 +23,63 @@ sample_profile::sample_profile()
 	insertsize_high = 500;
 	insertsize_median = 250;
 	library_type = UNSTRANDED;
+}
+
+int sample_profile::load_profile(const string &dir)
+{
+	char file[10240];
+	sprintf(file, "%s/%d.profile", dir.c_str(), sample_id);
+	ifstream fin(file);
+	if(fin.fail())
+	{
+		printf("cannot open profile to read: %s\n", file);
+		return 0;
+	}
+
+	char line[10240];
+	while(fin.getline(line, 10240, '\n'))
+	{
+		if(string(line) == "") continue;
+		stringstream sstr(line);
+		char key[10240];
+		sstr >> key;
+		
+		if(string(key) == "library_type") sstr >> library_type;
+		if(string(key) == "insertsize_low") sstr >> insertsize_low;
+		if(string(key) == "insertsize_high") sstr >> insertsize_high;
+		if(string(key) == "insertsize_median") sstr >> insertsize_median;
+		if(string(key) == "insertsize_ave") sstr >> insertsize_ave;
+		if(string(key) == "insertsize_std") sstr >> insertsize_std;
+	}
+
+	fin.close();
+	return 0;
+}
+
+int sample_profile::save_profile(const string &dir)
+{
+	char file[10240];
+	sprintf(file, "%s/%d.profile", dir.c_str(), sample_id);
+	ofstream fout(file);
+	if(fout.fail())
+	{
+		printf("cannot open profile to write: %s\n", file);
+		return 0;
+	}
+
+	fout << "library_type" << " " << library_type << endl;
+
+	if(data_type == PAIRED_END)
+	{
+		fout << "insertsize_low" << " " << insertsize_low << endl;
+		fout << "insertsize_high" << " " << insertsize_high << endl;
+		fout << "insertsize_median" << " " << insertsize_median << endl;
+		fout << "insertsize_ave" << " " << insertsize_ave << endl;
+		fout << "insertsize_std" << " " << insertsize_std << endl;
+	}
+
+	fout.close();
+	return 0;
 }
 
 int sample_profile::read_align_headers()

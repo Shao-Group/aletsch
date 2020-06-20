@@ -23,6 +23,7 @@ parameters::parameters()
 	output_gtf_file = "";
 	output_gtf_dir = "";
 	output_bridged_bam_dir = "";
+	profile_dir = "";
 	verbose = 1;
 	algo = "meta-scallop";
 	version = "0.1.7";
@@ -116,9 +117,14 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			output_gtf_dir = string(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "-D")
+		else if(string(argv[i]) == "-a")
 		{
 			output_bridged_bam_dir = string(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "-p")
+		{
+			profile_dir = string(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "-t")
@@ -448,7 +454,8 @@ int parameters::print_help()
 	printf(" %-42s  %s\n", "--help",  "print usage of meta-scallop and exit");
 	printf(" %-42s  %s\n", "--version",  "print current version of meta-scallop and exit");
 	printf(" %-42s  %s\n", "-d <string>",  "existing directory for individual transcripts, default: N/A");
-	printf(" %-42s  %s\n", "-D <string>",  "existing directory for individual bridged alignments, default: N/A");
+	printf(" %-42s  %s\n", "-a <string>",  "existing directory for individual bridged alignments, default: N/A");
+	printf(" %-42s  %s\n", "-p <string>",  "existing directory for saving/loading profiles of each samples, default: N/A");
 	printf(" %-42s  %s\n", "-t/--max_threads <integer>",  "maximized number of threads, default: 10");
 	printf(" %-42s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 20");
 	printf(" %-42s  %s\n", "-s/--min_grouping_similarity <float>",  "the minimized similarity for two graphs to be combined, default: 0.2");

@@ -29,6 +29,7 @@ See LICENSE for licensing.
 incubator::incubator(vector<parameters> &v)
 	: params(v), tmerge("", params[DEFAULT].min_single_exon_clustering_overlap)
 {
+	if(params[DEFAULT].output_gtf_file == "") return;
 	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str());
 	if(meta_gtf.fail())
 	{
@@ -39,6 +40,7 @@ incubator::incubator(vector<parameters> &v)
 
 incubator::~incubator()
 {
+	if(params[DEFAULT].output_gtf_file == "") return;
 	meta_gtf.close();
 }
 
@@ -46,6 +48,9 @@ int incubator::resolve()
 {
 	read_bam_list();
 	init_samples();
+
+	if(params[DEFAULT].output_gtf_file == "") return 0;
+
 	build_sample_index();
 
 	time_t mytime;
@@ -116,7 +121,7 @@ int incubator::read_bam_list()
 	{
 		if(strlen(line) <= 0) continue;
 		stringstream sstr(line);
-		sample_profile sp;
+		sample_profile sp(samples.size());
 		char align_file[10240];
 		char index_file[10240];
 		char type[10240];
@@ -129,7 +134,7 @@ int incubator::read_bam_list()
 		if(string(type) == "pacbio_sub") sp.data_type = PACBIO_SUB;
 		if(string(type) == "ont") sp.data_type = ONT;
 		assert(sp.data_type != DEFAULT);
-		sp.sample_id = samples.size();
+		assert(sp.sample_id == samples.size());
 		samples.push_back(sp);
 	}
 	return 0;
@@ -141,15 +146,32 @@ int incubator::init_samples()
 	for(int i = 0; i < samples.size(); i++)
 	{
 		sample_profile &sp = samples[i];
-		boost::asio::post(pool, [this, &sp] {
-				//sp.read_align_headers();
-				//printf("sp.hdr->n_targets = %d\n", sp.hdr->n_targets);
-				sp.read_index_iterators(); 
-				previewer pre(params[sp.data_type], sp);
-				pre.infer_library_type();
-				if(sp.data_type == PAIRED_END) pre.infer_insertsize();
-				string bdir = params[DEFAULT].output_bridged_bam_dir;
-				if(bdir != "") sp.init_bridged_bam(bdir);
+		boost::asio::post(pool, [this, &sp] 
+		{
+				const parameters &cfg = this->params[sp.data_type];
+				if(cfg.profile_dir != "" && cfg.output_gtf_file != "")
+				{
+					sp.load_profile(cfg.profile_dir);
+					sp.read_index_iterators(); 
+					string bdir = cfg.output_bridged_bam_dir;
+					if(bdir != "") sp.init_bridged_bam(bdir);
+				}
+				else if(cfg.profile_dir != "" && cfg.output_gtf_file == "")
+				{
+					previewer pre(cfg, sp);
+					pre.infer_library_type();
+					if(sp.data_type == PAIRED_END) pre.infer_insertsize();
+					sp.save_profile(cfg.profile_dir);
+				}
+				else if(cfg.output_gtf_file != "")
+				{
+					sp.read_index_iterators(); 
+					previewer pre(cfg, sp);
+					pre.infer_library_type();
+					if(sp.data_type == PAIRED_END) pre.infer_insertsize();
+					string bdir = cfg.output_bridged_bam_dir;
+					if(bdir != "") sp.init_bridged_bam(bdir);
+				}
 		});
 	}
 	pool.join();

@@ -27,6 +27,7 @@ public:
 	string output_gtf_file;
 	string output_gtf_dir;
 	string output_bridged_bam_dir;
+	string profile_dir;
 	int verbose;
 	string algo;
 	string version;

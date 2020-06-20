@@ -18,7 +18,7 @@ using namespace std;
 class sample_profile
 {
 public:
-	sample_profile();
+	sample_profile(int id);
 
 public:
 	int sample_id;
@@ -30,17 +30,19 @@ public:
 	ofstream *individual_gtf;
 	static mutex bam_lock;
 	static mutex gtf_lock;
-	int library_type;
 	int data_type;
-	double insertsize_ave;
-	double insertsize_std;
+	int library_type;
 	int insertsize_low;
 	int insertsize_high;
 	int insertsize_median;
+	double insertsize_ave;
+	double insertsize_std;
 	vector<double> insertsize_profile;
 	vector<hts_itr_t*> iters;
 
 public:
+	int load_profile(const string &dir);
+	int save_profile(const string &dir);
 	int open_align_file();
 	int open_bridged_bam(const string &dir);
 	int init_bridged_bam(const string &dir);
