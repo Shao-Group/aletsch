@@ -33,6 +33,7 @@ public:
 	string algo;
 	string version;
 	int max_threads;
+	bool profile_only;
 
 	// for meta-assembly
 	int max_group_size;

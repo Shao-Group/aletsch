@@ -28,6 +28,7 @@ parameters::parameters()
 	algo = "meta-scallop";
 	version = "0.1.7";
 	max_threads = 10;
+	profile_only = false;
 
 	// for meta-assembly
 	max_group_size = 20;
@@ -107,14 +108,19 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			input_bam_list = string(argv[i + 1]);
 			i++;
 		}
+		else if(string(argv[i]) == "-o")
+		{
+			output_gtf_file = string(argv[i + 1]);
+			i++;
+		}
 		if(string(argv[i]) == "-l")
 		{
 			chrm_list_file = string(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "-o")
+		if(string(argv[i]) == "--chrm_list_file")
 		{
-			output_gtf_file = string(argv[i + 1]);
+			chrm_list_file = string(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "-d")
@@ -122,7 +128,17 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			output_gtf_dir = string(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "-a")
+		else if(string(argv[i]) == "--output_gtf_dir")
+		{
+			output_gtf_dir = string(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "-b")
+		{
+			output_bridged_bam_dir = string(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "--output_bridged_bam_dir")
 		{
 			output_bridged_bam_dir = string(argv[i + 1]);
 			i++;
@@ -132,7 +148,17 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			profile_dir = string(argv[i + 1]);
 			i++;
 		}
+		else if(string(argv[i]) == "--profile_dir")
+		{
+			profile_dir = string(argv[i + 1]);
+			i++;
+		}
 		else if(string(argv[i]) == "-t")
+		{
+			max_threads = atoi(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "--max_threads")
 		{
 			max_threads = atoi(argv[i + 1]);
 			i++;
@@ -156,6 +182,10 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 		{
 			max_group_size = atoi(argv[i + 1]);
 			i++;
+		}
+		else if(string(argv[i]) == "--profile")
+		{
+			profile_only = true;
 		}
 		else if(string(argv[i]) == "--version")
 		{
@@ -456,29 +486,29 @@ int parameters::print_help()
 	printf("Usage: meta-scallop -i <input-bam-list> -o <output.gtf> [options]\n");
 	printf("\n");
 	printf("Options:\n");
-	printf(" %-42s  %s\n", "--help",  "print usage of meta-scallop and exit");
-	printf(" %-42s  %s\n", "--version",  "print current version of meta-scallop and exit");
-	printf(" %-42s  %s\n", "-l <string>",  "list of chromosomes that will be assembled, default: N/A (i.e., assemble all)");
-	printf(" %-42s  %s\n", "-d <string>",  "existing directory for individual transcripts, default: N/A");
-	printf(" %-42s  %s\n", "-a <string>",  "existing directory for individual bridged alignments, default: N/A");
-	printf(" %-42s  %s\n", "-p <string>",  "existing directory for saving/loading profiles of each samples, default: N/A");
-	printf(" %-42s  %s\n", "-t/--max_threads <integer>",  "maximized number of threads, default: 10");
-	printf(" %-42s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 20");
-	printf(" %-42s  %s\n", "-s/--min_grouping_similarity <float>",  "the minimized similarity for two graphs to be combined, default: 0.2");
-	printf(" %-42s  %s\n", "--min_bridging_score <float>",  "the minimum score for bridging a paired-end reads, default: 1.5");
-	printf(" %-42s  %s\n", "--min_splice_bundary_hits <integer>",  "the minimum number of spliced reads required to support a junction, default: 1");
-	printf(" %-42s  %s\n", "--min_transcript_coverage <float>",  "minimum coverage required for a multi-exon transcript, default: 1.0");
-	printf(" %-42s  %s\n", "--min_transcript_length_increase <integer>",  "default: 50");
-	printf(" %-42s  %s\n", "--min_transcript_length_base <integer>",  "default: 150, minimum length of a transcript would be");
-	printf(" %-42s  %s\n", "",  "--min_transcript_length_base + --min_transcript_length_increase * num-of-exons");
-	printf(" %-42s  %s\n", "--min_single_exon_coverage <float>",  "minimum coverage required for a single-exon transcript, default: 20");
-	printf(" %-42s  %s\n", "--min_single_exon_transcript_length <integer>",  "minimum length of single-exon transcript, default: 250");
-	printf(" %-42s  %s\n", "--min_single_exon_clustering_overlap <float>",  "minimum overlaping ratio to merge two single-exon transcripts, default: 0.8");
-	printf(" %-42s  %s\n", "--min_mapping_quality <integer>",  "ignore reads with mapping quality less than this value, default: 1");
-	printf(" %-42s  %s\n", "--max_num_cigar <integer>",  "ignore reads with CIGAR size larger than this value, default: 1000");
-	printf(" %-42s  %s\n", "--min_bundle_gap <integer>",  "minimum distances required to start a new bundle, default: 50");
-	printf(" %-42s  %s\n", "--min_num_hits_in_bundle <integer>",  "minimum number of reads required in a bundle, default: 20");
-	printf(" %-42s  %s\n", "--min_flank_length <integer>",  "minimum match length in each side for a spliced read, default: 3");
+	printf(" %-46s  %s\n", "--help",  "print usage of meta-scallop and exit");
+	printf(" %-46s  %s\n", "--version",  "print current version of meta-scallop and exit");
+	printf(" %-46s  %s\n", "--profile",  "profiling individual samples and exit (will write to files if -p provided)");
+	printf(" %-46s  %s\n", "-l/--chrm_list_file <string>",  "list of chromosomes that will be assembled, default: N/A (i.e., assemble all)");
+	printf(" %-46s  %s\n", "-d/--output_gtf_dir <string>",  "existing directory for individual transcripts, default: N/A");
+	printf(" %-46s  %s\n", "-b/--output_bridged_bam_dir <string>",  "existing directory for individual bridged alignments, default: N/A");
+	printf(" %-46s  %s\n", "-p/--profile_dir <string>",  "existing directory for saving/loading profiles of each samples, default: N/A");
+	printf(" %-46s  %s\n", "-t/--max_threads <integer>",  "maximized number of threads, default: 10");
+	printf(" %-46s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 20");
+	printf(" %-46s  %s\n", "-s/--min_grouping_similarity <float>",  "the minimized similarity for two graphs to be combined, default: 0.2");
+	printf(" %-46s  %s\n", "--min_bridging_score <float>",  "the minimum score for bridging a paired-end reads, default: 1.5");
+	printf(" %-46s  %s\n", "--min_splice_bundary_hits <integer>",  "the minimum number of spliced reads required to support a junction, default: 1");
+	printf(" %-46s  %s\n", "--min_transcript_coverage <float>",  "minimum coverage required for a multi-exon transcript, default: 1.0");
+	printf(" %-46s  %s\n", "--min_transcript_length_base <integer>",  "default: 150");
+	printf(" %-46s  %s\n", "--min_transcript_length_increase <integer>",  "default: 50, minimum length of a transcript: base + #exons * increase");
+	printf(" %-46s  %s\n", "--min_single_exon_coverage <float>",  "minimum coverage required for a single-exon transcript, default: 20");
+	printf(" %-46s  %s\n", "--min_single_exon_transcript_length <integer>",  "minimum length of single-exon transcript, default: 250");
+	printf(" %-46s  %s\n", "--min_single_exon_clustering_overlap <float>",  "minimum overlaping ratio to merge two single-exon transcripts, default: 0.8");
+	printf(" %-46s  %s\n", "--min_mapping_quality <integer>",  "ignore reads with mapping quality less than this value, default: 1");
+	printf(" %-46s  %s\n", "--max_num_cigar <integer>",  "ignore reads with CIGAR size larger than this value, default: 1000");
+	printf(" %-46s  %s\n", "--min_bundle_gap <integer>",  "minimum distances required to start a new bundle, default: 50");
+	printf(" %-46s  %s\n", "--min_num_hits_in_bundle <integer>",  "minimum number of reads required in a bundle, default: 20");
+	printf(" %-46s  %s\n", "--min_flank_length <integer>",  "minimum match length in each side for a spliced read, default: 3");
 	return 0;
 }
 

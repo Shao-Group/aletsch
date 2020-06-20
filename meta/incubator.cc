@@ -29,7 +29,7 @@ See LICENSE for licensing.
 incubator::incubator(vector<parameters> &v)
 	: params(v), tmerge("", params[DEFAULT].min_single_exon_clustering_overlap)
 {
-	if(params[DEFAULT].output_gtf_file == "") return;
+	if(params[DEFAULT].profile_only == true) return;
 	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str());
 	if(meta_gtf.fail())
 	{
@@ -40,7 +40,7 @@ incubator::incubator(vector<parameters> &v)
 
 incubator::~incubator()
 {
-	if(params[DEFAULT].output_gtf_file == "") return;
+	if(params[DEFAULT].profile_only == true) return;
 	meta_gtf.close();
 }
 
@@ -49,7 +49,7 @@ int incubator::resolve()
 	read_bam_list();
 	init_samples();
 
-	if(params[DEFAULT].output_gtf_file == "") return 0;
+	if(params[DEFAULT].profile_only == true) return 0;
 
 	build_sample_index();
 
@@ -149,29 +149,30 @@ int incubator::init_samples()
 		boost::asio::post(pool, [this, &sp] 
 		{
 				const parameters &cfg = this->params[sp.data_type];
-				if(cfg.profile_dir != "" && cfg.output_gtf_file != "")
+
+				if(cfg.profile_only == true)
+				{
+					previewer pre(cfg, sp);
+					pre.infer_library_type();
+					if(sp.data_type == PAIRED_END) pre.infer_insertsize();
+					if(cfg.profile_dir != "") sp.save_profile(cfg.profile_dir);
+					return;
+				}
+
+				if(cfg.profile_dir != "")
 				{
 					sp.load_profile(cfg.profile_dir);
-					sp.read_index_iterators(); 
-					string bdir = cfg.output_bridged_bam_dir;
-					if(bdir != "") sp.init_bridged_bam(bdir);
 				}
-				else if(cfg.profile_dir != "" && cfg.output_gtf_file == "")
+				else
 				{
 					previewer pre(cfg, sp);
 					pre.infer_library_type();
 					if(sp.data_type == PAIRED_END) pre.infer_insertsize();
-					sp.save_profile(cfg.profile_dir);
 				}
-				else if(cfg.output_gtf_file != "")
-				{
-					sp.read_index_iterators(); 
-					previewer pre(cfg, sp);
-					pre.infer_library_type();
-					if(sp.data_type == PAIRED_END) pre.infer_insertsize();
-					string bdir = cfg.output_bridged_bam_dir;
-					if(bdir != "") sp.init_bridged_bam(bdir);
-				}
+
+				sp.read_index_iterators(); 
+				string bdir = cfg.output_bridged_bam_dir;
+				if(bdir != "") sp.init_bridged_bam(bdir);
 		});
 	}
 	pool.join();
