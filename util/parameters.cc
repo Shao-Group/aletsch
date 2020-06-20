@@ -26,7 +26,7 @@ parameters::parameters()
 	profile_dir = "";
 	verbose = 1;
 	algo = "meta-scallop";
-	version = "0.1.7";
+	version = "0.1.8";
 	max_threads = 10;
 	profile_only = false;
 

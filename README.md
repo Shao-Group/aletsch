@@ -8,11 +8,11 @@ at overlapped gene loci. Eventually, the core algorithm used in Scallop (i.e., p
 is employed to decompose the combined splice graphs to transcripts.
 
 # Release
-Latest release of meta-scallop is [v0.1.7](https://github.com/Shao-Group/meta-scallop/releases/tag/v0.1.6).
+Latest release of meta-scallop is [v0.1.8](https://github.com/Shao-Group/meta-scallop/releases/tag/v0.1.8).
 
 # Installation
 Download the source code of meta-scallop from
-[here](https://github.com/Shao-Group/meta-scallop/releases/download/v0.1.7/meta-scallop-0.1.6.tar.gz).
+[here](https://github.com/Shao-Group/meta-scallop/releases/download/v0.1.8/meta-scallop-0.1.8.tar.gz).
 meta-scallop uses additional libraries of Boost and htslib. 
 If they have not been installed in your system, you first
 need to download and install them. You might also need to
