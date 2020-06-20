@@ -100,9 +100,9 @@ details.
  --version | | | print version of meta-scallop and exit
  --profile | | | profiling individual samples and exit (will write to files if -p provided)
  -l | string |    | the file consits of a list of chromosomes that will be assembled
- -d | string |    | the directory in which assembled transcripts for individual sample will be generated
- -b | string |    | the directory in which bridged alignments for individual sample will be generated
- -p | string |    | the directory in which profiles for individual sample will be read from / saved to
+ -d | string |    | the directory where transcripts for individual samples will be generated
+ -b | string |    | the directory where bridged alignments for individual samples will be generated
+ -p | string |    | the directory where profiles for individual samples will be read from / saved to
  -t | integer | 10  | number of threads
  -c | integer | 20  | the maximized number of splice graphs that will be combined into a cluster
  -s | float   | 0.2 | the minimized similarity between two splice graphs that will be combined
