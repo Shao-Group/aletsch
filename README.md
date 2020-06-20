@@ -84,10 +84,9 @@ The `protocol` is chosen from the 5 options: `single_end` (for illumina single-e
 `ont` (for Oxford Nanopore RNA-seq).
 Meta-Scallop will use different parameters / algorithms to process different data types.
 
-Meta-Scallop will try to infer the `library_type` of each individual sample
-using the `XS` tag stored in the input bam files. 
-Also make sure that they are sorted; otherwise run `samtools` to sort it (`samtools sort input.bam > input.sort.bam`).
-The assembled transcripts from all these samples will be written to `output.gtf`.
+Meta-Scallop requires that each input alignment file is sorted; otherwise run `samtools` to sort it (`samtools sort input.bam > input.sort.bam`).
+
+The assembled transcripts from all these samples will be written to `output.gtf`, in standard .gtf format.
 
 ## Options
 
@@ -99,14 +98,30 @@ details.
  ------------------------- | ------------- | ----------
  --help  | | print usage of meta-scallop and exit
  --version | | print version of meta-scallop and exit
+ --profile | | profiling individual samples and exit (will write to files if -p provided)
+ -l |     | the file consits of a list of chromosomes that will be assembled
+ -d |     | the directory in which assembled transcripts for individual sample will be generated
+ -b |     | the directory in which bridged alignments for individual sample will be generated
+ -p |     | the directory in which profiles for individual sample will be read from /saved to
  -t | 10  | number of threads
  -c | 20  | the maximized number of splice graphs that will be combined into a cluster
  -s | 0.2 | the minimized similarity between two splice graphs that will be combined
- -d |     | the directory in which assembled transcripts for individual sample will be generated
- -D |     | the directory in which bridged alignments for individual sample will be generated
+
+If `-l file` option is provided, Meta-Scallop will only assemble the specified chromosomes;
+otherwise, all chromosomes will be assembled.
 
 If `-d directory` option is provided, the assembled transcripts for each individual
 sample will be generated under the specified directory. 
-If `-D directory` option is provided, the bridged alignment files for each individual
+NOTE: make sure the specified directory exists, as `meta-scallop` will NOT create them in the program.
+
+If `-b directory` option is provided, the bridged alignment files for each individual
 sample will be generated under the specified directory. NOTE: make sure the specified
-directory exists, both for `-d` and `-D`, as `meta-scallop` will NOT create them in the program.
+directory exists, as `meta-scallop` will NOT create them in the program.
+
+If `-p directory` option is provided, the profile for for each individual
+sample will be saved to / read from the specified directory. NOTE: make sure the specified
+directory exists, as `meta-scallop` will NOT create them in the program.
+
+If `--profile` is provided, Meta-Scallop will only infer the profiles of
+individual samples.  NOTE: Meta-Scallop will infer the `library_type` of each
+individual sample using the `XS` tag stored in the input bam files. 
