@@ -24,6 +24,7 @@ public:
 public:
 	// for controling
 	string input_bam_list;
+	string chrm_list_file;
 	string output_gtf_file;
 	string output_gtf_dir;
 	string output_bridged_bam_dir;

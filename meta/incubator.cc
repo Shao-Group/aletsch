@@ -190,6 +190,21 @@ int incubator::free_samples()
 
 int incubator::build_sample_index()
 {
+	set<string> ss;
+	if(params[DEFAULT].chrm_list_file != "")
+	{
+		ifstream fin(params[DEFAULT].chrm_list_file.c_str());
+		if(fin.fail()) printf("cannot open chrm list file\n");
+		if(fin.fail()) exit(0);
+		char line[10240];
+		while(fin.getline(line, 10240, '\n'))
+		{
+			if(string(line) == "") continue;
+			ss.insert(string(line));
+		}
+		fin.close();
+	}
+
 	sindex.clear();
 	for(int i = 0; i < samples.size(); i++)
 	{
@@ -198,6 +213,9 @@ int incubator::build_sample_index()
 		for(int k = 0; k < sp.hdr->n_targets; k++)
 		{
 			string chrm(sp.hdr->target_name[k]);
+
+			if(params[DEFAULT].chrm_list_file != "" && ss.find(chrm) == ss.end()) continue;
+
 			if(sindex.find(chrm) == sindex.end())
 			{
 				vector<PI> v;

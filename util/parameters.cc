@@ -107,6 +107,11 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			input_bam_list = string(argv[i + 1]);
 			i++;
 		}
+		if(string(argv[i]) == "-l")
+		{
+			chrm_list_file = string(argv[i + 1]);
+			i++;
+		}
 		else if(string(argv[i]) == "-o")
 		{
 			output_gtf_file = string(argv[i + 1]);
@@ -453,6 +458,7 @@ int parameters::print_help()
 	printf("Options:\n");
 	printf(" %-42s  %s\n", "--help",  "print usage of meta-scallop and exit");
 	printf(" %-42s  %s\n", "--version",  "print current version of meta-scallop and exit");
+	printf(" %-42s  %s\n", "-l <string>",  "list of chromosomes that will be assembled, default: N/A (i.e., assemble all)");
 	printf(" %-42s  %s\n", "-d <string>",  "existing directory for individual transcripts, default: N/A");
 	printf(" %-42s  %s\n", "-a <string>",  "existing directory for individual bridged alignments, default: N/A");
 	printf(" %-42s  %s\n", "-p <string>",  "existing directory for saving/loading profiles of each samples, default: N/A");
