@@ -2,9 +2,9 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.63])
-AC_INIT(meta-scallop, 0.1.8, shaomingfu@gmail.com)
+AC_INIT(aletsch, 1.0.1, shaomingfu@gmail.com)
 AM_INIT_AUTOMAKE()
-AC_CONFIG_SRCDIR([meta/main.cc])
+AC_CONFIG_SRCDIR([aletsch.cc])
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.

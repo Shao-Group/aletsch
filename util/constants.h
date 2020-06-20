@@ -1,8 +1,8 @@
 /*
-Part of Scallop Transcript Assembler
-Part of meta-scallop 
-(c) 2017 by Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
+Part of aletsch 
 (c) 2020 by Mingfu Shao, The Pennsylvania State University.
+Part of Scallop Transcript Assembler
+(c) 2017 by Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
 See LICENSE for licensing.
 */
 

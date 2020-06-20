@@ -1,11 +1,11 @@
 /*
-Part of meta-scallop
+Part of aletsch
 (c) 2020 by Mingfu Shao, The Pennsylvania State University
 See LICENSE for licensing.
 */
 
-#ifndef __COMBINED_GROUP_H__
-#define __COMBINED_GROUP_H__
+#ifndef __GRAPH_GROUP_H__
+#define __GRAPH_GROUP_H__
 
 #include "parameters.h"
 #include "disjoint_set.h"

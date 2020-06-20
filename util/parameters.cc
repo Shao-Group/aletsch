@@ -1,5 +1,5 @@
 /*
-Part of meta-scallop
+Part of aletsch
 (c) 2020 by Mingfu Shao, The Pennsylvania State University
 Part of Scallop Transcript Assembler
 (c) 2017 by  Mingfu Shao, Carl Kingsford, and Carnegie Mellon University.
@@ -26,7 +26,7 @@ parameters::parameters()
 	profile_dir = "";
 	verbose = 1;
 	algo = "aletsch";
-	version = "0.1.8";
+	version = "1.0.1";
 	max_threads = 10;
 	profile_only = false;
 
@@ -483,11 +483,11 @@ int parameters::print_logo()
 int parameters::print_help()
 {
 	printf("\n");
-	printf("Usage: meta-scallop -i <input-bam-list> -o <output.gtf> [options]\n");
+	printf("Usage: aletsch -i <input-bam-list> -o <output.gtf> [options]\n");
 	printf("\n");
 	printf("Options:\n");
-	printf(" %-46s  %s\n", "--help",  "print usage of meta-scallop and exit");
-	printf(" %-46s  %s\n", "--version",  "print current version of meta-scallop and exit");
+	printf(" %-46s  %s\n", "--help",  "print usage of aletsch and exit");
+	printf(" %-46s  %s\n", "--version",  "print current version of aletsch and exit");
 	printf(" %-46s  %s\n", "--profile",  "profiling individual samples and exit (will write to files if -p provided)");
 	printf(" %-46s  %s\n", "-l/--chrm_list_file <string>",  "list of chromosomes that will be assembled, default: N/A (i.e., assemble all)");
 	printf(" %-46s  %s\n", "-d/--output_gtf_dir <string>",  "existing directory for individual transcripts, default: N/A");
@@ -514,6 +514,6 @@ int parameters::print_help()
 
 int parameters::print_copyright()
 {
-	printf("meta-scallop %s (c) 2020 Mingfu Shao, The Pennsylvania State University\n", version.c_str());
+	printf("aletsch %s (c) 2020 Mingfu Shao, The Pennsylvania State University\n", version.c_str());
 	return 0;
 }

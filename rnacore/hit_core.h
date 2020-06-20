@@ -1,3 +1,10 @@
+/*
+Part of aletsch
+(c) 2020 by Mingfu Shao, The Pennsylvania State University
+See LICENSE for licensing.
+*/
+
+
 #ifndef __HIT_CORE_H__
 #define __HIT_CORE_H__
 

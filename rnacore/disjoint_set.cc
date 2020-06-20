@@ -1,3 +1,9 @@
+/*
+Part of aletsch
+(c) 2020 by Mingfu Shao, The Pennsylvania State University
+See LICENSE for licensing.
+*/
+
 #include "disjoint_set.h"
 
 disjoint_set::disjoint_set()

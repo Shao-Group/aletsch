@@ -1,5 +1,5 @@
 /*
-Part of meta-scallop
+Part of aletsch
 (c) 2020 by Mingfu Shao, The Pennsylvania State University
 See LICENSE for licensing.
 */
@@ -654,7 +654,7 @@ int build_phase_set_from_unpaired_reads(phase_set &ps, splice_graph &gr, const v
 int build_transcript(splice_graph &gr, transcript &trst, const vector<int> &v, char strand, double abd, const string &tid)
 {
 	trst.seqname = gr.chrm;
-	trst.source = "scallop";
+	trst.source = "aletsch";
 	trst.gene_id = gr.gid;
 	trst.transcript_id = tid;
 	trst.coverage = log(1.0 + abd);
