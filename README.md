@@ -94,18 +94,18 @@ Meta-Scallop support the following parameters. It also supports all parameters
 that needed in the core algorithm of Scallop. Dry run `meta-scallop` for more
 details.
 
- Parameters | Default Value | Description
- ------------------------- | ------------- | ----------
- --help  | | print usage of meta-scallop and exit
- --version | | print version of meta-scallop and exit
- --profile | | profiling individual samples and exit (will write to files if -p provided)
- -l |     | the file consits of a list of chromosomes that will be assembled
- -d |     | the directory in which assembled transcripts for individual sample will be generated
- -b |     | the directory in which bridged alignments for individual sample will be generated
- -p |     | the directory in which profiles for individual sample will be read from /saved to
- -t | 10  | number of threads
- -c | 20  | the maximized number of splice graphs that will be combined into a cluster
- -s | 0.2 | the minimized similarity between two splice graphs that will be combined
+ Parameters | Type | Default Value | Description
+ ------------- | ------------ | ------------- | ----------
+ --help  | | | print usage of meta-scallop and exit
+ --version | | | print version of meta-scallop and exit
+ --profile | | | profiling individual samples and exit (will write to files if -p provided)
+ -l | string |    | the file consits of a list of chromosomes that will be assembled
+ -d | string |    | the directory in which assembled transcripts for individual sample will be generated
+ -b | string |    | the directory in which bridged alignments for individual sample will be generated
+ -p | string |    | the directory in which profiles for individual sample will be read from / saved to
+ -t | integer | 10  | number of threads
+ -c | integer | 20  | the maximized number of splice graphs that will be combined into a cluster
+ -s | float   | 0.2 | the minimized similarity between two splice graphs that will be combined
 
 If `-l file` option is provided, Meta-Scallop will only assemble the specified chromosomes;
 otherwise, all chromosomes will be assembled.
