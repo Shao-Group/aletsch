@@ -21,7 +21,7 @@ sample_profile::sample_profile()
 	insertsize_low = 80;
 	insertsize_high = 500;
 	insertsize_median = 250;
-	library_type == UNSTRANDED;
+	library_type = UNSTRANDED;
 }
 
 int sample_profile::read_align_headers()
