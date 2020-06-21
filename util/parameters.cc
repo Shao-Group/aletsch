@@ -23,6 +23,8 @@ parameters::parameters()
 	output_gtf_file = "";
 	output_gtf_dir = "";
 	output_bridged_bam_dir = "";
+	chrm_list_string = "";
+	chrm_list_file = "";
 	profile_dir = "";
 	verbose = 1;
 	algo = "aletsch";
@@ -114,6 +116,16 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			i++;
 		}
 		if(string(argv[i]) == "-l")
+		{
+			chrm_list_string = string(argv[i + 1]);
+			i++;
+		}
+		if(string(argv[i]) == "--chrm_list_string")
+		{
+			chrm_list_string = string(argv[i + 1]);
+			i++;
+		}
+		if(string(argv[i]) == "-L")
 		{
 			chrm_list_file = string(argv[i + 1]);
 			i++;
@@ -489,7 +501,8 @@ int parameters::print_help()
 	printf(" %-46s  %s\n", "--help",  "print usage of aletsch and exit");
 	printf(" %-46s  %s\n", "--version",  "print current version of aletsch and exit");
 	printf(" %-46s  %s\n", "--profile",  "profiling individual samples and exit (will write to files if -p provided)");
-	printf(" %-46s  %s\n", "-l/--chrm_list_file <string>",  "list of chromosomes that will be assembled, default: N/A (i.e., assemble all)");
+	printf(" %-46s  %s\n", "-l/--chrm_list_string <string>",  "list of chromosomes that will be assembled, default: N/A (i.e., assemble all)");
+	printf(" %-46s  %s\n", "-L/--chrm_list_file <string>",  "file with chromosomes that will be assembled, default: N/A (i.e., assemble all)");
 	printf(" %-46s  %s\n", "-d/--output_gtf_dir <string>",  "existing directory for individual transcripts, default: N/A");
 	printf(" %-46s  %s\n", "-b/--output_bridged_bam_dir <string>",  "existing directory for individual bridged alignments, default: N/A");
 	printf(" %-46s  %s\n", "-p/--profile_dir <string>",  "existing directory for saving/loading profiles of each samples, default: N/A");

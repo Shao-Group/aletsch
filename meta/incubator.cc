@@ -206,6 +206,16 @@ int incubator::build_sample_index()
 		fin.close();
 	}
 
+	if(params[DEFAULT].chrm_list_string != "")
+	{
+		vector<string> v = split_string(params[DEFAULT].chrm_list_string, ",");
+		for(int i = 0; i < v.size(); i++)
+		{
+			if(v[i] == "") continue;
+			ss.insert(v[i]);
+		}
+	}
+
 	sindex.clear();
 	for(int i = 0; i < samples.size(); i++)
 	{
@@ -214,8 +224,7 @@ int incubator::build_sample_index()
 		for(int k = 0; k < sp.hdr->n_targets; k++)
 		{
 			string chrm(sp.hdr->target_name[k]);
-
-			if(params[DEFAULT].chrm_list_file != "" && ss.find(chrm) == ss.end()) continue;
+			if(ss.size() >= 1 && ss.find(chrm) == ss.end()) continue;
 
 			if(sindex.find(chrm) == sindex.end())
 			{
