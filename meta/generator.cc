@@ -156,6 +156,9 @@ int generator::generate(bundle &bb, int index)
 		revise_splice_graph_full(gr, cfg);
 	}
 
+	// TODO
+	//if(gr.num_vertices() >= 100) return 0;
+
 	/*
 	printf("-----------------------------\n");
 	gr.print();
@@ -213,25 +216,32 @@ int generator::generate(bundle &bb, int index)
 		string gid = "gene." + tostring(sp.sample_id) + "." + tostring(index) + "." + tostring(k);
 		grv[k].gid = gid;
 
+		printf("process instance:\n");
+		grv[k].print();
+		printf("\n");
+
 		bool b = regional(grv[k], hsv[k], ubv[k]);
 		if(b == true) continue;
 
-		b = assemble(grv[k], hsv[k], ubv[k]);
+		b = assemble_single(grv[k], hsv[k], ubv[k]);
+		if(b == true) continue;
+
+		b = assemble_large(grv[k], hsv[k], ubv[k]);
 		if(b == true) continue;
 
 		combined_graph cb(cfg);
 		cb.sid = sp.sample_id;
 		cb.gid = gid;
 		cb.build(grv[k], std::move(hsv[k]), std::move(ubv[k]));
+
 		//cb.build(grv[k], std::move(hsv[k]), std::move(ubv[k]));
 		//cb.refine_junctions();
 
 		// print
-		/*
-		grv[k].print();
+		//grv[k].print();
+		printf("added to vcb\n");
 		cb.print(k);
 		printf("\n");
-		*/
 
 		vcb.push_back(std::move(cb));
 	}
@@ -266,7 +276,7 @@ bool generator::regional(splice_graph &gr, phase_set &ps, vector<pereads_cluster
 	return true;
 }
 
-bool generator::assemble(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc)
+bool generator::assemble_single(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc)
 {
 	transcript t;
 	bool b = build_single_exon_transcript(gr, t);
@@ -287,6 +297,38 @@ bool generator::assemble(splice_graph &gr, phase_set &ps, vector<pereads_cluster
 	if(t.length() < cfg.min_single_exon_transcript_length) return true;
 
 	ts.add(t, 2, sp.sample_id, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+	return true;
+}
+
+bool generator::assemble_large(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc)
+{
+	bool large = false;
+	if(gr.num_vertices() >= 500) large = true;
+	if(gr.num_edges() >= 1000) large = true;
+	if(ps.pmap.size() >= 5000) large = true;
+	if(vc.size() >= 5000) large = true;
+
+	if(large == false) return false;
+
+	vector<transcript> vt;
+	assembler asmb(cfg);
+	asmb.assemble(gr, ps, vt, 1);
+	for(int k = 0; k < vt.size(); k++) ts.add(vt[k], 2, sp.sample_id, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+
+	if(cfg.output_bridged_bam_dir != "" && vc.size() >= 1)
+	{
+		sp.open_bridged_bam(cfg.output_bridged_bam_dir);
+		for(int k = 0; k < vc.size(); k++)
+		{
+			write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
+			vc[k].clear();
+		}
+		sp.close_bridged_bam();
+	}
+
+	vc.clear();
+	ps.clear();
+
 	return true;
 }
 
