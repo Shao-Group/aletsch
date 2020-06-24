@@ -327,7 +327,7 @@ bool generator::assemble_large(splice_graph &gr, phase_set &ps, vector<pereads_c
 	}
 
 	vc.clear();
-	ps.clear();
+	ps.pmap.clear();
 
 	return true;
 }
