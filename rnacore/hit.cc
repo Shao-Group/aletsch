@@ -19,7 +19,6 @@ hit& hit::operator=(const hit &h)
 	bam1_core_t::operator=(h);
 	hid = h.hid;
 	rpos = h.rpos;
-	qlen = h.qlen;
 	qname = h.qname;
 	strand = h.strand;
 	spos = h.spos;
@@ -36,7 +35,6 @@ hit::hit(const hit &h)
 {
 	hid = h.hid;
 	rpos = h.rpos;
-	qlen = h.qlen;
 	qname = h.qname;
 	strand = h.strand;
 	spos = h.spos;
@@ -64,7 +62,6 @@ hit::hit(bam1_t *b, int id)
 
 	// compute rpos
 	rpos = pos + (int32_t)bam_cigar2rlen(n_cigar, bam_get_cigar(b));
-	qlen = (int32_t)bam_cigar2qlen(n_cigar, bam_get_cigar(b));
 }
 
 int hit::set_splices(bam1_t *b)
@@ -134,14 +131,13 @@ int hit::set_tags(bam1_t *b)
 	return 0;
 }
 
-int hit::set_concordance()
+bool hit::get_concordance()
 {
-	bool concordant = false;
-	if((flag & 0x10) <= 0 && (flag & 0x20) >= 1 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) concordant = true;		// F1R2
-	if((flag & 0x10) >= 1 && (flag & 0x20) <= 0 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) concordant = true;		// R1F2
-	if((flag & 0x10) <= 0 && (flag & 0x20) >= 1 && (flag & 0x40) <= 0 && (flag & 0x80) >= 1) concordant = true;		// F2R1
-	if((flag & 0x10) >= 1 && (flag & 0x20) <= 0 && (flag & 0x40) <= 0 && (flag & 0x80) >= 1) concordant = true;		// R2F1
-	return 0;
+	if((flag & 0x10) <= 0 && (flag & 0x20) >= 1 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) return true;		// F1R2
+	if((flag & 0x10) >= 1 && (flag & 0x20) <= 0 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) return true;		// R1F2
+	if((flag & 0x10) <= 0 && (flag & 0x20) >= 1 && (flag & 0x40) <= 0 && (flag & 0x80) >= 1) return true;		// F2R1
+	if((flag & 0x10) >= 1 && (flag & 0x20) <= 0 && (flag & 0x40) <= 0 && (flag & 0x80) >= 1) return true;		// R2F1
+	return false;
 }
 
 int hit::set_strand(int libtype)
@@ -191,8 +187,8 @@ bool hit::operator<(const hit &h) const
 int hit::print() const
 {
 	// print basic information
-	printf("Hit %s: tid = %d, hid = %d, [%d-%d), mpos = %d, flag = %d, quality = %d, strand = %c, xs = %c, ts = %c, isize = %d, qlen = %d, hi = %d\n", 
-			qname.c_str(), tid, hid, pos, rpos, mpos, flag, qual, strand, xs, ts, isize, qlen, hi);
+	printf("Hit %s: tid = %d, hid = %d, [%d-%d), mpos = %d, flag = %d, quality = %d, strand = %c, xs = %c, ts = %c, isize = %d, hi = %d\n", 
+			qname.c_str(), tid, hid, pos, rpos, mpos, flag, qual, strand, xs, ts, isize, hi);
 
 	return 0;
 
@@ -225,4 +221,31 @@ int hit::get_aligned_intervals(vector<int64_t> &v) const
 size_t hit::get_qhash() const
 {
 	return string_hash(qname);
+}
+
+size_t hit::get_phash() const
+{
+	vector<int32_t> v;
+	v.push_back(pos);
+	v.insert(v.end(), spos.begin(), spos.end());
+	v.push_back(rpos);
+	return vector_hash(v);
+}
+
+bool hit::equal(const hit &h) const
+{
+	if(strand != h.strand) return false;
+
+	if(tid != h.tid) return false;
+	if(mtid != h.mtid) return false;
+	if(pos != h.pos) return false;
+	if(mpos != h.mpos) return false;
+	if(rpos != h.rpos) return false;
+	if(spos != h.spos) return false;
+	if(flag != h.flag) return false;
+	if(isize != h.isize) return false;
+	if(n_cigar != h.n_cigar) return false;
+	if(l_qname != h.l_qname) return false;
+	if(l_extranul != h.l_extranul) return false;
+	return true;
 }

@@ -29,8 +29,6 @@ generator::generator(sample_profile &s, vector<combined_graph> &v, transcript_se
 	: vcb(v), ts(t), cfg(c), sp(s), target_id(tid)
 {
 	index = 0;
-	qlen = 0;
-	qcnt = 0;
 	sp.open_align_file();
 }
 
@@ -67,11 +65,7 @@ int generator::resolve()
 		ht.set_splices(b1t);
 		ht.set_tags(b1t);
 		ht.set_strand(sp.library_type);
-
 		//ht.print();
-
-		qlen += ht.qlen;
-		qcnt += 1;
 
 		// truncate
 		if(bb1.hits.size() >= 1 && (ht.tid != bb1.tid || ht.pos > bb1.rpos + cfg.min_bundle_gap))

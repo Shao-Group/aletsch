@@ -34,10 +34,7 @@ private:
 
 	vector<combined_graph> &vcb;
 	transcript_set &ts;
-
 	int index;
-	int qcnt;
-	double qlen;
 
 public:
 	int resolve();
