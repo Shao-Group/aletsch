@@ -31,6 +31,7 @@ parameters::parameters()
 	version = "1.0.1";
 	max_threads = 10;
 	profile_only = false;
+	boost_precision = false;
 
 	// for meta-assembly
 	max_group_size = 20;
@@ -194,6 +195,10 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 		{
 			max_group_size = atoi(argv[i + 1]);
 			i++;
+		}
+		else if(string(argv[i]) == "--boost_precision")
+		{
+			boost_precision = true;
 		}
 		else if(string(argv[i]) == "--profile")
 		{
@@ -509,6 +514,7 @@ int parameters::print_help()
 	printf(" %-46s  %s\n", "-t/--max_threads <integer>",  "maximized number of threads, default: 10");
 	printf(" %-46s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 20");
 	printf(" %-46s  %s\n", "-s/--min_grouping_similarity <float>",  "the minimized similarity for two graphs to be combined, default: 0.2");
+	printf(" %-46s  %s\n", "--boost_precision",  "reduce false positives, default: not to do so");
 	printf(" %-46s  %s\n", "--min_bridging_score <float>",  "the minimum score for bridging a paired-end reads, default: 1.5");
 	printf(" %-46s  %s\n", "--min_splice_bundary_hits <integer>",  "the minimum number of spliced reads required to support a junction, default: 1");
 	printf(" %-46s  %s\n", "--min_transcript_coverage <float>",  "minimum coverage required for a multi-exon transcript, default: 1.0");

@@ -35,6 +35,7 @@ public:
 	string version;
 	int max_threads;
 	bool profile_only;
+	bool boost_precision;
 
 	// for meta-assembly
 	int max_group_size;

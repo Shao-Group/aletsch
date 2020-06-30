@@ -145,7 +145,7 @@ int generator::generate(bundle &bb, int index)
 	gr.extend_strands();
 	gr.build_vertex_index();
 
-	if(sp.data_type == PAIRED_END || sp.data_type == SINGLE_END)
+	if(cfg.boost_precision == true && (sp.data_type == PAIRED_END || sp.data_type == SINGLE_END))
 	{
 		revise_splice_graph_full(gr, cfg);
 	}
@@ -228,14 +228,13 @@ int generator::generate(bundle &bb, int index)
 		cb.gid = gid;
 		cb.build(grv[k], std::move(hsv[k]), std::move(ubv[k]));
 
-		//cb.build(grv[k], std::move(hsv[k]), std::move(ubv[k]));
-		//cb.refine_junctions();
-
 		// print
+		/*
 		//grv[k].print();
 		printf("added to vcb\n");
 		cb.print(k);
 		printf("\n");
+		*/
 
 		vcb.push_back(std::move(cb));
 	}

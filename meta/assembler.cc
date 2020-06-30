@@ -34,7 +34,9 @@ int assembler::assemble(vector<combined_graph*> gv, int batch, int instance, tra
 	{
 		combined_graph &gt = *(gv[0]);
 		gt.set_gid(batch, instance, subindex++);
-		gt.refine_junctions();
+
+		if(cfg.boost_precision == true) gt.refine_junctions();
+
 		assemble(gt, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		ts.increase_count(1);
 		if(cfg.output_bridged_bam_dir != "" && gt.vc.size() >= 1)
@@ -139,7 +141,7 @@ int assembler::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, v
 	cb.combine(gv);
 	cb.sid = -1;
 
-	cb.refine_junctions(gv, samples);
+	if(cfg.boost_precision == true) cb.refine_junctions(gv, samples);
 
 	// rebuild splice graph
 	splice_graph gx;
@@ -155,7 +157,6 @@ int assembler::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, v
 	{
 		combined_graph &gt = *(gv[k]);
 		assert(gt.sid >= 0 && gt.sid < samples.size());
-		//gt.project_junctions(jm);
 		sample_profile &sp = samples[gt.sid];
 		if(sp.insertsize_low < length_low) length_low = sp.insertsize_low;
 		if(sp.insertsize_high > length_high) length_high = sp.insertsize_high;
