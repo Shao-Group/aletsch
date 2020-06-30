@@ -150,9 +150,6 @@ int generator::generate(bundle &bb, int index)
 		revise_splice_graph_full(gr, cfg);
 	}
 
-	// TODO
-	//if(gr.num_vertices() >= 100) return 0;
-
 	/*
 	printf("-----------------------------\n");
 	gr.print();
@@ -210,9 +207,11 @@ int generator::generate(bundle &bb, int index)
 		string gid = "gene." + tostring(sp.sample_id) + "." + tostring(index) + "." + tostring(k);
 		grv[k].gid = gid;
 
+		/*
 		printf("process instance:\n");
 		grv[k].print();
 		printf("\n");
+		*/
 
 		bool b = regional(grv[k], hsv[k], ubv[k]);
 		if(b == true) continue;
