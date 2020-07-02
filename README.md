@@ -8,11 +8,11 @@ at overlapped gene loci. Eventually, the core algorithm used in Scallop (i.e., p
 is employed to decompose the combined splice graphs to transcripts.
 
 # Release
-Latest release of aletsch is [v1.0.1](https://github.com/Shao-Group/aletsch/releases/tag/v1.0.1).
+Latest release of aletsch is [v1.0.2](https://github.com/Shao-Group/aletsch/releases/tag/v1.0.2).
 
 # Installation
 Download the source code of aletsch from
-[here](https://github.com/Shao-Group/aletsch/releases/download/v1.0.1/aletsch-1.0.1.tar.gz).
+[here](https://github.com/Shao-Group/aletsch/releases/download/v1.0.2/aletsch-1.0.2.tar.gz).
 Aletsch uses additional libraries of Boost and htslib. 
 If they have not been installed in your system, you first
 need to download and install them. You might also need to
@@ -100,7 +100,8 @@ details.
  --help  | | | print usage of aletsch and exit
  --version | | | print version of aletsch and exit
  --profile | | | profiling individual samples and exit (will write to files if -p provided)
- -l | string |    | the file consits of a list of chromosomes that will be assembled
+ -l | string |    | the list of chromosomes that will be assembled
+ -L | string |    | the file consits of a list of chromosomes that will be assembled
  -d | string |    | the directory where transcripts for individual samples will be generated
  -b | string |    | the directory where bridged alignments for individual samples will be generated
  -p | string |    | the directory where profiles for individual samples will be read from / saved to
@@ -108,7 +109,7 @@ details.
  -c | integer | 20  | the maximized number of splice graphs that will be combined into a cluster
  -s | float   | 0.2 | the minimized similarity between two splice graphs that will be combined
 
-If `-l file` option is provided, Aletsch will only assemble the specified chromosomes;
+If `-l string` or `-L file` option is provided, Aletsch will only assemble the specified chromosomes;
 otherwise, all chromosomes will be assembled.
 
 If `-d directory` option is provided, the assembled transcripts for each individual

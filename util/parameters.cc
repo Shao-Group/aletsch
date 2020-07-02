@@ -28,7 +28,7 @@ parameters::parameters()
 	profile_dir = "";
 	verbose = 1;
 	algo = "aletsch";
-	version = "1.0.1";
+	version = "1.0.2";
 	max_threads = 10;
 	profile_only = false;
 	boost_precision = false;
