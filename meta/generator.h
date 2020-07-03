@@ -45,6 +45,7 @@ private:
 	bool regional(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc);
 	bool assemble_single(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc);
 	bool assemble_large(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc);
+	int process_large(vector<pereads_cluster> &vc);
 };
 
 #endif

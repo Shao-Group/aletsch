@@ -219,8 +219,9 @@ int generator::generate(bundle &bb, int index)
 		b = assemble_single(grv[k], hsv[k], ubv[k]);
 		if(b == true) continue;
 
-		b = assemble_large(grv[k], hsv[k], ubv[k]);
-		if(b == true) continue;
+		process_large(ubv[k]);
+		//b = assemble_large(grv[k], hsv[k], ubv[k]);
+		//if(b == true) continue;
 
 		combined_graph cb(cfg);
 		cb.sid = sp.sample_id;
@@ -292,6 +293,23 @@ bool generator::assemble_single(splice_graph &gr, phase_set &ps, vector<pereads_
 	return true;
 }
 
+int generator::process_large(vector<pereads_cluster> &vc)
+{
+	if(vc.size() <= 5000) return 0;
+	if(cfg.output_bridged_bam_dir != "" && vc.size() >= 1)
+	{
+		sp.open_bridged_bam(cfg.output_bridged_bam_dir);
+		for(int k = 0; k < vc.size(); k++)
+		{
+			write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
+			vc[k].clear();
+		}
+		sp.close_bridged_bam();
+	}
+	vc.clear();
+	return 0;
+}
+
 bool generator::assemble_large(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc)
 {
 	bool large = false;
@@ -317,7 +335,6 @@ bool generator::assemble_large(splice_graph &gr, phase_set &ps, vector<pereads_c
 		}
 		sp.close_bridged_bam();
 	}
-
 	vc.clear();
 	ps.pmap.clear();
 
