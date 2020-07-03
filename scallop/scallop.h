@@ -63,6 +63,7 @@ private:
 	int refine_splice_graph();
 
 	// resolve iteratively
+	bool resolve_broken_vertex();
 	bool resolve_trivial_vertex(int type, double jump_ratio);
 	bool resolve_trivial_vertex_fast(double jump_ratio);
 	bool resolve_single_trivial_vertex_fast(int i, double jump_ratio);

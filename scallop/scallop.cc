@@ -60,6 +60,9 @@ int scallop::assemble()
 
 		bool b = false;
 
+		b = resolve_broken_vertex();
+		if(b == true) continue;
+
 		b = resolve_trivial_vertex_fast(cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 		if(b == true) continue;
 
@@ -192,6 +195,52 @@ int scallop::preassemble()
 	return 0;
 }
 
+bool scallop::resolve_broken_vertex()
+{
+	vector<int> vv(nonzeroset.begin(), nonzeroset.end());
+	int x = -1;
+	for(int k = 0; k < vv.size(); k++)
+	{
+		int i = vv[k];
+		if(i == 0) continue;
+		if(i == gr.num_vertices() - 1) continue;
+		if(gr.in_degree(i) >= 1 && gr.out_degree(i) >= 1) continue;
+		x = i;
+		break;
+	}
+
+	if(x == -1) return false;
+
+	vector<int> ve;
+	PEEI pei = gr.in_edges(x);
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = (*it);
+		assert(e2i.find(e) != e2i.end());
+		ve.push_back(e2i[e]);
+	}
+	pei = gr.out_edges(x);
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = (*it);
+		assert(e2i.find(e) != e2i.end());
+		ve.push_back(e2i[e]);
+	}
+
+	assert(ve.size() >= 1);
+	for(int k = 0; k < ve.size(); k++)
+	{
+		int e = ve[k];
+		remove_edge(e);
+		hs.remove(e);
+	}
+
+	assert(gr.degree(x) == 0);
+	nonzeroset.erase(x);
+
+	return true;
+}
+
 bool scallop::resolve_smallest_edges(double max_ratio)
 {
 	int se = -1;
@@ -204,8 +253,6 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 	for(int k = 0; k < vv.size(); k++)
 	{
 		int i = vv[k];
-		assert(gr.degree(i) >= 1);
-
 		if(gr.in_degree(i) <= 1) continue;
 		if(gr.out_degree(i) <= 1) continue;
 
@@ -276,8 +323,6 @@ bool scallop::resolve_negligible_edges(bool extend, double max_ratio)
 	for(int k = 0; k < vv.size(); k++)
 	{
 		int i = vv[k];
-		assert(gr.in_degree(i) >= 1);
-		assert(gr.out_degree(i) >= 1);
 		if(gr.in_degree(i) <= 1) continue;
 		if(gr.out_degree(i) <= 1) continue;
 		if(gr.mixed_strand_vertex(i)) continue;
@@ -334,12 +379,8 @@ bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 	for(int k = 0; k < vv.size(); k++)
 	{
 		int i = vv[k];
-		assert(gr.degree(i) >= 1);
 		if(gr.in_degree(i) <= 1) continue;
 		if(gr.out_degree(i) <= 1) continue;
-
-		assert(gr.in_degree(i) >= 1);
-		assert(gr.out_degree(i) >= 1);
 
 		MPII mpi = hs.get_routes(i, gr, e2i);
 		router rt(i, gr, e2i, i2e, mpi, cfg);
@@ -382,12 +423,8 @@ bool scallop::resolve_unsplittable_vertex(int type, int degree, double max_ratio
 	for(int k = 0; k < vv.size(); k++)
 	{
 		int i = vv[k];
-		assert(gr.degree(i) >= 1);
 		if(gr.in_degree(i) <= 1) continue;
 		if(gr.out_degree(i) <= 1) continue;
-
-		assert(gr.in_degree(i) >= 1);
-		assert(gr.out_degree(i) >= 1);
 
 		MPII mpi = hs.get_routes(i, gr, e2i);
 		router rt(i, gr, e2i, i2e, mpi, cfg);
@@ -459,6 +496,8 @@ bool scallop::resolve_hyper_edge(int fsize)
 		}
 	}
 
+	if(gr.in_degree(root) <= 0) return false;
+	if(gr.out_degree(root) <= 0) return false;
 	if(v1.size() == 0 || v2.size() == 0) return false;
 	assert(v1.size() == 1 || v2.size() == 1);
 
@@ -552,7 +591,6 @@ bool scallop::resolve_trivial_vertex(int type, double jump_ratio)
 	for(int k = 0; k < vv.size(); k++)
 	{
 		int i = vv[k];
-		assert(gr.degree(i) >= 1);
 		if(gr.in_degree(i) <= 0) continue;
 		if(gr.out_degree(i) <= 0) continue;
 		if(gr.mixed_strand_vertex(i)) continue;
@@ -603,8 +641,6 @@ bool scallop::resolve_trivial_vertex_fast(double jump_ratio)
 	for(int k = 0; k < vv.size(); k++)
 	{
 		int i = vv[k];
-		assert(gr.in_degree(i) >= 1);
-		assert(gr.out_degree(i) >= 1);
 		bool b = resolve_single_trivial_vertex_fast(i, jump_ratio);
 		if(b == true) flag = true;
 	}
@@ -613,7 +649,8 @@ bool scallop::resolve_trivial_vertex_fast(double jump_ratio)
 
 bool scallop::resolve_single_trivial_vertex_fast(int i, double jump_ratio)
 {
-	if(gr.degree(i) == 0) return false;
+	if(gr.in_degree(i) <= 0) return false;
+	if(gr.out_degree(i) <= 0) return false;
 	if(gr.in_degree(i) >= 2 && gr.out_degree(i) >= 2) return false;
 	if(gr.mixed_strand_vertex(i)) return false;
 	if(classify_trivial_vertex(i, false) != 1) return false;
@@ -637,6 +674,8 @@ bool scallop::resolve_mixed_vertex(int type)
 	for(int k = 0; k < vv.size(); k++)
 	{
 		int i = vv[k];
+		if(gr.out_degree(i) <= 0) continue;
+		if(gr.in_degree(i) <= 0) continue;
 		if(gr.mixed_strand_vertex(i) == false) continue;
 
 		MPII mpi = hs.get_routes(i, gr, e2i);
@@ -694,7 +733,8 @@ bool scallop::resolve_mixed_smallest_edges()
 	for(int k = 0; k < vv.size(); k++)
 	{
 		int i = vv[k];
-		assert(gr.degree(i) >= 1);
+		if(gr.out_degree(i) <= 0) continue;
+		if(gr.in_degree(i) <= 0) continue;
 
 		double r;
 		int e = compute_smallest_edge(i, r);
@@ -1594,7 +1634,6 @@ int scallop::merge_adjacent_edges(int x, int y, double ww)
 
 int scallop::merge_adjacent_edges(int x, int y)
 {
-
 	if(i2e[x] == null_edge) return -1;
 	if(i2e[y] == null_edge) return -1;
 
@@ -1662,8 +1701,8 @@ int scallop::split_edge(int ei, double w)
 int scallop::balance_vertex(int v, const vector<int> &ve1, const vector<int> &ve2)
 {
 	if(gr.degree(v) <= 0) return 0;
-	assert(ve1.size() >= 1);
-	assert(ve2.size() >= 1);
+	if(ve1.size() <= 0) return 0;
+	if(ve2.size() <= 0) return 0;
 
 	vector<double> v1;
 	vector<double> v2;
@@ -1733,7 +1772,8 @@ int scallop::balance_vertex(int v, const vector<int> &ve1, const vector<int> &ve
 
 int scallop::balance_vertex(int v)
 {
-	if(gr.degree(v) <= 0) return 0;
+	if(gr.in_degree(v) <= 0) return 0;
+	if(gr.out_degree(v) <= 0) return 0;
 
 	PEEI pei;
 	edge_iterator it1, it2;
@@ -1992,6 +2032,7 @@ int scallop::greedy_decompose()
 	{
 		VE v;
 		double w = gr.compute_maximum_path_w(v);
+		if(w < 0) break;
 		if(w <= cfg.min_transcript_coverage) break;
 
 		int e = split_merge_path(v, w);
