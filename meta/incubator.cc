@@ -304,7 +304,7 @@ int incubator::assemble()
 
 int incubator::rearrange()
 {
-	// filtering
+	// filtering with count
 	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
 	for(int i = 0; i < tsets.size(); i++)
 	{
@@ -347,21 +347,18 @@ int incubator::rearrange()
 
 int incubator::postprocess()
 {
-	vector<transcript> v = tmerge.get_transcripts(2);
+	vector<transcript> vt = tmerge.get_transcripts(2);
 
 	// warning: ts contains mixed strands
 	//cluster cs(v, cfg);
 	//cs.solve();
 
-	filter ft(v, /*cs.cct,*/ params[DEFAULT]);
-	//ft.join_single_exon_transcripts();
-	ft.filter_length_coverage();
-
+	// TODO, coverage for individual sample
 	stringstream ss;
 	vector<vector<int>> vv(samples.size());
-	for(int i = 0; i < ft.trs.size(); i++)
+	for(int i = 0; i < vt.size(); i++)
 	{
-		transcript &t = ft.trs[i];
+		transcript &t = vt[i];
 		t.write(ss);
 		pair<bool, trans_item> p = tmerge.query(t);
 		if(p.first == false) continue;
@@ -381,7 +378,7 @@ int incubator::postprocess()
 		boost::asio::thread_pool pool(params[DEFAULT].max_threads);
 		for(int i = 0; i < vv.size(); i++)
 		{
-			const vector<transcript> &z = ft.trs;
+			const vector<transcript> &z = vt;
 			const vector<int> &v = vv[i];
 			boost::asio::post(pool, [this, i, &z, &v]{ this->write_individual_gtf(i, z, v); });
 		}

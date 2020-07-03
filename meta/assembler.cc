@@ -10,6 +10,7 @@ See LICENSE for licensing.
 #include "bridge_solver.h"
 #include "essential.h"
 #include "constants.h"
+#include "filter.h"
 
 #include <fstream>
 #include <sstream>
@@ -118,10 +119,13 @@ int assembler::assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt,
 	scallop sx(gx, hx, cfg);
 	sx.assemble();
 
+	filter ft(sx.trsts, cfg);
+	ft.filter_length_coverage();
+
 	int z = 0;
-	for(int k = 0; k < sx.trsts.size(); k++)
+	for(int k = 0; k < ft.trs.size(); k++)
 	{
-		transcript &t = sx.trsts[k];
+		transcript &t = ft.trs[k];
 		z++;
 		t.RPKM = 0;
 		vt.push_back(t);
