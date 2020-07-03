@@ -496,6 +496,7 @@ bool scallop::resolve_hyper_edge(int fsize)
 		}
 	}
 
+	if(root < 0) return false;
 	if(gr.in_degree(root) <= 0) return false;
 	if(gr.out_degree(root) <= 0) return false;
 	if(v1.size() == 0 || v2.size() == 0) return false;
