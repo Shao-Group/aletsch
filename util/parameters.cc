@@ -475,9 +475,9 @@ int parameters::set_default(int data_type)
 	if(data_type == PACBIO_SUB) min_num_hits_in_bundle = 1;
 	if(data_type == ONT) min_num_hits_in_bundle = 1;
 
-	if(data_type == PACBIO_CCS) min_junction_support = 2;
-	if(data_type == PACBIO_SUB) min_junction_support = 3;
-	if(data_type == ONT) min_junction_support = 3;
+	if(data_type == PACBIO_CCS) min_junction_support = 1;
+	if(data_type == PACBIO_SUB) min_junction_support = 2;
+	if(data_type == ONT) min_junction_support = 2;
 	return 0;
 }
 

@@ -353,12 +353,15 @@ int incubator::postprocess()
 	//cluster cs(v, cfg);
 	//cs.solve();
 
+	filter ft(vt, params[DEFAULT]);
+	ft.filter_length_coverage();
+
 	// TODO, coverage for individual sample
 	stringstream ss;
 	vector<vector<int>> vv(samples.size());
-	for(int i = 0; i < vt.size(); i++)
+	for(int i = 0; i < ft.trs.size(); i++)
 	{
-		transcript &t = vt[i];
+		transcript &t = ft.trs[i];
 		t.write(ss);
 		pair<bool, trans_item> p = tmerge.query(t);
 		if(p.first == false) continue;
@@ -378,7 +381,7 @@ int incubator::postprocess()
 		boost::asio::thread_pool pool(params[DEFAULT].max_threads);
 		for(int i = 0; i < vv.size(); i++)
 		{
-			const vector<transcript> &z = vt;
+			const vector<transcript> &z = ft.trs;
 			const vector<int> &v = vv[i];
 			boost::asio::post(pool, [this, i, &z, &v]{ this->write_individual_gtf(i, z, v); });
 		}
