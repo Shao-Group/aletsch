@@ -4,16 +4,16 @@ SUBDIRS = util graph gtf rnacore scallop bridge meta
 
 bin_PROGRAMS = aletsch
 
-GTF_INCLUDE = $(top_srcdir)/gtf
 UTIL_INCLUDE = $(top_srcdir)/util
+GTF_INCLUDE = $(top_srcdir)/gtf
 GRAPH_INCLUDE = $(top_srcdir)/graph
 RNACORE_INCLUDE = $(top_srcdir)/rnacore
 SCALLOP_INCLUDE = $(top_srcdir)/scallop
 BRIDGE_INCLUDE = $(top_srcdir)/bridge
 META_INCLUDE = $(top_srcdir)/meta
 
-GTF_LIB = $(top_builddir)/gtf
 UTIL_LIB = $(top_builddir)/util
+GTF_LIB = $(top_builddir)/gtf
 GRAPH_LIB = $(top_builddir)/graph
 RNACORE_LIB = $(top_builddir)/rnacore
 SCALLOP_LIB = $(top_builddir)/scallop

@@ -4,8 +4,8 @@ Part of aletsch
 See LICENSE for licensing.
 */
 
-#ifndef __bridge_path_H__
-#define __bridge_path_H__
+#ifndef __BRIDGE_PATH_H__
+#define __BRIDGE_PATH_H__
 
 #include <vector>
 #include <stdint.h>

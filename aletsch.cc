@@ -32,6 +32,7 @@ int main(int argc, const char **argv)
 	}
 
 	params[0].print_command_line(argc, argv);
+
 	incubator icbt(params);
 	icbt.resolve();
 

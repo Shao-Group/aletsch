@@ -328,7 +328,7 @@ int transcript::write(ostream &fout) const
 	fout<<"transcript_id \""<<transcript_id.c_str()<<"\"; ";
 	if(gene_type != "") fout<<"gene_type \""<<gene_type.c_str()<<"\"; ";
 	if(transcript_type != "") fout<<"transcript_type \""<<transcript_type.c_str()<<"\"; ";
-	fout<<"RPKM \""<<RPKM<<"\"; ";
+	//fout<<"RPKM \""<<RPKM<<"\"; ";
 	fout<<"cov \""<<coverage<<"\";"<<endl;
 
 	for(int k = 0; k < exons.size(); k++)
