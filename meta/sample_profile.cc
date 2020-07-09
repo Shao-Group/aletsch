@@ -23,6 +23,7 @@ sample_profile::sample_profile(int id)
 	insertsize_high = 500;
 	insertsize_median = 250;
 	library_type = UNSTRANDED;
+	bam_with_xs = 0;
 }
 
 int sample_profile::load_profile(const string &dir)
@@ -45,6 +46,7 @@ int sample_profile::load_profile(const string &dir)
 		sstr >> key;
 		
 		if(string(key) == "library_type") sstr >> library_type;
+		if(string(key) == "bam_with_xs") sstr >> bam_with_xs;
 		if(string(key) == "insertsize_low") sstr >> insertsize_low;
 		if(string(key) == "insertsize_high") sstr >> insertsize_high;
 		if(string(key) == "insertsize_median") sstr >> insertsize_median;
@@ -68,6 +70,7 @@ int sample_profile::save_profile(const string &dir)
 	}
 
 	fout << "library_type" << " " << library_type << endl;
+	fout << "bam_with_xs" << " " << bam_with_xs << endl;
 
 	if(data_type == PAIRED_END)
 	{

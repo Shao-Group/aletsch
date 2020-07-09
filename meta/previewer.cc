@@ -31,6 +31,8 @@ int previewer::infer_library_type()
 	int total = 0;
 	int single = 0;
 	int paired = 0;
+	int num_xs = 0;
+	int spliced = 0;
 
 	int first = 0;
 	int second = 0;
@@ -48,11 +50,11 @@ int previewer::infer_library_type()
 
 		bam1_core_t &p = b1t->core;
 
-		if((p.flag & 0x4) >= 1) continue;										// read is not mapped
+		if((p.flag & 0x4) >= 1) continue;											// read is not mapped
 		if((p.flag & 0x100) >= 1) continue;	// secondary alignment
 		if(p.n_cigar > cfg.max_num_cigar) continue;									// ignore hits with more than max-num-cigar types
 		if(p.qual < cfg.min_mapping_quality) continue;								// ignore hits with small quality
-		if(p.n_cigar < 1) continue;												// should never happen
+		if(p.n_cigar < 1) continue;													// should never happen
 
 		total++;
 
@@ -60,10 +62,15 @@ int previewer::infer_library_type()
 		ht.set_splices(b1t);
 		ht.set_tags(b1t);
 
+		if(ht.spos.size() <= 0) continue;
+		spliced++;
+
 		if((ht.flag & 0x1) >= 1) paired ++;
 		if((ht.flag & 0x1) <= 0) single ++;
 
 		if(ht.xs == '.') continue;
+		num_xs++;
+
 		if(ht.xs == '+' && spn1.size() >= cfg.max_preview_spliced_reads) continue;
 		if(ht.xs == '-' && spn2.size() >= cfg.max_preview_spliced_reads) continue;
 
@@ -108,11 +115,14 @@ int previewer::infer_library_type()
 	int s1 = UNSTRANDED;
 	if(spn >= cfg.min_preview_spliced_reads && first > cfg.preview_infer_ratio * 2.0 * spn) s1 = FR_FIRST;
 	if(spn >= cfg.min_preview_spliced_reads && second > cfg.preview_infer_ratio * 2.0 * spn) s1 = FR_SECOND;
-
-	printf("infer-library-type (%s): reads = %d, single = %d, paired = %d, spliced = %d, first = %d, second = %d, inferred = %s\n",
-			sp.align_file.c_str(), total, single, paired, spn, first, second, vv[s1 + 1].c_str());
-
 	sp.library_type = s1;
+
+	if(num_xs * 1.0 / spliced > cfg.preview_infer_ratio) sp.bam_with_xs = 1;
+	else sp.bam_with_xs = 0;
+
+	printf("infer-library-type (%s): reads = %d, single = %d, paired = %d, spliced = %d, with-xs = %d, used = %d, first = %d, second = %d, inferred = %s, bam_with_xs = %d\n",
+			sp.align_file.c_str(), total, single, paired, spliced, num_xs, spn, first, second, vv[s1 + 1].c_str(), sp.bam_with_xs);
+
 	return 0;
 }
 
