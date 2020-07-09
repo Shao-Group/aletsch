@@ -219,9 +219,9 @@ int generator::generate(bundle &bb, int index)
 		b = assemble_single(grv[k], hsv[k], ubv[k]);
 		if(b == true) continue;
 
-		process_large(ubv[k]);
-		//b = assemble_large(grv[k], hsv[k], ubv[k]);
-		//if(b == true) continue;
+		//process_large(ubv[k]);
+		b = assemble_large(grv[k], hsv[k], ubv[k]);
+		if(b == true) continue;
 
 		combined_graph cb(cfg);
 		cb.sid = sp.sample_id;
