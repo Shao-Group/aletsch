@@ -60,10 +60,8 @@ int scallop::assemble()
 
 		bool b = false;
 
-		/*
 		b = resolve_broken_vertex();
 		if(b == true) continue;
-		*/
 
 		b = resolve_trivial_vertex_fast(cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 		if(b == true) continue;
