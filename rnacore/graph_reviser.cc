@@ -1064,3 +1064,222 @@ int group_end_boundaries(splice_graph &gr, map<int32_t, int32_t> &tmap, int32_t 
 	}
 	return 0;
 }
+
+int identify_boundaries(splice_graph &gr, const parameters &cfg)
+{
+	while(true)
+	{
+		bool b1 = identify_start_boundary(gr, cfg.min_boundary_log_ratio);
+		bool b2 = identify_end_boundary(gr, cfg.min_boundary_log_ratio);
+		if(b1 == false && b2 == false) break;
+	}
+	return 0;
+}
+
+bool identify_start_boundary(splice_graph &gr, double min_ratio)
+{
+	int besta = -1;
+	int bestb = -1;
+	double bestr = 0;
+	double bestw = 0;
+	for(int x = 1; x < gr.num_vertices() - 1; x++)
+	{
+		int a = left_continuous_extend(gr, x);
+		int b = x;
+		//int b = right_continuous_extend(gr, x);
+		if(a < 0 || b < 0 || a > b) continue;
+
+		double maxcov, in_sum;
+		int f = determine_start_boundary(gr, a, b, maxcov, in_sum);
+		if(f < 0) continue;
+
+		double r = log(2 + maxcov) / log(2 + in_sum);
+		if(r < bestr) continue;
+
+		bestr = r;
+		besta = a;
+		bestb = b;
+		bestw = maxcov - in_sum;
+	}
+
+	if(besta < 0) return false;
+	if(bestr < min_ratio) return false;
+
+	edge_descriptor ee = gr.add_edge(0, besta);
+	gr.set_edge_weight(ee, bestw);
+	gr.set_edge_info(ee, edge_info());
+
+	printf("identify start boundary at %d, weight = %.1lf, ratio = %.2lf, region = (%d, %d)\n",
+			gr.get_vertex_info(besta).lpos, bestw, bestr, besta, bestb);
+
+	return true;
+}
+
+bool identify_end_boundary(splice_graph &gr, double min_ratio)
+{
+	int besta = -1;
+	int bestb = -1;
+	double bestr = 0;
+	double bestw = 0;
+	for(int x = 1; x < gr.num_vertices() - 1; x++)
+	{
+		//int a = left_continuous_extend(gr, x);
+		int a = x;
+		int b = right_continuous_extend(gr, x);
+		if(a < 0 || b < 0 || a > b) continue;
+
+		double maxcov, out_sum;
+		int f = determine_end_boundary(gr, a, b, maxcov, out_sum);
+		if(f < 0) continue;
+
+		double r = log(2 + maxcov) / log(2 + out_sum);
+		if(r < bestr) continue;
+
+		bestr = r;
+		besta = a;
+		bestb = b;
+		bestw = maxcov - out_sum;
+	}
+
+	if(bestb < 0) return false;
+	if(bestr < min_ratio) return false;
+
+	edge_descriptor ee = gr.add_edge(bestb, gr.num_vertices() - 1);
+	gr.set_edge_weight(ee, bestw);
+	gr.set_edge_info(ee, edge_info());
+
+	printf("identify end boundary at %d, weight = %.1lf, ratio = %.2lf, region = (%d, %d)\n",
+			gr.get_vertex_info(bestb).rpos, bestw, bestr, besta, bestb);
+
+	return true;
+}
+
+int determine_start_boundary(splice_graph &gr, int a, int b, double &maxcov, double &in_sum)
+{
+	maxcov = 0;
+	in_sum = 0;
+
+	//gr.print(); printf("determine start boundary: a = %d, b = %d\n", a, b);
+	for(int k = a; k <= b; k++)
+	{
+		if(gr.edge(0, k).second == true) return -1;
+		//if(maxcov < gr.get_vertex_info(k).maxcov) maxcov = gr.get_vertex_info(k).maxcov;
+		if(maxcov < gr.get_vertex_weight(k)) maxcov = gr.get_vertex_weight(k);
+
+		PEEI pei = gr.in_edges(k);
+		for(edge_iterator it = pei.first; it != pei.second; it++)
+		{
+			edge_descriptor e = *it;
+			assert(e->target() == k);
+			int v = e->source();
+			if(v >= a && v <= b) assert(v == k - 1);
+			if(v >= a && v <= b) continue;
+			assert(v < a);
+			assert(v != 0);
+			in_sum += gr.get_edge_weight(e);
+		}
+	}
+	return 0;
+}
+
+int determine_end_boundary(splice_graph &gr, int a, int b, double &maxcov, double &out_sum)
+{
+	maxcov = 0;
+	out_sum = 0;
+	int n = gr.num_vertices() - 1;
+	for(int k = a; k <= b; k++)
+	{
+		if(gr.edge(k, n).second == true) return -1;
+		//if(maxcov < gr.get_vertex_info(k).maxcov) maxcov = gr.get_vertex_info(k).maxcov;
+		if(maxcov < gr.get_vertex_weight(k)) maxcov = gr.get_vertex_weight(k);
+
+		PEEI pei = gr.out_edges(k);
+		for(edge_iterator it = pei.first; it != pei.second; it++)
+		{
+			edge_descriptor e = *it;
+			assert(e->source() == k);
+			int v = e->target();
+			if(v >= a && v <= b) assert(v == k + 1);
+			if(v >= a && v <= b) continue;
+			assert(v > b);
+			assert(v != n);
+			out_sum += gr.get_edge_weight(e);
+		}
+	}
+	return 0;
+}
+
+int left_continuous_extend(splice_graph &gr, int x)
+{
+	int z = -1;				// will be returned
+	int k = x;				// current vertex
+	set<int> fb;
+	while(true)
+	{
+		if(k <= 0) break;
+		if(fb.find(k) != fb.end()) break;
+
+		z = k;
+		add_distant_in_vertices(gr, k, fb);
+
+		if(k - 1 <= 0) break;
+		if(gr.edge(k - 1, k).second == false) break;
+		if(gr.get_vertex_info(k - 1).rpos != gr.get_vertex_info(k).lpos) break;
+
+		k = k - 1;
+	}
+	return z;
+}
+
+int right_continuous_extend(splice_graph &gr, int x)
+{
+	int z = -1;				// will be returned
+	int k = x;				// current vertex
+	set<int> fb;
+	int n = gr.num_vertices() - 1;
+	while(true)
+	{
+		if(k >= n) break;
+		if(fb.find(k) != fb.end()) break;
+
+		z = k;
+		add_distant_out_vertices(gr, k, fb);
+
+		if(k + 1 >= n) break;
+		if(gr.edge(k, k + 1).second == false) break;
+		if(gr.get_vertex_info(k + 1).lpos != gr.get_vertex_info(k).rpos) break;
+
+		k = k + 1;
+	}
+	return z;
+}
+
+int add_distant_in_vertices(splice_graph &gr, int x, set<int> &s)
+{
+	PEEI pei = gr.in_edges(x);
+	int32_t p = gr.get_vertex_info(x).lpos;
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = *it;
+		assert(e->target() == x);
+		int v = e->source();
+		if(gr.get_vertex_info(v).rpos == p) continue;
+		s.insert(v);
+	}
+	return 0;
+}
+
+int add_distant_out_vertices(splice_graph &gr, int x, set<int> &s)
+{
+	PEEI pei = gr.out_edges(x);
+	int32_t p = gr.get_vertex_info(x).rpos;
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = *it;
+		assert(e->source() == x);
+		int v = e->target();
+		if(gr.get_vertex_info(v).lpos == p) continue;
+		s.insert(v);
+	}
+	return 0;
+}

@@ -165,8 +165,8 @@ int graph_builder::build_regions()
 	{
 		junction &jc = junctions[i];
 
-		double ave, dev;
-		evaluate_rectangle(bd.mmap, jc.lpos, jc.rpos, ave, dev);
+		//double ave, dev;
+		//evaluate_rectangle(bd.mmap, jc.lpos, jc.rpos, ave, dev);
 
 		int32_t l = jc.lpos;
 		int32_t r = jc.rpos;
@@ -300,8 +300,9 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 		vertex_info vi;
 		vi.lpos = r.lpos;
 		vi.rpos = r.rpos;
-		vi.length = length;
 		vi.stddev = r.dev;
+		vi.maxcov = r.max;
+		vi.length = length;
 		vi.regional = regional[i];
 		gr.set_vertex_info(i + 1, vi);
 	}

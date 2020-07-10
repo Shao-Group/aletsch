@@ -20,6 +20,7 @@ public:
 	int32_t pos;		// position
 	int32_t lpos;		// left position
 	int32_t rpos;		// right position
+	double maxcov;		// largest coverage in this region
 	double stddev;		// standard deviation of read coverage
 	int length;			// length of this partial exon
 	int sdist;			// shortest distance to s

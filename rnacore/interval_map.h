@@ -70,7 +70,7 @@ int compute_sum_overlap(const split_interval_map &imap, SIMI &p, SIMI &q);
 set<int> get_overlapped_set(const interval_set_map &ism, int32_t x, int32_t y);
 
 // evaluate a region
-int evaluate_rectangle(const split_interval_map &imap, int ll, int rr, double &ave, double &dev);
+int evaluate_rectangle(const split_interval_map &imap, int ll, int rr, double &ave, double &dev, double &max);
 int evaluate_triangle(const split_interval_map &imap, int ll, int rr, double &ave, double &dev);
 
 // print

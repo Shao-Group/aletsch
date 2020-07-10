@@ -41,4 +41,14 @@ int refine_splice_graph(splice_graph &gr);
 int group_start_boundaries(splice_graph &gr, map<int32_t, int32_t> &smap, int32_t max_group_boundary_distance);
 int group_end_boundaries(splice_graph &gr, map<int32_t, int32_t> &tmap, int32_t max_group_boundary_distance);
 
+int identify_boundaries(splice_graph &gr, const parameters &cfg);
+bool identify_start_boundary(splice_graph &gr, double min_ratio);
+bool identify_end_boundary(splice_graph &gr, double min_ratio);
+int left_continuous_extend(splice_graph &gr, int x);
+int right_continuous_extend(splice_graph &gr, int x);
+int add_distant_in_vertices(splice_graph &gr, int x, set<int> &s);
+int add_distant_out_vertices(splice_graph &gr, int x, set<int> &s);
+int determine_start_boundary(splice_graph &gr, int a, int b, double &max, double &sum);
+int determine_end_boundary(splice_graph &gr, int a, int b, double &max, double &sum);
+
 #endif

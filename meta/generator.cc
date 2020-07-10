@@ -147,6 +147,9 @@ int generator::generate(bundle &bb, int index)
 	gr.extend_strands();
 	gr.build_vertex_index();
 
+	// identify new boundaries
+	identify_boundaries(gr, cfg);
+
 	if(cfg.boost_precision == true && (sp.data_type == PAIRED_END || sp.data_type == SINGLE_END))
 	{
 		revise_splice_graph_full(gr, cfg);

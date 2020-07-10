@@ -98,6 +98,7 @@ public:
 	double min_surviving_edge_weight;
 	int normal_junction_threshold;
 	int extend_junction_threshold;
+	double min_boundary_log_ratio;
 
 public:
 	int print_command_line(int argc, const char ** argv);

@@ -163,10 +163,11 @@ int32_t compute_coverage(const split_interval_map &imap, SIMI &p, SIMI &q)
 	return s;
 }
 
-int evaluate_rectangle(const split_interval_map &imap, int ll, int rr, double &ave, double &dev)
+int evaluate_rectangle(const split_interval_map &imap, int ll, int rr, double &ave, double &dev, double &max)
 {
 	ave = 0;
-	dev = 1.0;
+	dev = 1;
+	max = 0;
 
 	PSIMI pei = locate_boundary_iterators(imap, ll, rr);
 	SIMI lit = pei.first, rit = pei.second;
@@ -174,6 +175,7 @@ int evaluate_rectangle(const split_interval_map &imap, int ll, int rr, double &a
 	if(lit == imap.end()) return 0;
 	if(rit == imap.end()) return 0;
 
+	max = 1.0 * compute_max_overlap(imap, lit, rit);
 	ave = 1.0 * compute_sum_overlap(imap, lit, rit) / (rr - ll);
 	//printf("compute average %d-%d = %.2lf\n", ll, rr, ave);
 
