@@ -86,7 +86,7 @@ int generator::resolve()
 		if(cfg.uniquely_mapped_only == true && ht.nh != 1) continue;
 		if(sp.library_type != UNSTRANDED && ht.strand == '+' && ht.xs == '-') continue;
 		if(sp.library_type != UNSTRANDED && ht.strand == '-' && ht.xs == '+') continue;
-		if(sp.library_type == UNSTRANDED && sp.bam_with_xs == 1 && ht.xs == '.') continue;
+		//if(sp.library_type == UNSTRANDED && sp.bam_with_xs == 1 && ht.xs == '.') continue;
 		if(sp.library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
 		if(sp.library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit_intervals(ht, b1t);
 		if(sp.library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit_intervals(ht, b1t);
