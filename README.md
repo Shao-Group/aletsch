@@ -10,12 +10,9 @@ Efficient algorithms are implemented to combine splice graphs (and phasing paths
 at overlapped gene loci. Eventually, the core algorithm used in Scallop (i.e., phase-preserving decomposition)
 is employed to decompose the combined splice graphs to transcripts.
 
-# Release
-Latest release of aletsch is [v1.0.2](https://github.com/Shao-Group/aletsch/releases/tag/v1.0.2).
-
 # Installation
-Download the source code of aletsch from
-[here](https://github.com/Shao-Group/aletsch/releases/download/v1.0.2/aletsch-1.0.2.tar.gz).
+Download the source code of latest aletsch from
+[here](https://github.com/Shao-Group/aletsch/releases/download/v1.0.3/aletsch-1.0.3.tar.gz).
 Aletsch uses additional libraries of Boost and htslib. 
 If they have not been installed in your system, you first
 need to download and install them. You might also need to
