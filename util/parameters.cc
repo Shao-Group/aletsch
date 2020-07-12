@@ -394,7 +394,6 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			i++;
 			i++;
 		}
-
 		else if(string(argv[i]) == "--max_preview_spliced_reads")
 		{
 			int dt = atoi(argv[i + 1]);
@@ -460,6 +459,13 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			i++;
 			i++;
 		}
+		else if(string(argv[i]) == "--min_boundary_log_ratio")
+		{
+			int dt = atoi(argv[i + 1]);
+			if(dt == 0 || dt == data_type) min_boundary_log_ratio = atof(argv[i + 2]);
+			i++;
+			i++;
+		}
 	}
 
 	if(min_surviving_edge_weight < 0.1 + min_transcript_coverage) 
@@ -507,6 +513,7 @@ int parameters::print_help()
 	printf(" %-46s  %s\n", "--help",  "print usage of aletsch and exit");
 	printf(" %-46s  %s\n", "--version",  "print current version of aletsch and exit");
 	printf(" %-46s  %s\n", "--profile",  "profiling individual samples and exit (will write to files if -p provided)");
+	printf(" %-46s  %s\n", "--boost_precision",  "reduce false positives, default: not to do so");
 	printf(" %-46s  %s\n", "-l/--chrm_list_string <string>",  "list of chromosomes that will be assembled, default: N/A (i.e., assemble all)");
 	printf(" %-46s  %s\n", "-L/--chrm_list_file <string>",  "file with chromosomes that will be assembled, default: N/A (i.e., assemble all)");
 	printf(" %-46s  %s\n", "-d/--output_gtf_dir <string>",  "existing directory for individual transcripts, default: N/A");
@@ -515,7 +522,6 @@ int parameters::print_help()
 	printf(" %-46s  %s\n", "-t/--max_threads <integer>",  "maximized number of threads, default: 10");
 	printf(" %-46s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 20");
 	printf(" %-46s  %s\n", "-s/--min_grouping_similarity <float>",  "the minimized similarity for two graphs to be combined, default: 0.2");
-	printf(" %-46s  %s\n", "--boost_precision",  "reduce false positives, default: not to do so");
 	printf(" %-46s  %s\n", "--min_bridging_score <float>",  "the minimum score for bridging a paired-end reads, default: 1.5");
 	printf(" %-46s  %s\n", "--min_splice_bundary_hits <integer>",  "the minimum number of spliced reads required to support a junction, default: 1");
 	printf(" %-46s  %s\n", "--min_transcript_coverage <float>",  "minimum coverage required for a multi-exon transcript, default: 1.0");
@@ -529,6 +535,7 @@ int parameters::print_help()
 	printf(" %-46s  %s\n", "--min_bundle_gap <integer>",  "minimum distances required to start a new bundle, default: 50");
 	printf(" %-46s  %s\n", "--min_num_hits_in_bundle <integer>",  "minimum number of reads required in a bundle, default: 20");
 	printf(" %-46s  %s\n", "--min_flank_length <integer>",  "minimum match length in each side for a spliced read, default: 3");
+	printf(" %-46s  %s\n", "--min_boundary_log_ratio <float>",  "minimum log-ratio to identify a new boundary, default: 2.0");
 	return 0;
 }
 
