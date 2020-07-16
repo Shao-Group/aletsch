@@ -17,7 +17,7 @@ trans_item::trans_item(const transcript &t, int c, int s)
 {
 	trst = t;
 	count = c;
-	samples.insert(s);
+	samples.insert(make_pair(s, t.coverage));
 }
 
 int trans_item::merge(const trans_item &ti, int mode)

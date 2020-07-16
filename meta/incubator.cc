@@ -347,29 +347,27 @@ int incubator::rearrange()
 
 int incubator::postprocess()
 {
-	vector<transcript> vt = tmerge.get_transcripts(2);
-
-	// warning: ts contains mixed strands
-	//cluster cs(v, cfg);
-	//cs.solve();
-
-	filter ft(vt, params[DEFAULT]);
-	ft.filter_length_coverage();
-
-	// TODO, coverage for individual sample
 	stringstream ss;
-	vector<vector<int>> vv(samples.size());
-	for(int i = 0; i < ft.trs.size(); i++)
+	vector<transcript> vt;
+	vector<vector<pair<int, double>>> vv(samples.size());
+	for(auto &it : tmerge.mt)
 	{
-		transcript &t = ft.trs[i];
-		t.write(ss);
-		pair<bool, trans_item> p = tmerge.query(t);
-		if(p.first == false) continue;
-		for(auto &k : p.second.samples)
+		auto &v = it.second;
+		for(int k = 0; k < v.size(); k++)
 		{
-			if(k < 0) continue;
-			assert(k >= 0 && k < vv.size());
-			vv[k].push_back(i);
+			transcript &t = v[k].trst;
+			if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
+
+			t.write(ss);
+			vt.push_back(t);
+			
+			for(auto &p : v[k].samples)
+			{
+				int j = p.first;
+				double w = p.second;
+				if(j < 0 || j >= vv.size()) continue;
+				vv[j].push_back(make_pair(vt.size() - 1, w));
+			}
 		}
 	}
 
@@ -381,8 +379,8 @@ int incubator::postprocess()
 		boost::asio::thread_pool pool(params[DEFAULT].max_threads);
 		for(int i = 0; i < vv.size(); i++)
 		{
-			const vector<transcript> &z = ft.trs;
-			const vector<int> &v = vv[i];
+			const vector<transcript> &z = vt;
+			const vector<pair<int, double>> &v = vv[i];
 			boost::asio::post(pool, [this, i, &z, &v]{ this->write_individual_gtf(i, z, v); });
 		}
 		pool.join();
@@ -442,15 +440,19 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	return 0;
 }
 
-int incubator::write_individual_gtf(int id, const vector<transcript> &vt, const vector<int> &v)
+int incubator::write_individual_gtf(int id, const vector<transcript> &vt, const vector<pair<int, double>> &v)
 {
 	assert(id >= 0 && id < samples.size());
 
 	stringstream ss;
 	for(int i = 0; i < v.size(); i++)
 	{
-		int k = v[i];
-		const transcript &t = vt[k];
+		int k = v[i].first;
+		transcript t = vt[k];
+		t.coverage = v[i].second;
+
+		if(t.exons.size() == 1 && t.coverage < params[DEFAULT].min_single_exon_individual_coverage) continue;
+
 		t.write(ss);
 	}
 

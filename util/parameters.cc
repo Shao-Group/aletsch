@@ -91,6 +91,7 @@ parameters::parameters()
 	min_transcript_length_base = 150;
 	min_transcript_length_increase = 50;
 	min_single_exon_transcript_coverage = 3.5;
+	min_single_exon_individual_coverage = 2.0;
 	min_single_exon_transcript_length = 250;
 	min_single_exon_clustering_overlap = 0.8;
 	min_exon_length = 20;

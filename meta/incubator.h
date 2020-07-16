@@ -52,7 +52,7 @@ private:
 	int assemble(vector<combined_graph*> gv, int instance, mutex &mylock);
 	int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);
 	int save_transcript_set(const transcript_set &ts, mutex &mylock);
-	int write_individual_gtf(int id, const vector<transcript> &vt, const vector<int> &v);
+	int write_individual_gtf(int id, const vector<transcript> &vt, const vector<pair<int, double>> &v);
 	int print_groups();
 };
 

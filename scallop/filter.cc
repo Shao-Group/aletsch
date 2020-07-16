@@ -17,12 +17,7 @@ int filter::filter_length_coverage()
 	vector<transcript> v;
 	for(int i = 0; i < trs.size(); i++)
 	{
-		int e = trs[i].exons.size();
-		int minl = cfg.min_transcript_length_base + e * cfg.min_transcript_length_increase;
-		if(e >= 2 && trs[i].length() < minl) continue;
-		if(e >= 2 && trs[i].coverage < cfg.min_transcript_coverage) continue;
-		if(e == 1 && trs[i].length() < cfg.min_single_exon_transcript_length) continue;
-		if(e == 1 && trs[i].coverage < cfg.min_single_exon_transcript_coverage) continue;
+		if(verify_length_coverage(trs[i], cfg) == false) continue;
 		v.push_back(trs[i]);
 	}
 	trs = v;
@@ -293,4 +288,15 @@ bool transcript_cmp(const transcript &x, const transcript &y)
 {
 	if(x.exons[0].first < y.exons[0].first) return true;
 	else return false;
+}
+
+bool verify_length_coverage(const transcript &t, const parameters &cfg)
+{
+	int e = t.exons.size();
+	int minl = cfg.min_transcript_length_base + e * cfg.min_transcript_length_increase;
+	if(e >= 2 && t.length() < minl) return false;
+	if(e >= 2 && t.coverage < cfg.min_transcript_coverage) return false;
+	if(e == 1 && t.length() < cfg.min_single_exon_transcript_length) return false;
+	if(e == 1 && t.coverage < cfg.min_single_exon_transcript_coverage) return false;
+	return true;
 }
