@@ -454,12 +454,11 @@ int incubator::write_individual_gtf(int id, const vector<transcript> &vt, const 
 	{
 		int k = v[i].first;
 		transcript t = vt[k];
-		double cov2 = t.coverage;
-		t.coverage = v[i].second;
+		double cov1 = v[i].second;
 
 		if(t.exons.size() == 1 && t.coverage < params[DEFAULT].min_single_exon_individual_coverage) continue;
 
-		t.write(ss, cov2, ct[k]);
+		t.write(ss, cov1, ct[k]);
 	}
 
 	const string &s = ss.str();
