@@ -70,7 +70,7 @@ public:
 	int compare1(const transcript &t, double single_exon_overlap) const;
 	int extend_bounds(const transcript &t);
 	string label() const;
-	int write(ostream &fout) const;
+	int write(ostream &fout, double cov2 = -1, int count = -1) const;
 };
 
 #endif

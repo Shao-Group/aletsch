@@ -349,17 +349,21 @@ int incubator::postprocess()
 {
 	stringstream ss;
 	vector<transcript> vt;
+	vector<int> ct;
 	vector<vector<pair<int, double>>> vv(samples.size());
 	for(auto &it : tmerge.mt)
 	{
 		auto &v = it.second;
 		for(int k = 0; k < v.size(); k++)
 		{
+			if(v[k].count <= 1) continue;
+
 			transcript &t = v[k].trst;
 			if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
 
-			t.write(ss);
+			t.write(ss, -1, v[k].samples.size());
 			vt.push_back(t);
+			ct.push_back(v[k].samples.size());
 			
 			for(auto &p : v[k].samples)
 			{
@@ -379,9 +383,10 @@ int incubator::postprocess()
 		boost::asio::thread_pool pool(params[DEFAULT].max_threads);
 		for(int i = 0; i < vv.size(); i++)
 		{
+			const vector<int> &c = ct;
 			const vector<transcript> &z = vt;
 			const vector<pair<int, double>> &v = vv[i];
-			boost::asio::post(pool, [this, i, &z, &v]{ this->write_individual_gtf(i, z, v); });
+			boost::asio::post(pool, [this, i, &z, &c, &v]{ this->write_individual_gtf(i, z, c, v); });
 		}
 		pool.join();
 	}
@@ -440,7 +445,7 @@ int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
 	return 0;
 }
 
-int incubator::write_individual_gtf(int id, const vector<transcript> &vt, const vector<pair<int, double>> &v)
+int incubator::write_individual_gtf(int id, const vector<transcript> &vt, const vector<int> &ct, const vector<pair<int, double>> &v)
 {
 	assert(id >= 0 && id < samples.size());
 
@@ -449,11 +454,12 @@ int incubator::write_individual_gtf(int id, const vector<transcript> &vt, const 
 	{
 		int k = v[i].first;
 		transcript t = vt[k];
+		double cov2 = t.coverage;
 		t.coverage = v[i].second;
 
 		if(t.exons.size() == 1 && t.coverage < params[DEFAULT].min_single_exon_individual_coverage) continue;
 
-		t.write(ss);
+		t.write(ss, cov2, ct[k]);
 	}
 
 	const string &s = ss.str();

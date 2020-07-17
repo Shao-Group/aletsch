@@ -43,6 +43,7 @@ int transcript::assign(const item &e)
 	end = e.end;
 	strand = e.strand;
 	frame = e.frame;
+	score = e.score;
 	coverage = e.coverage;
 	RPKM = e.RPKM;
 	FPKM = e.FPKM;
@@ -76,6 +77,7 @@ int transcript::clear()
 	strand = '.';
 	frame = -1;
 	coverage = 0;
+	score = 0;
 	RPKM = 0;
 	TPM = 0;
 	return 0;
@@ -307,7 +309,7 @@ string transcript::label() const
 	return string(buf);
 }
 
-int transcript::write(ostream &fout) const
+int transcript::write(ostream &fout, double cov2, int count) const
 {
 	fout.precision(4);
 	fout<<fixed;
@@ -329,7 +331,10 @@ int transcript::write(ostream &fout) const
 	if(gene_type != "") fout<<"gene_type \""<<gene_type.c_str()<<"\"; ";
 	if(transcript_type != "") fout<<"transcript_type \""<<transcript_type.c_str()<<"\"; ";
 	//fout<<"RPKM \""<<RPKM<<"\"; ";
-	fout<<"cov \""<<coverage<<"\";"<<endl;
+	fout<<"cov \""<<coverage<<"\"; ";
+	if(cov2 >= -0.5) fout<<"cov2 \""<<cov2<<"\"; ";
+	if(count >= -0.5) fout<<"count \""<<count<<"\"; ";
+	fout << endl;
 
 	for(int k = 0; k < exons.size(); k++)
 	{
@@ -347,4 +352,3 @@ int transcript::write(ostream &fout) const
 	}
 	return 0;
 }
-
