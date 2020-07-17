@@ -309,7 +309,7 @@ string transcript::label() const
 	return string(buf);
 }
 
-int transcript::write(ostream &fout, double cov1, int count) const
+int transcript::write(ostream &fout, double cov2, int count) const
 {
 	fout.precision(4);
 	fout<<fixed;
@@ -332,7 +332,7 @@ int transcript::write(ostream &fout, double cov1, int count) const
 	if(transcript_type != "") fout<<"transcript_type \""<<transcript_type.c_str()<<"\"; ";
 	//fout<<"RPKM \""<<RPKM<<"\"; ";
 	fout<<"cov \""<<coverage<<"\"; ";
-	if(cov1 >= -0.5) fout<<"cov2 \""<<cov1<<"\"; ";
+	if(cov2 >= -0.5) fout<<"cov2 \""<<cov2<<"\"; ";
 	if(count >= -0.5) fout<<"count \""<<count<<"\"; ";
 	fout << endl;
 
