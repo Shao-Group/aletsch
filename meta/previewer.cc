@@ -96,8 +96,26 @@ int previewer::infer_library_type()
     bam_destroy1(b1t);
 	sp.close_align_file();
 
-	int spn = spn1.size() < spn2.size() ? spn1.size() : spn2.size();
+	//int first1 = 0, second1 = 0;
+	//int first2 = 0, second2 = 0;
+	//printf("first1 = %d, second1 = %d, first2 = %d, second2 = %d\n", first1, second1, first2, second2);
 
+	int spn = (spn1.size() + spn2.size()) / 2.0;
+	for(int k = 0; k < spn1.size(); k++)
+	{
+		if(spn1[k] == 1) first++;
+		if(spn1[k] == 2) second++;
+	}
+
+	for(int k = 0; k < spn2.size(); k++)
+	{
+		if(spn2[k] == 1) first++;
+		if(spn2[k] == 2) second++;
+	}
+
+
+	/*
+	int spn = spn1.size() < spn2.size() ? spn1.size() : spn2.size();
 	for(int k = 0; k < spn; k++)
 	{
 		if(spn1[k] == 1) first++;
@@ -105,6 +123,7 @@ int previewer::infer_library_type()
 		if(spn1[k] == 2) second++;
 		if(spn2[k] == 2) second++;
 	}
+	*/
 
 	vector<string> vv;
 	vv.push_back("empty");

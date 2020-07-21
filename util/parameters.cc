@@ -48,10 +48,10 @@ parameters::parameters()
 	min_flank_length = 3;
 	max_num_cigar = 10000;
 	min_bundle_gap = 50;
-	min_num_hits_in_bundle = 10;
+	min_num_hits_in_bundle = 8;
 	min_junction_support = 1;
 	min_mapping_quality = 1;
-	use_second_alignment = false;
+	use_second_alignment = true;
 	uniquely_mapped_only = false;
 	batch_bundle_size = 100;
 	max_reads_partition_gap = 10;
@@ -88,8 +88,8 @@ parameters::parameters()
 	
 	// for filtering paths
 	min_transcript_coverage = 1.0;
-	min_transcript_length_base = 150;
-	min_transcript_length_increase = 50;
+	min_transcript_length_base = 100;
+	min_transcript_length_increase = 30;
 	min_single_exon_transcript_coverage = 3.5;
 	min_single_exon_individual_coverage = 2.5;
 	min_single_exon_transcript_length = 250;
