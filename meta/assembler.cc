@@ -128,6 +128,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt,
 		vt.push_back(t);
 	}
 
+	/*
 	printf("assemble %s: %d transcripts, combined = %d, graph with %lu vertices and %lu edges, phases = %lu\n", gx.gid.c_str(), z, combined, gx.num_vertices(), gx.num_edges(), px.pmap.size());
 	gx.print();
 	for(int k = 0; k < sx.trsts.size(); k++)
@@ -136,6 +137,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt,
 		t.write(cout);
 	}
 	printf("\n");
+	*/
 
 	return 0;
 }

@@ -156,10 +156,12 @@ int generator::generate(bundle &bb, int index)
 		revise_splice_graph_full(gr, cfg);
 	}
 
+	/*
 	printf("-----------------------------\n");
 	bb.print(index);
 	gr.print();
 	printf("\n");
+	*/
 
 	phase_set ps;
 	vector<pereads_cluster> ub;
@@ -233,11 +235,13 @@ int generator::generate(bundle &bb, int index)
 		cb.gid = gid;
 		cb.build(grv[k], std::move(hsv[k]), std::move(ubv[k]));
 
+		/*
 		// print
 		//grv[k].print();
 		printf("added to vcb\n");
 		cb.print(k);
 		printf("\n");
+		*/
 
 		vcb.push_back(std::move(cb));
 	}
