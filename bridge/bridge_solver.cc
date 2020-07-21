@@ -38,6 +38,7 @@ bridge_solver::bridge_solver(splice_graph &g, vector<pereads_cluster> &v, const 
 	build_piers();
 	nominate();
 	vote();
+	print();
 }
 
 int bridge_solver::build_bridging_vertices()
