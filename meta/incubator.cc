@@ -356,7 +356,7 @@ int incubator::postprocess()
 		auto &v = it.second;
 		for(int k = 0; k < v.size(); k++)
 		{
-			if(v[k].count <= 1) continue;
+			//if(v[k].count <= 1) continue;
 
 			transcript &t = v[k].trst;
 			if(verify_length_coverage(t, params[DEFAULT]) == false) continue;

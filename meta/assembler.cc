@@ -39,7 +39,8 @@ int assembler::assemble(vector<combined_graph*> gv, int batch, int instance, tra
 		if(cfg.boost_precision == true) gt.refine_junctions();
 
 		assemble(gt, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-		ts.increase_count(1);
+		//ts.increase_count(1);
+
 		if(cfg.output_bridged_bam_dir != "" && gt.vc.size() >= 1)
 		{
 			sample_profile &sp = samples[gt.sid];
@@ -65,7 +66,8 @@ int assembler::assemble(vector<combined_graph*> gv, int batch, int instance, tra
 		}
 
 		cx.set_gid(batch, instance, subindex++);
-		assemble(cx, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_NUL);
+		//assemble(cx, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_NUL);
+		assemble(cx, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	}
 
 	return 0;
