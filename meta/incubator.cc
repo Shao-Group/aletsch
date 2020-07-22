@@ -305,6 +305,7 @@ int incubator::assemble()
 int incubator::rearrange()
 {
 	// filtering with count
+	/*
 	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
 	for(int i = 0; i < tsets.size(); i++)
 	{
@@ -313,6 +314,7 @@ int incubator::rearrange()
 		boost::asio::post(pool, [&t]{ t.filter(2); });
 	}
 	pool.join();
+	*/
 
 	// random sort
 	std::random_shuffle(tsets.begin(), tsets.end());
