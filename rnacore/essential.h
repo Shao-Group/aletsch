@@ -17,12 +17,8 @@ See LICENSE for licensing.
 
 using namespace std;
 
-// process hit
-vector<int32_t> extract_splices(bam1_t *b);
-
 // match paired-end reads
 int build_paired_reads(const vector<hit> &hits, vector<PI> &fs);
-
 
 // determine whether a->b is continuous in graph
 bool check_continuous_vertices(splice_graph &gr, int x, int y);

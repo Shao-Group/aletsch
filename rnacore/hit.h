@@ -78,15 +78,13 @@ public:
 	int32_t nh;								// NH aux in sam
 	int32_t hi;								// HI aux in sam
 	int32_t nm;								// NM aux in sam
-	//vector<int32_t> spos;					// splice positions
-	string qname;							// query names
 	char strand;							// strandness
 	char xs;								// XS aux in sam
 	char ts;								// ts tag used in minimap2
+	string qname;							// query names
 
 public:
 	int set_tags(bam1_t *b);
-	int set_splices(bam1_t *b);
 	int set_strand(int lib_type);
 	int print() const;
 	int get_aligned_intervals(vector<int64_t> &v) const;
@@ -94,6 +92,7 @@ public:
 	size_t get_phash() const;
 	bool get_concordance();
 	bool equal(const hit &h) const;
+	vector<int32_t> extract_splices(bam1_t *b);
 };
 
 #endif

@@ -64,12 +64,10 @@ hit::hit(bam1_t *b, int id)
 	rpos = pos + (int32_t)bam_cigar2rlen(n_cigar, bam_get_cigar(b));
 }
 
-/*
-int hit::set_splices(bam1_t *b)
+vector<int32_t> hit::extract_splices(bam1_t *b)
 {
+	vector<int32_t> spos;
 	uint32_t *cigar = bam_get_cigar(b);
-
-	spos.clear();
 	int32_t p = pos;
 	int32_t q = 0;
     for(int k = 0; k < n_cigar; k++)
@@ -92,9 +90,8 @@ int hit::set_splices(bam1_t *b)
 		spos.push_back(s);
 		spos.push_back(p);
 	}
-	return 0;
+	return spos;
 }
-*/
 
 int hit::set_tags(bam1_t *b)
 {
