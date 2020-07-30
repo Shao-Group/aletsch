@@ -361,7 +361,9 @@ int incubator::postprocess()
 			//if(v[k].count <= 1) continue;
 
 			transcript &t = v[k].trst;
-			if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
+
+			// TODO
+			//if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
 
 			t.write(ss, -1, v[k].samples.size());
 			vt.push_back(t);

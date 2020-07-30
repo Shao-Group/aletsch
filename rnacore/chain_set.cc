@@ -58,6 +58,17 @@ int chain_set::add(const vector<int32_t> &v, int h)
 	return 0;
 }
 
+vector<int32_t> chain_set::get_chain(int h)
+{
+	vector<int32_t> v;
+	if(hmap.find(h) == hmap.end()) return v;
+
+	PI p = hmap[h];
+	assert(p.first >= 0 && p.first < chains.size());
+	assert(p.second >= 0 && p.second < chains[p.first].size());
+	return chains[p.first][p.second];
+}
+
 int chain_set::print()
 {
 	map<int, int> m;

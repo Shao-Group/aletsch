@@ -23,6 +23,7 @@ public:
 	vector<vector<vector<int32_t>>> chains;
 
 public:
+	vector<int32_t> v = get_chain(int h);
 	int add(const vector<int32_t> &v, int h);
 	int print();
 };

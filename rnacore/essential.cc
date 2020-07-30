@@ -42,6 +42,63 @@ vector<int32_t> extract_splices(bam1_t *b)
 	return spos;
 }
 
+int build_paired_reads(const vector<hit> &hits, vector<PI> &fs)
+{
+	fs.clear();
+	if(hits.size() == 0) return 0;
+
+	int max_index = hits.size() + 1;
+	if(max_index > 1000000) max_index = 1000000;
+
+	vector<bool> paired(hits.size(), false);
+	vector< vector<int> > vv;
+	vv.resize(max_index);
+
+	// first build index
+	for(int i = 0; i < hits.size(); i++)
+	{
+		const hit &h = hits[i];
+		// do not use hi; as long as qname, pos and isize are identical
+		int k = (h.get_qhash() % max_index + h.pos % max_index + (0 - h.isize) % max_index) % max_index;
+		vv[k].push_back(i);
+	}
+
+	for(int i = 0; i < hits.size(); i++)
+	{
+		const hit &h = hits[i];
+		if(paired[i] == true) continue;
+
+		int k = (h.get_qhash() % max_index + h.mpos % max_index + h.isize % max_index) % max_index;
+		int x = -1;
+		for(int j = 0; j < vv[k].size(); j++)
+		{
+			int u = vv[k][j];
+			const hit &z = hits[u];
+			if(u == i) continue;
+			//if(z.hi != h.hi) continue;
+			if(paired[u] == true) continue;
+			if(z.pos != h.mpos) continue;
+			if(z.isize + h.isize != 0) continue;
+			//if(z.qhash != h.qhash) continue;
+			if(z.qname != h.qname) continue;
+			x = u;
+			break;
+		}
+
+		if(x == -1) continue;
+
+		assert(i != x);
+		//fs.push_back(PI(i, x));
+		fs.push_back(PI(hits[i].hid, hits[x].hid));
+
+		paired[i] = true;
+		paired[x] = true;
+	}
+
+	//printf("total hits = %lu, total fragments = %lu\n", hits.size(), fs.size());
+	return 0;
+}
+
 int build_child_splice_graph(splice_graph &root, splice_graph &gr, map<int, int> &a2b)
 {
 	gr.clear();
@@ -381,63 +438,6 @@ bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv)
 
 	bool b = build_path_from_mixed_coordinates(gr, u, vv);
 	return b;
-}
-
-int build_paired_reads(const vector<hit> &hits, vector<PI> &fs)
-{
-	vector<bool> paired(hits.size(), false);
-
-	fs.clear();
-	if(hits.size() == 0) return 0;
-
-	int max_index = hits.size() + 1;
-	if(max_index > 1000000) max_index = 1000000;
-
-	vector< vector<int> > vv;
-	vv.resize(max_index);
-
-	// first build index
-	for(int i = 0; i < hits.size(); i++)
-	{
-		const hit &h = hits[i];
-		// do not use hi; as long as qname, pos and isize are identical
-		int k = (h.get_qhash() % max_index + h.pos % max_index + (0 - h.isize) % max_index) % max_index;
-		vv[k].push_back(i);
-	}
-
-	for(int i = 0; i < hits.size(); i++)
-	{
-		const hit &h = hits[i];
-		if(paired[i] == true) continue;
-
-		int k = (h.get_qhash() % max_index + h.mpos % max_index + h.isize % max_index) % max_index;
-		int x = -1;
-		for(int j = 0; j < vv[k].size(); j++)
-		{
-			int u = vv[k][j];
-			const hit &z = hits[u];
-			if(u == i) continue;
-			//if(z.hi != h.hi) continue;
-			if(paired[u] == true) continue;
-			if(z.pos != h.mpos) continue;
-			if(z.isize + h.isize != 0) continue;
-			//if(z.qhash != h.qhash) continue;
-			if(z.qname != h.qname) continue;
-			x = u;
-			break;
-		}
-
-		if(x == -1) continue;
-
-		assert(i != x);
-		fs.push_back(PI(i, x));
-
-		paired[i] = true;
-		paired[x] = true;
-	}
-
-	//printf("total hits = %lu, total fragments = %lu\n", hits.size(), fs.size());
-	return 0;
 }
 
 bool merge_intron_chains(const vector<int32_t> &x, const vector<int32_t> &y, vector<int32_t> &xy)

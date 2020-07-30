@@ -22,14 +22,14 @@ int pereads_cluster::clear()
 	chain2.clear();
 	bounds.clear();
 	extend.clear();
-	frags.clear();
+	frlist.clear();
 	count = 0;
 	return 0;
 }
 
 int pereads_cluster::print(int index) const
 {
-	printf("pereads-cluster %d: #reads = %d, #frags = %lu, bounds = ( ", index, count, frags.clear());
+	printf("pereads-cluster %d: #reads = %d, #frlist = %lu, bounds = ( ", index, count, frlist.clear());
 	printv(bounds);
 	printf("), extend = ( ");
 	printv(extend);

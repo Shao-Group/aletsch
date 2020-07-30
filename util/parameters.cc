@@ -88,8 +88,8 @@ parameters::parameters()
 	
 	// for filtering paths
 	min_transcript_coverage = 1.0;
-	min_transcript_length_base = 150;
-	min_transcript_length_increase = 50;
+	min_transcript_length_base = 100;
+	min_transcript_length_increase = 20;
 	min_single_exon_transcript_coverage = 3.5;
 	min_single_exon_individual_coverage = 1.5;
 	min_single_exon_transcript_length = 250;

@@ -29,10 +29,13 @@ public:
 	int32_t lpos;					// the leftmost boundary on reference
 	int32_t rpos;					// the rightmost boundary on reference
 	vector<hit> hits;				// hits
-	chain_set hcs;					// chain_set for hits 
+	vector<PI> frgs;				// fragments (pairs of hits)
+	vector<bool> brdg;				// if frgs are bridged
+	vector<junction> jcns;			// splice junctions
+	chain_set hcst;					// chain set for hits 
+	chain_set fcst;					// chain set for frgs
 	split_interval_map mmap;		// matched interval map
 	split_interval_map imap;		// indel interval map
-	vector<junction> junctions;		// splice junctions
 
 public:
 	int add_hit_intervals(const hit &ht, bam1_t *b);
@@ -42,7 +45,9 @@ public:
 	int compute_strand(int libtype);
 	int check_left_ascending();
 	int check_right_ascending();
+	int build_fragments();
 	int build_junctions();
+	int update_bridged_fragments(const vector<int> &frlist, const vector<int32_t> &chain, const vector<int32_t> &whole);
 
 private:
 	int add_hit(const hit &ht);

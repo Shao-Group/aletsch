@@ -20,14 +20,14 @@ public:
 
 public:
 	int type;
-	vector<int> v;
-	vector<int32_t> chain;
-	vector<int32_t> whole;
-	double score;
-	vector<int> stack;
 	int count;
 	int strand;
 	int choices;
+	double score;
+	vector<int> v;
+	vector<int32_t> chain;
+	vector<int32_t> whole;
+	vector<int> stack;
 
 public:
 	int clear();

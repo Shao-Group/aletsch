@@ -34,6 +34,10 @@ int bundle::add_hit(const hit &ht)
 	// store new hit
 	hits.push_back(ht);
 
+	// add splices
+	vector<int32_t> v = extract_splices(b);
+	hcst.add(v, hits.size() - 1);
+
 	// calcuate the boundaries on reference
 	if(ht.pos < lpos) lpos = ht.pos;
 	if(ht.rpos > rpos) rpos = ht.rpos;
@@ -96,6 +100,7 @@ int bundle::clear()
 	rpos = 0;
 	strand = '.';
 	hits.clear();
+	hcst.clear();
 	mmap.clear();
 	imap.clear();
 	junctions.clear();
@@ -165,12 +170,72 @@ int bundle::print(int index)
 	return 0;
 }
 
+int bundle::build_fragments()
+{
+	frgs.clear();
+	brdg.clear();
+	if(hits.size() == 0) return 0;
+
+	int max_index = hits.size() + 1;
+	if(max_index > 1000000) max_index = 1000000;
+
+	vector<bool> paired(hits.size(), false);
+	vector< vector<int> > vv;
+	vv.resize(max_index);
+
+	// first build index
+	for(int i = 0; i < hits.size(); i++)
+	{
+		const hit &h = hits[i];
+		// do not use hi; as long as qname, pos and isize are identical
+		int k = (h.get_qhash() % max_index + h.pos % max_index + (0 - h.isize) % max_index) % max_index;
+		vv[k].push_back(i);
+	}
+
+	for(int i = 0; i < hits.size(); i++)
+	{
+		const hit &h = hits[i];
+		if(paired[i] == true) continue;
+
+		int k = (h.get_qhash() % max_index + h.mpos % max_index + h.isize % max_index) % max_index;
+		int x = -1;
+		for(int j = 0; j < vv[k].size(); j++)
+		{
+			int u = vv[k][j];
+			const hit &z = hits[u];
+			if(u == i) continue;
+			//if(z.hi != h.hi) continue;
+			if(paired[u] == true) continue;
+			if(z.pos != h.mpos) continue;
+			if(z.isize + h.isize != 0) continue;
+			//if(z.qhash != h.qhash) continue;
+			if(z.qname != h.qname) continue;
+			x = u;
+			break;
+		}
+
+		if(x == -1) continue;
+
+		assert(i != x);
+		//frgs.push_back(PI(hits[i].hid, hits[x].hid));
+		frgs.push_back(PI(i, x));
+		brdg.push_back(false);
+
+		paired[i] = true;
+		paired[x] = true;
+	}
+
+	//printf("total hits = %lu, total fragments = %lu\n", hits.size(), frgs.size());
+	return 0;
+}
+
 int bundle::build_junctions()
 {
 	map<PI32, vector<int> > m;
 	for(int i = 0; i < bd.hits.size(); i++)
 	{
-		vector<int32_t> v = bd.hits[i].spos;
+		//vector<int32_t> v = bd.hits[i].spos;
+		vector<int32_t> v = hcst.get_chain(hits[i].hid);
 		if(v.size() == 0) continue;
 
 		for(int k = 0; k < v.size() / 2; k++)
@@ -215,7 +280,7 @@ int bundle::build_junctions()
 		if(jc.xs1 > jc.xs2) jc.strand = '+';
 		else if(jc.xs1 < jc.xs2) jc.strand = '-';
 		else jc.strand = '.';
-		junctions.push_back(jc);
+		jcns.push_back(jc);
 
 		/*
 		uint32_t max_qual = 0;
@@ -227,5 +292,10 @@ int bundle::build_junctions()
 		assert(max_qual >= min_max_boundary_quality);
 		*/
 	}
+	return 0;
+}
+
+int bundle::update_bridged_fragments(const vector<int> &frlist, const vector<int32_t> &chain, const vector<int32_t> &whole)
+{
 	return 0;
 }

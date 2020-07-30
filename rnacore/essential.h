@@ -20,6 +20,10 @@ using namespace std;
 // process hit
 vector<int32_t> extract_splices(bam1_t *b);
 
+// match paired-end reads
+int build_paired_reads(const vector<hit> &hits, vector<PI> &fs);
+
+
 // determine whether a->b is continuous in graph
 bool check_continuous_vertices(splice_graph &gr, int x, int y);
 
@@ -42,9 +46,6 @@ bool build_path_from_mixed_coordinates(splice_graph &gr, const vector<int32_t> &
 
 // align hit to splice graph
 bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv);
-
-// match paired-end reads
-int build_paired_reads(const vector<hit> &hits, vector<PI> &fs);
 
 // check consistency
 bool merge_intron_chains(const vector<int32_t> &x, const vector<int32_t> &y, vector<int32_t> &xy);

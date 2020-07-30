@@ -32,13 +32,19 @@ bool entry_compare(const entry &x, const entry &y)
 bridge_solver::bridge_solver(splice_graph &g, vector<pereads_cluster> &v, const parameters &c, int32_t low, int32_t high)
 	: gr(g), vc(v), cfg(c)
 {
+	add_adjacent_edges();
+
 	length_low = low;
 	length_high = high;
 	build_bridging_vertices();
 	build_piers();
 	nominate();
 	vote();
-	//print();
+
+	remove_adjacent_edges();
+	
+	// TODO
+	print();
 }
 
 int bridge_solver::build_bridging_vertices()
@@ -57,6 +63,32 @@ int bridge_solver::build_bridging_vertices()
 		*/
 
 		vpairs.push_back(PI(v1, v2));
+	}
+	return 0;
+}
+
+int bridge_solver::add_adjacent_edges()
+{
+	for(int i = 1; i < gr.num_vertices() - 2; i++)
+	{
+		PEB p = gr.edge(i + 0, i + 1);
+		if(p.second == true) continue;
+
+		edge_descriptor e = gr.add_edge(i + 0, i + 1);
+		edge_info ei;
+		ei.weight = 0.5;
+		gr.set_edge_weight(e, 0.5);
+		gr.set_edge_info(e, ei);
+		adjedges.push_back(e);
+	}
+	return 0;
+}
+
+int bridge_solver::remove_adjacent_edges()
+{
+	for(int i = 0; i < adjedges.size(); i++)
+	{
+		gr.remove_edge(adjedges[i]);
 	}
 	return 0;
 }
@@ -294,7 +326,9 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 		if(length < length_low) continue;
 		if(length > length_high) continue;
 		if(strands[e] < 0) continue;
-		if(scores[e] < cfg.min_bridging_score) continue;
+
+		// TODO
+		//if(scores[e] < cfg.min_bridging_score) continue;
 
 		if(be < 0) be = e;
 		choices++;

@@ -17,15 +17,13 @@ using namespace std;
 class graph_cluster
 {
 public:
-	graph_cluster(const splice_graph &gr, const vector<hit> &hits, const vector<PI> &frags, int max_gap, bool b);
+	graph_cluster(const splice_graph &gr, const bundle &bd, int max_gap, bool b);
 
 public:
 	const splice_graph &gr;						// given splice graph
-	const vector<hit> &hits;					// given hits
-	const vector<PI> &frags;					// given paired hits
+	const bundle &bd;							// given bundle
 
 private:
-	vector<bool> paired;			
 	vector<int32_t> extend;
 	vector< vector<PI> > groups;
 	int max_partition_gap;
@@ -33,7 +31,6 @@ private:
 
 public:
 	int build_pereads_clusters(vector<pereads_cluster> &vc);
-	vector<bool> get_paired();
 
 private:
 	int group_pereads();

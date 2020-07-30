@@ -37,13 +37,15 @@ public:
 public:
 	splice_graph &gr;						// given splice graph
 	vector<pereads_cluster> &vc;			// given paired reads clusters
+	vector<bridge_path> opt;				// optimal bridge path
 	const parameters &cfg;
 
+private:
+	vector<edge_descriptor> adjedges;		// added edges
 	vector<PI> vpairs;						// vertices for each cluster
 	vector<pier> piers;						// piers
 	vector<int> bounds;						// groups of piers
 	map<PI, int> pindex;					// piers index
-	vector<bridge_path> opt;				// optimal bridge path
 
 	int32_t length_low;
 	int32_t length_high;
@@ -55,6 +57,8 @@ public:
 	int write_bridged_reads(BGZF *fout);
 
 private:
+	int add_adjacent_edges();
+	int remove_adjacent_edges();
 	int build_bridging_vertices();
 	bool check_left_relaxing(const pereads_cluster &pc, int v);
 	bool check_right_relaxing(const pereads_cluster &pc, int v);

@@ -23,7 +23,7 @@ public:
 
 public:
 	const parameters &cfg;			// parameters
-	bundle &bd;						// given hits
+	bundle &bd;						// given bundle
 	vector<junctions> junctions;	// copy of junctions from bd
 	vector<region> regions;			// regions
 	vector<partial_exon> pexons;	// partial exons

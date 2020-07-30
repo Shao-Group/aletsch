@@ -110,10 +110,40 @@ int generator::resolve()
 	return 0;
 }
 
+int generator::iterate(bundle &bb)
+{
+	bb.build_fragments();
+	bb.build_junctions();
+	while(true)
+	{
+		splice_graph gr;
+		graph_builder gb(bb, cfg);
+		gb.build(gr);
+
+		vector<pereads_cluster> vc;
+		graph_cluster gc(gr, bb, cfg.max_reads_partition_gap, false);
+		gc.build_pereads_clusters(vc);
+
+		//vector<bool> paired = gc.get_paired();
+		//build_phase_set_from_unpaired_reads(ps, gr, bb.hits, paired);
+
+		bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
+		//bs.build_phase_set(ps);
+		//bs.collect_unbridged_clusters(ub); 
+
+		assert(vc.size() == opt.size());
+		for(int k = 0; k < vc.size(); k++)
+		{
+			if(opt[k].type <= 0) continue;
+			bb.update_bridged_fragments(vc.frlist, bs.opt[k].chain, bs.opt[k].whole);
+		}
+	}
+	return 0;
+}
+
 int generator::generate(bundle &bb, int index)
 {
 	if(bb.tid < 0) return 0;
-
 
 	bool store_hits = true;
 	if(cfg.output_bridged_bam_dir == "") store_hits = false;
@@ -184,6 +214,7 @@ int generator::generate(bundle &bb, int index)
 		bs.build_phase_set(ps);
 
 		bs.collect_unbridged_clusters(ub); 
+
 		if(store_hits == true)
 		{
 			sp.open_bridged_bam(cfg.output_bridged_bam_dir);

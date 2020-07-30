@@ -4,15 +4,14 @@ Part of aletsch
 See LICENSE for licensing.
 */
 
-
 #include "graph_cluster.h"
 #include "essential.h"
 #include "util.h"
 
 #include <algorithm>
 
-graph_cluster::graph_cluster(const splice_graph &g, const vector<hit> &h, const vector<PI> &f, int max_gap, bool b)
-	: gr(g), hits(h), frags(f), max_partition_gap(max_gap), store_hits(b)
+graph_cluster::graph_cluster(const splice_graph &g, const bundle &d, int max_gap, bool b)
+	: gr(g), bd(d), max_partition_gap(max_gap), store_hits(b)
 {
 	group_pereads();
 } 
@@ -33,21 +32,13 @@ int graph_cluster::group_pereads()
 
 	extend.clear();
 	groups.clear();
-	paired.clear();
-
-	/*
-	vector<PI> fs;
-	build_paired_reads(hits, fs);
-	*/
-
-	paired.resize(hits.size(), false);
-
-	//printf("total %lu paired reads\n", fs.size());
-
-	for(int i = 0; i < frags.size(); i++)
+	for(int i = 0; i < bd.frgs.size(); i++)
 	{
-		int h1 = frags[i].first;
-		int h2 = frags[i].second;
+		// only group unbridged fragments
+		if(bd.brdg[i] == true) continue;
+
+		int h1 = bd.frgs[i].first;
+		int h2 = bd.frgs[i].second;
 
 		if(hits[h1].rpos > hits[h2].rpos) continue;
 		if(hits[h1].pos > hits[h2].pos) continue;
@@ -61,9 +52,6 @@ int graph_cluster::group_pereads()
 		bool b2 = align_hit_to_splice_graph(hits[h2], gr, v2);
 		if(b1 == false || b2 == false)  continue;
 		if(v1.size() == 0 || v2.size() == 0) continue;
-
-		paired[h1] = true;
-		paired[h2] = true;
 
 		PVV pvv(v1, v2);
 		if(findex.find(pvv) == findex.end())
@@ -166,27 +154,6 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 
 		pc.frags = fs;
 		vc.push_back(pc);
-
-		/*
-		if(pc.bounds[0] == 31579218)
-		{
-			pc.print(999);
-			for(int k = 0; k < zz[i].size(); k++)
-			{
-				printf("element %d: ", zz[i][k]);
-				printv(vv[zz[i][k]]);
-				printf("\n");
-
-				h1 = fs[zz[i][k]].first;
-				h2 = fs[zz[i][k]].second;
-				if(hits[h1].rpos > hits[h2].rpos) continue;
-				if(hits[h1].pos > hits[h2].pos) continue;
-				hits[h1].print();
-				hits[h2].print();
-			}
-			printf("\n");
-		}
-		*/
 	}
 
 	return 0;
@@ -225,11 +192,6 @@ vector< vector<int> > graph_cluster::partition(vector< vector<int32_t> > &fs, in
 		pre = k;
 	}
 	return vv;
-}
-
-vector<bool> graph_cluster::get_paired()
-{
-	return paired;
 }
 
 bool compare_rank0(const vector<int32_t> &x, const vector<int32_t> &y) { return x[0] < y[0]; }
