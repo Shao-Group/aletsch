@@ -110,37 +110,6 @@ int generator::resolve()
 	return 0;
 }
 
-int generator::iterate(bundle &bb)
-{
-	bb.build_fragments();
-	bb.build_junctions();
-	while(true)
-	{
-		splice_graph gr;
-		graph_builder gb(bb, cfg);
-		gb.build(gr);
-
-		vector<pereads_cluster> vc;
-		graph_cluster gc(gr, bb, cfg.max_reads_partition_gap, false);
-		gc.build_pereads_clusters(vc);
-
-		//vector<bool> paired = gc.get_paired();
-		//build_phase_set_from_unpaired_reads(ps, gr, bb.hits, paired);
-
-		bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
-		//bs.build_phase_set(ps);
-		//bs.collect_unbridged_clusters(ub); 
-
-		assert(vc.size() == opt.size());
-		for(int k = 0; k < vc.size(); k++)
-		{
-			if(opt[k].type <= 0) continue;
-			bb.update_bridged_fragments(vc.frlist, bs.opt[k].chain, bs.opt[k].whole);
-		}
-	}
-	return 0;
-}
-
 int generator::generate(bundle &bb, int index)
 {
 	if(bb.tid < 0) return 0;
@@ -172,15 +141,48 @@ int generator::generate(bundle &bb, int index)
 	bb.chrm = string(buf);
 	//bb.compute_strand(sp.library_type);
 
+	bb.build_fragments();
+
+	bridge(bb);
+
+	// build splice graph
 	splice_graph gr;
 	graph_builder gb(bb, cfg);
 	gb.build(gr);
-	gr.extend_strands();
 	gr.build_vertex_index();
 
-	// identify new boundaries
-	identify_boundaries(gr, cfg);
+	// build phase set
+	phase_set ps;
+	bd.build_phase_set(gr, ps);
 
+	// build (unbridged) reads-clusters
+	vector<pereads_cluster> ub;
+	if(sp.data_type == PAIRED_END)
+	{
+		graph_cluster gc(gr, bd, cfg.max_reads_partition_gap, store_hits);
+		gc.build_pereads_clusters(ub);
+	}
+
+	// write bridged and cannot-be-bridged reads
+	if(store_hits == true)
+	{
+		// TODO TODO
+		/*
+		sp.open_bridged_bam(cfg.output_bridged_bam_dir);
+		write_unpaired_reads(sp.bridged_bam, bb.hits, paired);
+		assert(vc.size() == bs.opt.size());
+		for(int k = 0; k < vc.size(); k++)
+		{
+			if(bs.opt[k].type >= 0) write_bridged_pereads_cluster(sp.bridged_bam, vc[k], bs.opt[k].whole);
+			else write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
+		}
+		sp.close_bridged_bam();
+		*/
+	}
+
+	// refine splice graph
+	gr.extend_strands();
+	identify_boundaries(gr, cfg);
 	if(cfg.boost_precision == true && (sp.data_type == PAIRED_END || sp.data_type == SINGLE_END))
 	{
 		revise_splice_graph_full(gr, cfg);
@@ -193,45 +195,7 @@ int generator::generate(bundle &bb, int index)
 	printf("\n");
 	*/
 
-	phase_set ps;
-	vector<pereads_cluster> ub;
-
-	if(sp.data_type != PAIRED_END)
-	{
-		vector<bool> paired(bb.hits.size(), false);
-		build_phase_set_from_unpaired_reads(ps, gr, bb.hits, paired);
-	}
-	else
-	{
-		vector<pereads_cluster> vc;
-		graph_cluster gc(gr, bb.hits, cfg.max_reads_partition_gap, store_hits);
-		gc.build_pereads_clusters(vc);
-
-		vector<bool> paired = gc.get_paired();
-		build_phase_set_from_unpaired_reads(ps, gr, bb.hits, paired);
-
-		bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
-		bs.build_phase_set(ps);
-
-		bs.collect_unbridged_clusters(ub); 
-
-		if(store_hits == true)
-		{
-			sp.open_bridged_bam(cfg.output_bridged_bam_dir);
-			write_unpaired_reads(sp.bridged_bam, bb.hits, paired);
-			assert(vc.size() == bs.opt.size());
-			for(int k = 0; k < vc.size(); k++)
-			{
-				if(bs.opt[k].type >= 0) write_bridged_pereads_cluster(sp.bridged_bam, vc[k], bs.opt[k].whole);
-				else write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
-			}
-			sp.close_bridged_bam();
-		}
-		for(int i = 0; i < vc.size(); i++) vc[i].clear();
-	}
-
-	//printf("single-bridge, combined = %d, ", 1); bs.print();
-
+	// partition into smaller instances
 	vector<splice_graph> grv;
 	vector<phase_set> hsv;
 	vector< vector<pereads_cluster> > ubv;
@@ -277,6 +241,33 @@ int generator::generate(bundle &bb, int index)
 		vcb.push_back(std::move(cb));
 	}
 
+	return 0;
+}
+
+int generator::bridge(bundle &bb)
+{
+	while(true)
+	{
+		splice_graph gr;
+		graph_builder gb(bb, cfg);
+		gb.build(gr);
+
+		vector<pereads_cluster> vc;
+		graph_cluster gc(gr, bb, cfg.max_reads_partition_gap, false);
+		gc.build_pereads_clusters(vc);
+
+		bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
+
+		int cnt = 0;
+		assert(vc.size() == opt.size());
+		for(int k = 0; k < vc.size(); k++)
+		{
+			if(opt[k].type <= 0) continue;
+			cnt += bb.update_bridges(vc.frlist, bs.opt[k].chain);
+		}
+
+		if(cnt <= 0) break;
+	}
 	return 0;
 }
 

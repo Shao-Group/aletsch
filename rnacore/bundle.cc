@@ -229,74 +229,87 @@ int bundle::build_fragments()
 	return 0;
 }
 
-int bundle::build_junctions()
+int bundle::build_phase_set(phase_set &ps, splice_graph &gr)
 {
-	map<PI32, vector<int> > m;
-	for(int i = 0; i < bd.hits.size(); i++)
+	vector<int> fb(hits.size(), -1);
+	for(int i = 0; i < frgs.size(); i++)
 	{
-		//vector<int32_t> v = bd.hits[i].spos;
-		vector<int32_t> v = hcst.get_chain(hits[i].hid);
-		if(v.size() == 0) continue;
+		if(brdg[i] <= -1) continue;
 
-		for(int k = 0; k < v.size() / 2; k++)
+		int h1 = frgs[i].first;	
+		int h2 = frgs[i].second;
+
+		if(brdg[i] == 0)
 		{
-			PI p(v[k * 2 + 0], v[k * 2 + 1]);
-			if(m.find(p) == m.end())
-			{
-				vector<int> hv;
-				hv.push_back(i);
-				m.insert(pair< PI32, vector<int> >(p, hv));
-			}
-			else
-			{
-				m[p].push_back(i);
-			}
+			fb[h1] = 0;			// paired, to be bridged
+			fb[h2] = 0;			// paired, to be bridged
+			continue;
 		}
+
+		int u1 = gr.locate_vertex(hits[h1].pos);
+		int u2 = gr.locate_vertex(hits[h2].rpos - 1);
+
+		if(u1 < 0 || u2 < 0) continue;
+		int32_t p1 = gr.get_vertex_info(u1).lpos;
+		int32_t p2 = gr.get_vertex_info(u2).rpos;
+
+		vector<int32_t> v1 = hcst.get_chain(h1);
+		vector<int32_t> v2 = hcst.get_chain(h2);
+
+		vector<int32_t> xy;
+
+		if(brdg[i] == 1)
+		{
+			bool b = merge_intron_chain(v1, v2, xy);
+			if(b == false) continue;
+		}
+
+		if(brdg[i] >= 2)
+		{
+			vector<int32_t> vv = fcst.get_chain(i);
+			xy.insert(xy.end(), v1.begin(), v1.end());
+			xy.insert(xy.end(), vv.begin(), vv.end());
+			xy.insert(xy.end(), v2.begin(), v2.end());
+		}
+
+		xy.insert(xy.begin(), p1);
+		xy.insert(xy.end(), p2);
+
+		bool b = check_increasing_sequence(xy);
+		if(b == false) continue;
+
+		fb[h1] = 1;			// bridged
+		fb[h2] = 1;			// bridged
+
+		ps.add(xy, 1);
 	}
 
-	map<PI32, vector<int> >::iterator it;
-	for(it = m.begin(); it != m.end(); it++)
+	for(int i = 0; i < hits.size(); i++)
 	{
-		vector<int> &v = it->second;
+		if(fb[i] >= 0) continue;
 
-		int32_t p1 = it->first.first;
-		int32_t p2 = it->first.second;
+		int u1 = gr.locate_vertex(hits[i].pos);
+		int u2 = gr.locate_vertex(hits[i].rpos - 1);
 
-		junction jc(p1, p2, v.size());
+		if(u1 < 0 || u2 < 0) continue;
+		int32_t p1 = gr.get_vertex_info(u1).lpos;
+		int32_t p2 = gr.get_vertex_info(u2).rpos;
 
-		if(jc.count < cfg.min_junction_support) continue;
+		vector<int32_t> xy = hcst.get_chain(i);
+		xy.insert(xy.begin(), p1);
+		xy.insert(xy.end(), p2);
 
-		for(int k = 0; k < v.size(); k++)
-		{
-			const hit &h = bd.hits[v[k]];
-			jc.nm += h.nm;
-			if(h.xs == '.') jc.xs0++;
-			if(h.xs == '+') jc.xs1++;
-			if(h.xs == '-') jc.xs2++;
-		}
+		bool b = check_increasing_sequence(xy);
+		if(b == false) continue;
 
-		//printf("junction: %s:%d-%d (%d, %d, %d) %d\n", chrm.c_str(), p1, p2, s0, s1, s2, s1 < s2 ? s1 : s2);
-
-		if(jc.xs1 > jc.xs2) jc.strand = '+';
-		else if(jc.xs1 < jc.xs2) jc.strand = '-';
-		else jc.strand = '.';
-		jcns.push_back(jc);
-
-		/*
-		uint32_t max_qual = 0;
-		for(int k = 0; k < v.size(); k++)
-		{
-			hit &h = bd.hits[v[k]];
-			if(h.qual > max_qual) max_qual = h.qual;
-		}
-		assert(max_qual >= min_max_boundary_quality);
-		*/
+		ps.add(xy, 1);
 	}
 	return 0;
 }
 
 int bundle::update_bridges(const vector<int> &frlist, const vector<int32_t> &chain)
 {
+	int cnt = 0;
 	for(int i = 0; i < frlist.size(); i++)
 	{
 		assert(chain.size() % 2 == 0);
@@ -312,6 +325,8 @@ int bundle::update_bridges(const vector<int> &frlist, const vector<int32_t> &cha
 		v1.push_back(h2.pos);
 
 		if(h1.rpos < h2.pos && check_increasing_sequence(v1) == false) continue;
+
+		cnt++;
 
 		if(chain.size() <= 0)
 		{
@@ -332,5 +347,5 @@ int bundle::update_bridges(const vector<int> &frlist, const vector<int32_t> &cha
 			mmap += make_pair(ROI(p1, p2), 1);
 		}
 	}
-	return 0;
+	return cnt;
 }

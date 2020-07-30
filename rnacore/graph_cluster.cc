@@ -35,7 +35,10 @@ int graph_cluster::group_pereads()
 	for(int i = 0; i < bd.frgs.size(); i++)
 	{
 		// only group unbridged fragments
-		if(bd.brdg[i] == true) continue;
+		if(bd.brdg[i] >= 1) continue;
+		if(bd.brdg[i] <= -1) continue;
+
+		bd.brdg[i] = -1;		// assume cannot be bridged
 
 		int h1 = bd.frgs[i].first;
 		int h2 = bd.frgs[i].second;
@@ -52,6 +55,8 @@ int graph_cluster::group_pereads()
 		bool b2 = align_hit_to_splice_graph(hits[h2], gr, v2);
 		if(b1 == false || b2 == false)  continue;
 		if(v1.size() == 0 || v2.size() == 0) continue;
+
+		bd.brdg[i] = 0;			// to be bridged
 
 		PVV pvv(v1, v2);
 		if(findex.find(pvv) == findex.end())

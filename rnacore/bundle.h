@@ -14,6 +14,8 @@ See LICENSE for licensing.
 
 #include "hit.h"
 #include "interval_map.h"
+#include "chain_set.h"
+#include "phase_set.h"
 
 using namespace std;
 
@@ -44,6 +46,7 @@ public:
 	int check_left_ascending();
 	int check_right_ascending();
 	int build_fragments();
+	int build_phase_set(phase_set &ps, splice_graph &gr);
 	int update_bridges(const vector<int> &frlist, const vector<int32_t> &chain);
 	bool overlap(const hit &ht) const;
 
