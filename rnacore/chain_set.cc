@@ -16,7 +16,7 @@ int chain_set::add(const vector<int32_t> &v, int h)
 		return 0;
 	}
 
-	if(hmap.find(h) != h.end()) 
+	if(h >= 0 && hmap.find(h) != h.end()) 
 	{
 		printf("error: id %d has already been added to chain_set\n", h);
 		return 0;
@@ -30,7 +30,7 @@ int chain_set::add(const vector<int32_t> &v, int h)
 		chains.push_back(vv);
 		int n = chains.size() - 1;
 		pmap.insert(make_pair(p, n));
-		hmap.insert(make_pair(h, PI(n, 0)));
+		if(h >= 0) hmap.insert(make_pair(h, PI(n, 0)));
 	}
 	else
 	{
@@ -42,7 +42,7 @@ int chain_set::add(const vector<int32_t> &v, int h)
 		{
 			if(vv[i] == v)
 			{
-				hmap.insert(make_pair(h, PI(k, i)));
+				if(h >= 0) hmap.insert(make_pair(h, PI(k, i)));
 				found = true;
 				break;
 			}
@@ -52,7 +52,7 @@ int chain_set::add(const vector<int32_t> &v, int h)
 		{
 			vv.push_back(v);
 			int n = vv.size() - 1;
-			hmap.insert(make_pair(h, PI(k, n)));
+			if(h >= 0) hmap.insert(make_pair(h, PI(k, n)));
 		}
 	}
 	return 0;
@@ -61,6 +61,7 @@ int chain_set::add(const vector<int32_t> &v, int h)
 vector<int32_t> chain_set::get_chain(int h)
 {
 	vector<int32_t> v;
+	if(h < 0) return v;
 	if(hmap.find(h) == hmap.end()) return v;
 
 	PI p = hmap[h];

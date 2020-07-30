@@ -219,7 +219,7 @@ int bundle::build_fragments()
 		assert(i != x);
 		//frgs.push_back(PI(hits[i].hid, hits[x].hid));
 		frgs.push_back(PI(i, x));
-		brdg.push_back(false);
+		brdg.push_back(0);
 
 		paired[i] = true;
 		paired[x] = true;
@@ -295,7 +295,42 @@ int bundle::build_junctions()
 	return 0;
 }
 
-int bundle::update_bridged_fragments(const vector<int> &frlist, const vector<int32_t> &chain, const vector<int32_t> &whole)
+int bundle::update_bridges(const vector<int> &frlist, const vector<int32_t> &chain)
 {
+	for(int i = 0; i < frlist.size(); i++)
+	{
+		assert(chain.size() % 2 == 0);
+
+		int k = frlist[i];
+		assert(brdg[k] == 0);
+		hit &h1 = hits[frgs[k].first];
+		hit &h2 = hits[frgs[k].second];
+
+		vector<int32_t> v1;
+		v1.push_back(h1.rpos);
+		v1.insert(v1.end(), chain.begin(), chain.end());
+		v1.push_back(h2.pos);
+
+		if(h1.rpos < h2.pos && check_increasing_sequence(v1) == false) continue;
+
+		if(chain.size() <= 0)
+		{
+			brdg[k] = 1;
+		}
+		else
+		{
+			assert(chain.size() >= 2);
+			brdg[k] = 2;
+			fcst.add(chain, k);
+		}
+
+		for(int k = 0; k < v1.size() / 2; k++)
+		{
+			int32_t p1 = v1[k * 2 + 0];
+			int32_t p2 = v1[k * 2 + 1];
+			if(p1 >= p2) continue;
+			mmap += make_pair(ROI(p1, p2), 1);
+		}
+	}
 	return 0;
 }
