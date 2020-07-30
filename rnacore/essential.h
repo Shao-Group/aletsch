@@ -17,6 +17,9 @@ See LICENSE for licensing.
 
 using namespace std;
 
+// process hit
+vector<int32_t> extract_splices(bam1_t *b);
+
 // determine whether a->b is continuous in graph
 bool check_continuous_vertices(splice_graph &gr, int x, int y);
 

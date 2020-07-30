@@ -31,6 +31,7 @@ public:
 	vector<int32_t> extend;			// lexon1, rexon1, lexon2, rexon2
 	vector<hit> hits1;				// hits in this cluster (when bridged reads needes to be reported)
 	vector<hit> hits2;				// hits in this cluster (when bridged reads needes to be reported)
+	vector<PI> frags;				// fragments in this cluster
 	int count;						// number of such reads in this cluster
 
 public:

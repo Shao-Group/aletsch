@@ -98,6 +98,7 @@ int bundle::clear()
 	hits.clear();
 	mmap.clear();
 	imap.clear();
+	junctions.clear();
 	return 0;
 }
 
@@ -161,5 +162,70 @@ int bundle::print(int index)
 	printf("tid = %d, range = %s:%d-%d, orient = %c, #hits = %lu, #spliced = %d, +/-/. = %d / %d / %d\n",
 			tid, chrm.c_str(), lpos, rpos, strand, hits.size(), spliced, np, nq, n0);
 
+	return 0;
+}
+
+int bundle::build_junctions()
+{
+	map<PI32, vector<int> > m;
+	for(int i = 0; i < bd.hits.size(); i++)
+	{
+		vector<int32_t> v = bd.hits[i].spos;
+		if(v.size() == 0) continue;
+
+		for(int k = 0; k < v.size() / 2; k++)
+		{
+			PI p(v[k * 2 + 0], v[k * 2 + 1]);
+			if(m.find(p) == m.end())
+			{
+				vector<int> hv;
+				hv.push_back(i);
+				m.insert(pair< PI32, vector<int> >(p, hv));
+			}
+			else
+			{
+				m[p].push_back(i);
+			}
+		}
+	}
+
+	map<PI32, vector<int> >::iterator it;
+	for(it = m.begin(); it != m.end(); it++)
+	{
+		vector<int> &v = it->second;
+
+		int32_t p1 = it->first.first;
+		int32_t p2 = it->first.second;
+
+		junction jc(p1, p2, v.size());
+
+		if(jc.count < cfg.min_junction_support) continue;
+
+		for(int k = 0; k < v.size(); k++)
+		{
+			const hit &h = bd.hits[v[k]];
+			jc.nm += h.nm;
+			if(h.xs == '.') jc.xs0++;
+			if(h.xs == '+') jc.xs1++;
+			if(h.xs == '-') jc.xs2++;
+		}
+
+		//printf("junction: %s:%d-%d (%d, %d, %d) %d\n", chrm.c_str(), p1, p2, s0, s1, s2, s1 < s2 ? s1 : s2);
+
+		if(jc.xs1 > jc.xs2) jc.strand = '+';
+		else if(jc.xs1 < jc.xs2) jc.strand = '-';
+		else jc.strand = '.';
+		junctions.push_back(jc);
+
+		/*
+		uint32_t max_qual = 0;
+		for(int k = 0; k < v.size(); k++)
+		{
+			hit &h = bd.hits[v[k]];
+			if(h.qual > max_qual) max_qual = h.qual;
+		}
+		assert(max_qual >= min_max_boundary_quality);
+		*/
+	}
 	return 0;
 }

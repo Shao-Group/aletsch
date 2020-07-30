@@ -11,8 +11,8 @@ See LICENSE for licensing.
 
 #include <algorithm>
 
-graph_cluster::graph_cluster(splice_graph &g, vector<hit> &h, int max_gap, bool b)
-	: gr(g), hits(h), max_partition_gap(max_gap), store_hits(b)
+graph_cluster::graph_cluster(const splice_graph &g, const vector<hit> &h, const vector<PI> &f, int max_gap, bool b)
+	: gr(g), hits(h), frags(f), max_partition_gap(max_gap), store_hits(b)
 {
 	group_pereads();
 } 
@@ -35,16 +35,19 @@ int graph_cluster::group_pereads()
 	groups.clear();
 	paired.clear();
 
+	/*
 	vector<PI> fs;
 	build_paired_reads(hits, fs);
+	*/
+
 	paired.resize(hits.size(), false);
 
 	//printf("total %lu paired reads\n", fs.size());
 
-	for(int i = 0; i < fs.size(); i++)
+	for(int i = 0; i < frags.size(); i++)
 	{
-		int h1 = fs[i].first;
-		int h2 = fs[i].second;
+		int h1 = frags[i].first;
+		int h2 = frags[i].second;
 
 		if(hits[h1].rpos > hits[h2].rpos) continue;
 		if(hits[h1].pos > hits[h2].pos) continue;
@@ -66,7 +69,7 @@ int graph_cluster::group_pereads()
 		if(findex.find(pvv) == findex.end())
 		{
 			vector<PI> v;
-			v.push_back(fs[i]);
+			v.push_back(frags[i]);
 			findex.insert(pair<PVV, int>(pvv, groups.size()));
 			int32_t p1 = gr.get_vertex_info(v1.front()).lpos;
 			int32_t p2 = gr.get_vertex_info(v1.back()).rpos;
@@ -81,7 +84,7 @@ int graph_cluster::group_pereads()
 		else
 		{
 			int k = findex[pvv];
-			groups[k].push_back(fs[i]);
+			groups[k].push_back(frags[i]);
 		}
 	}
 
@@ -161,6 +164,7 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 		pc.extend[2] = extend[g * 4 + 2];
 		pc.extend[3] = extend[g * 4 + 3];
 
+		pc.frags = fs;
 		vc.push_back(pc);
 
 		/*

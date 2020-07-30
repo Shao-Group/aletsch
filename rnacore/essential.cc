@@ -4,6 +4,7 @@ Part of aletsch
 See LICENSE for licensing.
 */
 
+#include "hit.h"
 #include "util.h"
 #include "essential.h"
 #include "splice_graph.h"
@@ -11,6 +12,35 @@ See LICENSE for licensing.
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+
+vector<int32_t> extract_splices(bam1_t *b)
+{
+	vector<int32_t> spos;
+	uint32_t *cigar = bam_get_cigar(b);
+
+	int32_t p = pos;
+	int32_t q = 0;
+    for(int k = 0; k < n_cigar; k++)
+	{
+		if (bam_cigar_type(bam_cigar_op(cigar[k]))&2)
+			p += bam_cigar_oplen(cigar[k]);
+
+		if (bam_cigar_type(bam_cigar_op(cigar[k]))&1)
+			q += bam_cigar_oplen(cigar[k]);
+
+		if(k == 0 || k == n_cigar - 1) continue;
+		if(bam_cigar_op(cigar[k]) != BAM_CREF_SKIP) continue;
+		//if(bam_cigar_op(cigar[k-1]) != BAM_CMATCH) continue;
+		//if(bam_cigar_op(cigar[k+1]) != BAM_CMATCH) continue;
+		////if(bam_cigar_oplen(cigar[k-1]) < min_flank) continue;
+		////if(bam_cigar_oplen(cigar[k+1]) < min_flank) continue;
+
+		int32_t s = p - bam_cigar_oplen(cigar[k]);
+		spos.push_back(s);
+		spos.push_back(p);
+	}
+	return spos;
+}
 
 int build_child_splice_graph(splice_graph &root, splice_graph &gr, map<int, int> &a2b)
 {

@@ -4,7 +4,6 @@ Part of aletsch
 See LICENSE for licensing.
 */
 
-
 #ifndef __GRAPH_CLUSTER_H__
 #define __GRAPH_CLUSTER_H__
 
@@ -18,11 +17,12 @@ using namespace std;
 class graph_cluster
 {
 public:
-	graph_cluster(splice_graph &gr, vector<hit> &hits, int max_gap, bool b);
+	graph_cluster(const splice_graph &gr, const vector<hit> &hits, const vector<PI> &frags, int max_gap, bool b);
 
 public:
-	splice_graph &gr;				// given splice graph
-	vector<hit> &hits;				// given hits
+	const splice_graph &gr;						// given splice graph
+	const vector<hit> &hits;					// given hits
+	const vector<PI> &frags;					// given paired hits
 
 private:
 	vector<bool> paired;			

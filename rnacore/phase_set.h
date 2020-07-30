@@ -4,7 +4,6 @@ Part of aletsch
 See LICENSE for licensing.
 */
 
-
 #ifndef __PHASE_SET_H__
 #define __PHASE_SET_H__
 

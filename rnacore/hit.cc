@@ -21,7 +21,7 @@ hit& hit::operator=(const hit &h)
 	rpos = h.rpos;
 	qname = h.qname;
 	strand = h.strand;
-	spos = h.spos;
+	//spos = h.spos;
 	xs = h.xs;
 	ts = h.ts;
 	hi = h.hi;
@@ -37,7 +37,7 @@ hit::hit(const hit &h)
 	rpos = h.rpos;
 	qname = h.qname;
 	strand = h.strand;
-	spos = h.spos;
+	//spos = h.spos;
 	xs = h.xs;
 	ts = h.ts;
 	hi = h.hi;
@@ -64,6 +64,7 @@ hit::hit(bam1_t *b, int id)
 	rpos = pos + (int32_t)bam_cigar2rlen(n_cigar, bam_get_cigar(b));
 }
 
+/*
 int hit::set_splices(bam1_t *b)
 {
 	uint32_t *cigar = bam_get_cigar(b);
@@ -93,6 +94,7 @@ int hit::set_splices(bam1_t *b)
 	}
 	return 0;
 }
+*/
 
 int hit::set_tags(bam1_t *b)
 {
@@ -192,6 +194,7 @@ int hit::print() const
 
 	return 0;
 
+	/*
 	printf(" start position (%d - )\n", pos);
 	for(int i = 0; i < spos.size() / 2; i++)
 	{
@@ -200,10 +203,16 @@ int hit::print() const
 		printf(" splice position (%d - %d)\n", p1, p2);
 	}
 	printf(" end position (%d - )\n", rpos);
-
 	return 0;
+	*/
 }
 
+size_t hit::get_qhash() const
+{
+	return string_hash(qname);
+}
+
+/*
 int hit::get_aligned_intervals(vector<int64_t> &v) const
 {
 	v.clear();
@@ -216,11 +225,6 @@ int hit::get_aligned_intervals(vector<int64_t> &v) const
 	}
 	v.push_back(pack(p1, rpos));
 	return 0;
-}
-
-size_t hit::get_qhash() const
-{
-	return string_hash(qname);
 }
 
 size_t hit::get_phash() const
@@ -249,3 +253,4 @@ bool hit::equal(const hit &h) const
 	if(l_extranul != h.l_extranul) return false;
 	return true;
 }
+*/

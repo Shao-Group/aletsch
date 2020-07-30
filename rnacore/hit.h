@@ -78,7 +78,7 @@ public:
 	int32_t nh;								// NH aux in sam
 	int32_t hi;								// HI aux in sam
 	int32_t nm;								// NM aux in sam
-	vector<int32_t> spos;					// splice positions
+	//vector<int32_t> spos;					// splice positions
 	string qname;							// query names
 	char strand;							// strandness
 	char xs;								// XS aux in sam

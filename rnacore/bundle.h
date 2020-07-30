@@ -23,14 +23,16 @@ public:
 	bundle();
 
 public:
-	int32_t tid;					// chromosome ID
 	string chrm;					// chromosome name
+	char strand;					// strandness
+	int32_t tid;					// chromosome ID
 	int32_t lpos;					// the leftmost boundary on reference
 	int32_t rpos;					// the rightmost boundary on reference
-	char strand;					// strandness
 	vector<hit> hits;				// hits
+	chain_set hcs;					// chain_set for hits 
 	split_interval_map mmap;		// matched interval map
 	split_interval_map imap;		// indel interval map
+	vector<junction> junctions;		// splice junctions
 
 public:
 	int add_hit_intervals(const hit &ht, bam1_t *b);
@@ -40,6 +42,7 @@ public:
 	int compute_strand(int libtype);
 	int check_left_ascending();
 	int check_right_ascending();
+	int build_junctions();
 
 private:
 	int add_hit(const hit &ht);
