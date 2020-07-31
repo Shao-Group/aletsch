@@ -59,10 +59,10 @@ int previewer::infer_library_type()
 		total++;
 
 		hit ht(b1t, hid++);
-		ht.set_splices(b1t);
 		ht.set_tags(b1t);
+		vector<int32_t> spos = ht.extract_splices(b1t);
 
-		if(ht.spos.size() <= 0) continue;
+		if(spos.size() <= 0) continue;
 		spliced++;
 
 		if((ht.flag & 0x1) >= 1) paired ++;
@@ -168,7 +168,6 @@ int previewer::infer_insertsize()
 		if(p.n_cigar < 1) continue;												// should never happen
 
 		hit ht(b1t, hid++);
-		ht.set_splices(b1t);
 		ht.set_tags(b1t);
 		ht.set_strand(sp.library_type);
 
@@ -255,6 +254,8 @@ int previewer::process(bundle &bd, map<int32_t, int> &m)
 	strcpy(buf, sp.hdr->target_name[bd.tid]);
 	bd.chrm = string(buf);
 
+	bd.build_fragments();
+
 	splice_graph gr;
 	graph_builder gb(bd, cfg);
 	gb.build(gr);
@@ -263,7 +264,7 @@ int previewer::process(bundle &bd, map<int32_t, int> &m)
 	gr.build_vertex_index();
 
 	vector<pereads_cluster> vc;
-	graph_cluster gc(gr, bd.hits, 2, false);
+	graph_cluster gc(gr, bd, 2, false);
 	gc.build_pereads_clusters(vc);
 	
 	//printf("process bundle in previewer with %lu hits, %lu clusters\n", bd.hits.size(), vc.size());

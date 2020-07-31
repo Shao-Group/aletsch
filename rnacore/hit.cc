@@ -64,7 +64,7 @@ hit::hit(bam1_t *b, int id)
 	rpos = pos + (int32_t)bam_cigar2rlen(n_cigar, bam_get_cigar(b));
 }
 
-vector<int32_t> hit::extract_splices(bam1_t *b)
+vector<int32_t> hit::extract_splices(bam1_t *b) const
 {
 	vector<int32_t> spos;
 	uint32_t *cigar = bam_get_cigar(b);
@@ -130,7 +130,7 @@ int hit::set_tags(bam1_t *b)
 	return 0;
 }
 
-bool hit::get_concordance()
+bool hit::get_concordance() const
 {
 	if((flag & 0x10) <= 0 && (flag & 0x20) >= 1 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) return true;		// F1R2
 	if((flag & 0x10) >= 1 && (flag & 0x20) <= 0 && (flag & 0x40) >= 1 && (flag & 0x80) <= 0) return true;		// R1F2

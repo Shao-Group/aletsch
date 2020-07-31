@@ -392,23 +392,16 @@ bool check_valid_path(splice_graph &gr, const vector<int> &vv)
 	return true;
 }
 
-bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv)
+bool align_hit_to_splice_graph(const hit &h, const vector<int32_t> &chain, splice_graph &gr, vector<int> &vv)
 {
 	vv.clear();
-	vector<int64_t> v;
-	h.get_aligned_intervals(v);
-
-	if(v.size() == 0) return false;
-
 	vector<int32_t> u;
-	for(int i = 0; i < v.size(); i++)
-	{
-		u.push_back(high32(v[i]));
-		u.push_back(low32(v[i]));
-	}
-
-	bool b = build_path_from_mixed_coordinates(gr, u, vv);
-	return b;
+	u.push_back(h.pos);
+	u.insert(u.end(), chain.begin(), chain.end());
+	u.push_back(h.rpos);
+	bool b = check_increasing_sequence(u);
+	if(b == false) return false;
+	return build_path_from_mixed_coordinates(gr, u, vv);
 }
 
 bool merge_intron_chains(const vector<int32_t> &x, const vector<int32_t> &y, vector<int32_t> &xy)
@@ -628,15 +621,18 @@ int write_unpaired_reads(BGZF *fout, const vector<hit> &hits, const vector<bool>
 
 		const hit &h = hits[i];
 
+		/* TODO TODO
 		bam1_t b1t;
 		bool b = build_bam1_t(b1t, h, hits[i].spos);
 		if(b == true) bam_write1(fout, &(b1t));
 		assert(b1t.data != NULL);
 		delete b1t.data;
+		*/
 	}
 	return 0;
 }
 
+/* TODO
 int build_phase_set_from_unpaired_reads(phase_set &ps, splice_graph &gr, const vector<hit> &hits, const vector<bool> &paired)
 {
 	for(int i = 0; i < hits.size(); i++)
@@ -651,6 +647,7 @@ int build_phase_set_from_unpaired_reads(phase_set &ps, splice_graph &gr, const v
 	}
 	return 0;
 }
+*/
 
 int build_transcript(splice_graph &gr, transcript &trst, const vector<int> &v, char strand, double abd, const string &tid)
 {

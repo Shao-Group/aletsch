@@ -12,6 +12,7 @@ See LICENSE for licensing.
 #include "constants.h"
 #include "bundle.h"
 #include "util.h"
+#include "essential.h"
 
 bundle::bundle()
 {
@@ -26,6 +27,8 @@ int bundle::add_hit_intervals(const hit &ht, bam1_t *b)
 {
 	add_hit(ht);
 	add_intervals(b);
+	vector<int32_t> v = ht.extract_splices(b);
+	hcst.add(v, hits.size() - 1);
 	return 0;
 }
 
@@ -33,10 +36,6 @@ int bundle::add_hit(const hit &ht)
 {
 	// store new hit
 	hits.push_back(ht);
-
-	// add splices
-	vector<int32_t> v = extract_splices(b);
-	hcst.add(v, hits.size() - 1);
 
 	// calcuate the boundaries on reference
 	if(ht.pos < lpos) lpos = ht.pos;
@@ -101,9 +100,9 @@ int bundle::clear()
 	strand = '.';
 	hits.clear();
 	hcst.clear();
+	fcst.clear();
 	mmap.clear();
 	imap.clear();
-	junctions.clear();
 	return 0;
 }
 
@@ -155,17 +154,15 @@ int bundle::print(int index)
 
 	// statistic xs
 	int n0 = 0, np = 0, nq = 0;
-	int spliced = 0;
 	for(int i = 0; i < hits.size(); i++)
 	{
 		if(hits[i].xs == '.') n0++;
 		if(hits[i].xs == '+') np++;
 		if(hits[i].xs == '-') nq++;
-		if(hits[i].spos.size() >= 1) spliced++;
 	}
 
-	printf("tid = %d, range = %s:%d-%d, orient = %c, #hits = %lu, #spliced = %d, +/-/. = %d / %d / %d\n",
-			tid, chrm.c_str(), lpos, rpos, strand, hits.size(), spliced, np, nq, n0);
+	printf("tid = %d, range = %s:%d-%d, orient = %c, #hits = %lu, +/-/. = %d / %d / %d\n",
+			tid, chrm.c_str(), lpos, rpos, strand, hits.size(), np, nq, n0);
 
 	return 0;
 }
@@ -260,7 +257,7 @@ int bundle::build_phase_set(phase_set &ps, splice_graph &gr)
 
 		if(brdg[i] == 1)
 		{
-			bool b = merge_intron_chain(v1, v2, xy);
+			bool b = merge_intron_chains(v1, v2, xy);
 			if(b == false) continue;
 		}
 

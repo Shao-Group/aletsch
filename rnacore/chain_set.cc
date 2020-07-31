@@ -12,11 +12,11 @@ int chain_set::add(const vector<int32_t> &v, int h)
 {
 	if(v.size() <= 0)
 	{
-		printf("error: adding empty chain with id to chain_set\n", h);
+		printf("error: adding empty chain with id %d to chain_set\n", h);
 		return 0;
 	}
 
-	if(h >= 0 && hmap.find(h) != h.end()) 
+	if(h >= 0 && hmap.find(h) != hmap.end()) 
 	{
 		printf("error: id %d has already been added to chain_set\n", h);
 		return 0;
@@ -85,5 +85,13 @@ int chain_set::print()
 	{
 		printf("chain_set: %d groups with %d chains\n", x.second, x.first);
 	}
+	return 0;
+}
+
+int chain_set::clear()
+{
+	hmap.clear();
+	pmap.clear();
+	chains.clear();
 	return 0;
 }

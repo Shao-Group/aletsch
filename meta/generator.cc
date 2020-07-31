@@ -62,7 +62,6 @@ int generator::resolve()
 		if(p.n_cigar < 1) continue;													// should never happen
 
 		hit ht(b1t, hid++);
-		ht.set_splices(b1t);
 		ht.set_tags(b1t);
 		ht.set_strand(sp.library_type);
 		//ht.print();
@@ -126,11 +125,14 @@ int generator::generate(bundle &bb, int index)
 		for(int i = 0; i < bb.hits.size(); i++)
 		{
 			hit &h = bb.hits[i];
+
+			/* TODO TODO
 			bam1_t b1t;
 			bool b = build_bam1_t(b1t, h, bb.hits[i].spos);
 			if(b == true) bam_write1(sp.bridged_bam, &(b1t));
 			assert(b1t.data != NULL);
 			delete b1t.data;
+			*/
 		}
 		sp.close_bridged_bam();
 		return 0;
@@ -153,13 +155,13 @@ int generator::generate(bundle &bb, int index)
 
 	// build phase set
 	phase_set ps;
-	bd.build_phase_set(gr, ps);
+	bb.build_phase_set(ps, gr);
 
 	// build (unbridged) reads-clusters
 	vector<pereads_cluster> ub;
 	if(sp.data_type == PAIRED_END)
 	{
-		graph_cluster gc(gr, bd, cfg.max_reads_partition_gap, store_hits);
+		graph_cluster gc(gr, bb, cfg.max_reads_partition_gap, store_hits);
 		gc.build_pereads_clusters(ub);
 	}
 
@@ -259,11 +261,11 @@ int generator::bridge(bundle &bb)
 		bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
 
 		int cnt = 0;
-		assert(vc.size() == opt.size());
+		assert(vc.size() == bs.opt.size());
 		for(int k = 0; k < vc.size(); k++)
 		{
-			if(opt[k].type <= 0) continue;
-			cnt += bb.update_bridges(vc.frlist, bs.opt[k].chain);
+			if(bs.opt[k].type <= 0) continue;
+			cnt += bb.update_bridges(vc[k].frlist, bs.opt[k].chain);
 		}
 
 		if(cnt <= 0) break;

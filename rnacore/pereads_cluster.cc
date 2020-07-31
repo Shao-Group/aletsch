@@ -29,7 +29,7 @@ int pereads_cluster::clear()
 
 int pereads_cluster::print(int index) const
 {
-	printf("pereads-cluster %d: #reads = %d, #frlist = %lu, bounds = ( ", index, count, frlist.clear());
+	printf("pereads-cluster %d: #reads = %d, #frlist = %lu, bounds = ( ", index, count, frlist.size());
 	printv(bounds);
 	printf("), extend = ( ");
 	printv(extend);

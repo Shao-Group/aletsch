@@ -10,7 +10,7 @@ See LICENSE for licensing.
 
 #include <algorithm>
 
-graph_cluster::graph_cluster(const splice_graph &g, const bundle &d, int max_gap, bool b)
+graph_cluster::graph_cluster(splice_graph &g, bundle &d, int max_gap, bool b)
 	: gr(g), bd(d), max_partition_gap(max_gap), store_hits(b)
 {
 	group_pereads();
@@ -43,16 +43,15 @@ int graph_cluster::group_pereads()
 		int h1 = bd.frgs[i].first;
 		int h2 = bd.frgs[i].second;
 
-		if(hits[h1].rpos > hits[h2].rpos) continue;
-		if(hits[h1].pos > hits[h2].pos) continue;
-
-		bool b = consistent_intron_chains(hits[h1].spos, hits[h2].spos);
-		if(b == false) continue;
+		if(bd.hits[h1].pos > bd.hits[h2].pos) continue;
+		if(bd.hits[h1].rpos > bd.hits[h2].rpos) continue;
 
 		vector<int> v1;
 		vector<int> v2;
-		bool b1 = align_hit_to_splice_graph(hits[h1], gr, v1);
-		bool b2 = align_hit_to_splice_graph(hits[h2], gr, v2);
+		vector<int32_t> chain1 = bd.hcst.get_chain(h1);
+		vector<int32_t> chain2 = bd.hcst.get_chain(h2);
+		bool b1 = align_hit_to_splice_graph(bd.hits[h1], chain1, gr, v1);
+		bool b2 = align_hit_to_splice_graph(bd.hits[h2], chain2, gr, v2);
 		if(b1 == false || b2 == false)  continue;
 		if(v1.size() == 0 || v2.size() == 0) continue;
 
@@ -61,23 +60,23 @@ int graph_cluster::group_pereads()
 		PVV pvv(v1, v2);
 		if(findex.find(pvv) == findex.end())
 		{
-			vector<PI> v;
-			v.push_back(frags[i]);
+			vector<int> v;
+			v.push_back(i);
 			findex.insert(pair<PVV, int>(pvv, groups.size()));
 			int32_t p1 = gr.get_vertex_info(v1.front()).lpos;
 			int32_t p2 = gr.get_vertex_info(v1.back()).rpos;
 			int32_t p3 = gr.get_vertex_info(v2.front()).lpos;
 			int32_t p4 = gr.get_vertex_info(v2.back()).rpos;
-			groups.push_back(v);
 			extend.push_back(p1);
 			extend.push_back(p2);
 			extend.push_back(p3);
 			extend.push_back(p4);
+			groups.push_back(v);
 		}
 		else
 		{
 			int k = findex[pvv];
-			groups[k].push_back(frags[i]);
+			groups[k].push_back(i);
 		}
 	}
 
@@ -86,18 +85,18 @@ int graph_cluster::group_pereads()
 
 int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 {
-	const vector<PI> &fs = groups[g];
-	vector< vector<int32_t> > vv;
+	const vector<int> &fs = groups[g];
+	vector<vector<int32_t>> vv;
 	for(int i = 0; i < fs.size(); i++)
 	{
-		int h1 = fs[i].first;
-		int h2 = fs[i].second;
+		int h1 = bd.frgs[fs[i]].first;
+		int h2 = bd.frgs[fs[i]].second;
 
 		vector<int32_t> v;
-		v.push_back(hits[h1].pos);
-		v.push_back(hits[h1].rpos);
-		v.push_back(hits[h2].pos);
-		v.push_back(hits[h2].rpos);
+		v.push_back(bd.hits[h1].pos);
+		v.push_back(bd.hits[h1].rpos);
+		v.push_back(bd.hits[h2].pos);
+		v.push_back(bd.hits[h2].rpos);
 		v.push_back(i);
 		vv.push_back(v);
 	}
@@ -108,41 +107,38 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 	{
 		if(zz[i].size() == 0) continue;
 
-		int h1 = fs[zz[i][0]].first;
-		int h2 = fs[zz[i][0]].second;
-		assert(hits[h1].rpos <= hits[h2].rpos);
-		assert(hits[h1].pos <= hits[h2].pos);
-
-		bool b = consistent_intron_chains(hits[h1].spos, hits[h2].spos);
-		assert(b == true);
+		int h1 = bd.frgs[fs[zz[i][0]]].first;
+		int h2 = bd.frgs[fs[zz[i][0]]].second;
+		assert(bd.hits[h1].rpos <= bd.hits[h2].rpos);
+		assert(bd.hits[h1].pos <= bd.hits[h2].pos);
 
 		pereads_cluster pc;
 		pc.count = 0;
-		pc.chain1 = hits[h1].spos;
-		pc.chain2 = hits[h2].spos;
+		pc.chain1 = bd.hcst.get_chain(h1);
+		pc.chain2 = bd.hcst.get_chain(h2);
 
 		vector<int32_t> bounds(4, 0);
-		bounds[0] = hits[h1].pos;
-		bounds[1] = hits[h1].rpos;
-		bounds[2] = hits[h2].pos;
-		bounds[3] = hits[h2].rpos;
+		bounds[0] = bd.hits[h1].pos;
+		bounds[1] = bd.hits[h1].rpos;
+		bounds[2] = bd.hits[h2].pos;
+		bounds[3] = bd.hits[h2].rpos;
 
 		for(int k = 0; k < zz[i].size(); k++)
 		{
-			h1 = fs[zz[i][k]].first;
-			h2 = fs[zz[i][k]].second;
+			h1 = bd.frgs[fs[zz[i][k]]].first;
+			h2 = bd.frgs[fs[zz[i][k]]].second;
 
-			pc.bounds[0] += hits[h1].pos  - bounds[0];
-			pc.bounds[1] += hits[h1].rpos - bounds[1];
-			pc.bounds[2] += hits[h2].pos  - bounds[2];
-			pc.bounds[3] += hits[h2].rpos - bounds[3];
+			pc.bounds[0] += bd.hits[h1].pos  - bounds[0];
+			pc.bounds[1] += bd.hits[h1].rpos - bounds[1];
+			pc.bounds[2] += bd.hits[h2].pos  - bounds[2];
+			pc.bounds[3] += bd.hits[h2].rpos - bounds[3];
 
 			pc.count++;
 			
 			if(store_hits == true)
 			{
-				pc.hits1.push_back(hits[h1]);
-				pc.hits2.push_back(hits[h2]);
+				pc.hits1.push_back(bd.hits[h1]);
+				pc.hits2.push_back(bd.hits[h2]);
 			}
 		}
 
@@ -157,7 +153,7 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 		pc.extend[2] = extend[g * 4 + 2];
 		pc.extend[3] = extend[g * 4 + 3];
 
-		pc.frags = fs;
+		pc.frlist = fs;
 		vc.push_back(pc);
 	}
 

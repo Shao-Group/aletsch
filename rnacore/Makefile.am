@@ -17,6 +17,7 @@ librnacore_a_SOURCES = splice_graph.h splice_graph.cc \
 					   junction.h junction.cc \
 					   essential.h essential.cc \
 					   pereads_cluster.h pereads_cluster.cc \
+					   chain_set.h chain_set.cc \
 					   phase_set.h phase_set.cc \
 					   transcript_set.h transcript_set.cc \
 					   bundle.h bundle.cc \

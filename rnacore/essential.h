@@ -41,7 +41,7 @@ bool build_path_from_intron_coordinates(splice_graph &gr, const vector<int32_t> 
 bool build_path_from_mixed_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv);
 
 // align hit to splice graph
-bool align_hit_to_splice_graph(const hit &h, splice_graph &gr, vector<int> &vv);
+bool align_hit_to_splice_graph(const hit &h, const vector<int32_t> &chain, splice_graph &gr, vector<int> &vv);
 
 // check consistency
 bool merge_intron_chains(const vector<int32_t> &x, const vector<int32_t> &y, vector<int32_t> &xy);

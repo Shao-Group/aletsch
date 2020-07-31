@@ -16,6 +16,7 @@ See LICENSE for licensing.
 #include "interval_map.h"
 #include "chain_set.h"
 #include "phase_set.h"
+#include "splice_graph.h"
 
 using namespace std;
 
