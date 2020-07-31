@@ -282,7 +282,7 @@ int previewer::process(bundle &bd, map<int32_t, int> &m)
 
 		vector<int32_t> chain;
 		bool b = merge_intron_chains(pc.chain1, pc.chain2, chain);
-		assert(b == true);
+		if(b == false) continue;
 
 		int32_t length = get_total_length_of_introns(chain);
 		int32_t d = pc.bounds[3] - pc.bounds[0] - length;
