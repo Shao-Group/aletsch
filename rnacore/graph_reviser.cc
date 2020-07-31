@@ -1109,7 +1109,7 @@ bool identify_start_boundary(splice_graph &gr, double min_ratio)
 	gr.set_edge_weight(ee, bestw);
 	gr.set_edge_info(ee, edge_info());
 
-	//printf("identify start boundary at %d, weight = %.1lf, ratio = %.2lf, region = (%d, %d)\n", gr.get_vertex_info(besta).lpos, bestw, bestr, besta, bestb);
+	printf("identify start boundary at %d, weight = %.1lf, ratio = %.2lf, region = (%d, %d)\n", gr.get_vertex_info(besta).lpos, bestw, bestr, besta, bestb);
 
 	return true;
 }
@@ -1147,7 +1147,7 @@ bool identify_end_boundary(splice_graph &gr, double min_ratio)
 	gr.set_edge_weight(ee, bestw);
 	gr.set_edge_info(ee, edge_info());
 
-	//printf("identify end boundary at %d, weight = %.1lf, ratio = %.2lf, region = (%d, %d)\n", gr.get_vertex_info(bestb).rpos, bestw, bestr, besta, bestb);
+	printf("identify end boundary at %d, weight = %.1lf, ratio = %.2lf, region = (%d, %d)\n", gr.get_vertex_info(bestb).rpos, bestw, bestr, besta, bestb);
 
 	return true;
 }

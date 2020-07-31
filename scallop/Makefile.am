@@ -11,7 +11,6 @@ libscallop_a_SOURCES = subsetsum.h subsetsum.cc \
 					   router.h router.cc \
 					   equation.h equation.cc \
 					   scallop.h scallop.cc \
-					   filter.h filter.cc \
 					   cluster.h cluster.cc \
 					   path.h path.cc \
 					   hyper_set.h hyper_set.cc

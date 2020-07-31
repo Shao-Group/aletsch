@@ -34,5 +34,6 @@ private:
 
 bool transcript_cmp(const transcript &x, const transcript &y);
 bool verify_length_coverage(const transcript &t, const parameters &cfg);
+bool verify_exon_length(const transcript &t, const parameters &cfg);
 
 #endif

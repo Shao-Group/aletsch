@@ -182,6 +182,9 @@ int generator::generate(bundle &bb, int index)
 		*/
 	}
 
+	bb.print(index);
+	gr.print();
+
 	// refine splice graph
 	gr.extend_strands();
 	identify_boundaries(gr, cfg);
@@ -190,12 +193,9 @@ int generator::generate(bundle &bb, int index)
 		revise_splice_graph_full(gr, cfg);
 	}
 
-	/*
 	printf("-----------------------------\n");
-	bb.print(index);
 	gr.print();
 	printf("\n");
-	*/
 
 	// partition into smaller instances
 	vector<splice_graph> grv;

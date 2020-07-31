@@ -47,11 +47,11 @@ parameters::parameters()
 	// for loading bam file and reads
 	min_flank_length = 3;
 	max_num_cigar = 10000;
-	min_bundle_gap = 50;
+	min_bundle_gap = 200;
 	min_num_hits_in_bundle = 10;
 	min_junction_support = 1;
 	min_mapping_quality = 1;
-	use_second_alignment = false;
+	use_second_alignment = true;
 	uniquely_mapped_only = false;
 	batch_bundle_size = 100;
 	max_reads_partition_gap = 10;
@@ -94,7 +94,7 @@ parameters::parameters()
 	min_single_exon_individual_coverage = 1.5;
 	min_single_exon_transcript_length = 250;
 	min_single_exon_clustering_overlap = 0.8;
-	min_exon_length = 20;
+	min_exon_length = 8;
 	max_num_exons = 10000;
 
 	// for clustering assembled transcripts

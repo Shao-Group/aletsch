@@ -20,6 +20,7 @@ librnacore_a_SOURCES = splice_graph.h splice_graph.cc \
 					   chain_set.h chain_set.cc \
 					   phase_set.h phase_set.cc \
 					   transcript_set.h transcript_set.cc \
+					   filter.h filter.cc \
 					   bundle.h bundle.cc \
 					   disjoint_set.h disjoint_set.cc \
 					   graph_builder.h graph_builder.cc \

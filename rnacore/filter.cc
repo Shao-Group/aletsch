@@ -290,6 +290,16 @@ bool transcript_cmp(const transcript &x, const transcript &y)
 	else return false;
 }
 
+bool verify_exon_length(const transcript &t, const parameters &cfg)
+{
+	for(int i = 0; i < t.exons.size(); i++)
+	{
+		int32_t len = t.exons[i].second - t.exons[i].first;
+		if(len < cfg.min_exon_length) return false;
+	}
+	return true;
+}
+
 bool verify_length_coverage(const transcript &t, const parameters &cfg)
 {
 	int e = t.exons.size();
