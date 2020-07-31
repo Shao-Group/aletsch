@@ -82,10 +82,7 @@ int graph_cluster::group_pereads()
 		}
 	}
 
-	for(int k = 0; k < groups.size(); k++)
-	{
-		printf("group %d contains %lu frags\n", k, groups[k].size());
-	}
+	//for(int k = 0; k < groups.size(); k++) printf("group %d contains %lu frags\n", k, groups[k].size());
 
 	return 0;
 }

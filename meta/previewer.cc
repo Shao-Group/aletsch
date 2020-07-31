@@ -231,7 +231,7 @@ int previewer::infer_insertsize()
 		sp.insertsize_ave += vv[k].second * vv[k].first;
 		sx2 += vv[k].second * vv[k].first * vv[k].first;
 		if(sp.insertsize_low == -1 && n >= 0.005 * total) sp.insertsize_low = vv[k].first;
-		if(sp.insertsize_high == -1 && n >= 0.99 * total) sp.insertsize_high = vv[k].first;
+		if(sp.insertsize_high == -1 && n >= 0.995 * total) sp.insertsize_high = vv[k].first;
 		if(n >= 0.998 * total) break;
 	}
 	

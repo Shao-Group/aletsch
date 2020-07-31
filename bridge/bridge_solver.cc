@@ -43,7 +43,7 @@ bridge_solver::bridge_solver(splice_graph &g, vector<pereads_cluster> &v, const 
 	remove_adjacent_edges();
 	
 	// TODO
-	print();
+	//print();
 }
 
 int bridge_solver::build_bridging_vertices()
