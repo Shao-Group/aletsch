@@ -50,8 +50,10 @@ int graph_cluster::group_pereads()
 		vector<int> v2;
 		vector<int32_t> chain1 = bd.hcst.get_chain(h1);
 		vector<int32_t> chain2 = bd.hcst.get_chain(h2);
+
 		bool b1 = align_hit_to_splice_graph(bd.hits[h1], chain1, gr, v1);
 		bool b2 = align_hit_to_splice_graph(bd.hits[h2], chain2, gr, v2);
+
 		if(b1 == false || b2 == false)  continue;
 		if(v1.size() == 0 || v2.size() == 0) continue;
 
@@ -78,6 +80,11 @@ int graph_cluster::group_pereads()
 			int k = findex[pvv];
 			groups[k].push_back(i);
 		}
+	}
+
+	for(int k = 0; k < groups.size(); k++)
+	{
+		printf("group %d contains %lu frags\n", k, groups[k].size());
 	}
 
 	return 0;
@@ -133,6 +140,7 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 			pc.bounds[2] += bd.hits[h2].pos  - bounds[2];
 			pc.bounds[3] += bd.hits[h2].rpos - bounds[3];
 
+			pc.frlist.push_back(fs[zz[i][k]]);
 			pc.count++;
 			
 			if(store_hits == true)
@@ -153,7 +161,6 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 		pc.extend[2] = extend[g * 4 + 2];
 		pc.extend[3] = extend[g * 4 + 3];
 
-		pc.frlist = fs;
 		vc.push_back(pc);
 	}
 

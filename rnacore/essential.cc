@@ -399,6 +399,7 @@ bool align_hit_to_splice_graph(const hit &h, const vector<int32_t> &chain, splic
 	u.push_back(h.pos);
 	u.insert(u.end(), chain.begin(), chain.end());
 	u.push_back(h.rpos);
+
 	bool b = check_increasing_sequence(u);
 	if(b == false) return false;
 	return build_path_from_mixed_coordinates(gr, u, vv);

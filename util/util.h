@@ -179,7 +179,7 @@ bool check_increasing_sequence(const vector<T> &x)
 	if(x.size() <= 1) return true;
 	for(int k = 0; k < x.size() - 1; k++)
 	{
-		if(x[k] >= x[k + 1]) return false;
+		if(x[k] > x[k + 1]) return false;
 	}
 	return true;
 }

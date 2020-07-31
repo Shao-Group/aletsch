@@ -33,14 +33,13 @@ bridge_solver::bridge_solver(splice_graph &g, vector<pereads_cluster> &v, const 
 	: gr(g), vc(v), cfg(c)
 {
 	add_adjacent_edges();
-
+	build_pseudo_introns();
 	length_low = low;
 	length_high = high;
 	build_bridging_vertices();
 	build_piers();
 	nominate();
 	vote();
-
 	remove_adjacent_edges();
 	
 	// TODO
@@ -91,6 +90,33 @@ int bridge_solver::remove_adjacent_edges()
 		gr.remove_edge(adjedges[i]);
 	}
 	return 0;
+}
+
+int bridge_solver::build_pseudo_introns()
+{
+	for(int i = 0; i < adjedges.size(); i++)
+	{
+		edge_descriptor e = adjedges[i];
+		int32_t p1 = gr.get_vertex_info(e->source()).rpos;
+		int32_t p2 = gr.get_vertex_info(e->target()).lpos;
+		if(p1 >= p2) continue;
+		pseudos.insert(PI32(p1, p2));
+	}
+	return 0;
+}
+
+vector<int32_t> bridge_solver::filter_pseudo_introns(const vector<int32_t> &chain)
+{
+	assert(chain.size() % 2 == 0);
+	vector<int32_t> v;
+	for(int k = 0; k < chain.size() / 2; k++)
+	{
+		PI32 p(chain[k * 2 + 0], chain[k * 2 + 1]);
+		if(pseudos.find(p) != pseudos.end()) continue;
+		v.push_back(chain[k * 2 + 0]);
+		v.push_back(chain[k * 2 + 1]);
+	}
+	return v;
 }
 
 bool bridge_solver::check_left_relaxing(const pereads_cluster &pc, int v)
@@ -219,6 +245,7 @@ int bridge_solver::nominate(int strand)
 				p.stack = table[bt][j].stack;
 				p.v = pb[j];
 				build_intron_coordinates_from_path(gr, p.v, p.chain);
+				p.chain = filter_pseudo_introns(p.chain);
 				piers[b].bridges.push_back(p);
 			}
 		}
@@ -263,6 +290,9 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 
 	const pereads_cluster &pc = vc[r];
 
+	//printf("cluster %d, ss = %d, tt = %d, frlist.size() = %lu\n", r, ss, tt, pc.frlist.size());
+	//pc.print(r);
+
 	// construct candidate bridging paths
 	int type = 0;
 	vector< vector<int32_t> > chains;
@@ -296,10 +326,12 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 			vector<int32_t> w = pc.chain1;
 			w.insert(w.end(), pb[e].chain.begin(), pb[e].chain.end());
 			w.insert(w.end(), pc.chain2.begin(), pc.chain2.end());
+
 			bool b = check_increasing_sequence(w);
 			if(b == false) continue;
 			int s = check_strand_from_intron_coordinates(gr, w);
 			if(s < 0) continue;
+
 			wholes.push_back(w);
 			chains.push_back(pb[e].chain);
 			scores.push_back(pb[e].score);
@@ -323,6 +355,9 @@ int bridge_solver::vote(int r, bridge_path &bbp)
 
 		int32_t intron = get_total_length_of_introns(wholes[e]);
 		int32_t length = pc.bounds[3] - pc.bounds[0] - intron;
+
+		//printf(" candidate %d, list = ", e); printv(wholes[e]); printf(", length = %d, low = %d, high = %d, strand = %d\n", length, length_low, length_high, strands[e]);
+
 		if(length < length_low) continue;
 		if(length > length_high) continue;
 		if(strands[e] < 0) continue;

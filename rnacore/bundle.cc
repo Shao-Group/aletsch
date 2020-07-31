@@ -28,7 +28,7 @@ int bundle::add_hit_intervals(const hit &ht, bam1_t *b)
 	add_hit(ht);
 	add_intervals(b);
 	vector<int32_t> v = ht.extract_splices(b);
-	hcst.add(v, hits.size() - 1);
+	if(v.size() >= 1) hcst.add(v, hits.size() - 1);
 	return 0;
 }
 
@@ -312,6 +312,7 @@ int bundle::update_bridges(const vector<int> &frlist, const vector<int32_t> &cha
 		assert(chain.size() % 2 == 0);
 
 		int k = frlist[i];
+
 		assert(brdg[k] == 0);
 		hit &h1 = hits[frgs[k].first];
 		hit &h2 = hits[frgs[k].second];

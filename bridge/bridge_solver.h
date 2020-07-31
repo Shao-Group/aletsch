@@ -42,6 +42,7 @@ public:
 
 private:
 	vector<edge_descriptor> adjedges;		// added edges
+	set<PI32> pseudos;						// pseudo introns
 	vector<PI> vpairs;						// vertices for each cluster
 	vector<pier> piers;						// piers
 	vector<int> bounds;						// groups of piers
@@ -58,6 +59,7 @@ public:
 
 private:
 	int add_adjacent_edges();
+	int build_pseudo_introns();
 	int remove_adjacent_edges();
 	int build_bridging_vertices();
 	bool check_left_relaxing(const pereads_cluster &pc, int v);
@@ -71,6 +73,7 @@ private:
 	int dynamic_programming(int k1, int k2, vector< vector<entry> > &table, int strand);
 	vector<int> update_stack(const vector<int> &v, int s);
 	vector< vector<int> > trace_back(int k, const vector< vector<entry> > &table);
+	vector<int32_t> filter_pseudo_introns(const vector<int32_t> &chain);
 	int vote();
 	int vote(int r, bridge_path &bbp);
 };

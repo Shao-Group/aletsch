@@ -253,6 +253,9 @@ int generator::bridge(bundle &bb)
 		splice_graph gr;
 		graph_builder gb(bb, cfg);
 		gb.build(gr);
+		gr.build_vertex_index();
+
+		gr.print();
 
 		vector<pereads_cluster> vc;
 		graph_cluster gc(gr, bb, cfg.max_reads_partition_gap, false);
@@ -264,12 +267,29 @@ int generator::bridge(bundle &bb)
 		assert(vc.size() == bs.opt.size());
 		for(int k = 0; k < vc.size(); k++)
 		{
+			printf("update list %d with %lu frags = ", k, vc[k].frlist.size()); 
+			printv(vc[k].frlist);
+			printf(", chain = "); printv(bs.opt[k].chain); printf("\n");
+
+			/*
+			for(int j = 0; j < vc[k].frlist.size(); j++)
+			{
+				int h1 = bb.frgs[vc[k].frlist[j]].first;
+				int h2 = bb.frgs[vc[k].frlist[j]].second;
+				bb.hits[h1].print();
+				bb.hits[h2].print();
+			}
+			*/
+
 			if(bs.opt[k].type <= 0) continue;
 			cnt += bb.update_bridges(vc[k].frlist, bs.opt[k].chain);
 		}
 
+		printf("total frags %lu, bridged frags = %d\n", bb.frgs.size(), cnt);
 		if(cnt <= 0) break;
 	}
+	printf("\n");
+
 	return 0;
 }
 
