@@ -254,7 +254,7 @@ int previewer::process(bundle &bd, map<int32_t, int> &m)
 	strcpy(buf, sp.hdr->target_name[bd.tid]);
 	bd.chrm = string(buf);
 
-	bd.build_fragments();
+	bd.build();
 
 	splice_graph gr;
 	graph_builder gb(bd, cfg);

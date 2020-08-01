@@ -143,7 +143,7 @@ int generator::generate(bundle &bb, int index)
 	bb.chrm = string(buf);
 	//bb.compute_strand(sp.library_type);
 
-	bb.build_fragments();
+	bb.build();
 
 	bridge(bb);
 

@@ -58,6 +58,13 @@ int chain_set::add(const vector<int32_t> &v, int h)
 	return 0;
 }
 
+int chain_set::remove(int h)
+{
+	if(hmap.find(h) == hmap.end()) return 0;
+	hmap.erase(h);
+	return 0;
+}
+
 vector<int32_t> chain_set::get_chain(int h)
 {
 	vector<int32_t> v;

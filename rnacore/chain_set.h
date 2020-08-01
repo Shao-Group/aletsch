@@ -17,7 +17,7 @@ using namespace std;
 
 class chain_set
 {
-public:
+private:
 	map<int, PI> hmap;
 	map<int32_t, int> pmap;
 	vector<vector<vector<int32_t>>> chains;
@@ -25,6 +25,7 @@ public:
 public:
 	vector<int32_t> get_chain(int h);
 	int add(const vector<int32_t> &v, int h);
+	int remove(int h);
 	int print();
 	int clear();
 };

@@ -23,6 +23,14 @@ bundle::bundle()
 	strand = '.';
 }
 
+int bundle::build()
+{
+	build_fragments();
+	filter_secondary_hits();
+	build_fragments();
+	return 0;
+}
+
 int bundle::add_hit_intervals(const hit &ht, bam1_t *b)
 {
 	add_hit(ht);
@@ -59,7 +67,7 @@ int bundle::add_intervals(bam1_t *b)
 
     for(int k = 0; k < b->core.n_cigar; k++)
 	{
-		if (bam_cigar_type(bam_cigar_op(cigar[k]))&2)
+		if(bam_cigar_type(bam_cigar_op(cigar[k]))&2)
 		{
 			p += bam_cigar_oplen(cigar[k]);
 		}
@@ -223,6 +231,51 @@ int bundle::build_fragments()
 	}
 
 	//printf("total hits = %lu, total fragments = %lu\n", hits.size(), frgs.size());
+	return 0;
+}
+
+int bundle::filter_secondary_hits()
+{
+	set<string> primary;
+	for(int i = 0; i < frgs.size(); i++)
+	{
+		int h1 = frgs[i].first;
+		int h2 = frgs[i].second;
+		assert(hits[h1].qname == hits[h2].qname);
+		if((hits[h1].flag & 0x100) <= 0 && (hits[h2].flag & 0x100) <= 0)
+		{
+			primary.insert(hits[h1].qname);
+		}
+	}
+
+	int cnt = 0;
+	vector<bool> redundant(hits.size(), false);
+	for(int i = 0; i < frgs.size(); i++)
+	{
+		int h1 = frgs[i].first;
+		int h2 = frgs[i].second;
+		if((hits[h1].flag & 0x100) <= 0) continue;
+		if((hits[h2].flag & 0x100) <= 0) continue;
+		if(primary.find(hits[h1].qname) == primary.end()) continue;
+		cnt++;
+		redundant[h1] = true;
+		redundant[h2] = true;
+	}
+
+	printf("filter %d redundant fragments, total %lu frags %lu reads\n", cnt, frgs.size(), hits.size());
+
+	vector<hit> v;
+	chain_set s;
+	for(int i = 0; i < hits.size(); i++)
+	{
+		if(redundant[i] == true) continue;
+		v.push_back(hits[i]);
+		vector<int32_t> chain = hcst.get_chain(i);
+		if(chain.size() >= 1) s.add(chain, v.size() - 1);
+	}
+	hits = v;
+	hcst = s;
+
 	return 0;
 }
 

@@ -40,20 +40,22 @@ public:
 	split_interval_map imap;		// indel interval map
 
 public:
-	int add_hit_intervals(const hit &ht, bam1_t *b);
+	int build();
 	int clear();
 	int print(int index);
 	int compute_strand(int libtype);
 	int check_left_ascending();
 	int check_right_ascending();
-	int build_fragments();
+	int add_hit_intervals(const hit &ht, bam1_t *b);
 	int build_phase_set(phase_set &ps, splice_graph &gr);
 	int update_bridges(const vector<int> &frlist, const vector<int32_t> &chain);
-	bool overlap(const hit &ht) const;
 
 private:
 	int add_hit(const hit &ht);
 	int add_intervals(bam1_t *b);
+	int build_fragments();
+	int filter_secondary_hits();
+	bool overlap(const hit &ht) const;
 };
 
 #endif
