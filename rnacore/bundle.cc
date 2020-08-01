@@ -23,14 +23,6 @@ bundle::bundle()
 	strand = '.';
 }
 
-int bundle::build()
-{
-	build_fragments();
-	filter_secondary_hits();
-	build_fragments();
-	return 0;
-}
-
 int bundle::add_hit_intervals(const hit &ht, bam1_t *b)
 {
 	add_hit(ht);
@@ -192,6 +184,8 @@ int bundle::build_fragments()
 	for(int i = 0; i < hits.size(); i++)
 	{
 		const hit &h = hits[i];
+		if(h.hid < 0) continue;
+
 		// do not use hi; as long as qname, pos and isize are identical
 		int k = (h.get_qhash() % max_index + h.pos % max_index + (0 - h.isize) % max_index) % max_index;
 		vv[k].push_back(i);
@@ -200,6 +194,7 @@ int bundle::build_fragments()
 	for(int i = 0; i < hits.size(); i++)
 	{
 		const hit &h = hits[i];
+		if(h.hid < 0) continue;
 		if(paired[i] == true) continue;
 
 		int k = (h.get_qhash() % max_index + h.mpos % max_index + h.isize % max_index) % max_index;
@@ -234,51 +229,6 @@ int bundle::build_fragments()
 	return 0;
 }
 
-int bundle::filter_secondary_hits()
-{
-	set<string> primary;
-	for(int i = 0; i < frgs.size(); i++)
-	{
-		int h1 = frgs[i].first;
-		int h2 = frgs[i].second;
-		assert(hits[h1].qname == hits[h2].qname);
-		if((hits[h1].flag & 0x100) <= 0 && (hits[h2].flag & 0x100) <= 0)
-		{
-			primary.insert(hits[h1].qname);
-		}
-	}
-
-	int cnt = 0;
-	vector<bool> redundant(hits.size(), false);
-	for(int i = 0; i < frgs.size(); i++)
-	{
-		int h1 = frgs[i].first;
-		int h2 = frgs[i].second;
-		if((hits[h1].flag & 0x100) <= 0) continue;
-		if((hits[h2].flag & 0x100) <= 0) continue;
-		if(primary.find(hits[h1].qname) == primary.end()) continue;
-		cnt++;
-		redundant[h1] = true;
-		redundant[h2] = true;
-	}
-
-	printf("filter %d redundant fragments, total %lu frags %lu reads\n", cnt, frgs.size(), hits.size());
-
-	vector<hit> v;
-	chain_set s;
-	for(int i = 0; i < hits.size(); i++)
-	{
-		if(redundant[i] == true) continue;
-		v.push_back(hits[i]);
-		vector<int32_t> chain = hcst.get_chain(i);
-		if(chain.size() >= 1) s.add(chain, v.size() - 1);
-	}
-	hits = v;
-	hcst = s;
-
-	return 0;
-}
-
 int bundle::build_phase_set(phase_set &ps, splice_graph &gr)
 {
 	vector<int> fb(hits.size(), -1);
@@ -288,6 +238,9 @@ int bundle::build_phase_set(phase_set &ps, splice_graph &gr)
 
 		int h1 = frgs[i].first;	
 		int h2 = frgs[i].second;
+
+		assert(hits[h1].hid >= 0);
+		assert(hits[h2].hid >= 0);
 
 		if(brdg[i] == 0)
 		{
@@ -337,6 +290,7 @@ int bundle::build_phase_set(phase_set &ps, splice_graph &gr)
 	for(int i = 0; i < hits.size(); i++)
 	{
 		if(fb[i] >= 0) continue;
+		if(hits[i].hid < 0) continue;
 
 		int u1 = gr.locate_vertex(hits[i].pos);
 		int u2 = gr.locate_vertex(hits[i].rpos - 1);
@@ -365,10 +319,13 @@ int bundle::update_bridges(const vector<int> &frlist, const vector<int32_t> &cha
 		assert(chain.size() % 2 == 0);
 
 		int k = frlist[i];
-
 		assert(brdg[k] == 0);
+
 		hit &h1 = hits[frgs[k].first];
 		hit &h2 = hits[frgs[k].second];
+		
+		assert(h1.hid >= 0);
+		assert(h2.hid >= 0);
 
 		vector<int32_t> v1;
 		v1.push_back(h1.rpos);
@@ -399,4 +356,176 @@ int bundle::update_bridges(const vector<int> &frlist, const vector<int32_t> &cha
 		}
 	}
 	return cnt;
+}
+
+int bundle::eliminate_bridge(int k)
+{
+	assert(k >= 0 && k < frgs.size());
+	assert(brdg[k] >= 1);
+
+	hit &h1 = hits[frgs[k].first];
+	hit &h2 = hits[frgs[k].second];
+	assert(h1.hid >= 0);
+	assert(h2.hid >= 0);
+
+	vector<int32_t> chain = fcst.get_chain(k);
+
+	vector<int32_t> v1;
+	v1.push_back(h1.rpos);
+	v1.insert(v1.end(), chain.begin(), chain.end());
+	v1.push_back(h2.pos);
+
+	for(int i = 0; i < v1.size() / 2; i++)
+	{
+		int32_t p1 = v1[i * 2 + 0];
+		int32_t p2 = v1[i * 2 + 1];
+		if(p1 >= p2) continue;
+		mmap += make_pair(ROI(p1, p2), -1);
+	}
+
+	brdg[k] = -1;
+	fcst.remove(k);
+
+	return 0;
+}
+
+int bundle::eliminate_hit(int k)
+{
+	assert(k >= 0 && k < hits.size());
+
+	hit &h1 = hits[k];
+	assert(h1.hid >= 0);
+
+	vector<int32_t> chain = hcst.get_chain(k);
+
+	vector<int32_t> v1;
+	v1.push_back(h1.pos);
+	v1.insert(v1.end(), chain.begin(), chain.end());
+	v1.push_back(h1.rpos);
+
+	for(int i = 0; i < v1.size() / 2; i++)
+	{
+		int32_t p1 = v1[i * 2 + 0];
+		int32_t p2 = v1[i * 2 + 1];
+		if(p1 >= p2) continue;
+		mmap += make_pair(ROI(p1, p2), -1);
+	}
+
+	h1.hid = -1;
+	hcst.remove(k);
+
+	return 0;
+}
+
+int bundle::filter_secondary_hits()
+{
+	set<string> primary;
+	for(int i = 0; i < frgs.size(); i++)
+	{
+		int h1 = frgs[i].first;
+		int h2 = frgs[i].second;
+		assert(hits[h1].qname == hits[h2].qname);
+		if((hits[h1].flag & 0x100) <= 0 && (hits[h2].flag & 0x100) <= 0)
+		{
+			primary.insert(hits[h1].qname);
+		}
+	}
+
+	int cnt = 0;
+	vector<bool> redundant(hits.size(), false);
+	for(int i = 0; i < frgs.size(); i++)
+	{
+		int h1 = frgs[i].first;
+		int h2 = frgs[i].second;
+		if((hits[h1].flag & 0x100) <= 0) continue;
+		if((hits[h2].flag & 0x100) <= 0) continue;
+		if(primary.find(hits[h1].qname) == primary.end()) continue;
+		cnt++;
+		redundant[h1] = true;
+		redundant[h2] = true;
+	}
+
+	printf("filter %d redundant fragments, total %lu frags %lu reads\n", cnt, frgs.size(), hits.size());
+
+	vector<hit> v;
+	chain_set s;
+	for(int i = 0; i < hits.size(); i++)
+	{
+		if(redundant[i] == true) continue;
+		v.push_back(hits[i]);
+		vector<int32_t> chain = hcst.get_chain(i);
+		if(chain.size() >= 1) s.add(chain, v.size() - 1);
+	}
+	hits = v;
+	hcst = s;
+
+	return 0;
+}
+
+int bundle::filter_multialigned_hits()
+{
+	set<string> bridged;
+	set<string> primary;
+	for(int i = 0; i < frgs.size(); i++)
+	{
+		if(brdg[i] <= 0) continue;
+		int h1 = frgs[i].first;
+		int h2 = frgs[i].second;
+		assert(hits[h1].qname == hits[h2].qname);
+		bridged.insert(hits[h1].qname);
+		if((hits[h1].flag & 0x100) <= 0 && (hits[h2].flag & 0x100) <= 0) primary.insert(hits[h1].qname);
+	}
+
+	int cnt1 = 0;
+
+	// remove unbridged pairs
+	for(int i = 0; i < frgs.size(); i++)
+	{
+		int h1 = frgs[i].first;
+		int h2 = frgs[i].second;
+		if(brdg[i] >= 1) continue;
+		if(primary.find(hits[h1].qname) == primary.end()) continue;
+		eliminate_hit(h1);
+		eliminate_hit(h2);
+		brdg[i] = -1;
+		cnt1++;
+	}
+
+	// remove bridged but secondary pairs
+	for(int i = 0; i < frgs.size(); i++)
+	{
+		int h1 = frgs[i].first;
+		int h2 = frgs[i].second;
+		if(brdg[i] <= 0) continue;
+		if((hits[h1].flag & 0x100) <= 0) continue;
+		if((hits[h2].flag & 0x100) <= 0) continue;
+		if(primary.find(hits[h1].qname) == primary.end()) continue;
+		eliminate_bridge(i);
+		eliminate_hit(h1);
+		eliminate_hit(h2);
+		cnt1++;
+	}
+
+	// mark unpaired hits
+	vector<bool> paired(hits.size(), false);
+	for(int i = 0; i < frgs.size(); i++)
+	{
+		int h1 = frgs[i].first;
+		int h2 = frgs[i].second;
+		paired[h1] = true;
+		paired[h2] = true;
+	}
+
+	// remove unpaired hits
+	int cnt2 = 0;
+	for(int i = 0; i < hits.size(); i++)
+	{
+		if(paired[i] == true) continue;
+		if(bridged.find(hits[i].qname) == bridged.end()) continue;
+		eliminate_hit(i);
+		cnt2++;
+	}
+
+	printf("filter %d / %d multialigned fragments / hits, total %lu frags %lu reads\n", cnt1, cnt2, frgs.size(), hits.size());
+	return 0;
 }

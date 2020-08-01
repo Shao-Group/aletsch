@@ -143,9 +143,13 @@ int generator::generate(bundle &bb, int index)
 	bb.chrm = string(buf);
 	//bb.compute_strand(sp.library_type);
 
-	bb.build();
+	bb.build_fragments();
+
+	bb.print(index);
 
 	bridge(bb);
+
+	bb.filter_multialigned_hits();
 
 	// build splice graph
 	splice_graph gr;
@@ -182,7 +186,7 @@ int generator::generate(bundle &bb, int index)
 		*/
 	}
 
-	bb.print(index);
+	printf("-----------------------------\n");
 	gr.print();
 
 	// refine splice graph
@@ -195,6 +199,7 @@ int generator::generate(bundle &bb, int index)
 
 	printf("-----------------------------\n");
 	gr.print();
+
 	printf("\n");
 
 	// partition into smaller instances
@@ -288,7 +293,12 @@ int generator::bridge(bundle &bb)
 		}
 
 		//printf("total frags %lu, bridged frags = %d\n", bb.frgs.size(), cnt);
-		if(cnt <= 0) break;
+		if(cnt <= 0)
+		{
+			printf("-----------------------------\n");
+			gr.print();
+			break;
+		}
 	}
 	//printf("\n");
 

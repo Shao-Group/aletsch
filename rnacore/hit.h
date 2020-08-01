@@ -73,7 +73,7 @@ public:
 	virtual hit& operator=(const hit &h);
 
 public:
-	int hid;								// unique id for this hit
+	int hid;								// unique id for this hit, < 0 means removed
 	int32_t rpos;							// right position mapped to reference [pos, rpos)
 	int32_t nh;								// NH aux in sam
 	int32_t hi;								// HI aux in sam

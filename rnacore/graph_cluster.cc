@@ -43,6 +43,9 @@ int graph_cluster::group_pereads()
 		int h1 = bd.frgs[i].first;
 		int h2 = bd.frgs[i].second;
 
+		assert(bd.hits[h1].hid >= 0);
+		assert(bd.hits[h2].hid >= 0);
+
 		if(bd.hits[h1].pos > bd.hits[h2].pos) continue;
 		if(bd.hits[h1].rpos > bd.hits[h2].rpos) continue;
 
