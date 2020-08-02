@@ -145,8 +145,7 @@ int generator::generate(bundle &bb, int index)
 
 	bb.build_fragments();
 
-	bb.print(index);
-
+	//bb.print(index);
 	bridge(bb);
 
 	bb.filter_multialigned_hits();
@@ -186,8 +185,8 @@ int generator::generate(bundle &bb, int index)
 		*/
 	}
 
-	printf("-----------------------------\n");
-	gr.print();
+	//printf("-----------------------------\n");
+	//gr.print();
 
 	// refine splice graph
 	gr.extend_strands();
@@ -197,10 +196,9 @@ int generator::generate(bundle &bb, int index)
 		revise_splice_graph_full(gr, cfg);
 	}
 
-	printf("-----------------------------\n");
-	gr.print();
-
-	printf("\n");
+	//printf("-----------------------------\n");
+	//gr.print();
+	//printf("\n");
 
 	// partition into smaller instances
 	vector<splice_graph> grv;
@@ -295,8 +293,8 @@ int generator::bridge(bundle &bb)
 		//printf("total frags %lu, bridged frags = %d\n", bb.frgs.size(), cnt);
 		if(cnt <= 0)
 		{
-			printf("-----------------------------\n");
-			gr.print();
+			//printf("-----------------------------\n");
+			//gr.print();
 			break;
 		}
 	}

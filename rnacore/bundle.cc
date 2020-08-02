@@ -526,6 +526,6 @@ int bundle::filter_multialigned_hits()
 		cnt2++;
 	}
 
-	printf("filter %d / %d multialigned fragments / hits, total %lu frags %lu reads\n", cnt1, cnt2, frgs.size(), hits.size());
+	//printf("filter %d / %d multialigned fragments / hits, total %lu frags %lu reads\n", cnt1, cnt2, frgs.size(), hits.size());
 	return 0;
 }
