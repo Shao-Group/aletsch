@@ -10,6 +10,7 @@ See LICENSE for licensing.
 #define __CONSTANTS_H__
 
 #include <stdint.h>
+#include <array>
 #include <map>
 #include <set>
 #include <sstream>
@@ -85,5 +86,6 @@ typedef pair<int32_t, set<int> > PISI;
 typedef map<int, double> MID;
 typedef map<int32_t, set<int> > MISI;
 typedef pair<vector<int32_t>, int> PVI;
+typedef array<int, 3> AI3;
 
 #endif

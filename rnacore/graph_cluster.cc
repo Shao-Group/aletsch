@@ -35,13 +35,13 @@ int graph_cluster::group_pereads()
 	for(int i = 0; i < bd.frgs.size(); i++)
 	{
 		// only group unbridged fragments
-		if(bd.brdg[i] >= 1) continue;
-		if(bd.brdg[i] <= -1) continue;
+		if(bd.frgs[i][2] >= 1) continue;
+		if(bd.frgs[i][2] <= -1) continue;
 
-		bd.brdg[i] = -1;		// assume cannot be bridged
+		bd.frgs[i][2] = -1;		// assume cannot be bridged
 
-		int h1 = bd.frgs[i].first;
-		int h2 = bd.frgs[i].second;
+		int h1 = bd.frgs[i][0];
+		int h2 = bd.frgs[i][1];
 
 		assert(bd.hits[h1].hid >= 0);
 		assert(bd.hits[h2].hid >= 0);
@@ -60,7 +60,7 @@ int graph_cluster::group_pereads()
 		if(b1 == false || b2 == false)  continue;
 		if(v1.size() == 0 || v2.size() == 0) continue;
 
-		bd.brdg[i] = 0;			// to be bridged
+		bd.frgs[i][2] = 0;			// to be bridged
 
 		PVV pvv(v1, v2);
 		if(findex.find(pvv) == findex.end())
@@ -96,8 +96,8 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 	vector<vector<int32_t>> vv;
 	for(int i = 0; i < fs.size(); i++)
 	{
-		int h1 = bd.frgs[fs[i]].first;
-		int h2 = bd.frgs[fs[i]].second;
+		int h1 = bd.frgs[fs[i]][0];
+		int h2 = bd.frgs[fs[i]][1];
 
 		vector<int32_t> v;
 		v.push_back(bd.hits[h1].pos);
@@ -114,8 +114,8 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 	{
 		if(zz[i].size() == 0) continue;
 
-		int h1 = bd.frgs[fs[zz[i][0]]].first;
-		int h2 = bd.frgs[fs[zz[i][0]]].second;
+		int h1 = bd.frgs[fs[zz[i][0]]][0];
+		int h2 = bd.frgs[fs[zz[i][0]]][1];
 		assert(bd.hits[h1].rpos <= bd.hits[h2].rpos);
 		assert(bd.hits[h1].pos <= bd.hits[h2].pos);
 
@@ -132,8 +132,8 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 
 		for(int k = 0; k < zz[i].size(); k++)
 		{
-			h1 = bd.frgs[fs[zz[i][k]]].first;
-			h2 = bd.frgs[fs[zz[i][k]]].second;
+			h1 = bd.frgs[fs[zz[i][k]]][0];
+			h2 = bd.frgs[fs[zz[i][k]]][1];
 
 			pc.bounds[0] += bd.hits[h1].pos  - bounds[0];
 			pc.bounds[1] += bd.hits[h1].rpos - bounds[1];

@@ -170,7 +170,6 @@ int bundle::print(int index)
 int bundle::build_fragments()
 {
 	frgs.clear();
-	brdg.clear();
 	if(hits.size() == 0) return 0;
 
 	int max_index = hits.size() + 1;
@@ -217,10 +216,7 @@ int bundle::build_fragments()
 		if(x == -1) continue;
 
 		assert(i != x);
-		//frgs.push_back(PI(hits[i].hid, hits[x].hid));
-		frgs.push_back(PI(i, x));
-		brdg.push_back(0);
-
+		frgs.push_back(AI3({i, x, 0}));
 		paired[i] = true;
 		paired[x] = true;
 	}
@@ -234,15 +230,15 @@ int bundle::build_phase_set(phase_set &ps, splice_graph &gr)
 	vector<int> fb(hits.size(), -1);
 	for(int i = 0; i < frgs.size(); i++)
 	{
-		if(brdg[i] <= -1) continue;
+		if(frgs[i][2] <= -1) continue;
 
-		int h1 = frgs[i].first;	
-		int h2 = frgs[i].second;
+		int h1 = frgs[i][0];	
+		int h2 = frgs[i][1];
 
 		assert(hits[h1].hid >= 0);
 		assert(hits[h2].hid >= 0);
 
-		if(brdg[i] == 0)
+		if(frgs[i][2] == 0)
 		{
 			fb[h1] = 0;			// paired, to be bridged
 			fb[h2] = 0;			// paired, to be bridged
@@ -261,13 +257,13 @@ int bundle::build_phase_set(phase_set &ps, splice_graph &gr)
 
 		vector<int32_t> xy;
 
-		if(brdg[i] == 1)
+		if(frgs[i][2] == 1)
 		{
 			bool b = merge_intron_chains(v1, v2, xy);
 			if(b == false) continue;
 		}
 
-		if(brdg[i] >= 2)
+		if(frgs[i][2] >= 2)
 		{
 			vector<int32_t> vv = fcst.get(i).first;
 			xy.insert(xy.end(), v1.begin(), v1.end());
@@ -319,10 +315,10 @@ int bundle::update_bridges(const vector<int> &frlist, const vector<int32_t> &cha
 		assert(chain.size() % 2 == 0);
 
 		int k = frlist[i];
-		assert(brdg[k] == 0);
+		assert(frgs[k][2] == 0);
 
-		hit &h1 = hits[frgs[k].first];
-		hit &h2 = hits[frgs[k].second];
+		hit &h1 = hits[frgs[k][0]];
+		hit &h2 = hits[frgs[k][1]];
 		
 		assert(h1.hid >= 0);
 		assert(h2.hid >= 0);
@@ -338,12 +334,12 @@ int bundle::update_bridges(const vector<int> &frlist, const vector<int32_t> &cha
 
 		if(chain.size() <= 0)
 		{
-			brdg[k] = 1;
+			frgs[k][2] = 1;
 		}
 		else
 		{
 			assert(chain.size() >= 2);
-			brdg[k] = 2;
+			frgs[k][2] = 2;
 			fcst.add(chain, k);
 		}
 
@@ -361,10 +357,10 @@ int bundle::update_bridges(const vector<int> &frlist, const vector<int32_t> &cha
 int bundle::eliminate_bridge(int k)
 {
 	assert(k >= 0 && k < frgs.size());
-	assert(brdg[k] >= 1);
+	assert(frgs[k][2] >= 1);
 
-	hit &h1 = hits[frgs[k].first];
-	hit &h2 = hits[frgs[k].second];
+	hit &h1 = hits[frgs[k][0]];
+	hit &h2 = hits[frgs[k][1]];
 	assert(h1.hid >= 0);
 	assert(h2.hid >= 0);
 
@@ -383,7 +379,7 @@ int bundle::eliminate_bridge(int k)
 		mmap += make_pair(ROI(p1, p2), -1);
 	}
 
-	brdg[k] = -1;
+	frgs[k][2] = -1;
 	fcst.remove(k);
 
 	return 0;
@@ -422,8 +418,8 @@ int bundle::filter_secondary_hits()
 	set<string> primary;
 	for(int i = 0; i < frgs.size(); i++)
 	{
-		int h1 = frgs[i].first;
-		int h2 = frgs[i].second;
+		int h1 = frgs[i][0];
+		int h2 = frgs[i][1];
 		assert(hits[h1].qname == hits[h2].qname);
 		if((hits[h1].flag & 0x100) <= 0 && (hits[h2].flag & 0x100) <= 0)
 		{
@@ -435,8 +431,8 @@ int bundle::filter_secondary_hits()
 	vector<bool> redundant(hits.size(), false);
 	for(int i = 0; i < frgs.size(); i++)
 	{
-		int h1 = frgs[i].first;
-		int h2 = frgs[i].second;
+		int h1 = frgs[i][0];
+		int h2 = frgs[i][1];
 		if((hits[h1].flag & 0x100) <= 0) continue;
 		if((hits[h2].flag & 0x100) <= 0) continue;
 		if(primary.find(hits[h1].qname) == primary.end()) continue;
@@ -468,9 +464,9 @@ int bundle::filter_multialigned_hits()
 	set<string> primary;
 	for(int i = 0; i < frgs.size(); i++)
 	{
-		if(brdg[i] <= 0) continue;
-		int h1 = frgs[i].first;
-		int h2 = frgs[i].second;
+		if(frgs[i][2] <= 0) continue;
+		int h1 = frgs[i][0];
+		int h2 = frgs[i][1];
 		assert(hits[h1].qname == hits[h2].qname);
 		bridged.insert(hits[h1].qname);
 		if((hits[h1].flag & 0x100) <= 0 && (hits[h2].flag & 0x100) <= 0) primary.insert(hits[h1].qname);
@@ -481,22 +477,22 @@ int bundle::filter_multialigned_hits()
 	// remove unbridged pairs
 	for(int i = 0; i < frgs.size(); i++)
 	{
-		int h1 = frgs[i].first;
-		int h2 = frgs[i].second;
-		if(brdg[i] >= 1) continue;
+		int h1 = frgs[i][0];
+		int h2 = frgs[i][1];
+		if(frgs[i][2] >= 1) continue;
 		if(primary.find(hits[h1].qname) == primary.end()) continue;
 		eliminate_hit(h1);
 		eliminate_hit(h2);
-		brdg[i] = -1;
+		frgs[i][2] = -1;
 		cnt1++;
 	}
 
 	// remove bridged but secondary pairs
 	for(int i = 0; i < frgs.size(); i++)
 	{
-		int h1 = frgs[i].first;
-		int h2 = frgs[i].second;
-		if(brdg[i] <= 0) continue;
+		int h1 = frgs[i][0];
+		int h2 = frgs[i][1];
+		if(frgs[i][2] <= 0) continue;
 		if((hits[h1].flag & 0x100) <= 0) continue;
 		if((hits[h2].flag & 0x100) <= 0) continue;
 		if(primary.find(hits[h1].qname) == primary.end()) continue;
@@ -510,8 +506,8 @@ int bundle::filter_multialigned_hits()
 	vector<bool> paired(hits.size(), false);
 	for(int i = 0; i < frgs.size(); i++)
 	{
-		int h1 = frgs[i].first;
-		int h2 = frgs[i].second;
+		int h1 = frgs[i][0];
+		int h2 = frgs[i][1];
 		paired[h1] = true;
 		paired[h2] = true;
 	}

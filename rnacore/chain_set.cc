@@ -108,3 +108,24 @@ int chain_set::clear()
 	chains.clear();
 	return 0;
 }
+
+vector<int32_t> chain_set::get_splices()
+{
+	set<int32_t> s;
+	for(int i = 0; i < chains.size(); i++)
+	{
+		for(int j = 0; j < chains[i].size(); j++)
+		{
+			PVI &p = chains[i][j];
+			if(p.second <= 0) continue;
+			for(int k = 0; k < p.first.size(); k++)
+			{
+				s.insert(p.first[k]);
+			}
+		}
+	}
+
+	vector<int32_t> v(s.begin(), s.end());
+	sort(v.begin(), v.end());
+	return v;
+}

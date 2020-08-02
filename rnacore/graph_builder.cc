@@ -72,10 +72,10 @@ int graph_builder::build_junctions()
 
 	for(int i = 0; i < bd.frgs.size(); i++)
 	{
-		if(bd.brdg[i] <= 1) continue;
+		if(bd.frgs[i][2] <= 1) continue;
 
-		int h1 = bd.frgs[i].first;
-		int h2 = bd.frgs[i].second;
+		int h1 = bd.frgs[i][0];
+		int h2 = bd.frgs[i][1];
 		assert(bd.hits[h1].hid >= 0);
 		assert(bd.hits[h2].hid >= 0);
 

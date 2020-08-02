@@ -28,6 +28,7 @@ public:
 	PVI get(int h) const;						// get chain and return count
 	int clear();								// clear everything
 	int print();								// print
+	vector<int32_t> get_splices();
 };
 
 #endif
