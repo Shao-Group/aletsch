@@ -25,8 +25,8 @@ int chain_set::add(const vector<int32_t> &v, int h)
 	int32_t p = v[0];
 	if(pmap.find(p) == pmap.end())
 	{
-		vector<vector<int32_t>> vv;
-		vv.push_back(v);
+		vector<PVI> vv;
+		vv.push_back(PVI(v, 1));
 		chains.push_back(vv);
 		int n = chains.size() - 1;
 		pmap.insert(make_pair(p, n));
@@ -36,13 +36,14 @@ int chain_set::add(const vector<int32_t> &v, int h)
 	{
 		int k = pmap[p];
 		assert(k >= 0 && k < chains.size());
-		vector<vector<int32_t>> &vv = chains[k];
+		vector<PVI> &vv = chains[k];
 		bool found = false;
 		for(int i = 0; i < vv.size(); i++)
 		{
-			if(vv[i] == v)
+			if(vv[i].first == v)
 			{
 				if(h >= 0) hmap.insert(make_pair(h, PI(k, i)));
+				vv[i].second++;
 				found = true;
 				break;
 			}
@@ -50,7 +51,7 @@ int chain_set::add(const vector<int32_t> &v, int h)
 
 		if(found == false)
 		{
-			vv.push_back(v);
+			vv.push_back(PVI(v, 1));
 			int n = vv.size() - 1;
 			if(h >= 0) hmap.insert(make_pair(h, PI(k, n)));
 		}
@@ -61,17 +62,22 @@ int chain_set::add(const vector<int32_t> &v, int h)
 int chain_set::remove(int h)
 {
 	if(hmap.find(h) == hmap.end()) return 0;
+	PI p = hmap[h];
+	assert(p.first >= 0 && p.first < chains.size());
+	assert(p.second >= 0 && p.second < chains[p.first].size());
+	chains[p.first][p.second].second--;
+	if(chains[p.first][p.second].second <= 0) chains[p.first][p.second].second = 0;
 	hmap.erase(h);
 	return 0;
 }
 
-vector<int32_t> chain_set::get_chain(int h)
+PVI chain_set::get(int h) const
 {
-	vector<int32_t> v;
-	if(h < 0) return v;
-	if(hmap.find(h) == hmap.end()) return v;
-
-	PI p = hmap[h];
+	PVI pvi;
+	pvi.second = -1;
+	if(h < 0) return pvi;
+	if(hmap.find(h) == hmap.end()) return pvi;
+	const auto &p = hmap.at(h);
 	assert(p.first >= 0 && p.first < chains.size());
 	assert(p.second >= 0 && p.second < chains[p.first].size());
 	return chains[p.first][p.second];

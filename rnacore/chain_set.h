@@ -20,14 +20,14 @@ class chain_set
 private:
 	map<int, PI> hmap;
 	map<int32_t, int> pmap;
-	vector<vector<vector<int32_t>>> chains;
+	vector<vector<PVI>> chains;
 
 public:
-	vector<int32_t> get_chain(int h);
-	int add(const vector<int32_t> &v, int h);
-	int remove(int h);
-	int print();
-	int clear();
+	int add(const vector<int32_t> &v, int h);	// if h < 0, don't store the handle
+	int remove(int h);							// remove handle and decrease count
+	PVI get(int h) const;						// get chain and return count
+	int clear();								// clear everything
+	int print();								// print
 };
 
 #endif

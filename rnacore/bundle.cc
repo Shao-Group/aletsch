@@ -256,8 +256,8 @@ int bundle::build_phase_set(phase_set &ps, splice_graph &gr)
 		int32_t p1 = gr.get_vertex_info(u1).lpos;
 		int32_t p2 = gr.get_vertex_info(u2).rpos;
 
-		vector<int32_t> v1 = hcst.get_chain(h1);
-		vector<int32_t> v2 = hcst.get_chain(h2);
+		vector<int32_t> v1 = hcst.get(h1).first;
+		vector<int32_t> v2 = hcst.get(h2).first;
 
 		vector<int32_t> xy;
 
@@ -269,7 +269,7 @@ int bundle::build_phase_set(phase_set &ps, splice_graph &gr)
 
 		if(brdg[i] >= 2)
 		{
-			vector<int32_t> vv = fcst.get_chain(i);
+			vector<int32_t> vv = fcst.get(i).first;
 			xy.insert(xy.end(), v1.begin(), v1.end());
 			xy.insert(xy.end(), vv.begin(), vv.end());
 			xy.insert(xy.end(), v2.begin(), v2.end());
@@ -299,7 +299,7 @@ int bundle::build_phase_set(phase_set &ps, splice_graph &gr)
 		int32_t p1 = gr.get_vertex_info(u1).lpos;
 		int32_t p2 = gr.get_vertex_info(u2).rpos;
 
-		vector<int32_t> xy = hcst.get_chain(i);
+		vector<int32_t> xy = hcst.get(i).first;
 		xy.insert(xy.begin(), p1);
 		xy.insert(xy.end(), p2);
 
@@ -368,7 +368,7 @@ int bundle::eliminate_bridge(int k)
 	assert(h1.hid >= 0);
 	assert(h2.hid >= 0);
 
-	vector<int32_t> chain = fcst.get_chain(k);
+	vector<int32_t> chain = fcst.get(k).first;
 
 	vector<int32_t> v1;
 	v1.push_back(h1.rpos);
@@ -396,7 +396,7 @@ int bundle::eliminate_hit(int k)
 	hit &h1 = hits[k];
 	assert(h1.hid >= 0);
 
-	vector<int32_t> chain = hcst.get_chain(k);
+	vector<int32_t> chain = hcst.get(k).first;
 
 	vector<int32_t> v1;
 	v1.push_back(h1.pos);
@@ -453,7 +453,7 @@ int bundle::filter_secondary_hits()
 	{
 		if(redundant[i] == true) continue;
 		v.push_back(hits[i]);
-		vector<int32_t> chain = hcst.get_chain(i);
+		vector<int32_t> chain = hcst.get(i).first;
 		if(chain.size() >= 1) s.add(chain, v.size() - 1);
 	}
 	hits = v;

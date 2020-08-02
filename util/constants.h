@@ -84,5 +84,6 @@ typedef pair<PI, double> PPID;
 typedef pair<int32_t, set<int> > PISI;
 typedef map<int, double> MID;
 typedef map<int32_t, set<int> > MISI;
+typedef pair<vector<int32_t>, int> PVI;
 
 #endif

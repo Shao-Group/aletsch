@@ -51,8 +51,8 @@ int graph_cluster::group_pereads()
 
 		vector<int> v1;
 		vector<int> v2;
-		vector<int32_t> chain1 = bd.hcst.get_chain(h1);
-		vector<int32_t> chain2 = bd.hcst.get_chain(h2);
+		vector<int32_t> chain1 = bd.hcst.get(h1).first;
+		vector<int32_t> chain2 = bd.hcst.get(h2).first;
 
 		bool b1 = align_hit_to_splice_graph(bd.hits[h1], chain1, gr, v1);
 		bool b2 = align_hit_to_splice_graph(bd.hits[h2], chain2, gr, v2);
@@ -121,8 +121,8 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 
 		pereads_cluster pc;
 		pc.count = 0;
-		pc.chain1 = bd.hcst.get_chain(h1);
-		pc.chain2 = bd.hcst.get_chain(h2);
+		pc.chain1 = bd.hcst.get(h1).first;
+		pc.chain2 = bd.hcst.get(h2).first;
 
 		vector<int32_t> bounds(4, 0);
 		bounds[0] = bd.hits[h1].pos;

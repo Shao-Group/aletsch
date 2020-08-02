@@ -50,7 +50,7 @@ int graph_builder::build_junctions()
 	{
 		//vector<int32_t> v = bd.hits[i].spos;
 		if(bd.hits[i].hid < 0) continue;
-		vector<int32_t> v = bd.hcst.get_chain(i);
+		vector<int32_t> v = bd.hcst.get(i).first;
 		if(v.size() == 0) continue;
 
 		assert(v.size() % 2 == 0);
@@ -81,7 +81,7 @@ int graph_builder::build_junctions()
 
 		if(bd.hits[h1].xs != bd.hits[h2].xs) continue;
 
-		vector<int32_t> v = bd.fcst.get_chain(i);
+		vector<int32_t> v = bd.fcst.get(i).first;
 		if(v.size() == 0) continue;
 
 		assert(v.size() % 2 == 0);
