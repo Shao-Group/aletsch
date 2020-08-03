@@ -13,6 +13,8 @@ See LICENSE for licensing.
 #include "bundle.h"
 #include "util.h"
 #include "essential.h"
+#include "bridge_solver.h"
+#include "pereads_cluster.h"
 
 bundle::bundle()
 {

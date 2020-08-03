@@ -109,197 +109,24 @@ int generator::resolve()
 	return 0;
 }
 
-int generator::generate(bundle &bb, int index)
+int generator::generate(bundle2 &bb, int index)
 {
 	if(bb.tid < 0) return 0;
-
-	bool store_hits = true;
-	if(cfg.output_bridged_bam_dir == "") store_hits = false;
-	if(sp.data_type != PAIRED_END) store_hits = false;
-
-	if(bb.hits.size() < cfg.min_num_hits_in_bundle)
-	{
-		if(store_hits == false || bb.hits.size() <= 0) return 0;
-
-		sp.open_bridged_bam(cfg.output_bridged_bam_dir);
-		for(int i = 0; i < bb.hits.size(); i++)
-		{
-			hit &h = bb.hits[i];
-
-			/* TODO TODO
-			bam1_t b1t;
-			bool b = build_bam1_t(b1t, h, bb.hits[i].spos);
-			if(b == true) bam_write1(sp.bridged_bam, &(b1t));
-			assert(b1t.data != NULL);
-			delete b1t.data;
-			*/
-		}
-		sp.close_bridged_bam();
-		return 0;
-	}
 
 	char buf[1024];
 	strcpy(buf, sp.hdr->target_name[bb.tid]);
 	bb.chrm = string(buf);
-	//bb.compute_strand(sp.library_type);
-
 	bb.build_fragments();
-
-	//bb.print(index);
-	bridge(bb);
-
+	bb.bridge(cfg, sp);
 	bb.filter_multialigned_hits();
 
-	// build splice graph
-	splice_graph gr;
-	graph_builder gb(bb, cfg);
-	gb.build(gr);
-	gr.build_vertex_index();
+	// TODO, storing reads
+	// TODO, don't keep bridged reads
 
-	// build phase set
-	phase_set ps;
-	bb.build_phase_set(ps, gr);
-
-	// build (unbridged) reads-clusters
-	vector<pereads_cluster> ub;
-	if(sp.data_type == PAIRED_END)
-	{
-		graph_cluster gc(gr, bb, cfg.max_reads_partition_gap, store_hits);
-		gc.build_pereads_clusters(ub);
-	}
-
-	// write bridged and cannot-be-bridged reads
-	if(store_hits == true)
-	{
-		// TODO TODO
-		/*
-		sp.open_bridged_bam(cfg.output_bridged_bam_dir);
-		write_unpaired_reads(sp.bridged_bam, bb.hits, paired);
-		assert(vc.size() == bs.opt.size());
-		for(int k = 0; k < vc.size(); k++)
-		{
-			if(bs.opt[k].type >= 0) write_bridged_pereads_cluster(sp.bridged_bam, vc[k], bs.opt[k].whole);
-			else write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
-		}
-		sp.close_bridged_bam();
-		*/
-	}
-
-	//printf("-----------------------------\n");
-	//gr.print();
-
-	// refine splice graph
-	gr.extend_strands();
-	identify_boundaries(gr, cfg);
-	if(cfg.boost_precision == true && (sp.data_type == PAIRED_END || sp.data_type == SINGLE_END))
-	{
-		revise_splice_graph_full(gr, cfg);
-	}
-
-	//printf("-----------------------------\n");
-	//gr.print();
-	//printf("\n");
-
-	// partition into smaller instances
-	vector<splice_graph> grv;
-	vector<phase_set> hsv;
-	vector< vector<pereads_cluster> > ubv;
-	partition(gr, ps, ub, grv, hsv, ubv);
-
-	assert(grv.size() == hsv.size());
-	assert(grv.size() == ubv.size());
-
-	for(int k = 0; k < grv.size(); k++)
-	{
-		string gid = "gene." + tostring(sp.sample_id) + "." + tostring(index) + "." + tostring(k);
-		grv[k].gid = gid;
-
-		/*
-		printf("process instance:\n");
-		grv[k].print();
-		printf("\n");
-		*/
-
-		bool b = regional(grv[k], hsv[k], ubv[k]);
-		if(b == true) continue;
-
-		b = assemble_single(grv[k], hsv[k], ubv[k]);
-		if(b == true) continue;
-
-		//process_large(ubv[k]);
-		b = assemble_large(grv[k], hsv[k], ubv[k]);
-		if(b == true) continue;
-
-		combined_graph cb(cfg);
-		cb.sid = sp.sample_id;
-		cb.gid = gid;
-		cb.build(grv[k], std::move(hsv[k]), std::move(ubv[k]));
-
-		/*
-		// print
-		//grv[k].print();
-		printf("added to vcb\n");
-		cb.print(k);
-		printf("\n");
-		*/
-
-		vcb.push_back(std::move(cb));
-	}
-
-	return 0;
-}
-
-int generator::bridge(bundle &bb)
-{
-	while(true)
-	{
-		splice_graph gr;
-		graph_builder gb(bb, cfg);
-		gb.build(gr);
-		gr.build_vertex_index();
-
-		//gr.print();
-
-		vector<pereads_cluster> vc;
-		graph_cluster gc(gr, bb, cfg.max_reads_partition_gap, false);
-		gc.build_pereads_clusters(vc);
-
-		bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
-
-		int cnt = 0;
-		assert(vc.size() == bs.opt.size());
-		for(int k = 0; k < vc.size(); k++)
-		{
-			/*
-			printf("update list %d with %lu frags = ", k, vc[k].frlist.size()); 
-			printv(vc[k].frlist);
-			printf(", chain = "); printv(bs.opt[k].chain); printf("\n");
-			*/
-
-			/*
-			for(int j = 0; j < vc[k].frlist.size(); j++)
-			{
-				int h1 = bb.frgs[vc[k].frlist[j]].first;
-				int h2 = bb.frgs[vc[k].frlist[j]].second;
-				bb.hits[h1].print();
-				bb.hits[h2].print();
-			}
-			*/
-
-			if(bs.opt[k].type <= 0) continue;
-			cnt += bb.update_bridges(vc[k].frlist, bs.opt[k].chain);
-		}
-
-		//printf("total frags %lu, bridged frags = %d\n", bb.frgs.size(), cnt);
-		if(cnt <= 0)
-		{
-			//printf("-----------------------------\n");
-			//gr.print();
-			break;
-		}
-	}
-	//printf("\n");
-
+	bundle2 bb2(cfg, bb);
+	bb2.sid = sp.sample_id;
+	bb2.gid = "gene." + tostring(sp.sample_id) + "." + tostring(index);
+	vcb.push_back(std::move(bb2));
 	return 0;
 }
 

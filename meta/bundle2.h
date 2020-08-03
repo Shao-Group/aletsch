@@ -12,16 +12,19 @@ See LICENSE for licensing.
 #include <iostream>
 #include <string>
 
+#include "bundle.h"
 #include "parameters.h"
+#include "sample_profile.h"
 
 using namespace std;
 
-class combined_bundle : public bundle
+class bundle2 : public bundle
 {
 public:
-	combined_bundle(const parameters &cfg);
-	combined_bundle(const combined_bundle &cb) = default;
-	combined_bundle(combined_bundle &&cb) = default;
+	bundle2(const parameters &cfg);
+	bundle2(const parameters &cfg, bundle &&bd, int sid);
+	bundle2(const bundle2 &cb) = default;
+	bundle2(bundle2 &&cb) = default;
 
 public:
 	const parameters &cfg;
@@ -30,6 +33,7 @@ public:
 	int num_combined;
 
 public:
+	int bridge(const sample_profile &sp);
 	int print(int index);
 	int clear();
 };

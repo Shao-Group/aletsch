@@ -133,17 +133,17 @@ int bundle_group::build_similarity(const vector<int> &ss, vector<PPID> &vpid, bo
 	for(int xi = 0; xi < ss.size(); xi++)
 	{
 		int i = ss[xi];
-		if(gset[i].junctions.size() > cfg.max_num_junctions_to_combine) continue;
+		if(splices[i].size() / 2.0 > cfg.max_num_junctions_to_combine) continue;
 		for(int xj = 0; xj < ss.size(); xj++)
 		{
 			int j = ss[xj];
 			if(i >= j) continue;
-			if(gset[j].junctions.size() > cfg.max_num_junctions_to_combine) continue;
+			if(splices[j].size() / 2.0 > cfg.max_num_junctions_to_combine) continue;
 
 			assert(gset[i].chrm == gset[j].chrm);
 			assert(gset[i].strand == gset[j].strand);
 
-			vector<int32_t> vv(v.size(), 0);
+			vector<int32_t> vv(splices[i].size() + splices[j].size(), 0);
 			vector<int32_t>::iterator it = set_intersection(splices[i].begin(), splices[i].end(), splices[j].begin(), splices[j].end(), vv.begin());
 			int c = it - vv.begin();
 			double r = c * 1.0 / (splices[i].size() + splices[j].size() - c);

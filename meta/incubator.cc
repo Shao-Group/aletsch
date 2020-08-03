@@ -286,7 +286,7 @@ int incubator::assemble()
 		{
 			const vector<int> &v = groups[i].gvv[k];
 			if(v.size() == 0) continue;
-			vector<combined_graph*> gv;
+			vector<bundle2*> gv;
 			for(int j = 0; j < v.size(); j++)
 			{
 				gv.push_back(&(groups[i].gset[v[j]]));
@@ -401,7 +401,7 @@ int incubator::postprocess()
 
 int incubator::generate(sample_profile &sp, int tid, string chrm, mutex &mylock)
 {	
-	vector<combined_graph> v;
+	vector<bundle2> v;
 	transcript_set ts(chrm, params[DEFAULT].min_single_exon_clustering_overlap);
 	generator gt(sp, v, ts, params[sp.data_type], tid);
 	gt.resolve();
@@ -422,7 +422,7 @@ int incubator::generate(sample_profile &sp, int tid, string chrm, mutex &mylock)
 
 		if(found == false)
 		{
-			graph_group gp(v[k].chrm, v[k].strand, params[DEFAULT]);
+			bundle_group gp(v[k].chrm, v[k].strand, params[DEFAULT]);
 			gp.gset.push_back(std::move(v[k]));
 			groups.push_back(std::move(gp));
 		}
@@ -432,7 +432,7 @@ int incubator::generate(sample_profile &sp, int tid, string chrm, mutex &mylock)
 	return 0;
 }
 
-int incubator::assemble(vector<combined_graph*> gv, int instance, mutex &mylock)
+int incubator::assemble(vector<bundle2*> gv, int instance, mutex &mylock)
 {
 	if(gv.size() == 0) return 0;
 
