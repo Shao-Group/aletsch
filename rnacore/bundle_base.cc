@@ -9,14 +9,12 @@ See LICENSE for licensing.
 #include <cmath>
 #include <climits>
 
-#include "constants.h"
-#include "bundle.h"
-#include "util.h"
+#include "bundle_base.h"
 #include "essential.h"
-#include "bridge_solver.h"
-#include "pereads_cluster.h"
+#include "constants.h"
+#include "util.h"
 
-bundle::bundle()
+bundle_base::bundle_base()
 {
 	tid = -1;
 	chrm = "";
@@ -25,7 +23,7 @@ bundle::bundle()
 	strand = '.';
 }
 
-int bundle::add_hit_intervals(const hit &ht, bam1_t *b)
+int bundle_base::add_hit_intervals(const hit &ht, bam1_t *b)
 {
 	add_hit(ht);
 	add_intervals(b);
@@ -34,7 +32,7 @@ int bundle::add_hit_intervals(const hit &ht, bam1_t *b)
 	return 0;
 }
 
-int bundle::add_hit(const hit &ht)
+int bundle_base::add_hit(const hit &ht)
 {
 	// store new hit
 	hits.push_back(ht);
@@ -54,7 +52,7 @@ int bundle::add_hit(const hit &ht)
 	return 0;
 }
 
-int bundle::add_intervals(bam1_t *b)
+int bundle_base::add_intervals(bam1_t *b)
 {
 	int32_t p = b->core.pos;
 	uint32_t *cigar = bam_get_cigar(b);
@@ -86,14 +84,14 @@ int bundle::add_intervals(bam1_t *b)
 	return 0;
 }
 
-bool bundle::overlap(const hit &ht) const
+bool bundle_base::overlap(const hit &ht) const
 {
 	if(mmap.find(ROI(ht.pos, ht.pos + 1)) != mmap.end()) return true;
 	if(mmap.find(ROI(ht.rpos - 1, ht.rpos)) != mmap.end()) return true;
 	return false;
 }
 
-int bundle::clear()
+int bundle_base::clear()
 {
 	tid = -1;
 	chrm = "";
@@ -108,7 +106,7 @@ int bundle::clear()
 	return 0;
 }
 
-int bundle::compute_strand(int libtype)
+int bundle_base::compute_strand(int libtype)
 {
 	if(libtype != UNSTRANDED) assert(strand != '.');
 	if(libtype != UNSTRANDED) return 0;
@@ -128,7 +126,7 @@ int bundle::compute_strand(int libtype)
 	return 0;
 }
 
-int bundle::check_left_ascending()
+int bundle_base::check_left_ascending()
 {
 	for(int i = 1; i < hits.size(); i++)
 	{
@@ -139,7 +137,7 @@ int bundle::check_left_ascending()
 	return 0;
 }
 
-int bundle::check_right_ascending()
+int bundle_base::check_right_ascending()
 {
 	for(int i = 1; i < hits.size(); i++)
 	{
@@ -150,9 +148,9 @@ int bundle::check_right_ascending()
 	return 0;
 }
 
-int bundle::print(int index)
+int bundle_base::print(int index)
 {
-	printf("bundle%d: ", index);
+	printf("bundle_base%d: ", index);
 
 	// statistic xs
 	int n0 = 0, np = 0, nq = 0;
@@ -169,7 +167,7 @@ int bundle::print(int index)
 	return 0;
 }
 
-int bundle::build_fragments()
+int bundle_base::build_fragments()
 {
 	frgs.clear();
 	if(hits.size() == 0) return 0;
@@ -227,7 +225,7 @@ int bundle::build_fragments()
 	return 0;
 }
 
-int bundle::build_phase_set(phase_set &ps, splice_graph &gr)
+int bundle_base::build_phase_set(phase_set &ps, splice_graph &gr)
 {
 	vector<int> fb(hits.size(), -1);
 	for(int i = 0; i < frgs.size(); i++)
@@ -309,7 +307,7 @@ int bundle::build_phase_set(phase_set &ps, splice_graph &gr)
 	return 0;
 }
 
-int bundle::update_bridges(const vector<int> &frlist, const vector<int32_t> &chain)
+int bundle_base::update_bridges(const vector<int> &frlist, const vector<int32_t> &chain)
 {
 	int cnt = 0;
 	for(int i = 0; i < frlist.size(); i++)
@@ -356,7 +354,7 @@ int bundle::update_bridges(const vector<int> &frlist, const vector<int32_t> &cha
 	return cnt;
 }
 
-int bundle::eliminate_bridge(int k)
+int bundle_base::eliminate_bridge(int k)
 {
 	assert(k >= 0 && k < frgs.size());
 	assert(frgs[k][2] >= 1);
@@ -387,7 +385,7 @@ int bundle::eliminate_bridge(int k)
 	return 0;
 }
 
-int bundle::eliminate_hit(int k)
+int bundle_base::eliminate_hit(int k)
 {
 	assert(k >= 0 && k < hits.size());
 
@@ -415,7 +413,7 @@ int bundle::eliminate_hit(int k)
 	return 0;
 }
 
-int bundle::filter_secondary_hits()
+int bundle_base::filter_secondary_hits()
 {
 	set<string> primary;
 	for(int i = 0; i < frgs.size(); i++)
@@ -460,7 +458,7 @@ int bundle::filter_secondary_hits()
 	return 0;
 }
 
-int bundle::filter_multialigned_hits()
+int bundle_base::filter_multialigned_hits()
 {
 	set<string> bridged;
 	set<string> primary;

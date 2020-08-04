@@ -9,7 +9,7 @@ See LICENSE for licensing.
 
 #include "splice_graph.h"
 #include "interval_map.h"
-#include "bundle2.h"
+#include "bundle.h"
 #include "bundle_group.h"
 #include "parameters.h"
 #include "transcript_set.h"
@@ -49,7 +49,7 @@ private:
 	int free_samples();
 	int build_sample_index();
 	int generate(sample_profile &sp, int tid, string chrm, mutex &mylock);
-	int assemble(vector<bundle2*> gv, int instance, mutex &mylock);
+	int assemble(vector<bundle*> gv, int instance, mutex &mylock);
 	int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);
 	int save_transcript_set(const transcript_set &ts, mutex &mylock);
 	int write_individual_gtf(int id, const vector<transcript> &vt, const vector<int> &ct, const vector<pair<int, double>> &v);

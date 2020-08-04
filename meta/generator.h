@@ -14,7 +14,7 @@ See LICENSE for licensing.
 #include "splice_graph.h"
 #include "phase_set.h"
 #include "pereads_cluster.h"
-#include "bundle2.h"
+#include "bundle.h"
 #include "sample_profile.h"
 #include "transcript_set.h"
 #include "parameters.h"
@@ -24,7 +24,7 @@ using namespace std;
 class generator
 {
 public:
-	generator(sample_profile &sp, vector<bundle2> &cbv, transcript_set &ts, const parameters &c, int target_id);
+	generator(sample_profile &sp, vector<bundle> &cbv, transcript_set &ts, const parameters &c, int target_id);
 	~generator();
 
 private:
@@ -32,7 +32,7 @@ private:
 	sample_profile &sp;
 	int target_id;
 
-	vector<bundle2> &vcb;
+	vector<bundle> &vcb;
 	transcript_set &ts;
 	int index;
 
@@ -40,7 +40,7 @@ public:
 	int resolve();
 
 private:
-	int generate(bundle2 &bb, int index);
+	int generate(bundle_base &bb, int index);
 	int partition(splice_graph &gr, phase_set &hs, vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &hsv, vector< vector<pereads_cluster> > &ubv);
 	int process_large(vector<pereads_cluster> &vc);
 	bool regional(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc);

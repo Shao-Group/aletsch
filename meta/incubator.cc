@@ -286,7 +286,7 @@ int incubator::assemble()
 		{
 			const vector<int> &v = groups[i].gvv[k];
 			if(v.size() == 0) continue;
-			vector<bundle2*> gv;
+			vector<bundle*> gv;
 			for(int j = 0; j < v.size(); j++)
 			{
 				gv.push_back(&(groups[i].gset[v[j]]));
@@ -401,7 +401,7 @@ int incubator::postprocess()
 
 int incubator::generate(sample_profile &sp, int tid, string chrm, mutex &mylock)
 {	
-	vector<bundle2> v;
+	vector<bundle> v;
 	transcript_set ts(chrm, params[DEFAULT].min_single_exon_clustering_overlap);
 	generator gt(sp, v, ts, params[sp.data_type], tid);
 	gt.resolve();
@@ -432,7 +432,7 @@ int incubator::generate(sample_profile &sp, int tid, string chrm, mutex &mylock)
 	return 0;
 }
 
-int incubator::assemble(vector<bundle2*> gv, int instance, mutex &mylock)
+int incubator::assemble(vector<bundle*> gv, int instance, mutex &mylock)
 {
 	if(gv.size() == 0) return 0;
 

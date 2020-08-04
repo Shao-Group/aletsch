@@ -12,18 +12,18 @@ See LICENSE for licensing.
 #include "partial_exon.h"
 #include "splice_graph.h"
 #include "parameters.h"
-#include "bundle.h"
+#include "bundle_base.h"
 
 using namespace std;
 
 class graph_builder
 {
 public:
-	graph_builder(bundle &bd, const parameters &cfg);
+	graph_builder(bundle_base &bd, const parameters &cfg);
 
 public:
 	const parameters &cfg;			// parameters
-	bundle &bd;						// given bundle
+	bundle_base &bd;				// given bundle_base
 	vector<junction> junctions;		// junctions
 	vector<region> regions;			// regions
 	vector<partial_exon> pexons;	// partial exons

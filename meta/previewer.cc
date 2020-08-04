@@ -10,7 +10,7 @@ See LICENSE for licensing.
 #include <cassert>
 #include <sstream>
 
-#include "bundle.h"
+#include "bundle_base.h"
 #include "previewer.h"
 #include "constants.h"
 #include "graph_cluster.h"
@@ -147,8 +147,8 @@ int previewer::infer_library_type()
 
 int previewer::infer_insertsize()
 {
-	bundle bb1;
-	bundle bb2;
+	bundle_base bb1;
+	bundle_base bb2;
 	bb1.strand = '+';
 	bb2.strand = '-';
 	map<int32_t, int> m;
@@ -244,7 +244,7 @@ int previewer::infer_insertsize()
 	return 0;
 }
 
-int previewer::process(bundle &bd, map<int32_t, int> &m)
+int previewer::process(bundle_base &bd, map<int32_t, int> &m)
 {
 	if(bd.hits.size() < cfg.min_num_hits_in_bundle) return 0;
 	if(bd.hits.size() > 20000) return 0;

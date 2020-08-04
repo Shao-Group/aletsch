@@ -10,7 +10,7 @@ See LICENSE for licensing.
 
 #include <algorithm>
 
-graph_cluster::graph_cluster(splice_graph &g, bundle &d, int max_gap, bool b)
+graph_cluster::graph_cluster(splice_graph &g, bundle_base &d, int max_gap, bool b)
 	: gr(g), bd(d), max_partition_gap(max_gap), store_hits(b)
 {
 	group_pereads();

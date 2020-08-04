@@ -25,7 +25,7 @@ See LICENSE for licensing.
 #include "hyper_set.h"
 #include "assembler.h"
 
-generator::generator(sample_profile &s, vector<combined_graph> &v, transcript_set &t, const parameters &c, int tid)
+generator::generator(sample_profile &s, vector<bundle> &v, transcript_set &t, const parameters &c, int tid)
 	: vcb(v), ts(t), cfg(c), sp(s), target_id(tid)
 {
 	index = 0;
@@ -42,8 +42,8 @@ int generator::resolve()
 	if(target_id < 0) return 0;
 
 	int index = 0;
-	bundle bb1;
-	bundle bb2;
+	bundle_base bb1;
+	bundle_base bb2;
 
 	int hid = 0;
     bam1_t *b1t = bam_init1();
@@ -109,24 +109,23 @@ int generator::resolve()
 	return 0;
 }
 
-int generator::generate(bundle2 &bb, int index)
+int generator::generate(bundle_base &bb, int index)
 {
 	if(bb.tid < 0) return 0;
-
 	char buf[1024];
 	strcpy(buf, sp.hdr->target_name[bb.tid]);
-	bb.chrm = string(buf);
-	bb.build_fragments();
-	bb.bridge(cfg, sp);
-	bb.filter_multialigned_hits();
+
+	bundle bd(cfg, sp, std::move(bb));
+	bd.chrm = string(buf);
+	bd.gid = "gene." + tostring(sp.sample_id) + "." + tostring(index);
+	bd.build_fragments();
+	bd.bridge();
+	bd.filter_multialigned_hits();
 
 	// TODO, storing reads
 	// TODO, don't keep bridged reads
 
-	bundle2 bb2(cfg, bb);
-	bb2.sid = sp.sample_id;
-	bb2.gid = "gene." + tostring(sp.sample_id) + "." + tostring(index);
-	vcb.push_back(std::move(bb2));
+	vcb.push_back(std::move(bd));
 	return 0;
 }
 

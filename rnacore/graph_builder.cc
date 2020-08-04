@@ -17,7 +17,7 @@ See LICENSE for licensing.
 #include "util.h"
 #include "undirected_graph.h"
 
-graph_builder::graph_builder(bundle &b, const parameters &c)
+graph_builder::graph_builder(bundle_base &b, const parameters &c)
 	: bd(b), cfg(c)
 {}
 

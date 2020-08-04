@@ -11,7 +11,7 @@ See LICENSE for licensing.
 
 #include "parameters.h"
 #include "hit.h"
-#include "bundle.h"
+#include "bundle_base.h"
 #include "sample_profile.h"
 
 #include <fstream>
@@ -33,7 +33,7 @@ private:
 public:
 	int infer_library_type();
 	int infer_insertsize();
-	int process(bundle &bb, map<int32_t, int> &m);
+	int process(bundle_base &bb, map<int32_t, int> &m);
 };
 
 #endif

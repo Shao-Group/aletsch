@@ -4,38 +4,41 @@ Part of aletsch
 See LICENSE for licensing.
 */
 
-#include "bundle2.h"
+#include "bundle.h"
 #include "config.h"
 #include "essential.h"
+#include "graph_builder.h"
+#include "graph_cluster.h"
+#include "bridge_solver.h"
 
 #include <sstream>
 #include <algorithm>
 
-bundle2::bundle2(const parameters &c, bundle &&b, int id)
-	: cfg(c), bundle(b)
+bundle::bundle(const parameters &c, sample_profile &s, bundle_base &&bb)
+	: cfg(c), sp(s), bundle_base(bb)
 {
-	sid = id;
 	num_combined = 0;
 }
 
-bundle2::bundle2(const parameters &c)
-	: cfg(c)
+int bundle::set_gid(int batch, int instance, int subindex)
 {
-	sid = -1;
-	num_combined = 0;
+	char name[10240];
+	sprintf(name, "instance.%d.%d.%d", batch, instance, subindex);
+	gid = name;
+	return 0;
 }
 
-int bundle2::bridge(const sample_profile &sp)
+int bundle::bridge()
 {
 	while(true)
 	{
 		splice_graph gr;
-		graph_builder gb(bb, cfg);
+		graph_builder gb(*this, cfg);
 		gb.build(gr);
 		gr.build_vertex_index();
 
 		vector<pereads_cluster> vc;
-		graph_cluster gc(gr, bb, cfg.max_reads_partition_gap, false);
+		graph_cluster gc(gr, *this, cfg.max_reads_partition_gap, false);
 		gc.build_pereads_clusters(vc);
 
 		bridge_solver bs(gr, vc, cfg, sp.insertsize_low, sp.insertsize_high);
@@ -51,5 +54,11 @@ int bundle2::bridge(const sample_profile &sp)
 		//printf("total frags %lu, bridged frags = %d\n", bb.frgs.size(), cnt);
 		if(cnt <= 0) break;
 	}
+	return 0;
+}
+
+int bundle::combine(const bundle &bb)
+{
+	assert(chrm == bb.chrm);
 	return 0;
 }

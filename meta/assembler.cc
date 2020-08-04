@@ -27,28 +27,30 @@ assembler::assembler(const parameters &p)
 {
 }
 
-int assembler::assemble(vector<combined_graph*> gv, int batch, int instance, transcript_set &ts, vector<sample_profile> &samples)
+int assembler::assemble(vector<bundle*> gv, int batch, int instance, transcript_set &ts, vector<sample_profile> &samples)
 {
 	int subindex = 0;
 
 	if(gv.size() == 1)
 	{
-		combined_graph &gt = *(gv[0]);
+		bundle &gt = *(gv[0]);
 		gt.set_gid(batch, instance, subindex++);
 
-		if(cfg.boost_precision == true) gt.refine_junctions();
+		// TODO
+		//if(cfg.boost_precision == true) gt.refine_junctions();
 
 		assemble(gt, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		//ts.increase_count(1);
 
 		if(cfg.output_bridged_bam_dir != "" && gt.vc.size() >= 1)
 		{
-			sample_profile &sp = samples[gt.sid];
+			sample_profile &sp = gt.sp;
 			sp.bam_lock.lock();
 			sp.open_bridged_bam(cfg.output_bridged_bam_dir);
 			for(int k = 0; k < gt.vc.size(); k++)
 			{
-				write_unbridged_pereads_cluster(sp.bridged_bam, gt.vc[k]);
+				// TODO
+				//write_unbridged_pereads_cluster(sp.bridged_bam, gt.vc[k]);
 			}
 			sp.close_bridged_bam();
 			sp.bam_lock.unlock();
@@ -56,7 +58,7 @@ int assembler::assemble(vector<combined_graph*> gv, int batch, int instance, tra
 	}
 	else
 	{
-		combined_graph cx(cfg);
+		bundle cx(cfg);
 		resolve_cluster(gv, cx, samples);
 
 		for(int i = 0; i < gv.size(); i++)
@@ -66,14 +68,13 @@ int assembler::assemble(vector<combined_graph*> gv, int batch, int instance, tra
 		}
 
 		cx.set_gid(batch, instance, subindex++);
-		//assemble(cx, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_NUL);
 		assemble(cx, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	}
 
 	return 0;
 }
 
-int assembler::assemble(combined_graph &cb, transcript_set &ts, int mode)
+int assembler::assemble(bundle &cb, transcript_set &ts, int mode)
 {
 	vector<transcript> vt;
 	assemble(cb, vt);
@@ -85,7 +86,7 @@ int assembler::assemble(combined_graph &cb, transcript_set &ts, int mode)
 	return 0;
 }
 
-int assembler::assemble(combined_graph &cb, vector<transcript> &vt)
+int assembler::assemble(bundle &cb, vector<transcript> &vt)
 {
 	// rebuild splice graph
 	splice_graph gx;
@@ -143,7 +144,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt,
 	return 0;
 }
 
-int assembler::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, vector<sample_profile> &samples)
+int assembler::resolve_cluster(vector<bundle*> gv, bundle &cb)
 {
 	assert(gv.size() >= 2);
 
@@ -152,7 +153,8 @@ int assembler::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, v
 	cb.combine(gv);
 	cb.sid = -1;
 
-	if(cfg.boost_precision == true) cb.refine_junctions(gv, samples);
+	// TODO
+	//if(cfg.boost_precision == true) cb.refine_junctions(gv, samples);
 
 	// rebuild splice graph
 	splice_graph gx;
@@ -166,9 +168,8 @@ int assembler::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, v
 	int length_high = 0;
 	for(int k = 0; k < gv.size(); k++)
 	{
-		combined_graph &gt = *(gv[k]);
-		assert(gt.sid >= 0 && gt.sid < samples.size());
-		sample_profile &sp = samples[gt.sid];
+		bundle &gt = *(gv[k]);
+		sample_profile &sp = gt.sp;
 		if(sp.insertsize_low < length_low) length_low = sp.insertsize_low;
 		if(sp.insertsize_high > length_high) length_high = sp.insertsize_high;
 		index[k].first = vc.size();
@@ -184,7 +185,7 @@ int assembler::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, v
 	// resolve individual graphs
 	for(int i = 0; i < gv.size(); i++)
 	{
-		combined_graph g1(cfg);
+		bundle g1(cfg);
 		for(int k = index[i].first; k < index[i].second; k++)
 		{
 			if(br.opt[k].type < 0) continue;
@@ -198,8 +199,8 @@ int assembler::resolve_cluster(vector<combined_graph*> gv, combined_graph &cb, v
 	{
 		for(int i = 0; i < gv.size(); i++)
 		{
-			combined_graph &gt = *(gv[i]);
-			sample_profile &sp = samples[gt.sid];
+			bundle &gt = *(gv[i]);
+			sample_profile &sp = gt.sp;
 			sp.bam_lock.lock();
 			sp.open_bridged_bam(cfg.output_bridged_bam_dir);
 			for(int k = index[i].first; k < index[i].second; k++)

@@ -10,18 +10,18 @@ See LICENSE for licensing.
 #include "splice_graph.h"
 #include "pereads_cluster.h"
 #include "phase_set.h"
-#include "bundle.h"
+#include "bundle_base.h"
 
 using namespace std;
 
 class graph_cluster
 {
 public:
-	graph_cluster(splice_graph &gr, bundle &bd, int max_gap, bool b);
+	graph_cluster(splice_graph &gr, bundle_base &bd, int max_gap, bool b);
 
 public:
 	splice_graph &gr;				// given splice graph
-	bundle &bd;						// given bundle
+	bundle_base &bd;				// given bundle_base
 
 private:
 	vector<vector<int>> groups;

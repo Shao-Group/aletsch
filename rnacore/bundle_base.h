@@ -20,10 +20,10 @@ See LICENSE for licensing.
 
 using namespace std;
 
-class bundle
+class bundle_base
 {
 public:
-	bundle();
+	bundle_base();
 
 public:
 	string chrm;					// chromosome name

@@ -16,12 +16,12 @@ librnacore_a_SOURCES = splice_graph.h splice_graph.cc \
 					   region.h region.cc \
 					   junction.h junction.cc \
 					   essential.h essential.cc \
+					   chain_set.h chain_set.cc \
 					   pereads_cluster.h pereads_cluster.cc \
 					   phase_set.h phase_set.cc \
 					   transcript_set.h transcript_set.cc \
 					   filter.h filter.cc \
-					   chain_set.h chain_set.cc \
-					   bundle.h bundle.cc \
+					   bundle_base.h bundle_base.cc \
 					   disjoint_set.h disjoint_set.cc \
 					   graph_builder.h graph_builder.cc \
 					   graph_cluster.h graph_cluster.cc \

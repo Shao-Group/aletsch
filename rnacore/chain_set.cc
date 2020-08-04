@@ -8,7 +8,7 @@ See LICENSE for licensing.
 #include "constants.h"
 #include "chain_set.h"
 
-int chain_set::add(const vector<int32_t> &v, int h)
+int chain_set::add(const vector<int32_t> &v, int h, int xs)
 {
 	if(v.size() <= 0)
 	{
@@ -25,25 +25,27 @@ int chain_set::add(const vector<int32_t> &v, int h)
 	int32_t p = v[0];
 	if(pmap.find(p) == pmap.end())
 	{
-		vector<PVI> vv;
-		vv.push_back(PVI(v, 1));
+		AI3 a = {0, 0, 0};
+		a[xs] = 1;
+		vector<PVI3> vv;
+		vv.push_back(PVI3(v, a));
 		chains.push_back(vv);
 		int n = chains.size() - 1;
-		pmap.insert(make_pair(p, n));
-		if(h >= 0) hmap.insert(make_pair(h, PI(n, 0)));
+		pmap.insert(PI(p, n));
+		if(h >= 0) hmap.insert(make_pair(h, AI3({n, 0, xs})));
 	}
 	else
 	{
 		int k = pmap[p];
 		assert(k >= 0 && k < chains.size());
-		vector<PVI> &vv = chains[k];
+		vector<PVI3> &vv = chains[k];
 		bool found = false;
 		for(int i = 0; i < vv.size(); i++)
 		{
 			if(vv[i].first == v)
 			{
-				if(h >= 0) hmap.insert(make_pair(h, PI(k, i)));
-				vv[i].second++;
+				if(h >= 0) hmap.insert(make_pair(h, AI3({k, i, xs})));
+				vv[i].second[xs]++;
 				found = true;
 				break;
 			}
@@ -51,9 +53,11 @@ int chain_set::add(const vector<int32_t> &v, int h)
 
 		if(found == false)
 		{
-			vv.push_back(PVI(v, 1));
+			AI3 a = {0, 0, 0};
+			a[xs] = 1;
+			vv.push_back(PVI3(v, a));
 			int n = vv.size() - 1;
-			if(h >= 0) hmap.insert(make_pair(h, PI(k, n)));
+			if(h >= 0) hmap.insert(make_pair(h, AI3({k, n, xs})));
 		}
 	}
 	return 0;
@@ -62,25 +66,33 @@ int chain_set::add(const vector<int32_t> &v, int h)
 int chain_set::remove(int h)
 {
 	if(hmap.find(h) == hmap.end()) return 0;
-	PI p = hmap[h];
-	assert(p.first >= 0 && p.first < chains.size());
-	assert(p.second >= 0 && p.second < chains[p.first].size());
-	chains[p.first][p.second].second--;
-	if(chains[p.first][p.second].second <= 0) chains[p.first][p.second].second = 0;
+	AI3 p = hmap[h];
+	assert(p[0] >= 0 && p[0] < chains.size());
+	assert(p[1] >= 0 && p[1] < chains[p[0]].size());
+	assert(p[2] >= 0 && p[2] <= 2);
+	chains[p[0]][p[1]].second[p[2]]--;
+	if(chains[p[0]][p[1]].second[p[2]] <= 0) chains[p[0]][p[1]].second[p[2]] = 0;
 	hmap.erase(h);
 	return 0;
 }
 
-PVI chain_set::get(int h) const
+vector<int32_t> chain_set::get_chain(int h) const
 {
-	PVI pvi;
-	pvi.second = -1;
+	vector<int32_t> v;
+	if(h < 0) return v;
+	if(hmap.find(h) == hmap.end()) return v;
+	const auto &p = hmap.at(h);
+	return chains[p[0]][p[1]].first;
+}
+
+PVI3 chain_set::get(int h) const
+{
+	PVI3 pvi;
+	pvi.second = {-1, -1, -1};
 	if(h < 0) return pvi;
 	if(hmap.find(h) == hmap.end()) return pvi;
 	const auto &p = hmap.at(h);
-	assert(p.first >= 0 && p.first < chains.size());
-	assert(p.second >= 0 && p.second < chains[p.first].size());
-	return chains[p.first][p.second];
+	return chains[p[0]][p[1]];
 }
 
 int chain_set::print()
@@ -109,15 +121,15 @@ int chain_set::clear()
 	return 0;
 }
 
-vector<int32_t> chain_set::get_splices()
+vector<int32_t> chain_set::get_splices() const
 {
 	set<int32_t> s;
 	for(int i = 0; i < chains.size(); i++)
 	{
 		for(int j = 0; j < chains[i].size(); j++)
 		{
-			PVI &p = chains[i][j];
-			if(p.second <= 0) continue;
+			const PVI3 &p = chains[i][j];
+			if(p.second[0] + p.second[1] + p.second[2] <= 0) continue;
 			for(int k = 0; k < p.first.size(); k++)
 			{
 				s.insert(p.first[k]);

@@ -12,28 +12,30 @@ See LICENSE for licensing.
 #include <iostream>
 #include <string>
 
-#include "bundle.h"
 #include "parameters.h"
+#include "bundle_base.h"
 #include "sample_profile.h"
 
 using namespace std;
 
-class bundle2 : public bundle
+class bundle : public bundle_base
 {
 public:
-	bundle2(const parameters &cfg);
-	bundle2(const parameters &cfg, bundle &&bd, int sid);
-	bundle2(const bundle2 &cb) = default;
-	bundle2(bundle2 &&cb) = default;
+	//bundle(const parameters &cfg, const sample_profile &sp);
+	bundle(const parameters &cfg, sample_profile &sp, bundle_base &&bb);
+	bundle(const bundle &cb) = default;
+	bundle(bundle &&cb) = default;
 
 public:
 	const parameters &cfg;
-	int sid;
+	const sample_profile &sp;
 	string gid;
 	int num_combined;
 
 public:
-	int bridge(const sample_profile &sp);
+	int set_gid(int batch, int instance, int subindex);
+	int combine(const bundle &bb);
+	int bridge();
 	int print(int index);
 	int clear();
 };

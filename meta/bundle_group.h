@@ -9,7 +9,7 @@ See LICENSE for licensing.
 
 #include "parameters.h"
 #include "disjoint_set.h"
-#include "bundle2.h"
+#include "bundle.h"
 #include "constants.h"
 #include <mutex>
 
@@ -22,7 +22,7 @@ public:
 
 public:
 	const parameters &cfg;
-	vector<bundle2> gset;		// given graphs
+	vector<bundle> gset;				// given graphs
 	vector<vector<int32_t>> splices;	// splices for all bundles
 	vector<vector<int>> gvv;			// merged graphs
 	string chrm;
@@ -36,7 +36,7 @@ private:
 	int min_group_size;			// minimum #graphs to form a group
 
 public:
-	//int add_graph(const bundle2 &gr);
+	//int add_graph(const bundle &gr);
 	int resolve();
 	int print();
 	int stats(int k);
