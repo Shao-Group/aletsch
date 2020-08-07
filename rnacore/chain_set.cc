@@ -8,7 +8,47 @@ See LICENSE for licensing.
 #include "constants.h"
 #include "chain_set.h"
 
-int chain_set::add(const vector<int32_t> &v, int h, int xs)
+int chain_set::add(const vector<int32_t> &v, const AI3 &a)
+{
+	if(v.size() <= 0)
+	{
+		printf("error: adding empty chain to chain_set\n");
+		return 0;
+	}
+
+	int32_t p = v[0];
+	if(pmap.find(p) == pmap.end())
+	{
+		vector<PVI3> vv;
+		vv.push_back(PVI3(v, a));
+		chains.push_back(vv);
+		int n = chains.size() - 1;
+		pmap.insert(PI(p, n));
+	}
+	else
+	{
+		int k = pmap[p];
+		assert(k >= 0 && k < chains.size());
+		vector<PVI3> &vv = chains[k];
+		bool found = false;
+		for(int i = 0; i < vv.size(); i++)
+		{
+			if(vv[i].first == v)
+			{
+				vv[i].second[0] += a[0];
+				vv[i].second[1] += a[1];
+				vv[i].second[2] += a[2];
+				found = true;
+				break;
+			}
+		}
+
+		if(found == false) vv.push_back(PVI3(v, a));
+	}
+	return 0;
+}
+
+int chain_set::add(const vector<int32_t> &v, int h, char c)
 {
 	if(v.size() <= 0)
 	{
@@ -21,6 +61,10 @@ int chain_set::add(const vector<int32_t> &v, int h, int xs)
 		printf("error: id %d has already been added to chain_set\n", h);
 		return 0;
 	}
+
+	int xs = 0;
+	if(c == '+') xs = 1;
+	if(c == '-') xs = 2;
 
 	int32_t p = v[0];
 	if(pmap.find(p) == pmap.end())

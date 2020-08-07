@@ -44,102 +44,74 @@ int graph_builder::clear()
 
 int graph_builder::build_junctions()
 {
-	junctions.clear();
-	map<PI32, vector<int> > m;
-	for(int i = 0; i < bd.hits.size(); i++)
-	{
-		//vector<int32_t> v = bd.hits[i].spos;
-		if(bd.hits[i].hid < 0) continue;
-		vector<int32_t> v = bd.hcst.get(i).first;
-		if(v.size() == 0) continue;
+	chain_set jcst;
 
-		assert(v.size() % 2 == 0);
-		for(int k = 0; k < v.size() / 2; k++)
+	for(int i = 0; i < bd.hcst.chains.size(); i++)
+	{
+		for(int j = 0; j < bd.hcst.chains[i].size(); j++)
 		{
-			PI p(v[k * 2 + 0], v[k * 2 + 1]);
-			if(m.find(p) == m.end())
+			vector<int32_t> &v = bd.hcst.chains[i][j].first;
+			AI3 &a = bd.hcst.chains[i][j].second;
+
+			if(v.size() <= 0) continue;
+			if(v.size() % 2 != 0) continue;
+
+			for(int k = 0; k < v.size() / 2; k++)
 			{
-				vector<int> hv;
-				hv.push_back(i);
-				m.insert(pair< PI32, vector<int> >(p, hv));
-			}
-			else
-			{
-				m[p].push_back(i);
+				vector<int32_t> z;
+				z.push_back(v[k * 2 + 0]);
+				z.push_back(v[k * 2 + 1]);
+				jcst.add(z, a);
 			}
 		}
 	}
 
-	for(int i = 0; i < bd.frgs.size(); i++)
+	for(int i = 0; i < bd.fcst.chains.size(); i++)
 	{
-		if(bd.frgs[i][2] <= 1) continue;
-
-		int h1 = bd.frgs[i][0];
-		int h2 = bd.frgs[i][1];
-		assert(bd.hits[h1].hid >= 0);
-		assert(bd.hits[h2].hid >= 0);
-
-		if(bd.hits[h1].xs != bd.hits[h2].xs) continue;
-
-		vector<int32_t> v = bd.fcst.get(i).first;
-		if(v.size() == 0) continue;
-
-		assert(v.size() % 2 == 0);
-		for(int k = 0; k < v.size() / 2; k++)
+		for(int j = 0; j < bd.fcst.chains[i].size(); j++)
 		{
-			PI p(v[k * 2 + 0], v[k * 2 + 1]);
-			if(m.find(p) == m.end())
+			vector<int32_t> &v = bd.fcst.chains[i][j].first;
+			AI3 &a = bd.fcst.chains[i][j].second;
+
+			if(v.size() <= 0) continue;
+			if(v.size() % 2 != 0) continue;
+
+			for(int k = 0; k < v.size() / 2; k++)
 			{
-				vector<int> hv;
-				hv.push_back(h1);
-				m.insert(pair< PI32, vector<int> >(p, hv));
-			}
-			else
-			{
-				m[p].push_back(h1);
+				vector<int32_t> z;
+				z.push_back(v[k * 2 + 0]);
+				z.push_back(v[k * 2 + 1]);
+				jcst.add(z, a);
 			}
 		}
 	}
 
-
-	map<PI32, vector<int> >::iterator it;
-	for(it = m.begin(); it != m.end(); it++)
+	for(int i = 0; i < jcst.chains.size(); i++)
 	{
-		vector<int> &v = it->second;
-
-		int32_t p1 = it->first.first;
-		int32_t p2 = it->first.second;
-
-		junction jc(p1, p2, v.size());
-
-		if(jc.count < cfg.min_junction_support) continue;
-
-		for(int k = 0; k < v.size(); k++)
+		for(int j = 0; j < jcst.chains[i].size(); j++)
 		{
-			const hit &h = bd.hits[v[k]];
-			jc.nm += h.nm;
-			if(h.xs == '.') jc.xs0++;
-			if(h.xs == '+') jc.xs1++;
-			if(h.xs == '-') jc.xs2++;
+			vector<int32_t> &v = jcst.chains[i][j].first;
+			AI3 &a = jcst.chains[i][j].second;
+
+			if(v.size() != 2) continue;
+			if(v[0] >= v[1]) continue;
+
+			int count = a[0] + a[1] + a[2];
+			if(count < cfg.min_junction_support) continue;
+
+			junction jc(v[0], v[1], count);
+			jc.xs0 = a[0];
+			jc.xs1 = a[1];
+			jc.xs2 = a[2];
+
+			if(jc.xs1 > jc.xs2) jc.strand = '+';
+			else if(jc.xs1 < jc.xs2) jc.strand = '-';
+			else jc.strand = '.';
+
+			junctions.push_back(jc);
 		}
-
-		//printf("junction: %s:%d-%d (%d, %d, %d) %d\n", chrm.c_str(), p1, p2, s0, s1, s2, s1 < s2 ? s1 : s2);
-
-		if(jc.xs1 > jc.xs2) jc.strand = '+';
-		else if(jc.xs1 < jc.xs2) jc.strand = '-';
-		else jc.strand = '.';
-		junctions.push_back(jc);
-
-		/*
-		uint32_t max_qual = 0;
-		for(int k = 0; k < v.size(); k++)
-		{
-			hit &h = bd.hits[v[k]];
-			if(h.qual > max_qual) max_qual = h.qual;
-		}
-		assert(max_qual >= min_max_boundary_quality);
-		*/
 	}
+
 	return 0;
 }
 

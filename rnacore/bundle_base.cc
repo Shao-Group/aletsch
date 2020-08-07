@@ -28,7 +28,7 @@ int bundle_base::add_hit_intervals(const hit &ht, bam1_t *b)
 	add_hit(ht);
 	add_intervals(b);
 	vector<int32_t> v = ht.extract_splices(b);
-	if(v.size() >= 1) hcst.add(v, hits.size() - 1);
+	if(v.size() >= 1) hcst.add(v, hits.size() - 1, ht.xs);
 	return 0;
 }
 
@@ -340,7 +340,8 @@ int bundle_base::update_bridges(const vector<int> &frlist, const vector<int32_t>
 		{
 			assert(chain.size() >= 2);
 			frgs[k][2] = 2;
-			fcst.add(chain, k);
+			if(h1.xs == h2.xs) fcst.add(chain, k, h1.xs);
+			else hcst.add(chain, k, '.');
 		}
 
 		for(int k = 0; k < v1.size() / 2; k++)
@@ -450,7 +451,7 @@ int bundle_base::filter_secondary_hits()
 		if(redundant[i] == true) continue;
 		v.push_back(hits[i]);
 		vector<int32_t> chain = hcst.get(i).first;
-		if(chain.size() >= 1) s.add(chain, v.size() - 1);
+		if(chain.size() >= 1) s.add(chain, v.size() - 1, hits[i].xs);
 	}
 	hits = v;
 	hcst = s;
