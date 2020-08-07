@@ -59,6 +59,15 @@ int bundle::bridge()
 
 int bundle::combine(const bundle &bb)
 {
+	num_combined += bb.num_combined;
+	assert(strand == bb.strand);
 	assert(chrm == bb.chrm);
+	assert(tid == bb.tid);
+	if(lpos > bb.lpos) lpos = bb.lpos;
+	if(rpos < bb.rpos) rpos = bb.rpos;
+	hcst.add(bb.hcst);
+	fcst.add(bb.fcst);
+	for(SIMI z = bb.mmap.begin(); z != bb.mmap.end(); z++) mmap += *z;
+	for(SIMI z = bb.imap.begin(); z != bb.imap.end(); z++) imap += *z;
 	return 0;
 }

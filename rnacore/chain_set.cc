@@ -8,6 +8,19 @@ See LICENSE for licensing.
 #include "constants.h"
 #include "chain_set.h"
 
+int chain_set::add(const chain_set &cst)
+{
+	for(int i = 0; i < cst.chains.size(); i++)
+	{
+		for(int j = 0; j < cst.chains[i].size(); j++)  
+		{
+			const PVI3 &p = cst.chains[i][j];
+			add(p.first, p.second);
+		}
+	}
+	return 0;
+}
+
 int chain_set::add(const vector<int32_t> &v, const AI3 &a)
 {
 	if(v.size() <= 0)
