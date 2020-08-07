@@ -28,11 +28,9 @@ public:
 	int remove(int h);									// remove handle and decrease count
 	int clear();										// clear everything
 	int print();										// print
+	PVI3 get(int h) const;								// get chain and return count
 	vector<int32_t> get_chain(int h) const;				// get chain
 	vector<int32_t> get_splices() const;				// get the set of all splices
-	PVI3 get(int h) const;								// get chain and return count
-
-private:
 };
 
 #endif
