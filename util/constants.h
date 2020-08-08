@@ -14,6 +14,7 @@ See LICENSE for licensing.
 #include <map>
 #include <set>
 #include <sstream>
+#include <vector>
 
 using namespace std;
 
