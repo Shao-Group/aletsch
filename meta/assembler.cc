@@ -6,6 +6,8 @@ See LICENSE for licensing.
 
 #include "assembler.h"
 #include "scallop.h"
+#include "graph_builder.h"
+#include "graph_cluster.h"
 #include "graph_reviser.h"
 #include "bridge_solver.h"
 #include "essential.h"
@@ -27,7 +29,7 @@ assembler::assembler(const parameters &p)
 {
 }
 
-int assembler::assemble(vector<bundle*> gv, int batch, int instance, transcript_set &ts, vector<sample_profile> &samples)
+int assembler::assemble(vector<bundle*> gv, int batch, int instance, transcript_set &ts)
 {
 	int subindex = 0;
 
@@ -41,34 +43,20 @@ int assembler::assemble(vector<bundle*> gv, int batch, int instance, transcript_
 
 		assemble(gt, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		//ts.increase_count(1);
-
-		if(cfg.output_bridged_bam_dir != "" && gt.vc.size() >= 1)
-		{
-			sample_profile &sp = gt.sp;
-			sp.bam_lock.lock();
-			sp.open_bridged_bam(cfg.output_bridged_bam_dir);
-			for(int k = 0; k < gt.vc.size(); k++)
-			{
-				// TODO
-				//write_unbridged_pereads_cluster(sp.bridged_bam, gt.vc[k]);
-			}
-			sp.close_bridged_bam();
-			sp.bam_lock.unlock();
-		}
+		// TODO, write reads
 	}
-	else
+	else if(gv.size() >= 2)
 	{
-		bundle cx(cfg);
-		resolve_cluster(gv, cx, samples);
+		bundle cx(cfg, gv[0]->sp);
+		resolve_cluster(gv, cx);
+		cx.set_gid(batch, instance, subindex++);
+		assemble(cx, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 
 		for(int i = 0; i < gv.size(); i++)
 		{
 			gv[i]->set_gid(batch, instance, subindex++);
 			assemble(*gv[i], ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		}
-
-		cx.set_gid(batch, instance, subindex++);
-		assemble(cx, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	}
 
 	return 0;
@@ -76,23 +64,20 @@ int assembler::assemble(vector<bundle*> gv, int batch, int instance, transcript_
 
 int assembler::assemble(bundle &cb, transcript_set &ts, int mode)
 {
+	splice_graph gr;
+	graph_builder gb(cb, cfg);
+	gb.build(gr);
+	gr.gid = cb.gid;
+
 	vector<transcript> vt;
-	assemble(cb, vt);
+
+	// TODO build phase-set
+	//assemble(gr, cb.ps, vt, cb.num_combined);
 
 	for(int k = 0; k < vt.size(); k++)
 	{
-		ts.add(vt[k], 1, cb.sid, mode);
+		ts.add(vt[k], 1, cb.sp.sample_id, mode);
 	}
-	return 0;
-}
-
-int assembler::assemble(bundle &cb, vector<transcript> &vt)
-{
-	// rebuild splice graph
-	splice_graph gx;
-	cb.build_splice_graph(gx, cfg);
-	gx.gid = cb.gid;
-	assemble(gx, cb.ps, vt, cb.num_combined);
 	return 0;
 }
 
@@ -134,12 +119,14 @@ int assembler::assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt,
 	printf("assemble %s: %d transcripts, combined = %d, graph with %lu vertices and %lu edges, phases = %lu\n", gx.gid.c_str(), z, combined, gx.num_vertices(), gx.num_edges(), px.pmap.size());
 	gx.print();
 
+	/*
 	for(int k = 0; k < sx.trsts.size(); k++)
 	{
 		transcript &t = sx.trsts[k];
 		t.write(cout);
 	}
 	printf("\n");
+	*/
 
 	return 0;
 }
@@ -148,81 +135,36 @@ int assembler::resolve_cluster(vector<bundle*> gv, bundle &cb)
 {
 	assert(gv.size() >= 2);
 
-	// construct combined graph
+	// construct combined bundle
 	cb.copy_meta_information(*(gv[0]));
-	cb.combine(gv);
-	cb.sid = -1;
+	for(int k = 0; k < gv.size(); k++) cb.combine(*(gv[k]));
 
-	// TODO
-	//if(cfg.boost_precision == true) cb.refine_junctions(gv, samples);
+	// construct combined graph
+	splice_graph gr;
+	graph_builder gb(cb, cfg);
+	gb.build(gr);
+	gr.build_vertex_index();
 
-	// rebuild splice graph
-	splice_graph gx;
-	cb.build_splice_graph(gx, cfg);
-	gx.build_vertex_index();
-
-	// collect and bridge all unbridged pairs
-	vector<pereads_cluster> vc;
-	vector<PI> index(gv.size());
-	int length_low = 999;
-	int length_high = 0;
+	// bridge each individual bundle
 	for(int k = 0; k < gv.size(); k++)
 	{
-		bundle &gt = *(gv[k]);
-		sample_profile &sp = gt.sp;
-		if(sp.insertsize_low < length_low) length_low = sp.insertsize_low;
-		if(sp.insertsize_high > length_high) length_high = sp.insertsize_high;
-		index[k].first = vc.size();
-		vc.insert(vc.end(), gt.vc.begin(), gt.vc.end());
-		index[k].second = vc.size();
-	}
+		bundle &bd = *(gv[k]);
+		vector<pereads_cluster> vc;
+		graph_cluster gc(gr, bd, cfg.max_reads_partition_gap, false);
+		gc.build_pereads_clusters(vc);
 
-	bridge_solver br(gx, vc, cfg, length_low, length_high);
-	br.build_phase_set(cb.ps);
+		bridge_solver bs(gr, vc, cfg, bd.sp.insertsize_low, bd.sp.insertsize_high);
 
-	//printf("cluster-bridge, combined = %lu, ", gv.size()); br.print();
-
-	// resolve individual graphs
-	for(int i = 0; i < gv.size(); i++)
-	{
-		bundle g1(cfg);
-		for(int k = index[i].first; k < index[i].second; k++)
+		int cnt = 0;
+		assert(vc.size() == bs.opt.size());
+		for(int k = 0; k < vc.size(); k++)
 		{
-			if(br.opt[k].type < 0) continue;
-			g1.append(vc[k], br.opt[k]);
+			if(bs.opt[k].type <= 0) continue;
+			cnt += bd.update_bridges(vc[k].frlist, bs.opt[k].chain);
 		}
-		gv[i]->combine(&g1);
+		printf("further bridge frags %d / %lu\n", cnt, bd.frgs.size());
 	}
 
-	// write bridged and unbridged reads
-	if(cfg.output_bridged_bam_dir != "")
-	{
-		for(int i = 0; i < gv.size(); i++)
-		{
-			bundle &gt = *(gv[i]);
-			sample_profile &sp = gt.sp;
-			sp.bam_lock.lock();
-			sp.open_bridged_bam(cfg.output_bridged_bam_dir);
-			for(int k = index[i].first; k < index[i].second; k++)
-			{
-				//vc[k].print(k);
-				//br.opt[k].print(k);
-				if(br.opt[k].type < 0) 
-				{
-					write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
-				}
-				else
-				{
-					write_bridged_pereads_cluster(sp.bridged_bam, vc[k], br.opt[k].whole);
-				}
-			}
-			sp.close_bridged_bam();
-			sp.bam_lock.unlock();
-		}
-	}
-
-	// clear to release memory
-	for(int i = 0; i < gv.size(); i++) gv[i]->vc.clear();
-
+	// TODO write reads
 	return 0;
 }

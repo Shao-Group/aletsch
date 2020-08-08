@@ -14,7 +14,13 @@ See LICENSE for licensing.
 #include <sstream>
 #include <algorithm>
 
-bundle::bundle(const parameters &c, sample_profile &s, bundle_base &&bb)
+bundle::bundle(const parameters &c, const sample_profile &s)
+	: cfg(c), sp(s)
+{
+	num_combined = 0;
+}
+
+bundle::bundle(const parameters &c, const sample_profile &s, bundle_base &&bb)
 	: cfg(c), sp(s), bundle_base(bb)
 {
 	num_combined = 0;
@@ -25,6 +31,16 @@ int bundle::set_gid(int batch, int instance, int subindex)
 	char name[10240];
 	sprintf(name, "instance.%d.%d.%d", batch, instance, subindex);
 	gid = name;
+	return 0;
+}
+
+int bundle::copy_meta_information(const bundle &bb)
+{
+	chrm = bb.chrm;
+	strand = bb.strand;
+	tid = bb.tid;
+	lpos = bb.lpos;
+	rpos = bb.rpos;
 	return 0;
 }
 

@@ -23,10 +23,9 @@ public:
 
 public:
 	int assemble(vector<bundle*> gv, int batch, int instance, transcript_set &ts);
-	int resolve_cluster(vector<bundle*> gv, bundle &cb);
 	int assemble(bundle &cb, transcript_set &ts, int mode);
-	int assemble(bundle &cb, vector<transcript> &vt);
 	int assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt, int combined = 1);
+	int resolve_cluster(vector<bundle*> gv, bundle &cb);
 };
 
 #endif

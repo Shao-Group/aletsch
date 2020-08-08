@@ -21,19 +21,20 @@ using namespace std;
 class bundle : public bundle_base
 {
 public:
-	//bundle(const parameters &cfg, const sample_profile &sp);
-	bundle(const parameters &cfg, sample_profile &sp, bundle_base &&bb);
+	bundle(const parameters &cfg, const sample_profile &sp);
+	bundle(const parameters &cfg, const sample_profile &sp, bundle_base &&bb);
 	bundle(const bundle &cb) = default;
 	bundle(bundle &&cb) = default;
 
 public:
 	const parameters &cfg;
 	const sample_profile &sp;
-	string gid;
 	int num_combined;
+	string gid;
 
 public:
 	int set_gid(int batch, int instance, int subindex);
+	int copy_meta_information(const bundle &bb);
 	int combine(const bundle &bb);
 	int bridge();
 	int print(int index);
