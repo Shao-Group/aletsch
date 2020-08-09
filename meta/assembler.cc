@@ -153,6 +153,8 @@ int assembler::resolve_cluster(vector<bundle*> gv, bundle &cb)
 		graph_cluster gc(gr, bd, cfg.max_reads_partition_gap, false);
 		gc.build_pereads_clusters(vc);
 
+		if(vc.size() <= 0) continue;
+
 		bridge_solver bs(gr, vc, cfg, bd.sp.insertsize_low, bd.sp.insertsize_high);
 
 		int cnt = 0;
@@ -162,7 +164,7 @@ int assembler::resolve_cluster(vector<bundle*> gv, bundle &cb)
 			if(bs.opt[k].type <= 0) continue;
 			cnt += bd.update_bridges(vc[k].frlist, bs.opt[k].chain);
 		}
-		printf("further bridge frags %d / %lu\n", cnt, bd.frgs.size());
+		printf("further bridge %d / %lu fragments, vc = %lu\n", cnt, bd.frgs.size(), vc.size());
 	}
 
 	// TODO write reads
