@@ -36,22 +36,19 @@ int assembler::assemble(vector<bundle*> gv, int batch, int instance, transcript_
 	if(gv.size() == 1)
 	{
 		bundle &gt = *(gv[0]);
-		gt.set_gid(batch, instance, subindex++);
 
 		// TODO
 		//if(cfg.boost_precision == true) gt.refine_junctions();
-
+		gt.set_gid(batch, instance, subindex++);
 		assemble(gt, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		//ts.increase_count(1);
 		// TODO, write reads
 	}
 	else if(gv.size() >= 2)
 	{
-		bundle cx(cfg, gv[0]->sp);
-		resolve_cluster(gv, cx);
-		cx.set_gid(batch, instance, subindex++);
-		assemble(cx, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-
+		bridge(gv);
+		//cx.set_gid(batch, instance, subindex++);
+		//assemble(cx, ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		for(int i = 0; i < gv.size(); i++)
 		{
 			gv[i]->set_gid(batch, instance, subindex++);
@@ -68,11 +65,13 @@ int assembler::assemble(bundle &cb, transcript_set &ts, int mode)
 	graph_builder gb(cb, cfg);
 	gb.build(gr);
 	gr.gid = cb.gid;
+	gr.build_vertex_index();
+
+	phase_set ps;
+	cb.build_phase_set(ps, gr);
 
 	vector<transcript> vt;
-
-	// TODO build phase-set
-	//assemble(gr, cb.ps, vt, cb.num_combined);
+	assemble(gr, ps, vt, cb.num_combined);
 
 	for(int k = 0; k < vt.size(); k++)
 	{
@@ -83,13 +82,14 @@ int assembler::assemble(bundle &cb, transcript_set &ts, int mode)
 
 int assembler::assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt, int combined)
 {
-	gx.build_vertex_index();
 	gx.extend_strands();
 
+	/*
 	map<int32_t, int32_t> smap, tmap;
 	group_start_boundaries(gx, smap, cfg.max_group_boundary_distance);
 	group_end_boundaries(gx, tmap, cfg.max_group_boundary_distance);
 	px.project_boundaries(smap, tmap);
+	*/
 
 	refine_splice_graph(gx);
 	hyper_set hx(gx, px);
@@ -117,7 +117,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt,
 	}
 
 	printf("assemble %s: %d transcripts, combined = %d, graph with %lu vertices and %lu edges, phases = %lu\n", gx.gid.c_str(), z, combined, gx.num_vertices(), gx.num_edges(), px.pmap.size());
-	gx.print();
+	//gx.print();
 
 	/*
 	for(int k = 0; k < sx.trsts.size(); k++)
@@ -131,11 +131,12 @@ int assembler::assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt,
 	return 0;
 }
 
-int assembler::resolve_cluster(vector<bundle*> gv, bundle &cb)
+int assembler::bridge(vector<bundle*> gv)
 {
 	assert(gv.size() >= 2);
 
 	// construct combined bundle
+	bundle cb(cfg, gv[0]->sp);
 	cb.copy_meta_information(*(gv[0]));
 	for(int k = 0; k < gv.size(); k++) cb.combine(*(gv[k]));
 
