@@ -162,9 +162,12 @@ int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int
 	px.project_boundaries(smap, tmap);
 	*/
 
+	identify_boundaries(gx, cfg);
 	refine_splice_graph(gx);
 	hyper_set hx(gx, px);
 	hx.filter_nodes(gx);
+
+	//gx.print();
 
 	/*
 	gx.print();
