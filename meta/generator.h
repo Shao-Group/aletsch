@@ -42,10 +42,8 @@ public:
 private:
 	int generate(bundle_base &bb, int index);
 	int partition(splice_graph &gr, phase_set &hs, vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &hsv, vector< vector<pereads_cluster> > &ubv);
-	int process_large(vector<pereads_cluster> &vc);
 	bool regional(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc);
 	bool assemble_single(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc);
-	bool assemble_large(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc);
 };
 
 #endif

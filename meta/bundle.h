@@ -33,7 +33,7 @@ public:
 	string gid;
 
 public:
-	int set_gid(int batch, int instance, int subindex);
+	int set_gid(int instance, int subindex);
 	int copy_meta_information(const bundle &bb);
 	int combine(const bundle &bb);
 	int bridge();

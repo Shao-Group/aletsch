@@ -22,10 +22,12 @@ public:
 	const parameters &cfg;
 
 public:
-	int assemble(vector<bundle*> gv, int batch, int instance, transcript_set &ts);
-	int assemble(bundle &cb, transcript_set &ts, int mode);
-	int assemble(splice_graph &gx, phase_set &px, vector<transcript> &vt, int combined = 1);
+	int resolve(vector<bundle*> gv, transcript_set &ts, int instance);
+	int assemble(bundle &cb, transcript_set &ts, int instance);
+	int assemble(vector<bundle*> gv, transcript_set &ts, int instance);
+	int assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int sid);
 	int bridge(vector<bundle*> gv);
+	int transform(bundle &cb, splice_graph &gr);
 };
 
 #endif

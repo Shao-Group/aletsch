@@ -442,7 +442,7 @@ int incubator::assemble(vector<bundle*> gv, int instance, mutex &mylock)
 	//for(int k = 0; k < gv.size(); k++) gv[k]->print(k);
 
 	assembler asmb(params[DEFAULT]);
-	asmb.assemble(gv, 0, instance, ts);
+	asmb.resolve(gv, ts, instance);
 
 	save_transcript_set(ts, mylock);
 	for(int i = 0; i > gv.size(); i++) gv[i]->clear();

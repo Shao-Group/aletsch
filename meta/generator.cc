@@ -176,54 +176,6 @@ bool generator::assemble_single(splice_graph &gr, phase_set &ps, vector<pereads_
 	return true;
 }
 
-int generator::process_large(vector<pereads_cluster> &vc)
-{
-	if(vc.size() <= 5000) return 0;
-	if(cfg.output_bridged_bam_dir != "" && vc.size() >= 1)
-	{
-		sp.open_bridged_bam(cfg.output_bridged_bam_dir);
-		for(int k = 0; k < vc.size(); k++)
-		{
-			write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
-			vc[k].clear();
-		}
-		sp.close_bridged_bam();
-	}
-	vc.clear();
-	return 0;
-}
-
-bool generator::assemble_large(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc)
-{
-	bool large = false;
-	if(gr.num_vertices() >= 500) large = true;
-	if(gr.num_edges() >= 1000) large = true;
-	if(ps.pmap.size() >= 5000) large = true;
-	if(vc.size() >= 5000) large = true;
-
-	if(large == false) return false;
-
-	vector<transcript> vt;
-	assembler asmb(cfg);
-	asmb.assemble(gr, ps, vt, 1);
-	for(int k = 0; k < vt.size(); k++) ts.add(vt[k], 2, sp.sample_id, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-
-	if(cfg.output_bridged_bam_dir != "" && vc.size() >= 1)
-	{
-		sp.open_bridged_bam(cfg.output_bridged_bam_dir);
-		for(int k = 0; k < vc.size(); k++)
-		{
-			write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
-			vc[k].clear();
-		}
-		sp.close_bridged_bam();
-	}
-	vc.clear();
-	ps.pmap.clear();
-
-	return true;
-}
-
 int generator::partition(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &psv, vector< vector<pereads_cluster> > &ubv)
 {
 	int n = gr.num_vertices();

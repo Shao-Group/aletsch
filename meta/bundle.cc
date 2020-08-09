@@ -26,10 +26,10 @@ bundle::bundle(const parameters &c, const sample_profile &s, bundle_base &&bb)
 	num_combined = 0;
 }
 
-int bundle::set_gid(int batch, int instance, int subindex)
+int bundle::set_gid(int instance, int subindex)
 {
 	char name[10240];
-	sprintf(name, "instance.%d.%d.%d", batch, instance, subindex);
+	sprintf(name, "instance.%d.%d", instance, subindex);
 	gid = name;
 	return 0;
 }
