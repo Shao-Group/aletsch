@@ -341,7 +341,7 @@ int bundle_base::update_bridges(const vector<int> &frlist, const vector<int32_t>
 			assert(chain.size() >= 2);
 			frgs[k][2] = 2;
 			if(h1.xs == h2.xs) fcst.add(chain, k, h1.xs);
-			else hcst.add(chain, k, '.');
+			else fcst.add(chain, k, '.');
 		}
 
 		for(int k = 0; k < v1.size() / 2; k++)

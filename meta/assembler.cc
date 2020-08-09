@@ -157,14 +157,22 @@ int assembler::resolve_cluster(vector<bundle*> gv, bundle &cb)
 
 		bridge_solver bs(gr, vc, cfg, bd.sp.insertsize_low, bd.sp.insertsize_high);
 
-		int cnt = 0;
-		assert(vc.size() == bs.opt.size());
-		for(int k = 0; k < vc.size(); k++)
+		int cnt1 = 0;
+		int cnt2 = 0;
+		int unbridged = 0;
+		for(int j = 0; j < bd.frgs.size(); j++)
 		{
-			if(bs.opt[k].type <= 0) continue;
-			cnt += bd.update_bridges(vc[k].frlist, bs.opt[k].chain);
+			if(bd.frgs[j][2] <= 0) unbridged++;
 		}
-		printf("further bridge %d / %lu fragments, vc = %lu\n", cnt, bd.frgs.size(), vc.size());
+
+		assert(vc.size() == bs.opt.size());
+		for(int j = 0; j < vc.size(); j++)
+		{
+			if(bs.opt[j].type <= 0) continue;
+			cnt1 += 1;
+			cnt2 += bd.update_bridges(vc[j].frlist, bs.opt[j].chain);
+		}
+		printf("further bridge %d / %lu clusters, %d / %d fragments\n", cnt1, vc.size(), cnt2, unbridged);
 	}
 
 	// TODO write reads
