@@ -26,8 +26,8 @@ public:
 	int assemble(bundle &cb, transcript_set &ts, int instance);
 	int assemble(vector<bundle*> gv, transcript_set &ts, int instance);
 	int assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int sid);
+	int transform(bundle &cb, splice_graph &gr, bool detect);
 	int bridge(vector<bundle*> gv);
-	int transform(bundle &cb, splice_graph &gr);
 };
 
 #endif

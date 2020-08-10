@@ -10,6 +10,7 @@ See LICENSE for licensing.
 
 #include "parameters.h"
 #include "splice_graph.h"
+#include "bundle_base.h"
 
 using namespace std;
 
@@ -50,5 +51,7 @@ int add_distant_in_vertices(splice_graph &gr, int x, set<int> &s);
 int add_distant_out_vertices(splice_graph &gr, int x, set<int> &s);
 int determine_start_boundary(splice_graph &gr, int a, int b, double &max, double &sum);
 int determine_end_boundary(splice_graph &gr, int a, int b, double &max, double &sum);
+
+int remove_false_boundaries(splice_graph &gr, bundle_base &bb);
 
 #endif

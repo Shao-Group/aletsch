@@ -51,7 +51,8 @@ int assembler::assemble(bundle &bd, transcript_set &ts, int instance)
 {
 	bd.set_gid(instance, 0);
 	splice_graph gr;
-	transform(bd, gr);
+	transform(bd, gr, true);
+
 	phase_set ps;
 	bd.build_phase_set(ps, gr);
 	assemble(gr, ps, ts, bd.sp.sample_id);
@@ -71,7 +72,7 @@ int assembler::assemble(vector<bundle*> gv, transcript_set &ts, int instance)
 
 	// combined graph
 	splice_graph gx;
-	transform(bx, gx);
+	transform(bx, gx, false);	// TODO
 
 	// combined phase set 
 	phase_set px;
@@ -83,7 +84,7 @@ int assembler::assemble(vector<bundle*> gv, transcript_set &ts, int instance)
 		bd.set_gid(instance, subindex++);
 
 		splice_graph gr;
-		transform(bd, gr);
+		transform(bd, gr, true);
 
 		phase_set ps;
 		bd.build_phase_set(ps, gr);
@@ -97,12 +98,19 @@ int assembler::assemble(vector<bundle*> gv, transcript_set &ts, int instance)
 	return 0;
 }
 
-int assembler::transform(bundle &cb, splice_graph &gr)
+int assembler::transform(bundle &cb, splice_graph &gr, bool detect)
 {
 	graph_builder gb(cb, cfg);
 	gb.build(gr);
 	gr.gid = cb.gid;
 	gr.build_vertex_index();
+	
+	if(detect == true)
+	{
+		identify_boundaries(gr, cfg);
+		remove_false_boundaries(gr, cb);
+		refine_splice_graph(gr);
+	}
 	return 0;
 }
 
@@ -117,7 +125,7 @@ int assembler::bridge(vector<bundle*> gv)
 
 	// construct combined graph
 	splice_graph gr;
-	transform(cb, gr);
+	transform(cb, gr, false);
 
 	// bridge each individual bundle
 	for(int k = 0; k < gv.size(); k++)
@@ -162,12 +170,10 @@ int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int
 	px.project_boundaries(smap, tmap);
 	*/
 
-	identify_boundaries(gx, cfg);
-	refine_splice_graph(gx);
 	hyper_set hx(gx, px);
 	hx.filter_nodes(gx);
 
-	//gx.print();
+	gx.print();
 
 	/*
 	gx.print();

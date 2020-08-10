@@ -1281,3 +1281,50 @@ int add_distant_out_vertices(splice_graph &gr, int x, set<int> &s)
 	}
 	return 0;
 }
+
+int remove_false_boundaries(splice_graph &gr, bundle_base &bb)
+{
+	map<int, int> fb1;		// end
+	map<int, int> fb2;		// start
+	for(int i = 0; i < bb.frgs.size(); i++)
+	{
+		if(bb.frgs[i][2] != 0) continue;
+		hit &h1 = bb.hits[bb.frgs[i][0]];
+		hit &h2 = bb.hits[bb.frgs[i][1]];
+		int u1 = gr.locate_vertex(h1.rpos - 1);
+		int u2 = gr.locate_vertex(h2.pos);
+		if(u1 < 0 || u2 < 0) continue;
+		if(u1 >= u2) continue;
+
+		//printf("(%d, %d) => (%d, %d) => (%d, %d)\n", h1.rpos, h2.pos, u1, u2, gr.get_vertex_info(u1).rpos, gr.get_vertex_info(u2).lpos);
+
+		if(gr.get_vertex_info(u1).rpos == h1.rpos)
+		{
+			if(fb1.find(u1) != fb1.end()) fb1[u1]++;
+			else fb1.insert(make_pair(u1, 1));
+		}
+
+		if(gr.get_vertex_info(u2).lpos == h2.pos)
+		{
+			if(fb2.find(u2) != fb2.end()) fb2[u2]++;
+			else fb2.insert(make_pair(u2, 1));
+		}
+	}
+
+	for(auto &x : fb1)
+	{
+		PEB p = gr.edge(x.first, gr.num_vertices() - 1);
+		if(p.second == false) continue;
+		gr.remove_edge(p.first);
+		printf("detect false end boundary %d with %d reads\n", gr.get_vertex_info(x.first).rpos, x.second); 
+	}
+
+	for(auto &x : fb2)
+	{
+		PEB p = gr.edge(0, x.first);
+		if(p.second == false) continue;
+		gr.remove_edge(p.first);
+		printf("detect false start boundary %d with %d reads\n", gr.get_vertex_info(x.first).lpos, x.second); 
+	}
+	return 0;
+}
