@@ -310,7 +310,8 @@ bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 	}
 	*/
 
-	if(cfg.verbose >= 2) printf("resolve splittable vertex, type = %d, degree = %d, vertex = %d, ratio = %.2lf, degree = (%d, %d)\n", type, degree, root, ratio, gr.in_degree(root), gr.out_degree(root));
+	if(cfg.verbose >= 2) printf("resolve splittable vertex, type = %d, degree = %d, vertex = %d, ratio = %.2lf, degree = (%d, %d), eqn = (%d, %d)\n",
+			type, degree, root, ratio, gr.in_degree(root), gr.out_degree(root), eqns[0].s.size(), eqns[0].t.size());
 
 	split_vertex(root, eqns[0].s, eqns[0].t);
 
@@ -960,6 +961,34 @@ int scallop::init_nonzeroset()
 
 int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 {
+	// print
+	PEEI pei;
+	edge_iterator it1, it2;
+
+	printf(" in-weights: ");
+	for(pei = gr.in_edges(root), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	{
+		edge_descriptor e = (*it1);
+		double w = gr.get_edge_weight(e);
+		printf("%d:%.2lf, ", e2i[e], w);
+	}
+	printf("\n");
+	printf(" out-weights: ");
+	for(pei = gr.out_edges(root), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	{
+		edge_descriptor e = (*it1);
+		double w = gr.get_edge_weight(e);
+		printf("%d:%.2lf, ", e2i[e], w);
+	}
+	printf("\n");
+	printf(" decompose weights: ");
+	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
+	{
+		printf("%d:%d:%.2lf, ", it->first.first, it->first.second, it->second);
+	}
+	printf("\n");
+	// end print
+
 	// compute degree of each edge
 	map<int, int> mdegree;
 	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
@@ -1001,8 +1030,6 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 	int m = gr.num_vertices() - 1;
 	int n = m;
 	map<int, int> ev1, ev2;
-	PEEI pei;
-	edge_iterator it1, it2;
 	for(pei = gr.in_edges(root), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
 	{
 		edge_descriptor e = (*it1);
@@ -1033,6 +1060,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		v2v.push_back(-1);
 	}
 	v2v[n] = v2v[m];
+	gr.set_vertex_info(n, gr.get_vertex_info(m));
 	exchange_sink(m, n);
 
 	// set vertex info for new vertices
@@ -1042,9 +1070,12 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		edge_descriptor e = i2e[it->first];
 		int k = it->second;
 
-		gr.move_edge(e, e->source(), k);
+		vertex_info vi;
+		vi.lpos = gr.get_vertex_info(e->source()).rpos;
+		vi.rpos = gr.get_vertex_info(e->source()).rpos;
 
-		gr.set_vertex_info(k, vertex_info());
+		gr.move_edge(e, e->source(), k);
+		gr.set_vertex_info(k, vi);
 		gr.set_vertex_weight(k, 0);
 		v2v[k] = -2; //v2v[root];
 	}
@@ -1053,9 +1084,12 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		edge_descriptor e = i2e[it->first];
 		int k = it->second;
 
-		gr.move_edge(e, k, e->target());
+		vertex_info vi;
+		vi.lpos = gr.get_vertex_info(e->target()).lpos;
+		vi.rpos = gr.get_vertex_info(e->target()).lpos;
 
-		gr.set_vertex_info(k, vertex_info());
+		gr.move_edge(e, k, e->target());
+		gr.set_vertex_info(k, vi);
 		gr.set_vertex_weight(k, 0);
 		v2v[k] = -2;
 	}

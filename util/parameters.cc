@@ -64,8 +64,9 @@ parameters::parameters()
 	
 	// for identifying subgraphs
 	min_subregion_gap = 15;
-	min_subregion_overlap = 1.5;
-	min_subregion_length = 15;
+	min_subregion_overlap = -1;		// used to be 1.5
+	min_subregion_length = -1;		// used to be 15
+	min_subregion_score = 20;
 	
 	// for revising splice graph and phasing paths
 	max_group_boundary_distance = 10000;

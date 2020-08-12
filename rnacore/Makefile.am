@@ -10,6 +10,7 @@ librnacore_a_SOURCES = splice_graph.h splice_graph.cc \
 					   vertex_info.h vertex_info.cc \
 					   edge_info.h edge_info.cc \
 					   interval_map.h interval_map.cc \
+					   binomial.h binomial.cc \
 					   hit.h hit.cc \
 					   hit_core.h hit_core.cc \
 					   partial_exon.h partial_exon.cc \

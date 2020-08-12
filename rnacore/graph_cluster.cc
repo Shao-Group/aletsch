@@ -57,6 +57,17 @@ int graph_cluster::group_pereads()
 		bool b1 = align_hit_to_splice_graph(bd.hits[h1], chain1, gr, v1);
 		bool b2 = align_hit_to_splice_graph(bd.hits[h2], chain2, gr, v2);
 
+		/*
+		if(bd.hits[h1].qname == "SRR307903.26879664")
+		{
+			printf("b1 = %c, b2 = %c\n", b1 ? 'T' : 'F', b2 ? 'T' : 'F');
+			printv(chain1); printf("\n");
+			printv(chain2); printf("\n");
+			printv(v1); printf("\n");
+			printv(v2); printf("\n");
+		}
+		*/
+
 		if(b1 == false || b2 == false)  continue;
 		if(v1.size() == 0 || v2.size() == 0) continue;
 

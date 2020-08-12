@@ -7,6 +7,7 @@ See LICENSE for licensing.
 #include "constants.h"
 #include "region.h"
 #include "config.h"
+#include "binomial.h"
 #include <algorithm>
 
 using namespace std;
@@ -24,6 +25,7 @@ region::region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype, const split
 	build_join_interval_map();
 	smooth_join_interval_map();
 	build_partial_exons();
+	filter_partial_exons();
 } 
 
 region::~region()
@@ -143,12 +145,8 @@ int region::build_partial_exons()
 		assert(p1 < p2);
 		
 		bool b = empty_subregion(p1, p2);
-
-		//printf(" subregion [%d, %d), empty = %c\n", p1, p2, b ? 'T' : 'F');
-
 		if(p1 == lpos && ltype == RIGHT_SPLICE) b = false;
 		if(p2 == rpos && rtype == LEFT_SPLICE) b = false;
-
 		if(b == true) continue;
 
 		int lt = (p1 == lpos) ? ltype : START_BOUNDARY;
@@ -198,5 +196,48 @@ int region::print(int index) const
 	}
 	*/
 
+	return 0;
+}
+
+int region::filter_partial_exons()
+{
+	if(pexons.size() <= 1) return 0;
+
+	// TODO
+	int read_length = 100;
+	int total_reads = 0;
+	int total_bins = 1 + (rpos - lpos) / read_length;
+	for(int i = 0; i < pexons.size(); i++)
+	{
+		partial_exon &pe = pexons[i];
+		int len = pe.rpos - pe.lpos;
+		int reads = 1 + pe.ave * len / read_length;
+		total_reads += reads;
+	}
+
+	vector<partial_exon> v;
+	for(int i = 0; i < pexons.size(); i++)
+	{
+		partial_exon &pe = pexons[i];
+		int len = pe.rpos - pe.lpos;
+		int bins = 1 + len / read_length;
+		double pr = 1.0 * bins / total_bins;
+		if(pr <= 0) pr = 0;
+		if(pr >= 1) pr = 1;
+		int reads = 1 + pe.ave * len / read_length;
+		uint32_t score = compute_binomial_score(total_reads, pr, reads);
+
+		bool b = false;
+		if(pe.lpos == lpos && ltype == RIGHT_SPLICE) b = true;
+		if(pe.rpos == rpos && rtype == LEFT_SPLICE) b = true;
+
+		if(b == false) printf("subregion %d-%d, range = %d-%d, total-bins = %d, bins = %d, pr = %.4lf, total-reads = %d, reads = %d, score = %d\n", 
+				pe.lpos, pe.rpos, lpos, rpos, total_bins, bins, pr, total_reads, reads, score);
+
+		if(score >= cfg.min_subregion_score) b = true;
+
+		if(b == true) v.push_back(pe);
+	}
+	pexons = v;
 	return 0;
 }

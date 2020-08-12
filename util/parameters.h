@@ -92,6 +92,7 @@ public:
 	int32_t min_subregion_gap;
 	double min_subregion_overlap;
 	int32_t min_subregion_length;
+	uint32_t min_subregion_score;
 
 	// for revising splice graph and phasing paths
 	int32_t max_group_boundary_distance;

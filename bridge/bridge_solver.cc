@@ -43,7 +43,7 @@ bridge_solver::bridge_solver(splice_graph &g, vector<pereads_cluster> &v, const 
 	remove_adjacent_edges();
 	
 	// TODO
-	//print();
+	print();
 }
 
 int bridge_solver::build_bridging_vertices()
@@ -593,6 +593,13 @@ int bridge_solver::print()
 		*/
 	}
 
+	/*
+	for(int i = 0; i < vc.size(); i++)
+	{
+		printf("bridge: type = %d, chain = %lu, vc = ", opt[i].type, opt[i].chain.size());
+		vc[i].print(i);
+	}
 	printf("bridge_solver: clusters %d / %lu, reads %d / %d, choices = %d / %d, scores = %d / %d\n", bridged_clusters, vc.size(), bridged_reads, total_reads, choice1, choice2, score1, score2);
+	*/
 	return 0;
 }
