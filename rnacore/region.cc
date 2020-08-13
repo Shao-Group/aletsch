@@ -19,13 +19,13 @@ region::region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype)
 } 
 */
 
-region::region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype, const split_interval_map *_mmap, const split_interval_map *_imap, const parameters &c)
-	:lpos(_lpos), rpos(_rpos), mmap(_mmap), imap(_imap), ltype(_ltype), rtype(_rtype), cfg(c)
+region::region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype, const split_interval_map *_mmap, const split_interval_map *_imap, const parameters &c, const sample_profile &s)
+	:lpos(_lpos), rpos(_rpos), mmap(_mmap), imap(_imap), ltype(_ltype), rtype(_rtype), cfg(c), sp(s)
 {
 	build_join_interval_map();
 	smooth_join_interval_map();
 	build_partial_exons();
-	filter_partial_exons();
+	calculate_significance();
 } 
 
 region::~region()
@@ -199,12 +199,11 @@ int region::print(int index) const
 	return 0;
 }
 
-int region::filter_partial_exons()
+int region::calculate_significance()
 {
-	if(pexons.size() <= 1) return 0;
+	if(pexons.size() == 1 && pexons[0].lpos == lpos && pexons[0].rpos == rpos) return 0;
 
-	// TODO
-	int read_length = 100;
+	int read_length = sp.insertsize_median / 2;
 	int total_reads = 0;
 	int total_bins = 1 + (rpos - lpos) / read_length;
 	for(int i = 0; i < pexons.size(); i++)
@@ -215,7 +214,6 @@ int region::filter_partial_exons()
 		total_reads += reads;
 	}
 
-	vector<partial_exon> v;
 	for(int i = 0; i < pexons.size(); i++)
 	{
 		partial_exon &pe = pexons[i];
@@ -225,19 +223,116 @@ int region::filter_partial_exons()
 		if(pr <= 0) pr = 0;
 		if(pr >= 1) pr = 1;
 		int reads = 1 + pe.ave * len / read_length;
-		uint32_t score = compute_binomial_score(total_reads, pr, reads);
+		int n = ceil(total_bins / bins);
 
-		bool b = false;
-		if(pe.lpos == lpos && ltype == RIGHT_SPLICE) b = true;
-		if(pe.rpos == rpos && rtype == LEFT_SPLICE) b = true;
+		double pvalue = compute_binomial_pvalue(total_reads, pr, reads);
+		pe.pvalue = pvalue * total_bins;
+		//uint32_t score = compute_binomial_score(total_reads, pr, reads);
+		//long double score = calculate_score(total_reads, n, reads); 
 
-		if(b == false) printf("subregion %d-%d, range = %d-%d, total-bins = %d, bins = %d, pr = %.4lf, total-reads = %d, reads = %d, score = %d\n", 
-				pe.lpos, pe.rpos, lpos, rpos, total_bins, bins, pr, total_reads, reads, score);
+		if(pe.lpos == lpos && ltype == RIGHT_SPLICE) pe.pvalue = 0;
+		if(pe.rpos == rpos && rtype == LEFT_SPLICE) pe.pvalue = 0;
 
-		if(score >= cfg.min_subregion_score) b = true;
-
-		if(b == true) v.push_back(pe);
+		if(cfg.verbose >= 2)
+		{
+			printf("subregion %d-%d, range = %d-%d, total-bins = %d, bins = %d, pr = %.4lf, n = %d, total-reads = %d, reads = %d, pvalue = %.8lf\n", 
+					pe.lpos, pe.rpos, lpos, rpos, total_bins, bins, pr, n, total_reads, reads, pvalue);
+		}
 	}
-	pexons = v;
 	return 0;
+}
+
+long double region::calculate_score(int n, int k, int z)
+{
+	// compute the probability of 
+	// x1 + x2 + ... xk = n
+	// and there exists one i s.t. xi >= z
+
+	vector<long double> v;
+	for(int i = 1; i <= k; i++)
+	{
+		if(i * z > n) break;
+		long double s = log_factorial(n, k, z, i);
+		v.push_back(s);
+	}
+
+	if(v.size() <= 0) return -9999999;
+
+	long double ans = v[0];
+	for(int i = 2; i < v.size(); i += 2) ans = log_add(ans, v[i]);
+	for(int i = 1; i < v.size(); i += 2) ans = log_subtract(ans, v[i]);
+	printf("ans = %.4Lf, total count = %Lf\n", ans, exp(ans));
+	ans -= log_factorial(n, k, 0, k);
+	printf("n = %d, k = %d, z = %d, ans = %.3Lf\n", n, k, z, ans);
+	return ans;
+}
+
+long double region::log_factorial(int n, int k, int z, int i)
+{
+	// compute (k choose i) (n+k-1-iz choose k-1)
+	assert(i >= 1);
+	assert(k >= i);
+	assert(n >= i * z);
+	long double ans = log_select(n - i * z + k - 1, k - 1);
+	ans += log_select(k, i);
+	printf("n = %d, k = %d, z = %d, i = %d, ans = %.3Lf, count = %.2Lf\n", n, k, z, i, ans, exp(ans));
+	return ans;
+
+	/*
+	long double ans = log(k);
+	for(int j = n - i * z + 1; j <= n - i * z + k - 1; j++)
+	{
+		ans += log(j);
+	}
+	for(int j = 1; j <= k - i; j++)
+	{
+		ans -= log(j);
+	}
+	for(int j = 1; j <= i; j++)
+	{
+		ans -= log(j);
+	}
+	printf("n = %d, k = %d, z = %d, i = %d, ans = %.3Lf, count = %.2Lf\n", n, k, z, i, ans, exp(ans));
+	return ans;
+	*/
+}
+
+long double region::log_add(long double x, long double y)
+{
+	if(x < y) return log_add(y, x);
+	assert(x >= y);
+	//printf("compute exp of %.4Lf = %.4Lf\n", y - x, expm1(y - x));
+	long f = floor(y);
+	double dy = y - f;
+	double dx = x - f;
+	return x + log1p(1 + expm1(y - x));
+	if(x - y >= 1) return x + log1p(1 + expm1(y - x));
+	else return x + log1p((1 + expm1(dy)) / (1 + expm1(dx)));
+}
+
+long double region::log_subtract(long double x, long double y)
+{
+	if(x < y)
+	{
+		printf("x = %.3Lf, y = %.3Lf\n", x, y);
+	}
+	//printf("compute exp of %.4Lf = %.4Lf\n", y - x, expm1(y - x));
+
+	long f = floor(y);
+	double dy = y - f;
+	double dx = x - f;
+	return x + log1p(-1 - expm1(y - x));
+	//if(x - y >= 1) return x + log1p(-1 - expm1(y - x));
+	//else return x + log1p(0 - (1 + expm1(dy)) / (1 + expm1(dx)));
+}
+
+long double region::log_select(int n, int k)
+{
+	long double ans = 0;
+	for(int j = 1; j <= k; j++)
+	{
+		ans += log(1.0L * (n - k + j) / j);
+	}
+	//printf("log-select: %d choose %d log = %.3Lf, count = %.3Lf\n", n, k, ans, exp(ans));
+	return ans;
 }

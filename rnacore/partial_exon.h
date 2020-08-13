@@ -27,6 +27,7 @@ public:
 	double ave;						// average abundance
 	double dev;						// standard-deviation of abundance
 	double max;						// largest coverage in this partial exon
+	double pvalue;					// significance
 
 public:
 	string label() const;

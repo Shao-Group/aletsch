@@ -15,5 +15,4 @@ libmeta_a_SOURCES = combined_graph.h combined_graph.cc \
 					generator.h generator.cc \
 					assembler.h assembler.cc \
 					previewer.h previewer.cc \
-					sample_profile.h sample_profile.cc \
 					incubator.h incubator.cc

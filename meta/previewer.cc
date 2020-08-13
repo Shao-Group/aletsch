@@ -257,7 +257,7 @@ int previewer::process(bundle_base &bd, map<int32_t, int> &m)
 	bd.build_fragments();
 
 	splice_graph gr;
-	graph_builder gb(bd, cfg);
+	graph_builder gb(bd, cfg, sp);
 	gb.build(gr);
 	//gr.print();
 

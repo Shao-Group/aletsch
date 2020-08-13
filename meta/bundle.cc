@@ -49,7 +49,7 @@ int bundle::bridge()
 	while(true)
 	{
 		splice_graph gr;
-		graph_builder gb(*this, cfg);
+		graph_builder gb(*this, cfg, sp);
 		gb.build(gr);
 		gr.build_vertex_index();
 

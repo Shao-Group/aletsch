@@ -98,14 +98,16 @@ int assembler::assemble(vector<bundle*> gv, transcript_set &ts, int instance)
 	return 0;
 }
 
-int assembler::transform(bundle &cb, splice_graph &gr, bool detect)
+int assembler::transform(bundle &cb, splice_graph &gr, bool revising)
 {
-	graph_builder gb(cb, cfg);
+	graph_builder gb(cb, cfg, cb.sp);
+	if(revising == true) gb.fpe = true;
+
 	gb.build(gr);
 	gr.gid = cb.gid;
 	gr.build_vertex_index();
 	
-	if(detect == true)
+	if(revising == true)
 	{
 		identify_boundaries(gr, cfg);
 		remove_false_boundaries(gr, cb);

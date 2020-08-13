@@ -22,7 +22,7 @@ string partial_exon::label() const
 
 int partial_exon::print(int index) const
 {
-	printf("partial_exon %d: [%d-%d), type = (%d, %d), length = %d, ave-abd = %.1lf, std-abd = %.1lf, max-abd = %.1lf\n",
-			index, lpos, rpos, ltype, rtype, rpos - lpos, ave, dev, max);
+	printf("partial_exon %d: [%d-%d), type = (%d, %d), length = %d, ave-abd = %.1lf, std-abd = %.1lf, max-abd = %.1lf, pvalue = %.8lf\n",
+			index, lpos, rpos, ltype, rtype, rpos - lpos, ave, dev, max, pvalue);
 	return 0;
 }

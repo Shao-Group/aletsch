@@ -7,6 +7,7 @@ using namespace boost::math;
 
 // return the score(transformed from probability)
 // that >= x is observed
+double compute_binomial_pvalue(int n, double pr, int x);
 uint32_t compute_binomial_score(int n, double pr, int x);
 
 #endif

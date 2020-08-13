@@ -13,16 +13,19 @@ See LICENSE for licensing.
 #include "splice_graph.h"
 #include "parameters.h"
 #include "bundle_base.h"
+#include "sample_profile.h"
 
 using namespace std;
 
 class graph_builder
 {
 public:
-	graph_builder(bundle_base &bd, const parameters &cfg);
+	graph_builder(bundle_base &bd, const parameters &cfg, const sample_profile &sp);
 
 public:
 	const parameters &cfg;			// parameters
+	const sample_profile &sp;		// sample profile
+	bool fpe;						// if to filter partial exons
 	bundle_base &bd;				// given bundle_base
 	vector<junction> junctions;		// junctions
 	vector<region> regions;			// regions
