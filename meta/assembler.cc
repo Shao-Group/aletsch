@@ -175,8 +175,6 @@ int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int
 	hyper_set hx(gx, px);
 	hx.filter_nodes(gx);
 
-	gx.print();
-
 	/*
 	gx.print();
 	if(gx.num_vertices() <= 40) 
