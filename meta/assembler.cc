@@ -107,9 +107,6 @@ int assembler::transform(bundle &cb, splice_graph &gr, bool revising)
 	gr.gid = cb.gid;
 	gr.build_vertex_index();
 
-	// TODO
-	gr.print();
-	
 	if(revising == true)
 	{
 		identify_boundaries(gr, cfg);
@@ -178,7 +175,8 @@ int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int
 	hyper_set hx(gx, px);
 	hx.filter_nodes(gx);
 
-	gx.print();
+	if(cfg.verbose >= 2) gx.print();
+
 	/*
 	if(gx.num_vertices() <= 40) 
 	{
@@ -199,7 +197,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int
 		ts.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	}
 
-	printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges, phases = %lu\n", gx.gid.c_str(), z, gx.num_vertices(), gx.num_edges(), px.pmap.size());
+	if(cfg.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges, phases = %lu\n", gx.gid.c_str(), z, gx.num_vertices(), gx.num_edges(), px.pmap.size());
 	//gx.print();
 
 	return 0;

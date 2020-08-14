@@ -205,27 +205,52 @@ int region::calculate_significance()
 
 	int read_length = sp.insertsize_median / 2;
 	int total_reads = 0;
-	int total_bins = 1 + (rpos - lpos) / read_length;
+	int total_length = rpos - lpos;
 	for(int i = 0; i < pexons.size(); i++)
 	{
 		partial_exon &pe = pexons[i];
-		int len = pe.rpos - pe.lpos;
-		int reads = 1 + pe.ave * len / read_length;
+		int length = pe.rpos - pe.lpos;
+		int reads = 1 + pe.ave * length / read_length;
 		total_reads += reads;
+	}
+
+	vector<double> pvalues(pexons.size(), 1);
+
+	while(true)
+	{
+		bool flag = false;
+		for(int i = 0; i < pexons.size(); i++)
+		{
+			if(pvalues[i] <= cfg.min_subregion_pvalue) continue;
+
+			partial_exon &pe = pexons[i];
+			int length = pe.rpos - pe.lpos;
+			int reads = 1 + pe.ave * length / read_length;
+			double pr = 1.0 * length / total_length;
+			if(pr <= 0) pr = 0;
+			if(pr >= 1) pr = 1;
+
+			pvalues[i] = compute_binomial_pvalue(total_reads, pr, reads) / pr;
+
+			if(cfg.verbose >= 2)
+			{
+				printf("subregion %d-%d, type = (%d, %d), range = %d-%d, ltype = %d, rtype = %d, pr = %.4lf, total-reads = %d, reads = %d, pvalue = %.8lf\n",
+						pe.lpos, pe.rpos, pe.ltype, pe.rtype, lpos, rpos, ltype, rtype, pr, total_reads, reads, pvalues[i]);
+			}
+
+			if(pvalues[i] > cfg.min_subregion_pvalue) continue;
+
+			flag = true;
+			total_length -= length;
+			total_reads -= reads;
+		}
+		if(flag == false) break;
 	}
 
 	for(int i = 0; i < pexons.size(); i++)
 	{
 		partial_exon &pe = pexons[i];
-		int len = pe.rpos - pe.lpos;
-		int bins = 1 + len / read_length;
-		double pr = 1.0 * bins / total_bins;
-		if(pr <= 0) pr = 0;
-		if(pr >= 1) pr = 1;
-		int reads = 1 + pe.ave * len / read_length;
-		int n = ceil(total_bins / bins);
-
-		pe.pvalue = total_bins * compute_binomial_pvalue(total_reads, pr, reads);
+		pe.pvalue = pvalues[i];
 
 		if(pe.ave < cfg.min_subregion_overlap) pe.pvalue = 1;
 		if(pe.rpos - pe.lpos < cfg.min_subregion_length) pe.pvalue = 1;
@@ -234,8 +259,7 @@ int region::calculate_significance()
 
 		if(cfg.verbose >= 2)
 		{
-			printf("subregion %d-%d, type = (%d, %d), range = %d-%d, ltype = %d, rtype = %d, total-bins = %d, bins = %d, pr = %.4lf, n = %d, total-reads = %d, reads = %d, pvalue = %.8lf\n", 
-					pe.lpos, pe.rpos, pe.ltype, pe.rtype, lpos, rpos, ltype, rtype, total_bins, bins, pr, n, total_reads, reads, pe.pvalue);
+			printf("subregion %d-%d, type = (%d, %d), range = %d-%d, ltype = %d, rtype = %d, pvalue = %.8lf\n", pe.lpos, pe.rpos, pe.ltype, pe.rtype, lpos, rpos, ltype, rtype, pe.pvalue);
 		}
 	}
 	return 0;
