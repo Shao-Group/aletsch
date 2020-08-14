@@ -42,8 +42,7 @@ bridge_solver::bridge_solver(splice_graph &g, vector<pereads_cluster> &v, const 
 	vote();
 	remove_adjacent_edges();
 	
-	// TODO
-	print();
+	//print();
 }
 
 int bridge_solver::build_bridging_vertices()
@@ -56,10 +55,8 @@ int bridge_solver::build_bridging_vertices()
 		int v1 = gr.locate_vertex(pc.bounds[1] - 1);
 		int v2 = gr.locate_vertex(pc.bounds[2] - 0);
 
-		/*
 		if(check_left_relaxing(pc, v1)) v1--;
 		if(check_right_relaxing(pc, v2)) v2++;
-		*/
 
 		vpairs.push_back(PI(v1, v2));
 	}
@@ -127,7 +124,7 @@ bool bridge_solver::check_left_relaxing(const pereads_cluster &pc, int v)
 	assert(p <= pc.bounds[1]);
 	if(v <= 1) return false;
 	if(check_continuous_vertices(gr, v - 1, v) == false) return false;
-	if(pc.bounds[1] - p > 10) return false;
+	if(pc.bounds[1] - p > cfg.bridge_end_relaxing) return false;
 	if(pc.chain1.size() >= 1 && pc.chain1.back() >= p) return false;
 	return true;
 }
@@ -140,7 +137,7 @@ bool bridge_solver::check_right_relaxing(const pereads_cluster &pc, int v)
 	assert(p >= pc.bounds[2]);
 	if(v >= n - 1) return false;
 	if(check_continuous_vertices(gr, v, v + 1) == false) return false;
-	if(p - pc.bounds[2] > 10) return false;
+	if(p - pc.bounds[2] > cfg.bridge_end_relaxing) return false;
 	if(pc.chain2.size() >= 1 && pc.chain2.front() <= p) return false;
 	return true;
 }
@@ -394,6 +391,7 @@ int bridge_solver::collect_unbridged_clusters(vector<pereads_cluster> &v)
 
 int bridge_solver::build_phase_set(phase_set &ps)
 {
+	assert(false);	// TODO
 	assert(opt.size() == vc.size());
 	for(int i = 0; i < vc.size(); i++)
 	{
@@ -405,6 +403,7 @@ int bridge_solver::build_phase_set(phase_set &ps)
 
 int add_phases_from_bridged_pereads_cluster(const pereads_cluster &pc, const bridge_path &bbp, phase_set &ps)
 {
+	assert(false);	// TODO
 	assert(bbp.type >= 0);
 	int32_t p0 = pc.extend[0];
 	int32_t p3 = pc.extend[3];
@@ -419,6 +418,7 @@ int add_phases_from_bridged_pereads_cluster(const pereads_cluster &pc, const bri
 		
 int add_phases_from_unbridged_pereads_cluster(const pereads_cluster &pc, phase_set &ps)
 {
+	assert(false);	// TODO
 	int32_t p0 = pc.extend[0];
 	int32_t p1 = pc.extend[1];
 	int32_t p2 = pc.extend[2];
@@ -440,6 +440,7 @@ int add_phases_from_unbridged_pereads_cluster(const pereads_cluster &pc, phase_s
 
 int add_phases_from_bridge_path(const pereads_cluster &pc, const bridge_path &bbp, phase_set &ps)
 {
+	assert(false);	// TODO
 	int32_t p0 = pc.extend[0];
 	int32_t p3 = pc.extend[3];
 
@@ -593,13 +594,12 @@ int bridge_solver::print()
 		*/
 	}
 
-	/*
 	for(int i = 0; i < vc.size(); i++)
 	{
 		printf("bridge: type = %d, chain = %lu, vc = ", opt[i].type, opt[i].chain.size());
 		vc[i].print(i);
 	}
+
 	printf("bridge_solver: clusters %d / %lu, reads %d / %d, choices = %d / %d, scores = %d / %d\n", bridged_clusters, vc.size(), bridged_reads, total_reads, choice1, choice2, score1, score2);
-	*/
 	return 0;
 }

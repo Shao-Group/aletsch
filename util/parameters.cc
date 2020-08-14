@@ -40,6 +40,7 @@ parameters::parameters()
 	max_num_junctions_to_combine = 500;
 
 	// for bridging paired-end reads
+	bridge_end_relaxing = 6;
 	bridge_dp_solution_size = 10;
 	bridge_dp_stack_size = 5;
 	min_bridging_score = 1.5;
@@ -64,8 +65,8 @@ parameters::parameters()
 	
 	// for identifying subgraphs
 	min_subregion_gap = 15;
-	min_subregion_overlap = -1;		// used to be 1.5
-	min_subregion_length = -1;		// used to be 15
+	min_subregion_overlap = 1.5;		// used to be 1.5
+	min_subregion_length = 15;			// used to be 15
 	min_subregion_pvalue = 0.001;
 	
 	// for revising splice graph and phasing paths

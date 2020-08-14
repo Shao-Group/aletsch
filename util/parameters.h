@@ -44,6 +44,7 @@ public:
 	int max_num_junctions_to_combine;
 
 	// for bridging paired-end reads
+	int bridge_end_relaxing;
 	int bridge_dp_solution_size;
 	int bridge_dp_stack_size;
 	double min_bridging_score;

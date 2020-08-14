@@ -106,6 +106,9 @@ int assembler::transform(bundle &cb, splice_graph &gr, bool revising)
 	gb.build(gr);
 	gr.gid = cb.gid;
 	gr.build_vertex_index();
+
+	// TODO
+	gr.print();
 	
 	if(revising == true)
 	{
@@ -175,8 +178,8 @@ int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int
 	hyper_set hx(gx, px);
 	hx.filter_nodes(gx);
 
-	/*
 	gx.print();
+	/*
 	if(gx.num_vertices() <= 40) 
 	{
 		string texfile = "tex/" + gx.gid + ".tex";

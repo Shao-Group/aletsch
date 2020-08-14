@@ -373,6 +373,8 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 			edge_info ei;
 			ei.weight = w;
 			gr.set_edge_info(p, ei);
+
+			printf("link to end: %d, w = %.3lf\n", r.rpos, w);
 		}
 	}
 

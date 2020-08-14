@@ -300,8 +300,8 @@ int router::split_plain_vertex()
 		for(set<int>::iterator it = vv[i].begin(); it != vv[i].end(); it++)
 		{
 			double w = vw[*it];
-			if(*it >= gr.in_degree(root)) w = 0 - w;
-			ww += w;
+			if(*it >= gr.in_degree(root)) ww -= w;
+			else ww += w;
 		}
 		if(ww >= 0) ss.push_back(PI((int)(ww), i));
 		else tt.push_back(PI((int)(0 - ww), i));

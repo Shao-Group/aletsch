@@ -9,6 +9,7 @@ See LICENSE for licensing.
 #include "essential.h"
 
 #include <cstdio>
+#include <cmath>
 #include <cstdio>
 #include <iostream>
 #include <climits>
@@ -267,8 +268,10 @@ bool scallop::resolve_single_smallest_edge(int i, double max_ratio, double &rati
 bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 {
 	int root = -1;
-	double ratio = max_ratio;
-	vector<equation> eqns;
+	int min_balance = INT_MAX;
+	double min_ratio = max_ratio;
+	equation eqn;
+	//vector<equation> eqns;
 	//for(set<int>::iterator it = nonzeroset.begin(); it != nonzeroset.end(); it++)
 	//for(int i = 1; i < gr.num_vertices() - 1; i++)
 	vector<int> vv(nonzeroset.begin(), nonzeroset.end());
@@ -288,13 +291,16 @@ bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 		rt.build();
 		assert(rt.eqns.size() == 2);
 
-		//if(rt.degree == degree && ratio < rt.ratio) continue;
-		if(ratio < rt.ratio) continue;
+		int balance = abs((int)(rt.eqns[0].s.size() - rt.eqns[0].t.size())) + abs((int)(gr.in_degree(i) - rt.eqns[0].s.size()) - (int)(gr.out_degree(i) - rt.eqns[0].t.size()));
+
+		if(rt.ratio > max_ratio) continue;
+		if(balance > min_balance) continue;
+		if(balance == min_balance && rt.ratio > min_ratio) continue;
 
 		root = i;
-		ratio = rt.ratio;
-		eqns = rt.eqns;
-		//degree = rt.degree;
+		min_ratio = rt.ratio;
+		min_balance = balance;
+		eqn = rt.eqns[0];
 	}
 
 	if(root == -1) return false;
@@ -310,10 +316,10 @@ bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 	}
 	*/
 
-	if(cfg.verbose >= 2) printf("resolve splittable vertex, type = %d, degree = %d, vertex = %d, %d-%d, ratio = %.2lf, degree = (%d, %d), eqn = (%lu, %lu)\n",
-			type, degree, root, gr.get_vertex_info(root).lpos, gr.get_vertex_info(root).rpos, ratio, gr.in_degree(root), gr.out_degree(root), eqns[0].s.size(), eqns[0].t.size());
+	if(cfg.verbose >= 2) printf("resolve splittable vertex, type = %d, degree = %d, vertex = %d, %d-%d, ratio = %.2lf, balance = %d, degree = (%d, %d), eqn = (%lu, %lu)\n",
+			type, degree, root, gr.get_vertex_info(root).lpos, gr.get_vertex_info(root).rpos, min_ratio, min_balance, gr.in_degree(root), gr.out_degree(root), eqn.s.size(), eqn.t.size());
 
-	split_vertex(root, eqns[0].s, eqns[0].t);
+	split_vertex(root, eqn.s, eqn.t);
 
 	return true;
 }

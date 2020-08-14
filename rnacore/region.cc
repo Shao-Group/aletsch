@@ -225,18 +225,17 @@ int region::calculate_significance()
 		int reads = 1 + pe.ave * len / read_length;
 		int n = ceil(total_bins / bins);
 
-		double pvalue = compute_binomial_pvalue(total_reads, pr, reads);
-		pe.pvalue = pvalue * total_bins;
-		//uint32_t score = compute_binomial_score(total_reads, pr, reads);
-		//long double score = calculate_score(total_reads, n, reads); 
+		pe.pvalue = total_bins * compute_binomial_pvalue(total_reads, pr, reads);
 
+		if(pe.ave < cfg.min_subregion_overlap) pe.pvalue = 1;
+		if(pe.rpos - pe.lpos < cfg.min_subregion_length) pe.pvalue = 1;
 		if(pe.lpos == lpos && ltype == RIGHT_SPLICE) pe.pvalue = 0;
 		if(pe.rpos == rpos && rtype == LEFT_SPLICE) pe.pvalue = 0;
 
 		if(cfg.verbose >= 2)
 		{
-			printf("subregion %d-%d, range = %d-%d, total-bins = %d, bins = %d, pr = %.4lf, n = %d, total-reads = %d, reads = %d, pvalue = %.8lf\n", 
-					pe.lpos, pe.rpos, lpos, rpos, total_bins, bins, pr, n, total_reads, reads, pvalue);
+			printf("subregion %d-%d, type = (%d, %d), range = %d-%d, ltype = %d, rtype = %d, total-bins = %d, bins = %d, pr = %.4lf, n = %d, total-reads = %d, reads = %d, pvalue = %.8lf\n", 
+					pe.lpos, pe.rpos, pe.ltype, pe.rtype, lpos, rpos, ltype, rtype, total_bins, bins, pr, n, total_reads, reads, pe.pvalue);
 		}
 	}
 	return 0;
