@@ -18,7 +18,7 @@ See LICENSE for licensing.
 #include "undirected_graph.h"
 
 graph_builder::graph_builder(bundle_base &b, const parameters &c, const sample_profile &s)
-	: bd(b), cfg(c), sp(s), fpe(false)
+	: bd(b), cfg(c), sp(s)
 {}
 
 int graph_builder::build(splice_graph &gr)
@@ -224,7 +224,6 @@ int graph_builder::build_partial_exons()
 		for(int k = 0; k < r.pexons.size(); k++)
 		{
 			partial_exon &pe = r.pexons[k];
-			if(fpe == true && pe.pvalue > cfg.min_subregion_pvalue) continue;
 			pexons.push_back(pe);
 			if((pe.lpos != bd.lpos || pe.rpos != bd.rpos) && pe.ltype == START_BOUNDARY && pe.rtype == END_BOUNDARY) regional.push_back(true);
 			else regional.push_back(false);

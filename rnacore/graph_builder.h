@@ -25,7 +25,6 @@ public:
 public:
 	const parameters &cfg;			// parameters
 	const sample_profile &sp;		// sample profile
-	bool fpe;						// if to filter partial exons
 	bundle_base &bd;				// given bundle_base
 	vector<junction> junctions;		// junctions
 	vector<region> regions;			// regions
