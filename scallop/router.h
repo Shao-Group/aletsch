@@ -73,6 +73,7 @@ public:
 	int thread();												// for unsplitable vertices
 	int thread_isolate1(int k, vector<double> &vw);
 	int thread_isolate2(int k, vector<double> &vw);
+	int thread_isolate_all(const vector<int> &v1, const vector<int> &v2, vector<double> &vw);
 	bool thread_leaf(vector<double> &vw);
 	bool thread_turn(vector<double> &vw);
 

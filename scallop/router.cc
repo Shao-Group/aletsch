@@ -591,12 +591,17 @@ int router::split_mixed_vertex()
 int router::thread()
 {
 	pe2w.clear();
+
 	vector<int> v1;
+	vector<int> v2;
+	int a = gr.in_degree(root);
+	int n = gr.degree(root);
 	for(int k = 0; k < u2e.size(); k++)
 	{
-		int e = u2e[k];
-		if(ug.degree(k) == 0) v1.push_back(k);
+		if(ug.degree(k) == 0 && k <  a) v1.push_back(k);
+		if(ug.degree(k) == 0 && k >= a) v2.push_back(k);
 	}
+
 
 	vector<double> vw = compute_balanced_weights();
 	double weight_sum = 0;
@@ -614,6 +619,7 @@ int router::thread()
 
 	assert(ug.num_edges() == 0);
 
+	/*
 	int n = gr.in_degree(root);
 	for(int i = 0; i < v1.size(); i++)
 	{
@@ -621,11 +627,32 @@ int router::thread()
 		if(k < n) thread_isolate1(k, vw);
 		else thread_isolate2(k, vw);
 	}
-	
+	*/
+
+	assert(v1.size() == 0 || v2.size() == 0);
+
+	if(v1.size() == 0 && v2.size() >= 1)
+	{
+		for(int k = 0; k < a; k++)
+		{
+			if(vw[k] <= 0) continue;
+			v1.push_back(k);
+		}
+	}
+	if(v2.size() == 0 && v1.size() >= 1)
+	{
+		for(int k = a; k < n; k++)
+		{
+			if(vw[k] <= 0) continue;
+			v2.push_back(k);
+		}
+	}
+
+	thread_isolate_all(v1, v2, vw);
+
 	double weight_remain = 0;
 	for(int k = 0; k < vw.size(); k++)
 	{
-		//printf("weight remain for edge %d = %.2lf, sum = %.2lf\n", u2e[k], vw[k], weight_sum);
 		if(vw[k] <= 0) continue;
 		weight_remain += vw[k];
 	}
@@ -712,6 +739,44 @@ bool router::thread_turn(vector<double> &vw)
 	vw[x] = -1;
 	ug.clear_vertex(x);
 	return true;
+}
+
+int router::thread_isolate_all(const vector<int> &v1, const vector<int> &v2, vector<double> &vw)
+{
+	if(v1.size() == 0 || v2.size() == 0) return 0;
+
+	double sum1 = 0;
+	double sum2 = 0;
+	int a = gr.in_degree(root);
+	int b = gr.degree(root);
+	for(int i = 0; i < v1.size(); i++)
+	{
+		int x = v1[i];
+		sum1 += vw[x];
+	}
+	for(int i = 0; i < v2.size(); i++)
+	{
+		int x = v2[i];
+		sum2 += vw[x];
+	}
+	double sum = (sum1 + sum2) * 0.5;
+
+	vector<double> ww = vw;
+	for(int i = 0; i < v1.size(); i++)
+	{
+		int x = v1[i];
+		for(int j = 0; j < v2.size(); j++)
+		{
+			int y = v2[j];
+			double w = vw[x] * vw[y] / sum;
+			PPID pw(PI(u2e[x], u2e[y]), w);
+			pe2w.insert(pw);
+			ww[x] -= w;
+			ww[y] -= w;
+		}
+	}
+	vw = ww;
+	return 0;
 }
 
 int router::thread_isolate1(int k, vector<double> &vw)
