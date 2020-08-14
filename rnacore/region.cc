@@ -230,12 +230,12 @@ int region::calculate_significance()
 			if(pr <= 0) pr = 0;
 			if(pr >= 1) pr = 1;
 
-			pvalues[i] = compute_binomial_pvalue(total_reads, pr, reads) / pr;
+			pvalues[i] = compute_binomial_pvalue(total_reads, pr, reads) * total_length;
 
 			if(cfg.verbose >= 2)
 			{
-				printf("subregion %d-%d, type = (%d, %d), range = %d-%d, ltype = %d, rtype = %d, pr = %.4lf, total-reads = %d, reads = %d, pvalue = %.8lf\n",
-						pe.lpos, pe.rpos, pe.ltype, pe.rtype, lpos, rpos, ltype, rtype, pr, total_reads, reads, pvalues[i]);
+				printf("subregion %d-%d, type = (%d, %d), range = %d-%d, ltype = %d, rtype = %d, total-length = %d, pr = %.4lf, total-reads = %d, reads = %d, pvalue = %.8lf\n",
+						pe.lpos, pe.rpos, pe.ltype, pe.rtype, lpos, rpos, ltype, rtype, total_length, pr, total_reads, reads, pvalues[i]);
 			}
 
 			if(pvalues[i] > cfg.min_subregion_pvalue) continue;
