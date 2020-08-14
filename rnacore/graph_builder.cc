@@ -18,7 +18,7 @@ See LICENSE for licensing.
 #include "undirected_graph.h"
 
 graph_builder::graph_builder(bundle_base &b, const parameters &c, const sample_profile &s)
-	: bd(b), cfg(c), sp(s), fpe(true)
+	: bd(b), cfg(c), sp(s), fpe(false)
 {}
 
 int graph_builder::build(splice_graph &gr)
