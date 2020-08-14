@@ -327,6 +327,7 @@ int bundle_base::update_bridges(const vector<int> &frlist, const vector<int32_t>
 		assert(h2.hid >= 0);
 
 		// possibly revise pos/rpos
+		/*
 		if(chain.size() >= 1 && h1.rpos > chain.front())
 		{
 			printf("retract small region 1: %d-%d\n", chain.front(), h1.rpos);
@@ -339,19 +340,13 @@ int bundle_base::update_bridges(const vector<int> &frlist, const vector<int32_t>
 			mmap -= make_pair(ROI(h2.pos, chain.back()), 1);
 			h2.pos = chain.back();
 		}
+		*/
 
 		vector<int32_t> v1;
 		v1.push_back(h1.rpos);
 
 		v1.insert(v1.end(), chain.begin(), chain.end());
 		v1.push_back(h2.pos);
-
-		/*
-		printf("hit: %s, h1 = %d-%d, h2 = %d-%d, ", h1.qname.c_str(), h1.pos, h1.rpos, h2.pos, h2.rpos);
-		printf("entire chain: ");
-		printv(v1);
-		printf("\n");
-		*/
 
 		if(h1.rpos < h2.pos && check_increasing_sequence(v1) == false) continue;
 
