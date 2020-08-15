@@ -119,7 +119,7 @@ int router::classify_plain_vertex()
 	if(routes.size() == 0)
 	{
 		type = SPLITTABLE_SIMPLE;
-		degree = gr.degree(root) - 1;
+		degree = (gr.degree(root) + 1) / 2 - 1;
 		return 0;
 	}
 
@@ -139,8 +139,17 @@ int router::classify_plain_vertex()
 		return 0;
 	}
 
-	type = SPLITTABLE_HYPER;
-	degree = vv.size() - 1;
+	int a = 0, b = 0;
+	type = SPLITTABLE_PURE;
+	for(int i = 0; i < vv.size(); i++)
+	{
+		if(vv[i].size() == 1) type = SPLITTABLE_HYPER;
+		if(vv[i].size() == 1) a++;
+		if(vv[i].size() >= 2) b++;
+	}
+	assert(b >= 1);
+	degree = b - 1 + (a + 1) / 2;
+	//printf("classify: a = %d, b = %d, degree = %d, type = %d\n", a, b, degree, type);
 	return 0;
 }
 
@@ -166,7 +175,7 @@ bool router::one_side_connected(undirected_graph &xg)
 
 int router::build()
 {
-	if(type == SPLITTABLE_SIMPLE || type == SPLITTABLE_HYPER) 
+	if(type == SPLITTABLE_SIMPLE || type == SPLITTABLE_HYPER || type == SPLITTABLE_PURE) 
 	{
 		split_plain_vertex();
 	}

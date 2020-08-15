@@ -82,9 +82,10 @@ parameters::parameters()
 	max_decompose_error_ratio[1] = 0.05;
 	max_decompose_error_ratio[2] = 0.25;
 	max_decompose_error_ratio[3] = 0.25;
-	max_decompose_error_ratio[4] = 0.30;
-	max_decompose_error_ratio[5] = 0.00;
-	max_decompose_error_ratio[6] = 1.10;
+	max_decompose_error_ratio[4] = 0.25;
+	max_decompose_error_ratio[5] = 0.30;
+	max_decompose_error_ratio[6] = 0.00;
+	max_decompose_error_ratio[7] = 1.00;
 	min_guaranteed_edge_weight = 0.01;
 	max_dp_table_size = 10000;
 	

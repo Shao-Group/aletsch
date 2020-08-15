@@ -70,19 +70,25 @@ int scallop::assemble()
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, 1, 0.01);
 		if(b == true) continue;
 
-		b = resolve_splittable_vertex(SPLITTABLE_HYPER, 1, cfg.max_decompose_error_ratio[SPLITTABLE_HYPER]);
+		b = resolve_splittable_vertex(SPLITTABLE_PURE, 1, cfg.max_decompose_error_ratio[SPLITTABLE_PURE]);
 		if(b == true) continue;
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, cfg.max_decompose_error_ratio[UNSPLITTABLE_SINGLE]);
 		if(b == true) continue;
 
-		b = resolve_splittable_vertex(SPLITTABLE_SIMPLE, 3, cfg.max_decompose_error_ratio[SPLITTABLE_SIMPLE]);
+		b = resolve_splittable_vertex(SPLITTABLE_HYPER, 1, cfg.max_decompose_error_ratio[SPLITTABLE_HYPER]);
+		if(b == true) continue;
+
+		b = resolve_splittable_vertex(SPLITTABLE_SIMPLE, 1, cfg.max_decompose_error_ratio[SPLITTABLE_SIMPLE]);
+		if(b == true) continue;
+
+		b = resolve_smallest_edge(0.01, 1);
 		if(b == true) continue;
 
 		b = resolve_smallest_edge(0.01, 0);
 		if(b == true) continue;
 
-		b = resolve_smallest_edge(0.01, 1);
+		b = resolve_splittable_vertex(SPLITTABLE_PURE, INT_MAX, cfg.max_decompose_error_ratio[SPLITTABLE_PURE]);
 		if(b == true) continue;
 
 		b = resolve_splittable_vertex(SPLITTABLE_HYPER, INT_MAX, cfg.max_decompose_error_ratio[SPLITTABLE_HYPER]);
@@ -545,6 +551,9 @@ bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 		if(rt.degree > degree) continue;
 
 		rt.build();
+
+		printf("type = %d, degree = %d, rt.degree = %d\n", type, degree, rt.degree);
+
 		assert(rt.eqns.size() == 2);
 
 		int balance = abs((int)(rt.eqns[0].s.size() - rt.eqns[0].t.size())) + abs((int)(gr.in_degree(i) - rt.eqns[0].s.size()) - (int)(gr.out_degree(i) - rt.eqns[0].t.size()));
