@@ -641,18 +641,11 @@ int router::thread()
 
 	assert(ug.num_edges() == 0);
 
+	for(int i = 0; i < v1.size(); i++) thread_isolate1(v1[i], vw);
+	for(int i = 0; i < v2.size(); i++) thread_isolate2(v2[i], vw);
+
 	/*
-	int n = gr.in_degree(root);
-	for(int i = 0; i < v1.size(); i++)
-	{
-		int k = v1[i];
-		if(k < n) thread_isolate1(k, vw);
-		else thread_isolate2(k, vw);
-	}
-	*/
-
 	assert(v1.size() == 0 || v2.size() == 0);
-
 	if(v1.size() == 0 && v2.size() >= 1)
 	{
 		for(int k = 0; k < a; k++)
@@ -669,8 +662,8 @@ int router::thread()
 			v2.push_back(k);
 		}
 	}
-
 	thread_isolate_all(v1, v2, vw);
+	*/
 
 	double weight_remain = 0;
 	for(int k = 0; k < vw.size(); k++)

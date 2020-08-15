@@ -94,11 +94,13 @@ int scallop::assemble()
 		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], true);
 		if(b == true) continue;
 
+		/*
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_MULTIPLE, 1, 0.01);
 		if(b == true) continue;
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_MULTIPLE, INT_MAX, cfg.max_decompose_error_ratio[UNSPLITTABLE_MULTIPLE]);
 		if(b == true) continue;
+		*/
 
 		b = resolve_hyper_edge(2);
 		if(b == true) continue;
