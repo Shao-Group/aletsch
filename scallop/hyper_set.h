@@ -64,6 +64,7 @@ public:
 public:
 	int replace(int x, int e);
 	int replace(int x, int y, int e);
+	int replace(int x, int y, int x2, int y2);
 	int replace(const vector<int> &x, int e);
 	int replace_strange(const vector<int> &x, int e);
 	int remove(int e);

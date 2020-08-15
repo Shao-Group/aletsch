@@ -673,6 +673,54 @@ int hyper_set::replace(const vector<int> &v, int e)
 	return 0;
 }
 
+int hyper_set::replace(int x, int y, int x2, int y2)
+{
+	vector<int> v{x, y};
+	set<int> s = get_intersection(v);
+
+	for(set<int>::iterator it = s.begin(); it != s.end(); it++)
+	{
+		int k = (*it);
+		vector<int> &vv = edges[k];
+
+		bool f = false;
+		for(int k = 0; k < vv.size() - 1; k++)
+		{
+			if(vv[k] == x && vv[k + 1] == y) 
+			{
+				vv[k + 0] = x2;
+				vv[k + 1] = y2;
+				f = true;
+				break;
+			}
+		}
+		if(f == false) continue;
+
+		if(e2s.find(y2) == e2s.end())
+		{
+			set<int> ss;
+			ss.insert(k);
+			e2s.insert(PISI(y2, ss));
+		}
+		else
+		{
+			e2s[y2].insert(k);
+		}
+
+		if(e2s.find(x2) == e2s.end())
+		{
+			set<int> ss;
+			ss.insert(k);
+			e2s.insert(PISI(x2, ss));
+		}
+		else
+		{
+			e2s[x2].insert(k);
+		}
+	}
+	return 0;
+}
+
 int hyper_set::replace_strange(const vector<int> &v, int e)
 {
 	if(v.size() == 0) return 0;

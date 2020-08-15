@@ -79,7 +79,10 @@ int scallop::assemble()
 		b = resolve_splittable_vertex(SPLITTABLE_SIMPLE, 3, cfg.max_decompose_error_ratio[SPLITTABLE_SIMPLE]);
 		if(b == true) continue;
 
-		b = resolve_smallest_edge(0.01, false);
+		b = resolve_smallest_edge(0.01, 0);
+		if(b == true) continue;
+
+		b = resolve_smallest_edge(0.01, 1);
 		if(b == true) continue;
 
 		b = resolve_splittable_vertex(SPLITTABLE_HYPER, INT_MAX, cfg.max_decompose_error_ratio[SPLITTABLE_HYPER]);
@@ -88,10 +91,16 @@ int scallop::assemble()
 		b = resolve_splittable_vertex(SPLITTABLE_SIMPLE, INT_MAX, cfg.max_decompose_error_ratio[SPLITTABLE_SIMPLE]);
 		if(b == true) continue;
 
-		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], false);
+		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 0);
 		if(b == true) continue;
 
-		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], true);
+		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 1);
+		if(b == true) continue;
+
+		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 2);
+		if(b == true) continue;
+
+		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 3);
 		if(b == true) continue;
 
 		/*
@@ -196,7 +205,7 @@ bool scallop::resolve_broken_vertex()
 	return true;
 }
 
-bool scallop::resolve_smallest_edge(double max_ratio, bool threading)
+bool scallop::resolve_smallest_edge(double max_ratio, int degree)
 {
 	int root = -1;
 	bool flag = false;
@@ -207,8 +216,9 @@ bool scallop::resolve_smallest_edge(double max_ratio, bool threading)
 		int i = vv[k];
 		double ratio;
 		bool b = false;
-		if(threading == false) b = remove_single_smallest_edge(i, 0.01, ratio);
-		else b = thread_single_smallest_edge(i, 0.01, ratio);
+		if(degree == 0) b = remove_single_smallest_edge(i, 0.01, ratio);
+		if(degree == 1) b = thread_single_smallest_edge(i, 0.01, ratio);
+		if(degree >= 2) b = thread_single_smallest_edge(i, 0.01, ratio, degree);
 
 		//printf("resolve %d, ratio = %.3lf, b = %c | best = %.3lf, root = %d\n", i, ratio, b ? 'T' : 'F', best_ratio, root);
 
@@ -226,9 +236,182 @@ bool scallop::resolve_smallest_edge(double max_ratio, bool threading)
 	}
 
 	if(flag == true) return true;
-	if(root >= 0 && threading == false) return remove_single_smallest_edge(root, max_ratio, best_ratio);
-	if(root >= 0 && threading ==  true) return thread_single_smallest_edge(root, max_ratio, best_ratio);
+	if(root >= 0 && degree == 0) return remove_single_smallest_edge(root, max_ratio, best_ratio);
+	if(root >= 0 && degree == 1) return thread_single_smallest_edge(root, max_ratio, best_ratio);
+	if(root >= 0 && degree >= 2) return thread_single_smallest_edge(root, max_ratio, best_ratio, degree);
 	return false;
+}
+
+bool scallop::thread_single_smallest_edge(int x, double max_ratio, double &ratio, int degree)
+{
+	ratio = -1;
+	if(degree <= 1) return false;
+	if(gr.out_degree(x) <= 1) return false;
+	if(gr.in_degree(x) <= 1) return false;
+	if(gr.mixed_strand_vertex(x)) return false;
+
+	double r;
+	int e = compute_smallest_edge(x, r);
+	if(e == -1) return false;
+
+	edge_descriptor ee = i2e[e];
+	int es = ee->source();
+	int et = ee->target();
+	assert(es == x || et == x);
+
+	MI s;
+	if(et == x) s = hs.get_successors(e);
+	if(es == x) s = hs.get_predecessors(e);
+	if(s.size() != degree) return false;
+
+	if(r > max_ratio)
+	{
+		ratio = r;
+		return false;
+	}
+
+	/*
+	PEEI pe1, pe2;
+	edge_iterator it1, it2, ot1, ot2;
+	for(pe1 = gr.in_edges(x), it1 = pe1.first, it2 = pe1.second; it1 != it2; it1++)
+	{
+		int e1 = e2i[*it1];
+		double w1 = gr.get_edge_weight(*it1);
+		printf("in edges of %d: %d - %.3lf\n", x, e1, w1);
+	}
+	for(pe2 = gr.out_edges(x), ot1 = pe2.first, ot2 = pe2.second; ot1 != ot2; ot1++)
+	{
+		int e2 = e2i[*ot1];
+		double w2 = gr.get_edge_weight(*ot1);
+		printf("out edges of %d: %d - %.3lf\n", x, e2, w2);
+	}
+	*/
+
+	double we = gr.get_edge_weight(ee);
+	double sum;
+	for(auto &a : s)
+	{
+		int f = a.first;
+		edge_descriptor ff = i2e[f];
+		double w = gr.get_edge_weight(ff);
+		sum += w;
+	}
+
+	double ww1 = gr.get_vertex_weight(x) * r;
+	double ww2 = gr.get_vertex_weight(x) - ww1;
+
+	// vertex-n => new sink vertex
+	// vertex-(n-1) => splitted vertex for xe and ye
+	// vertex-x => splitted vertex for xe2 and ye2
+
+	int n = gr.num_vertices();
+	assert(v2v.size() == n);
+	gr.add_vertex();
+	assert(nonzeroset.find(n - 1) == nonzeroset.end());
+	nonzeroset.insert(n - 1);
+	gr.set_vertex_info(n, gr.get_vertex_info(n - 1));
+	gr.set_vertex_info(n - 1, gr.get_vertex_info(x));
+	gr.set_vertex_weight(n, gr.get_vertex_weight(n - 1));
+	gr.set_vertex_weight(n - 1, ww1);
+	gr.set_vertex_weight(x, ww2);
+
+	v2v.push_back(v2v[n - 1]);
+	v2v[n - 1] = v2v[x];
+
+	// use vertex-n instead of vertex-(n-1) as sink vertex
+	exchange_sink(n - 1, n);
+	if(et == n - 1) et = n;
+
+	assert(gr.degree(n - 1) == 0);
+
+	// attach edges in xe and ye to vertex-(n-1)
+	if(et == x) gr.move_edge(ee, es, n - 1);
+	if(es == x) gr.move_edge(ee, n - 1, et);
+
+	// create new edges
+	for(auto &a : s)
+	{
+		int f = a.first;
+		edge_descriptor ff = i2e[f];
+		int fs = ff->source();
+		int ft = ff->target();
+
+		edge_descriptor pe = null_edge;
+		if(et == x) pe = gr.add_edge(n - 1, ft);
+		if(es == x) pe = gr.add_edge(fs, n - 1);
+
+		int z = i2e.size();
+		i2e.push_back(pe);
+		e2i.insert(PEI(pe, z));
+
+		if(et == x) hs.replace(e, f, e, z);
+		if(es == x) hs.replace(f, e, z, e);
+
+		double wf = gr.get_edge_weight(ff);
+		double wa = wf / sum * we;
+		double wb = wf - wa;
+		if(wa < cfg.min_guaranteed_edge_weight) wa = cfg.min_guaranteed_edge_weight;
+		if(wb < cfg.min_guaranteed_edge_weight) wb = cfg.min_guaranteed_edge_weight;
+
+		gr.set_edge_weight(pe, wa);
+		gr.set_edge_weight(ff, wb);
+		gr.set_edge_info(pe, gr.get_edge_info(ff));
+
+		// TODO, might be buggy
+		vector<int> v0 = mev[ff];
+		if(mev.find(pe) != mev.end()) mev[pe] = v0;
+		else mev.insert(PEV(pe, v0));
+
+		double dd = med[ff] * wf / sum;
+		if(med.find(pe) != med.end()) med[pe] = dd;
+		else med.insert(PED(pe, dd));
+		med[ff] = med[ff] - dd;
+
+		int l = mei[ff];
+		if(mei.find(pe) != mei.end()) mei[pe] = l;
+		else mei.insert(PEI(pe, l));
+
+		borrow_edge_strand(z, f);
+
+		//printf("add edge (%d, %d), id = %d, x = %d, f = %d, fs = %d, ft = %d, z = %d, dd = %.3lf, l = %d, ind = %d, outd = %d\n", pe->source(), pe->target(), z, x, f, fs, ft, z, dd, f, gr.in_degree(n - 1), gr.out_degree(n - 1));
+	}
+
+	/*
+	for(pe1 = gr.in_edges(x), it1 = pe1.first, it2 = pe1.second; it1 != it2; it1++)
+	{
+		int e1 = e2i[*it1];
+		double w1 = gr.get_edge_weight(*it1);
+		printf("in edges of %d: %d - %.3lf\n", x, e1, w1);
+	}
+	for(pe2 = gr.out_edges(x), ot1 = pe2.first, ot2 = pe2.second; ot1 != ot2; ot1++)
+	{
+		int e2 = e2i[*ot1];
+		double w2 = gr.get_edge_weight(*ot1);
+		printf("out edges of %d: %d - %.3lf\n", x, e2, w2);
+	}
+
+	for(pe1 = gr.in_edges(n-1), it1 = pe1.first, it2 = pe1.second; it1 != it2; it1++)
+	{
+		int e1 = e2i[*it1];
+		double w1 = gr.get_edge_weight(*it1);
+		printf("in edges of %d: %d - %.3lf\n", n-1, e1, w1);
+	}
+	for(pe2 = gr.out_edges(n-1), ot1 = pe2.first, ot2 = pe2.second; ot1 != ot2; ot1++)
+	{
+		int e2 = e2i[*ot1];
+		double w2 = gr.get_edge_weight(*ot1);
+		printf("out edges of %d: %d - %.3lf\n", n-1, e2, w2);
+	}
+	*/
+
+	if(cfg.verbose >= 2) 
+	{
+		int32_t p1 = gr.get_vertex_info(x).rpos;
+		int32_t p2 = gr.get_vertex_info(x).lpos;
+		printf("split smallest edge, edge = %d, degree = %d, weight = %.2lf, ratio = %.3lf, vertex = %d, pos = (%d, %d)\n", 
+				e, degree, we, r, x, p1, p2);
+	}
+	return true;
 }
 
 bool scallop::thread_single_smallest_edge(int i, double max_ratio, double &ratio)
@@ -604,6 +787,7 @@ bool scallop::resolve_trivial_vertex(int type, bool fast, double jump_ratio)
 			ratio, gr.in_degree(root), gr.out_degree(root));
 
 	decompose_trivial_vertex(root);
+
 	assert(gr.degree(root) == 0);
 	return true;
 }
