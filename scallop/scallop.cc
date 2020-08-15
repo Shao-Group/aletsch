@@ -79,7 +79,7 @@ int scallop::assemble()
 		b = resolve_splittable_vertex(SPLITTABLE_SIMPLE, 3, cfg.max_decompose_error_ratio[SPLITTABLE_SIMPLE]);
 		if(b == true) continue;
 
-		b = resolve_smallest_edge(0.01);
+		b = resolve_smallest_edge(0.01, false);
 		if(b == true) continue;
 
 		b = resolve_splittable_vertex(SPLITTABLE_HYPER, INT_MAX, cfg.max_decompose_error_ratio[SPLITTABLE_HYPER]);
@@ -88,7 +88,10 @@ int scallop::assemble()
 		b = resolve_splittable_vertex(SPLITTABLE_SIMPLE, INT_MAX, cfg.max_decompose_error_ratio[SPLITTABLE_SIMPLE]);
 		if(b == true) continue;
 
-		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
+		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], false);
+		if(b == true) continue;
+
+		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], true);
 		if(b == true) continue;
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_MULTIPLE, 1, 0.01);
@@ -191,7 +194,7 @@ bool scallop::resolve_broken_vertex()
 	return true;
 }
 
-bool scallop::resolve_smallest_edge(double max_ratio)
+bool scallop::resolve_smallest_edge(double max_ratio, bool threading)
 {
 	int root = -1;
 	bool flag = false;
@@ -201,7 +204,9 @@ bool scallop::resolve_smallest_edge(double max_ratio)
 	{
 		int i = vv[k];
 		double ratio;
-		bool b = resolve_single_smallest_edge(i, 0.01, ratio);
+		bool b = false;
+		if(threading == false) b = remove_single_smallest_edge(i, 0.01, ratio);
+		else b = thread_single_smallest_edge(i, 0.01, ratio);
 
 		//printf("resolve %d, ratio = %.3lf, b = %c | best = %.3lf, root = %d\n", i, ratio, b ? 'T' : 'F', best_ratio, root);
 
@@ -219,11 +224,77 @@ bool scallop::resolve_smallest_edge(double max_ratio)
 	}
 
 	if(flag == true) return true;
-	if(root >= 0) return resolve_single_smallest_edge(root, max_ratio, best_ratio);
+	if(root >= 0 && threading == false) return remove_single_smallest_edge(root, max_ratio, best_ratio);
+	if(root >= 0 && threading ==  true) return thread_single_smallest_edge(root, max_ratio, best_ratio);
 	return false;
 }
 
-bool scallop::resolve_single_smallest_edge(int i, double max_ratio, double &ratio)
+bool scallop::thread_single_smallest_edge(int i, double max_ratio, double &ratio)
+{
+	ratio = -1;
+	if(gr.out_degree(i) <= 1) return false;
+	if(gr.in_degree(i) <= 1) return false;
+	if(gr.mixed_strand_vertex(i)) return false;
+
+	double r;
+	int e = compute_smallest_edge(i, r);
+	if(e == -1) return false;
+
+	edge_descriptor ee = i2e[e];
+	int es = ee->source();
+	int et = ee->target();
+	assert(es == i || et == i);
+
+	MI s;
+	if(et == i) s = hs.get_successors(e);
+	if(es == i) s = hs.get_predecessors(e);
+	if(s.size() != 1) return false;
+
+	if(r > max_ratio)
+	{
+		ratio = r;
+		return false;
+	}
+
+	int f = s.begin()->first;
+	edge_descriptor ff = i2e[f];
+	int fs = ff->source();
+	int ft = ff->target();
+
+	double we = gr.get_edge_weight(ee);
+	double wf = gr.get_edge_weight(ff);
+
+	if(wf <= we + cfg.min_guaranteed_edge_weight) wf = we + cfg.min_guaranteed_edge_weight;
+	gr.set_edge_weight(ff, wf);
+
+	if(et == i)
+	{
+		assert(et == fs);
+		int g = merge_adjacent_edges(e, f);
+		assert(g >= 0);
+		hs.replace(e, f, g);
+		hs.replace(e, g);
+	}
+	if(es == i)
+	{
+		assert(es == ft);
+		int g = merge_adjacent_edges(f, e);
+		assert(g >= 0);
+		hs.replace(f, e, g);
+		hs.replace(e, g);
+	}
+
+	if(cfg.verbose >= 2) 
+	{
+		int32_t p1 = gr.get_vertex_info(i).rpos;
+		int32_t p2 = gr.get_vertex_info(i).lpos;
+		printf("thread smallest edge, edge = %d, weight = %.2lf, ratio = %.3lf, vertex = %d, pos = (%d, %d)\n", 
+				e, we, r, i, p1, p2);
+	}
+	return true;
+}
+
+bool scallop::remove_single_smallest_edge(int i, double max_ratio, double &ratio)
 {
 	double r;
 	ratio = -1;
@@ -304,17 +375,6 @@ bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 	}
 
 	if(root == -1) return false;
-
-	// compare with removing the smallest edge
-	/*
-	double small_ratio;
-	bool b = resolve_single_smallest_edge(root, ratio, small_ratio);
-	if(b == true)
-	{
-		if(cfg.verbose >= 2) printf("resolve smallest edge in resolving splittable vertex, type = %d, degree = %d, vertex = %d, ratio = %.2lf, small-ratio = %.2lf degree = (%d, %d)\n", type, degree, root, ratio, small_ratio, gr.in_degree(root), gr.out_degree(root));
-		return true;
-	}
-	*/
 
 	if(cfg.verbose >= 2) printf("resolve splittable vertex, type = %d, degree = %d, vertex = %d, %d-%d, ratio = %.2lf, balance = %d, degree = (%d, %d), eqn = (%lu, %lu)\n",
 			type, degree, root, gr.get_vertex_info(root).lpos, gr.get_vertex_info(root).rpos, min_ratio, min_balance, gr.in_degree(root), gr.out_degree(root), eqn.s.size(), eqn.t.size());

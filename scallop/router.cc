@@ -602,10 +602,32 @@ int router::thread()
 		if(ug.degree(k) == 0 && k >= a) v2.push_back(k);
 	}
 
-
 	vector<double> vw = compute_balanced_weights();
 	double weight_sum = 0;
 	for(int k = 0; k < vw.size(); k++) weight_sum += vw[k];
+
+	// print
+	printf("left vertices: ");
+	for(int i = 0; i < gr.in_degree(root); i++)
+	{
+		printf("%d/%.2lf, ", i, vw[i]);
+	}
+	printf("\n");
+	printf("right vertices: ");
+	for(int i = gr.in_degree(root); i < gr.degree(root); i++)
+	{
+		printf("%d/%.2lf, ", i, vw[i]);
+	}
+	printf("\n");
+	MPID md;		/// for printing purpose
+	for(auto &x : u2w)
+	{
+		int s = x.first->source();
+		int t = x.first->target();
+		if(s < t) md.insert(make_pair(PI(s, t), x.second));
+		else md.insert(make_pair(PI(t, s), x.second));
+	}
+	// end print
 
 	bool b;
 	while(true)
@@ -658,6 +680,20 @@ int router::thread()
 	}
 
 	ratio = weight_remain / weight_sum;
+
+	// print
+	printf("pe2w: ");
+	for(auto &x : pe2w)
+	{
+		int s = e2u[x.first.first];
+		int t = e2u[x.first.second];
+		double w = -1;
+		if(md.find(PI(s, t)) != md.end()) w = md[PI(s, t)];
+		if(md.find(PI(t, s)) != md.end()) w = md[PI(t, s)];
+		printf("%d-%d/%.2lf/%.0lf, ", s, t, x.second, w);
+	}
+	printf("\n");
+
 	return 0;
 }
 
