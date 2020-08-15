@@ -70,31 +70,16 @@ int scallop::assemble()
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, 1, 0.01);
 		if(b == true) continue;
 
-		b = resolve_splittable_vertex(SPLITTABLE_PURE, 1, cfg.max_decompose_error_ratio[SPLITTABLE_PURE]);
+		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, cfg.max_decompose_error_ratio[UNSPLITTABLE_SINGLE]);
 		if(b == true) continue;
 
-		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, cfg.max_decompose_error_ratio[UNSPLITTABLE_SINGLE]);
+		b = resolve_splittable_vertex(SPLITTABLE_PURE, 1, cfg.max_decompose_error_ratio[SPLITTABLE_PURE]);
 		if(b == true) continue;
 
 		b = resolve_splittable_vertex(SPLITTABLE_HYPER, 1, cfg.max_decompose_error_ratio[SPLITTABLE_HYPER]);
 		if(b == true) continue;
 
 		b = resolve_splittable_vertex(SPLITTABLE_SIMPLE, 1, cfg.max_decompose_error_ratio[SPLITTABLE_SIMPLE]);
-		if(b == true) continue;
-
-		b = resolve_smallest_edge(0.01, 1);
-		if(b == true) continue;
-
-		b = resolve_smallest_edge(0.01, 0);
-		if(b == true) continue;
-
-		b = resolve_splittable_vertex(SPLITTABLE_PURE, INT_MAX, cfg.max_decompose_error_ratio[SPLITTABLE_PURE]);
-		if(b == true) continue;
-
-		b = resolve_splittable_vertex(SPLITTABLE_HYPER, INT_MAX, cfg.max_decompose_error_ratio[SPLITTABLE_HYPER]);
-		if(b == true) continue;
-
-		b = resolve_splittable_vertex(SPLITTABLE_SIMPLE, INT_MAX, cfg.max_decompose_error_ratio[SPLITTABLE_SIMPLE]);
 		if(b == true) continue;
 
 		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 0);
@@ -104,6 +89,15 @@ int scallop::assemble()
 		if(b == true) continue;
 
 		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 2);
+		if(b == true) continue;
+
+		b = resolve_splittable_vertex(SPLITTABLE_PURE, INT_MAX, cfg.max_decompose_error_ratio[SPLITTABLE_PURE]);
+		if(b == true) continue;
+
+		b = resolve_splittable_vertex(SPLITTABLE_HYPER, INT_MAX, cfg.max_decompose_error_ratio[SPLITTABLE_HYPER]);
+		if(b == true) continue;
+
+		b = resolve_splittable_vertex(SPLITTABLE_SIMPLE, INT_MAX, cfg.max_decompose_error_ratio[SPLITTABLE_SIMPLE]);
 		if(b == true) continue;
 
 		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 3);
@@ -214,7 +208,6 @@ bool scallop::resolve_broken_vertex()
 bool scallop::resolve_smallest_edge(double max_ratio, int degree)
 {
 	int root = -1;
-	bool flag = false;
 	double best_ratio = max_ratio;
 	vector<int> vv(nonzeroset.begin(), nonzeroset.end());
 	for(int k = 0; k < vv.size(); k++)
@@ -228,20 +221,15 @@ bool scallop::resolve_smallest_edge(double max_ratio, int degree)
 
 		//printf("resolve %d, ratio = %.3lf, b = %c | best = %.3lf, root = %d\n", i, ratio, b ? 'T' : 'F', best_ratio, root);
 
-		if(b == true)
-		{
-			assert(ratio <= 0.01);
-			flag = true;
-		}
+		if(b == true) return true;
 
-		if(b == false && ratio >= 0 && ratio < best_ratio)
+		if(ratio >= 0 && ratio < best_ratio)
 		{
 			best_ratio = ratio;
 			root = i;
 		}
 	}
 
-	if(flag == true) return true;
 	if(root >= 0 && degree == 0) return remove_single_smallest_edge(root, max_ratio, best_ratio);
 	if(root >= 0 && degree == 1) return thread_single_smallest_edge(root, max_ratio, best_ratio);
 	if(root >= 0 && degree >= 2) return thread_single_smallest_edge(root, max_ratio, best_ratio, degree);
