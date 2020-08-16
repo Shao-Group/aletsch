@@ -1316,7 +1316,7 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb)
 		PEB p = gr.edge(x.first, gr.num_vertices() - 1);
 		if(p.second == false) continue;
 		gr.remove_edge(p.first);
-		printf("detect false end boundary %d with %d reads\n", gr.get_vertex_info(x.first).rpos, x.second); 
+		//printf("detect false end boundary %d with %d reads\n", gr.get_vertex_info(x.first).rpos, x.second); 
 	}
 
 	for(auto &x : fb2)
@@ -1324,7 +1324,7 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb)
 		PEB p = gr.edge(0, x.first);
 		if(p.second == false) continue;
 		gr.remove_edge(p.first);
-		printf("detect false start boundary %d with %d reads\n", gr.get_vertex_info(x.first).lpos, x.second); 
+		//printf("detect false start boundary %d with %d reads\n", gr.get_vertex_info(x.first).lpos, x.second); 
 	}
 	return 0;
 }
