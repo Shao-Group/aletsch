@@ -616,6 +616,7 @@ int router::thread()
 	for(int k = 0; k < vw.size(); k++) weight_sum += vw[k];
 
 	// print
+	/*
 	printf("left vertices: ");
 	for(int i = 0; i < gr.in_degree(root); i++)
 	{
@@ -636,6 +637,7 @@ int router::thread()
 		if(s < t) md.insert(make_pair(PI(s, t), x.second));
 		else md.insert(make_pair(PI(t, s), x.second));
 	}
+	*/
 	// end print
 
 	bool b;
@@ -684,6 +686,7 @@ int router::thread()
 	ratio = weight_remain / weight_sum;
 
 	// print
+	/*
 	printf("pe2w: ");
 	for(auto &x : pe2w)
 	{
@@ -695,6 +698,8 @@ int router::thread()
 		printf("%d-%d/%.2lf/%.0lf, ", s, t, x.second, w);
 	}
 	printf("\n");
+	*/
+	// end print
 
 	return 0;
 }

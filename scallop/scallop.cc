@@ -540,7 +540,7 @@ bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 
 		rt.build();
 
-		printf("type = %d, degree = %d, rt.degree = %d\n", type, degree, rt.degree);
+		//printf("type = %d, degree = %d, rt.degree = %d\n", type, degree, rt.degree);
 
 		assert(rt.eqns.size() == 2);
 

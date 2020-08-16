@@ -154,7 +154,7 @@ int assembler::bridge(vector<bundle*> gv)
 			cnt1 += 1;
 			cnt2 += bd.update_bridges(vc[j].frlist, bs.opt[j].chain);
 		}
-		printf("further bridge %d / %lu clusters, %d / %d fragments\n", cnt1, vc.size(), cnt2, unbridged);
+		if(cfg.verbose >= 2) printf("further bridge %d / %lu clusters, %d / %d fragments\n", cnt1, vc.size(), cnt2, unbridged);
 	}
 	return 0;
 }
