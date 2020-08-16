@@ -65,7 +65,7 @@ private:
 	bool resolve_broken_vertex();
 	bool resolve_trivial_vertex(int type, bool fast, double jump_ratio);
 	bool resolve_single_trivial_vertex(int i, double jump_ratio);
-	bool resolve_smallest_edge(double max_ratio, int degree);
+	bool resolve_smallest_edge(double max_ratio, int degree, bool adj_only);
 	bool resolve_splittable_vertex(int type, int degree, double max_ratio);
 	bool resolve_unsplittable_vertex(int type, int degree, double max_ratio);
 	bool resolve_hyper_edge(int fsize);
@@ -78,7 +78,7 @@ private:
 	double compute_balance_ratio(int x);
 
 	// decomposing subroutines
-	bool remove_single_smallest_edge(int root, double max_ratio, double &ratio);
+	bool remove_single_smallest_edge(int root, double max_ratio, double &ratio, bool adj_only);
 	bool thread_single_smallest_edge(int root, double max_ratio, double &ratio);
 	bool thread_single_smallest_edge(int root, double max_ratio, double &ratio, int degree);
 	int compute_smallest_edge(int x, double &ratio);
@@ -102,6 +102,8 @@ private:
 	int borrow_edge_strand(int e1, int e2);
 	bool consistent_strands(int e1, int e2);
 	int break_divided_phases();
+	bool left_adjacent(edge_descriptor e);
+	bool right_adjacent(edge_descriptor e);
 
 	int collect_existing_st_paths();
 	int collect_path(int e);
