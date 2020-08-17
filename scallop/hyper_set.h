@@ -40,14 +40,14 @@ public:
 public:
 	int clear();
 	int add_node_list(const vector<int> &s, int c, int o = 1);
-	int build(directed_graph &gr, MEI &e2i);
-	int build_edges(directed_graph &gr, MEI &e2i);
+	int build(splice_graph &gr, MEI &e2i);
+	int build_edges(splice_graph &gr, MEI &e2i);
 	int build_index();
 	int update_index();
 	set<int> get_intersection(const vector<int> &v);
 	MI get_successors(int e);
 	MI get_predecessors(int e);
-	MPII get_routes(int x, directed_graph &gr, MEI &e2i);
+	MPII get_routes(int x, splice_graph &gr, MEI &e2i);
 	int print_nodes();
 	int print_edges();
 	int write(ostream &os) const;

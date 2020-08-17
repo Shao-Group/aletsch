@@ -1166,7 +1166,7 @@ int splice_graph::print()
 	for(int i = 0; i < num_vertices(); i++)
 	{
 		vertex_info vi = get_vertex_info(i);
-		printf("vertex %d, range = [%d, %d), length = %d, weight = %.2lf\n", i, vi.lpos, vi.rpos, vi.rpos - vi.lpos, get_vertex_weight(i));
+		printf("vertex %d, range = [%d, %d), length = %d, weight = %.2lf, type = %d\n", i, vi.lpos, vi.rpos, vi.rpos - vi.lpos, get_vertex_weight(i), vi.type);
 	}
 	print_weights();
 	return 0;

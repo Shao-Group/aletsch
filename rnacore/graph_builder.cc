@@ -27,6 +27,8 @@ int graph_builder::build(splice_graph &gr)
 	remove_opposite_junctions();
 	build_regions();
 	build_partial_exons();
+	filter_partial_exons();
+	build_regional();
 	link_partial_exons();
 	build_splice_graph(gr);
 	refine_splice_graph(gr);
@@ -217,7 +219,6 @@ int graph_builder::build_regions()
 int graph_builder::build_partial_exons()
 {
 	pexons.clear();
-	regional.clear();
 	for(int i = 0; i < regions.size(); i++)
 	{
 		region &r = regions[i];
@@ -225,9 +226,70 @@ int graph_builder::build_partial_exons()
 		{
 			partial_exon &pe = r.pexons[k];
 			pexons.push_back(pe);
-			if((pe.lpos != bd.lpos || pe.rpos != bd.rpos) && pe.ltype == START_BOUNDARY && pe.rtype == END_BOUNDARY) regional.push_back(true);
-			else regional.push_back(false);
 		}
+	}
+	return 0;
+}
+
+int graph_builder::filter_partial_exons()
+{
+	map<PI32, int> mj;
+	for(int i = 0; i < junctions.size(); i++)
+	{
+		junction &jc = junctions[i];
+		PI32 p(jc.lpos, jc.rpos);
+		assert(mj.find(p) == mj.end());
+		mj.insert(make_pair(p, i));
+	}
+
+	vector<partial_exon> pv;
+	for(int i = 0; i < pexons.size(); i++)
+	{
+		partial_exon &pe = pexons[i];
+
+		bool b = false;
+		if(pe.lpos == bd.lpos) b = true;
+		if(pe.rpos == bd.rpos) b = true;
+		if(pe.ltype == RIGHT_SPLICE) b = true;
+		if(pe.rtype == LEFT_SPLICE) b = true;
+		if(pe.ltype == LEFT_SPLICE && pe.rtype == RIGHT_SPLICE)
+		{
+			PI32 p(pe.lpos, pe.rpos);
+			if(mj.find(p) == mj.end()) b = true;
+			else if(junctions[mj[p]].count < pe.ave) b = true;
+		}
+
+		if(b == true) 
+		{
+			pe.type = 0;
+			pv.push_back(pe);
+			continue;
+		}
+
+		bool f = true;
+		if(pe.rpos - pe.lpos <= 0) f = false;
+		if(pe.ltype == START_BOUNDARY && pe.rpos - pe.lpos < cfg.min_subregion_length) f = false;
+		if(pe.rtype == END_BOUNDARY && pe.rpos - pe.lpos < cfg.min_subregion_length) f = false;
+		if(pe.ave < cfg.min_subregion_overlap) f = false;
+
+		if(f == true) 
+		{
+			pe.type = 1;
+			pv.push_back(pe);
+		}
+	}
+	pexons = pv;
+	return 0;
+}
+
+int graph_builder::build_regional()
+{
+	regional.clear();
+	for(int k = 0; k < pexons.size(); k++)
+	{
+		partial_exon &pe = pexons[k];
+		if((pe.lpos != bd.lpos || pe.rpos != bd.rpos) && pe.ltype == START_BOUNDARY && pe.rtype == END_BOUNDARY) regional.push_back(true);
+		else regional.push_back(false);
 	}
 	return 0;
 }
@@ -295,6 +357,7 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 	vertex_info vi0;
 	vi0.lpos = bd.lpos;
 	vi0.rpos = bd.lpos;
+	vi0.type = 0;
 	gr.set_vertex_weight(0, 0);
 	gr.set_vertex_info(0, vi0);
 	for(int i = 0; i < pexons.size(); i++)
@@ -307,6 +370,7 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 		if(w < cfg.min_guaranteed_edge_weight) w = cfg.min_guaranteed_edge_weight;
 		gr.set_vertex_weight(i + 1, w);
 		vertex_info vi;
+		vi.type = r.type;
 		vi.lpos = r.lpos;
 		vi.rpos = r.rpos;
 		vi.stddev = r.dev;
@@ -315,11 +379,11 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 		vi.regional = regional[i];
 		gr.set_vertex_info(i + 1, vi);
 	}
-
 	gr.add_vertex();
 	vertex_info vin;
 	vin.lpos = bd.rpos;
 	vin.rpos = bd.rpos;
+	vin.type = 0;
 	gr.set_vertex_weight(pexons.size() + 1, 0);
 	gr.set_vertex_info(pexons.size() + 1, vin);
 

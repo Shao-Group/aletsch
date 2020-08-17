@@ -78,7 +78,7 @@ parameters::parameters()
 	min_boundary_log_ratio = 2.0;
 
 	// for decomposing splice graph
-	max_decompose_error_ratio[0] = 0.25;
+	max_decompose_error_ratio[0] = 0.15;
 	max_decompose_error_ratio[1] = 0.00;
 	max_decompose_error_ratio[2] = 0.25;
 	max_decompose_error_ratio[3] = 0.25;

@@ -313,14 +313,14 @@ int hyper_set::merge(const hyper_set &hx)
 	return 0;
 }
 
-int hyper_set::build(directed_graph &gr, MEI& e2i)
+int hyper_set::build(splice_graph &gr, MEI& e2i)
 {
 	build_edges(gr, e2i);
 	build_index();
 	return 0;
 }
 
-int hyper_set::build_edges(directed_graph &gr, MEI& e2i)
+int hyper_set::build_edges(splice_graph &gr, MEI& e2i)
 {
 	edges.clear();
 	for(MVII::iterator it = nodes.begin(); it != nodes.end(); it++)
@@ -328,26 +328,45 @@ int hyper_set::build_edges(directed_graph &gr, MEI& e2i)
 		int c = it->second;
 		//if(c < min_hyper_count) continue;
 
-		const vector<int> &vv = it->first;
-		if(vv.size() <= 1) continue;
+		const vector<int> &v = it->first;
+		if(v.size() <= 1) continue;
 
-		vector<int> ve;
-		bool b = true;
-		for(int k = 0; k < vv.size() - 1; k++)
+		// filter nodes with type = 1
+		vector<vector<int>> vv;
+		vector<int> t;
+		for(int i = 0; i < v.size(); i++)
 		{
-			assert(vv[k] < vv[k + 1]);
-			PEB p = gr.edge(vv[k], vv[k + 1]);
-			if(p.second == false) b = false;
-			if(p.second == false) ve.push_back(-1);
-			else ve.push_back(e2i[p.first]);
+			if(gr.get_vertex_info(v[i]).type == 1)
+			{
+				if(t.size() >= 2) vv.push_back(t);
+				t.clear();
+			}
+			else
+			{
+				t.push_back(v[i]);
+			}
 		}
+		if(t.size() >= 2) vv.push_back(t);
 
-		if(b == true && ve.size() >= 2)
+		for(int i = 0; i < vv.size(); i++)
 		{
-			edges.push_back(ve);
-			ecnts.push_back(c);
+			bool b = true;
+			const vector<int> &t = vv[i];
+			vector<int> ve;
+			for(int k = 0; k < t.size() - 1; k++)
+			{
+				assert(t[k] < t[k + 1]);
+				PEB p = gr.edge(t[k], t[k + 1]);
+				if(p.second == false) b = false;
+				if(p.second == false) ve.push_back(-1);
+				else ve.push_back(e2i[p.first]);
+			}
+			if(b == true && ve.size() >= 2)
+			{
+				edges.push_back(ve);
+				ecnts.push_back(c);
+			}
 		}
-		continue;
 	}
 	return 0;
 }
@@ -549,7 +568,7 @@ MI hyper_set::get_predecessors(int e)
 	return s;
 }
 
-MPII hyper_set::get_routes(int x, directed_graph &gr, MEI &e2i)
+MPII hyper_set::get_routes(int x, splice_graph &gr, MEI &e2i)
 {
 	MPII mpi;
 	edge_iterator it1, it2;
@@ -568,42 +587,6 @@ MPII hyper_set::get_routes(int x, directed_graph &gr, MEI &e2i)
 	}
 	return mpi;
 }
-
-/*
-int hyper_set::get_routes(int x, directed_graph &gr, MEI &e2i, MPII &mpi)
-{
-	edge_iterator it1, it2;
-	mpi.clear();
-	int total = 0;
-	for(tie(it1, it2) = gr.in_edges(x); it1 != it2; it1++)
-	{
-		assert(e2i.find(*it1) != e2i.end());
-		int e = e2i[*it1];
-
-		if(e2s.find(e) == e2s.end()) continue;
-		set<int> &ss = e2s[e];
-		for(set<int>::iterator it = ss.begin(); it != ss.end(); it++)
-		{
-			int k = *it;
-			assert(k >= 0 && k < edges.size());
-			assert(k >= 0 && k < ecnts.size());
-			vector<int> &v = edges[k];
-			int cnt = ecnts[k];
-			for(int i = 0; i < v.size(); i++)
-			{
-				if(v[i] != e) continue;
-				if(i == v.size() - 1) continue;
-				if(v[i + 1] == -1) continue;
-				PI p(e, v[i + 1]);
-				total += cnt;
-				if(mpi.find(p) != mpi.end()) mpi[p] += cnt;
-				else mpi.insert(PPII(p, cnt));
-			}
-		}
-	}
-	return total;
-}
-*/
 
 int hyper_set::replace(int x, int e)
 {
