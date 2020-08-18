@@ -85,6 +85,27 @@ int region::smooth_join_interval_map()
 	return 0;
 }
 
+bool region::empty_subregion(int32_t p1, int32_t p2)
+{
+	assert(p1 < p2);
+	assert(p1 >= lpos && p2 <= rpos);
+
+	//printf(" region = [%d, %d), subregion [%d, %d), length = %d\n", lpos, rpos, p1, p2, p2 - p1);
+	if(p2 - p1 < cfg.min_subregion_length) return true;
+
+	PSIMI pei = locate_boundary_iterators(*mmap, p1, p2);
+	SIMI it1 = pei.first, it2 = pei.second;
+	if(it1 == mmap->end() || it2 == mmap->end()) return true;
+
+	int32_t sum = compute_sum_overlap(*mmap, it1, it2);
+	double ratio = sum * 1.0 / (p2 - p1);
+	//printf(" region = [%d, %d), subregion [%d, %d), overlap = %.2lf\n", lpos, rpos, p1, p2, ratio);
+	//if(ratio < min_subregion_overlap + max_intron_contamination_coverage) return true;
+	if(ratio < cfg.min_subregion_overlap) return true;
+
+	return false;
+}
+
 int region::build_partial_exons()
 {
 	pexons.clear();
@@ -123,6 +144,13 @@ int region::build_partial_exons()
 		int32_t p2 = upper(it->first);
 		assert(p1 < p2);
 		
+		/*
+		bool b = empty_subregion(p1, p2);
+		if(p1 == lpos && ltype == RIGHT_SPLICE) b = false;
+		if(p2 == rpos && rtype == LEFT_SPLICE) b = false;
+		if(b == true) continue;
+		*/
+
 		int lt = (p1 == lpos) ? ltype : START_BOUNDARY;
 		int rt = (p2 == rpos) ? rtype : END_BOUNDARY;
 
@@ -240,7 +268,7 @@ int region::calculate_significance1()
 		partial_exon &pe = pexons[i];
 		pe.pvalue = pvalues[i];
 
-		if(pe.ave < cfg.min_subregion_coverage) pe.pvalue = 1;
+		if(pe.ave < cfg.min_subregion_overlap) pe.pvalue = 1;
 		if(pe.rpos - pe.lpos < cfg.min_subregion_length) pe.pvalue = 1;
 		if(pe.lpos == lpos && ltype == RIGHT_SPLICE) pe.pvalue = 0;
 		if(pe.rpos == rpos && rtype == LEFT_SPLICE) pe.pvalue = 0;
@@ -313,7 +341,7 @@ int region::calculate_significance2()
 		partial_exon &pe = pexons[i];
 		pe.pvalue = pvalues[i];
 
-		if(pe.ave < cfg.min_subregion_coverage) pe.pvalue = 1;
+		if(pe.ave < cfg.min_subregion_overlap) pe.pvalue = 1;
 		if(pe.rpos - pe.lpos < cfg.min_subregion_length) pe.pvalue = 1;
 		if(pe.lpos == lpos && ltype == RIGHT_SPLICE) pe.pvalue = 0;
 		if(pe.rpos == rpos && rtype == LEFT_SPLICE) pe.pvalue = 0;

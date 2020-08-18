@@ -65,7 +65,7 @@ parameters::parameters()
 	
 	// for identifying subgraphs
 	min_subregion_gap = 15;
-	min_subregion_coverage = 2.5;		// used to be 1.5
+	min_subregion_overlap = 1.5;		// used to be 1.5
 	min_subregion_length = 15;			// used to be 15
 	min_subregion_pvalue = 0.01;
 	
@@ -441,10 +441,10 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			i++;
 			i++;
 		}
-		else if(string(argv[i]) == "--min_subregion_coverage")
+		else if(string(argv[i]) == "--min_subregion_overlap")
 		{
 			int dt = atoi(argv[i + 1]);
-			if(dt == 0 || dt == data_type) min_subregion_coverage = atoi(argv[i + 2]);
+			if(dt == 0 || dt == data_type) min_subregion_overlap = atoi(argv[i + 2]);
 			i++;
 			i++;
 		}

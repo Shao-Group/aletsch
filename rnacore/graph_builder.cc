@@ -270,7 +270,7 @@ int graph_builder::filter_partial_exons()
 		if(pe.rpos - pe.lpos <= 0) f = false;
 		if(pe.ltype == START_BOUNDARY && pe.rpos - pe.lpos < cfg.min_subregion_length) f = false;
 		if(pe.rtype == END_BOUNDARY && pe.rpos - pe.lpos < cfg.min_subregion_length) f = false;
-		if(pe.ave < cfg.min_subregion_coverage) f = false;
+		if(pe.ave < cfg.min_subregion_overlap) f = false;
 
 		if(f == true) 
 		{
