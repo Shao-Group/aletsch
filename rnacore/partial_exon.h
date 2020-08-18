@@ -24,7 +24,6 @@ public:
 	int ltype;						// type of the left boundary
 	int rtype;						// type of the right boundary
 
-	int type;						// for different uses
 	double ave;						// average abundance
 	double dev;						// standard-deviation of abundance
 	double max;						// largest coverage in this partial exon

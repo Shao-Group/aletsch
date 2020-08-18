@@ -183,9 +183,6 @@ int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int
 	}
 	*/
 
-	if(cfg.verbose >= 2) gx.print();
-	if(cfg.verbose >= 2) hx.print_nodes();
-
 	scallop sx(gx, hx, cfg);
 	sx.assemble();
 

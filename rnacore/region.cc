@@ -25,7 +25,7 @@ region::region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype, const split
 	build_join_interval_map();
 	smooth_join_interval_map();
 	build_partial_exons();
-	//calculate_significance2();
+	//calculate_significance();
 } 
 
 region::~region()
@@ -144,12 +144,10 @@ int region::build_partial_exons()
 		int32_t p2 = upper(it->first);
 		assert(p1 < p2);
 		
-		/*
 		bool b = empty_subregion(p1, p2);
 		if(p1 == lpos && ltype == RIGHT_SPLICE) b = false;
 		if(p2 == rpos && rtype == LEFT_SPLICE) b = false;
 		if(b == true) continue;
-		*/
 
 		int lt = (p1 == lpos) ? ltype : START_BOUNDARY;
 		int rt = (p2 == rpos) ? rtype : END_BOUNDARY;
@@ -201,21 +199,7 @@ int region::print(int index) const
 	return 0;
 }
 
-int region::calculate_significance0()
-{
-	if(pexons.size() <= 0) return 0;
-	if(pexons.size() == 1)
-	{
-		partial_exon &pe = pexons[0];
-		if(pe.lpos == lpos && pe.rpos == rpos && (pe.ltype != LEFT_SPLICE || pe.rtype != RIGHT_SPLICE)) pe.pvalue = 0;
-		else pe.pvalue = 1;
-		return 0;
-	}
-	for(int i = 0; i < pexons.size(); i++) pexons[i].pvalue = 1;
-	return 0;
-}
-
-int region::calculate_significance1()
+int region::calculate_significance()
 {
 	if(pexons.size() == 1 && pexons[0].lpos == lpos && pexons[0].rpos == rpos) return 0;
 
@@ -278,83 +262,6 @@ int region::calculate_significance1()
 			printf("subregion %d-%d, type = (%d, %d), range = %d-%d, ltype = %d, rtype = %d, pvalue = %.8lf\n", pe.lpos, pe.rpos, pe.ltype, pe.rtype, lpos, rpos, ltype, rtype, pe.pvalue);
 		}
 	}
-	return 0;
-}
-
-int region::calculate_significance2()
-{
-	if(pexons.size() == 1 && pexons[0].lpos == lpos && pexons[0].rpos == rpos) return 0;
-
-	int read_length = sp.insertsize_median / 2;
-	int total_len = 0;
-	double total_cov = 0;
-	for(int i = 0; i < pexons.size(); i++)
-	{
-		partial_exon &pe = pexons[i];
-		int len = pe.rpos - pe.lpos;
-		total_cov += pe.ave * len;
-		total_len += len;
-	}
-
-	vector<double> pvalues(pexons.size(), 1);
-
-	while(true)
-	{
-		bool flag = false;
-		for(int i = 0; i < pexons.size(); i++)
-		{
-			if(pvalues[i] <= 0.5) continue;
-
-			partial_exon &pe = pexons[i];
-			int len = pe.rpos - pe.lpos;
-			int base_len = total_len - len;
-			double base_cov = total_cov - pe.ave * len;
-			double base_ave = 1;
-			if(base_len <= 0)
-			{
-				pvalues[i] = 0;
-			}
-			else
-			{
-				base_ave = base_cov / base_len;
-				if(pe.ave > 2 * base_ave * base_ave + 1) pvalues[i] = 0;
-			}
-
-			if(cfg.verbose >= 2)
-			{
-				printf("subregion %d-%d, type = (%d, %d), range = %d-%d, ltype = %d, rtype = %d, base-len = %d, base-ave = %.2lf, pe.ave = %.2lf, len = %d, pvalue = %.1lf\n",
-						pe.lpos, pe.rpos, pe.ltype, pe.rtype, lpos, rpos, ltype, rtype, base_len, base_ave, pe.ave, len, pvalues[i]);
-			}
-
-			if(pvalues[i] > 0.5) continue;
-
-			flag = true;
-			total_len -= len;
-			total_cov -= len * pe.ave;
-		}
-		if(flag == false) break;
-	}
-
-	vector<partial_exon> v;
-	for(int i = 0; i < pexons.size(); i++)
-	{
-		partial_exon &pe = pexons[i];
-		pe.pvalue = pvalues[i];
-
-		if(pe.ave < cfg.min_subregion_overlap) pe.pvalue = 1;
-		if(pe.rpos - pe.lpos < cfg.min_subregion_length) pe.pvalue = 1;
-		if(pe.lpos == lpos && ltype == RIGHT_SPLICE) pe.pvalue = 0;
-		if(pe.rpos == rpos && rtype == LEFT_SPLICE) pe.pvalue = 0;
-
-		if(pe.pvalue < 0.5) v.push_back(pe);
-
-		if(cfg.verbose >= 2)
-		{
-			printf("subregion %d-%d, type = (%d, %d), range = %d-%d, ltype = %d, rtype = %d, pvalue = %.8lf\n", pe.lpos, pe.rpos, pe.ltype, pe.rtype, lpos, rpos, ltype, rtype, pe.pvalue);
-		}
-	}
-
-	pexons = v;
 	return 0;
 }
 
