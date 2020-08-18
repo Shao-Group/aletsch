@@ -44,6 +44,7 @@ private:
 	int remove_opposite_junctions();
 	int build_regions();
 	int build_partial_exons();
+	int classify_partial_exons();
 	int link_partial_exons();
 	int build_splice_graph(splice_graph &gr);
 };

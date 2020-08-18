@@ -25,6 +25,7 @@ scallop::scallop(splice_graph &g, hyper_set &h, const parameters &c)
 	//add_pseudo_hyper_edges();
 	//hs.build_confident_nodes(cfg.min_confident_phasing_path_weight);
 	hs.build(gr, e2i);
+	hs.print_nodes();
 	init_super_edges();
 	init_vertex_map();
 	init_inner_weights();
@@ -64,7 +65,10 @@ int scallop::assemble()
 		b = resolve_broken_vertex();
 		if(b == true) continue;
 
-		b = resolve_trivial_vertex(1, true, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
+		b = resolve_trivial_vertex(1, 1, true, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
+		if(b == true) continue;
+
+		b = resolve_trivial_vertex(1, INT_MAX, true, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 		if(b == true) continue;
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, 1, 0.01);
@@ -80,6 +84,9 @@ int scallop::assemble()
 		if(b == true) continue;
 
 		b = target_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
+		if(b == true) continue;
+
+		b = remove_trivial_edges(0.15);
 		if(b == true) continue;
 
 		b = resolve_splittable_vertex(SPLITTABLE_HYPER, 1, cfg.max_decompose_error_ratio[SPLITTABLE_HYPER]);
@@ -118,10 +125,10 @@ int scallop::assemble()
 
 		b = resolve_hyper_edge(1);
 		if(b == true) continue;
-		*/
 
 		b = resolve_trivial_vertex(2, true, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 		if(b == true) continue;
+		*/
 
 		// process mixed vertices
 		break_divided_phases();
@@ -256,6 +263,41 @@ bool scallop::target_smallest_edges(double max_ratio)
 		flag = true;
 	}
 	return flag;
+}
+
+bool scallop::remove_trivial_edges(double max_ratio)
+{
+	int root = -1;
+	int type = -1;
+	double best_ratio = max_ratio;
+	vector<int> vv(nonzeroset.begin(), nonzeroset.end());
+	for(int k = 0; k < vv.size(); k++)
+	{
+		int i = vv[k];
+		double ratio;
+
+		bool b1 = remove_single_trivial_in_edge(i, 0.01, ratio);
+		if(b1 == true) return true;
+		if(ratio >= 0 && ratio < best_ratio)
+		{
+			best_ratio = ratio;
+			root = i;
+			type = 1;
+		}
+
+		bool b2 = remove_single_trivial_out_edge(i, 0.01, ratio);
+		if(b2 == true) return true;
+		if(ratio >= 0 && ratio < best_ratio)
+		{
+			best_ratio = ratio;
+			root = i;
+			type = 2;
+		}
+	}
+
+	if(type == 1) return remove_single_trivial_in_edge(root, max_ratio, best_ratio);
+	if(type == 2) return remove_single_trivial_out_edge(root, max_ratio, best_ratio);
+	return false;
 }
 
 bool scallop::remove_smallest_edges(double max_ratio)
@@ -695,6 +737,7 @@ bool scallop::remove_single_smallest_out_edge(int i, double max_ratio, double &r
 		double w2 = gr.get_edge_weight(*it1);
 		if(w2 >= w) bigger++;
 	}
+
 	if(bigger <= 1) return false;
 
 	ratio = r;
@@ -727,7 +770,6 @@ bool scallop::remove_single_smallest_in_edge(int i, double max_ratio, double &ra
 	if(gr.in_degree(t) <= 1) return false;
 	if(hs.right_extend(e)) return false;
 
-	//if(gr.mixed_strand_vertex(i)) return false;
 	// check if there are at least two possible ways 
 	// for e to go to the other side
 	vector<int> vs = gr.get_strand_degree(i);
@@ -742,6 +784,7 @@ bool scallop::remove_single_smallest_in_edge(int i, double max_ratio, double &ra
 		double w2 = gr.get_edge_weight(*it1);
 		if(w2 >= w) bigger++;
 	}
+
 	if(bigger <= 1) return false;
 
 	ratio = r;
@@ -752,6 +795,85 @@ bool scallop::remove_single_smallest_in_edge(int i, double max_ratio, double &ra
 		int32_t p1 = gr.get_vertex_info(s).rpos;
 		int32_t p2 = gr.get_vertex_info(t).lpos;
 		printf("remove smallest in-edge, edge = %d, weight = %.2lf, ratio = %.2lf, vertex = (%d, %d), degree = (%d, %d), pos = (%d, %d)\n", 
+				e, w, r, s, t, gr.out_degree(s), gr.in_degree(t), p1, p2);
+	}
+	remove_edge(e);
+	hs.remove(e);
+	return true;
+}
+
+bool scallop::remove_single_trivial_out_edge(int i, double max_ratio, double &ratio)
+{
+	double r;
+	ratio = -1;
+	int e = compute_smallest_out_edge(i, r);
+	if(e == -1) return false;
+
+	int s = i2e[e]->source();
+	int t = i2e[e]->target();
+	assert(s == i);
+
+	if(gr.out_degree(s) <= 1) return false;
+	if(gr.in_degree(t) <= 1) return false;
+	//if(hs.left_extend(e)) return false;
+
+	// check if there are at least two possible ways 
+	// for e to go to the other side
+	vector<int> vs = gr.get_strand_degree(i);
+	int z = gr.get_edge_info(i2e[e]).strand;
+	if(z >= 1 && vs[3] + vs[z + 3] <= 1) return false;
+
+	bool b = right_removable(i2e[e]);
+	if(b == false) return false;
+
+	ratio = r;
+	if(r > max_ratio) return false;
+
+	double w = gr.get_edge_weight(i2e[e]);
+	if(cfg.verbose >= 2) 
+	{
+		int32_t p1 = gr.get_vertex_info(s).rpos;
+		int32_t p2 = gr.get_vertex_info(t).lpos;
+		printf("remove trivial out-edge, edge = %d, weight = %.2lf, ratio = %.2lf, vertex = (%d, %d), degree = (%d, %d), pos = (%d, %d)\n", 
+				e, w, r, s, t, gr.out_degree(s), gr.in_degree(t), p1, p2);
+	}
+	remove_edge(e);
+	hs.remove(e);
+	return true;
+}
+
+bool scallop::remove_single_trivial_in_edge(int i, double max_ratio, double &ratio)
+{
+	double r;
+	ratio = -1;
+	int e = compute_smallest_in_edge(i, r);
+	if(e == -1) return false;
+
+	int s = i2e[e]->source();
+	int t = i2e[e]->target();
+	assert(t == i);
+
+	if(gr.out_degree(s) <= 1) return false;
+	if(gr.in_degree(t) <= 1) return false;
+	//if(hs.right_extend(e)) return false;
+
+	// for e to go to the other side
+	vector<int> vs = gr.get_strand_degree(i);
+	int z = gr.get_edge_info(i2e[e]).strand;
+	if(z >= 1 && vs[3] + vs[z + 3] <= 1) return false;
+
+	bool b = left_removable(i2e[e]);
+	if(b == false) return false;
+
+	ratio = r;
+	if(r > max_ratio) return false;
+
+	double w = gr.get_edge_weight(i2e[e]);
+	if(cfg.verbose >= 2) 
+	{
+		int32_t p1 = gr.get_vertex_info(s).rpos;
+		int32_t p2 = gr.get_vertex_info(t).lpos;
+		printf("remove trivial in-edge, edge = %d, weight = %.2lf, ratio = %.2lf, vertex = (%d, %d), degree = (%d, %d), pos = (%d, %d)\n", 
 				e, w, r, s, t, gr.out_degree(s), gr.in_degree(t), p1, p2);
 	}
 	remove_edge(e);
@@ -1021,7 +1143,7 @@ bool scallop::resolve_hyper_edge(int fsize)
 	return flag;
 }
 
-bool scallop::resolve_trivial_vertex(int type, bool fast, double jump_ratio)
+bool scallop::resolve_trivial_vertex(int type, int max_degree, bool fast, double jump_ratio)
 {
 	int root = -1;
 	double ratio = DBL_MAX;
@@ -1040,6 +1162,10 @@ bool scallop::resolve_trivial_vertex(int type, bool fast, double jump_ratio)
 		assert(gr.out_degree(i) >= 1);
 
 		if(gr.in_degree(i) >= 2 && gr.out_degree(i) >= 2) continue;
+
+		if(gr.in_degree(i) > max_degree) continue;
+		if(gr.out_degree(i) > max_degree) continue;
+
 		if(classify_trivial_vertex(i, fast) != type) continue;
 
 		int e;
@@ -1049,7 +1175,9 @@ bool scallop::resolve_trivial_vertex(int type, bool fast, double jump_ratio)
 		{
 			if(cfg.verbose >= 2) printf("resolve trivial vertex %d, %d-%d, type = %d, ratio = %.2lf, degree = (%d, %d), fast = %c\n", 
 					i, gr.get_vertex_info(i).lpos, gr.get_vertex_info(i).rpos, type, r, gr.in_degree(i), gr.out_degree(i), fast ? 'T' : 'F');
+
 			decompose_trivial_vertex(i);
+
 			flag = true;
 			continue;
 		}
@@ -1611,6 +1739,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		vertex_info vi;
 		vi.lpos = gr.get_vertex_info(e->source()).rpos;
 		vi.rpos = gr.get_vertex_info(e->source()).rpos;
+		vi.type = gr.get_vertex_info(e->source()).type;
 
 		gr.move_edge(e, e->source(), k);
 		gr.set_vertex_info(k, vi);
@@ -1625,6 +1754,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		vertex_info vi;
 		vi.lpos = gr.get_vertex_info(e->target()).lpos;
 		vi.rpos = gr.get_vertex_info(e->target()).lpos;
+		vi.type = gr.get_vertex_info(e->target()).type;
 
 		gr.move_edge(e, k, e->target());
 		gr.set_vertex_info(k, vi);
@@ -2355,6 +2485,41 @@ int scallop::split_vertex(int x, const vector<int> &xe, const vector<int> &ye)
 	}
 
 	return 0;
+}
+
+bool scallop::left_removable(edge_descriptor e)
+{
+	assert(e != null_edge);
+	int s = e->source();
+	int t = e->target();
+	if(gr.get_vertex_info(t).type == 1) return true;
+
+	vector<int> &v = mev[e];
+	for(int k = 0; k < v.size(); k++)
+	{
+		int u = v2v[v[k]];
+		if(u < 0) continue;
+		if(gr.get_vertex_info(u).type == 1) return true;
+	}
+	return false;
+}
+
+bool scallop::right_removable(edge_descriptor e)
+{
+	assert(e != null_edge);
+	int s = e->source();
+	int t = e->target();
+	if(gr.get_vertex_info(s).type == 1) return true;
+
+	vector<int> &v = mev[e];
+
+	for(int k = v.size() - 1; k >= 0; k--)
+	{
+		int u = v2v[v[k]];
+		if(u < 0) continue;
+		if(gr.get_vertex_info(u).type == 1) return true;
+	}
+	return false;
 }
 
 bool scallop::left_adjacent(edge_descriptor e)

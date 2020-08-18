@@ -27,6 +27,7 @@ int graph_builder::build(splice_graph &gr)
 	remove_opposite_junctions();
 	build_regions();
 	build_partial_exons();
+	classify_partial_exons();
 	link_partial_exons();
 	build_splice_graph(gr);
 	refine_splice_graph(gr);
@@ -293,6 +294,7 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 	// vertices: start, each region, end
 	gr.add_vertex();
 	vertex_info vi0;
+	vi0.type = 0;
 	vi0.lpos = bd.lpos;
 	vi0.rpos = bd.lpos;
 	gr.set_vertex_weight(0, 0);
@@ -307,6 +309,8 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 		if(w < cfg.min_guaranteed_edge_weight) w = cfg.min_guaranteed_edge_weight;
 		gr.set_vertex_weight(i + 1, w);
 		vertex_info vi;
+		if(r.pvalue < cfg.min_subregion_pvalue) vi.type = 0;
+		else vi.type = 1;
 		vi.lpos = r.lpos;
 		vi.rpos = r.rpos;
 		vi.stddev = r.dev;
@@ -318,6 +322,7 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 
 	gr.add_vertex();
 	vertex_info vin;
+	vin.type = 0;
 	vin.lpos = bd.rpos;
 	vin.rpos = bd.rpos;
 	gr.set_vertex_weight(pexons.size() + 1, 0);
@@ -449,6 +454,38 @@ int graph_builder::analyze_junctions()
 			y.print(bd.chrm, j);
 			printf("\n");
 		}
+	}
+	return 0;
+}
+
+int graph_builder::classify_partial_exons()
+{
+	map<PI32, int> mj;
+	for(int i = 0; i < junctions.size(); i++)
+	{
+		junction &jc = junctions[i];
+		PI32 p(jc.lpos, jc.rpos);
+		assert(mj.find(p) == mj.end());
+		mj.insert(make_pair(p, i));
+	}
+
+	for(int i = 0; i < pexons.size(); i++)
+	{
+		partial_exon &pe = pexons[i];
+		bool b = false;
+		if(pe.lpos == bd.lpos) b = true;
+		if(pe.rpos == bd.rpos) b = true;
+		if(pe.ltype == RIGHT_SPLICE) b = true;
+		if(pe.rtype == LEFT_SPLICE) b = true;
+		if(pe.ltype == LEFT_SPLICE && pe.rtype == RIGHT_SPLICE)
+		{
+			PI32 p(pe.lpos, pe.rpos);
+			if(mj.find(p) == mj.end()) b = true;
+			else if(junctions[mj[p]].count < pe.ave) b = true;
+		}
+
+		if(b == true) pe.pvalue = 0;
+		else pe.pvalue = 1;
 	}
 	return 0;
 }
