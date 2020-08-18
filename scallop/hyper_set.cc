@@ -328,44 +328,23 @@ int hyper_set::build_edges(splice_graph &gr, MEI& e2i)
 		int c = it->second;
 		//if(c < min_hyper_count) continue;
 
-		const vector<int> &v = it->first;
-		if(v.size() <= 1) continue;
+		const vector<int> &t = it->first;
+		if(t.size() <= 1) continue;
 
-		// filter nodes with type = 1
-		vector<vector<int>> vv;
-		vector<int> t;
-		for(int i = 0; i < v.size(); i++)
+		bool b = true;
+		vector<int> ve;
+		for(int k = 0; k < t.size() - 1; k++)
 		{
-			if(gr.get_vertex_info(v[i]).type == 1)
-			{
-				if(t.size() >= 2) vv.push_back(t);
-				t.clear();
-			}
-			else
-			{
-				t.push_back(v[i]);
-			}
+			assert(t[k] < t[k + 1]);
+			PEB p = gr.edge(t[k], t[k + 1]);
+			if(p.second == false) b = false;
+			if(p.second == false) ve.push_back(-1);
+			else ve.push_back(e2i[p.first]);
 		}
-		if(t.size() >= 2) vv.push_back(t);
-
-		for(int i = 0; i < vv.size(); i++)
+		if(b == true && ve.size() >= 2)
 		{
-			bool b = true;
-			const vector<int> &t = vv[i];
-			vector<int> ve;
-			for(int k = 0; k < t.size() - 1; k++)
-			{
-				assert(t[k] < t[k + 1]);
-				PEB p = gr.edge(t[k], t[k + 1]);
-				if(p.second == false) b = false;
-				if(p.second == false) ve.push_back(-1);
-				else ve.push_back(e2i[p.first]);
-			}
-			if(b == true && ve.size() >= 2)
-			{
-				edges.push_back(ve);
-				ecnts.push_back(c);
-			}
+			edges.push_back(ve);
+			ecnts.push_back(c);
 		}
 	}
 	return 0;

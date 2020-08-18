@@ -92,7 +92,7 @@ public:
 	// for identifying subgraphs
 	int32_t min_subregion_gap;
 	int32_t min_subregion_length;
-	double min_subregion_overlap;
+	double min_subregion_coverage;
 	double min_subregion_pvalue;
 
 	// for revising splice graph and phasing paths
