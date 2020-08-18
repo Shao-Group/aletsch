@@ -76,16 +76,13 @@ int scallop::assemble()
 		b = resolve_splittable_vertex(SPLITTABLE_PURE, 1, cfg.max_decompose_error_ratio[SPLITTABLE_PURE]);
 		if(b == true) continue;
 
-		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 0, true);
+		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 0, false);
 		if(b == true) continue;
 
 		b = resolve_splittable_vertex(SPLITTABLE_HYPER, 1, cfg.max_decompose_error_ratio[SPLITTABLE_HYPER]);
 		if(b == true) continue;
 
 		b = resolve_splittable_vertex(SPLITTABLE_SIMPLE, 1, cfg.max_decompose_error_ratio[SPLITTABLE_SIMPLE]);
-		if(b == true) continue;
-
-		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 0, false);
 		if(b == true) continue;
 
 		b = resolve_smallest_edge(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 1, false);
@@ -112,13 +109,13 @@ int scallop::assemble()
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_MULTIPLE, INT_MAX, cfg.max_decompose_error_ratio[UNSPLITTABLE_MULTIPLE]);
 		if(b == true) continue;
-		*/
 
 		b = resolve_hyper_edge(2);
 		if(b == true) continue;
 
 		b = resolve_hyper_edge(1);
 		if(b == true) continue;
+		*/
 
 		b = resolve_trivial_vertex(2, true, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 		if(b == true) continue;
