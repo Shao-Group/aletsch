@@ -63,9 +63,11 @@ private:
 
 	// resolve iteratively
 	bool resolve_broken_vertex();
+	bool target_smallest_edges(double max_ratio);
+	bool remove_smallest_edges(double max_ratio);
+	bool thread_smallest_edges(double max_ratio, int degree);
 	bool resolve_trivial_vertex(int type, bool fast, double jump_ratio);
 	bool resolve_single_trivial_vertex(int i, double jump_ratio);
-	bool resolve_smallest_edge(double max_ratio, int degree, bool adj_only);
 	bool resolve_splittable_vertex(int type, int degree, double max_ratio);
 	bool resolve_unsplittable_vertex(int type, int degree, double max_ratio);
 	bool resolve_hyper_edge(int fsize);
@@ -78,10 +80,18 @@ private:
 	double compute_balance_ratio(int x);
 
 	// decomposing subroutines
-	bool remove_single_smallest_edge(int root, double max_ratio, double &ratio, bool adj_only);
+	bool remove_single_smallest_edge(int root, double max_ratio, double &ratio);
+	bool remove_single_smallest_in_edge(int root, double max_ratio, double &ratio);
+	bool remove_single_smallest_out_edge(int root, double max_ratio, double &ratio);
 	bool thread_single_smallest_edge(int root, double max_ratio, double &ratio);
 	bool thread_single_smallest_edge(int root, double max_ratio, double &ratio, int degree);
+	int target_single_smallest_in_edge(int root, double max_ratio);
+	int target_single_smallest_out_edge(int root, double max_ratio);
 	int compute_smallest_edge(int x, double &ratio);
+	int compute_smallest_in_edge(int x, double &ratio);
+	int compute_smallest_out_edge(int x, double &ratio);
+	int compute_second_smallest_in_edge(int x, double &ratio);
+	int compute_second_smallest_out_edge(int x, double &ratio);
 	int decompose_trivial_vertex(int v);
 	int decompose_vertex_extend(int v, MPID &pe2w);
 	int decompose_vertex_replace(int v, MPID &pe2w);
