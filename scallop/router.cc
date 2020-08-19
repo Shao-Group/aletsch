@@ -415,6 +415,10 @@ int router::split_plain_vertex()
 	if(eqn0.e < -0.5 && eqn1.e < -0.5) return 0;
 	assert(eqn0.e >= 0 || eqn1.e >= 0);
 
+	// only use eqn0 when eqn0 is feasible
+	//if(eqn0.e < -0.5) eqn2 = eqn1;
+	//else eqn2 = eqn0;
+
 	if(eqn1.e < -0.5) eqn2 = eqn0;
 	else if(eqn0.e < -0.5) eqn2 = eqn1;
 	else if(eqn0.e > eqn1.e) eqn2 = eqn1;
