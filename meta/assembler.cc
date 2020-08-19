@@ -163,12 +163,10 @@ int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int
 {
 	gx.extend_strands();
 
-	/*
 	map<int32_t, int32_t> smap, tmap;
 	group_start_boundaries(gx, smap, cfg.max_group_boundary_distance);
 	group_end_boundaries(gx, tmap, cfg.max_group_boundary_distance);
 	px.project_boundaries(smap, tmap);
-	*/
 
 	hyper_set hx(gx, px);
 	hx.filter_nodes(gx);
