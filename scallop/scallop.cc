@@ -272,7 +272,7 @@ bool scallop::remove_smallest_edges(double max_ratio)
 		int i = vv[k];
 		double ratio;
 
-		bool b1 = remove_single_smallest_edge(i, 0.01, ratio);
+		bool b1 = remove_single_smallest_in_edge(i, 0.01, ratio);
 		if(b1 == true) return true;
 		if(ratio >= 0 && ratio < best_ratio)
 		{
@@ -281,7 +281,6 @@ bool scallop::remove_smallest_edges(double max_ratio)
 			type = 1;
 		}
 
-		/*
 		bool b2 = remove_single_smallest_out_edge(i, 0.01, ratio);
 		if(b2 == true) return true;
 		if(ratio >= 0 && ratio < best_ratio)
@@ -290,11 +289,10 @@ bool scallop::remove_smallest_edges(double max_ratio)
 			root = i;
 			type = 2;
 		}
-		*/
 	}
 
-	if(type == 1) return remove_single_smallest_edge(root, max_ratio, best_ratio);
-	//if(type == 2) return remove_single_smallest_out_edge(root, max_ratio, best_ratio);
+	if(type == 1) return remove_single_smallest_in_edge(root, max_ratio, best_ratio);
+	if(type == 2) return remove_single_smallest_out_edge(root, max_ratio, best_ratio);
 	return false;
 }
 
@@ -608,11 +606,7 @@ int scallop::target_single_smallest_in_edge(int x, double max_ratio)
 	for(int k = x; k < gr.num_vertices() - 1; k++)
 	{
 		if(gr.out_degree(k) <= 1) continue;
-		double r2;
-		int e2 = compute_smallest_out_edge(k, r2);
-		if(r > r2) continue;
 
-		/*
 		int bigger = 0;
 		PEEI pei = gr.out_edges(k);
 		double sum = gr.get_out_weights(k);
@@ -630,7 +624,6 @@ int scallop::target_single_smallest_in_edge(int x, double max_ratio)
 			printf("catch smallest in-edge, node = %d, edge = %d, weight = %.2lf, ratio = %.2lf, degree = (%d, %d), pos = (%d, %d), verifier = %d, bigger = %d, degree = %d\n", 
 					x, e, w, r, gr.in_degree(x), gr.out_degree(x), p1, p2, k, bigger, gr.out_degree(k));
 		}
-		*/
 
 		found = true;
 		break;
@@ -669,11 +662,6 @@ int scallop::target_single_smallest_out_edge(int x, double max_ratio)
 	{
 		if(gr.in_degree(k) <= 1) continue;
 
-		double r2;
-		int e2 = compute_smallest_in_edge(k, r2);
-		if(r > r2) continue;
-
-		/*
 		int bigger = 0;
 		PEEI pei = gr.in_edges(k);
 		double sum = gr.get_in_weights(k);
@@ -691,7 +679,6 @@ int scallop::target_single_smallest_out_edge(int x, double max_ratio)
 			printf("catch smallest out-edge, node = %d, edge = %d, weight = %.2lf, ratio = %.2lf, degree = (%d, %d), pos = (%d, %d), verifier = %d, bigger = %d, degree = %d\n", 
 					x, e, w, r, gr.in_degree(x), gr.out_degree(x), p1, p2, k, bigger, gr.in_degree(k));
 		}
-		*/
 
 		found = true;
 		break;
@@ -724,7 +711,6 @@ bool scallop::remove_single_smallest_out_edge(int i, double max_ratio, double &r
 	if(z >= 1 && vs[3] + vs[z + 3] <= 1) return false;
 
 	double w = gr.get_edge_weight(i2e[e]);
-	/*
 	int bigger = 0;
 	PEEI pei = gr.in_edges(i);
 	for(edge_iterator it1 = pei.first; it1 != pei.second; it1++)
@@ -733,7 +719,6 @@ bool scallop::remove_single_smallest_out_edge(int i, double max_ratio, double &r
 		if(w2 >= w) bigger++;
 	}
 	if(bigger <= 1) return false;
-	*/
 
 	ratio = r;
 	if(r > max_ratio) return false;
@@ -773,7 +758,6 @@ bool scallop::remove_single_smallest_in_edge(int i, double max_ratio, double &ra
 	if(z >= 1 && vs[3] + vs[z + 3] <= 1) return false;
 
 	double w = gr.get_edge_weight(i2e[e]);
-	/*
 	int bigger = 0;
 	PEEI pei = gr.out_edges(i);
 	for(edge_iterator it1 = pei.first; it1 != pei.second; it1++)
@@ -782,7 +766,6 @@ bool scallop::remove_single_smallest_in_edge(int i, double max_ratio, double &ra
 		if(w2 >= w) bigger++;
 	}
 	if(bigger <= 1) return false;
-	*/
 
 	ratio = r;
 	if(r > max_ratio) return false;
