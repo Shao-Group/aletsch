@@ -52,6 +52,7 @@ int add_distant_out_vertices(splice_graph &gr, int x, set<int> &s);
 int determine_start_boundary(splice_graph &gr, int a, int b, double &max, double &sum);
 int determine_end_boundary(splice_graph &gr, int a, int b, double &max, double &sum);
 
-int remove_false_boundaries(splice_graph &gr, bundle_base &bb);
+int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters &cfg);
+int catch_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters &cfg);
 
 #endif

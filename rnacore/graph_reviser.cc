@@ -1282,7 +1282,7 @@ int add_distant_out_vertices(splice_graph &gr, int x, set<int> &s)
 	return 0;
 }
 
-int remove_false_boundaries(splice_graph &gr, bundle_base &bb)
+int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters &cfg)
 {
 	map<int, int> fb1;		// end
 	map<int, int> fb2;		// start
@@ -1293,18 +1293,24 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb)
 		hit &h2 = bb.hits[bb.frgs[i][1]];
 		int u1 = gr.locate_vertex(h1.rpos - 1);
 		int u2 = gr.locate_vertex(h2.pos);
+
 		if(u1 < 0 || u2 < 0) continue;
 		if(u1 >= u2) continue;
 
-		//printf("(%d, %d) => (%d, %d) => (%d, %d)\n", h1.rpos, h2.pos, u1, u2, gr.get_vertex_info(u1).rpos, gr.get_vertex_info(u2).lpos);
+		vertex_info v1 = gr.get_vertex_info(u1);
+		vertex_info v2 = gr.get_vertex_info(u2);
+		if(h1.rpos - v1.lpos <= cfg.bridge_end_relaxing) continue;
+		if(v2.rpos - h2.pos  <= cfg.bridge_end_relaxing) continue;
 
-		if(gr.get_vertex_info(u1).rpos == h1.rpos)
+		//printf("%s: u1 = %d, %d-%d, u2 = %d, %d-%d, h1.rpos = %d, h2.lpos = %d\n", h1.qname.c_str(), u1, v1.lpos, v1.rpos, u2, v2.lpos, v2.rpos, h1.rpos, h2.pos);
+
+		//if(gr.get_vertex_info(u1).rpos == h1.rpos)
 		{
 			if(fb1.find(u1) != fb1.end()) fb1[u1]++;
 			else fb1.insert(make_pair(u1, 1));
 		}
 
-		if(gr.get_vertex_info(u2).lpos == h2.pos)
+		//if(gr.get_vertex_info(u2).lpos == h2.pos)
 		{
 			if(fb2.find(u2) != fb2.end()) fb2[u2]++;
 			else fb2.insert(make_pair(u2, 1));
@@ -1314,17 +1320,71 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb)
 	for(auto &x : fb1)
 	{
 		PEB p = gr.edge(x.first, gr.num_vertices() - 1);
+		vertex_info vi = gr.get_vertex_info(x.first);
 		if(p.second == false) continue;
+		double w = gr.get_vertex_weight(x.first);
+		double z = log(1 + w) / log(1 + x.second);
+		double s = log(1 + w) - log(1 + x.second);
+		if(cfg.verbose >= 2) printf("detect false end boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.rpos, x.second, x.first, w, vi.type, z, s); 
+		if(s > 0.5) continue;
 		gr.remove_edge(p.first);
-		//printf("detect false end boundary %d with %d reads\n", gr.get_vertex_info(x.first).rpos, x.second); 
 	}
 
 	for(auto &x : fb2)
 	{
 		PEB p = gr.edge(0, x.first);
+		vertex_info vi = gr.get_vertex_info(x.first);
 		if(p.second == false) continue;
+		double w = gr.get_vertex_weight(x.first);
+		double z = log(1 + w) / log(1 + x.second);
+		double s = log(1 + w) - log(1 + x.second);
+		if(cfg.verbose >= 2) printf("detect false start boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.lpos, x.second, x.first, w, vi.type, z, s); 
+		if(s > 0.5) continue;
 		gr.remove_edge(p.first);
-		//printf("detect false start boundary %d with %d reads\n", gr.get_vertex_info(x.first).lpos, x.second); 
 	}
+	return 0;
+}
+
+int catch_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters &cfg)
+{
+	map<PI, int> fb;		// end
+	for(int i = 0; i < bb.frgs.size(); i++)
+	{
+		if(bb.frgs[i][2] != 0) continue;
+		hit &h1 = bb.hits[bb.frgs[i][0]];
+		hit &h2 = bb.hits[bb.frgs[i][1]];
+		int u1 = gr.locate_vertex(h1.rpos - 1);
+		int u2 = gr.locate_vertex(h2.pos);
+
+		if(u1 < 0 || u2 < 0) continue;
+		if(u1 >= u2) continue;
+
+		vertex_info v1 = gr.get_vertex_info(u1);
+		vertex_info v2 = gr.get_vertex_info(u2);
+		if(h1.rpos - v1.lpos <= cfg.bridge_end_relaxing) continue;
+		if(v2.rpos - h2.pos  <= cfg.bridge_end_relaxing) continue;
+
+
+		//printf("%s: u1 = %d, %d-%d, u2 = %d, %d-%d, h1.rpos = %d, h2.lpos = %d\n", h1.qname.c_str(), u1, v1.lpos, v1.rpos, u2, v2.lpos, v2.rpos, h1.rpos, h2.pos);
+
+		PI p(u1, u2);
+		if(fb.find(p) != fb.end()) fb[p]++;
+		else fb.insert(make_pair(p, 1));
+	}
+
+	for(auto &x : fb)
+	{
+		int u1 = x.first.first;
+		int u2 = x.first.second;
+		if(gr.check_path(u1, u2) == true) continue;
+		double w1 = gr.get_vertex_weight(u1);
+		double w2 = gr.get_vertex_weight(u2);
+		double s1 = log(1 + w1) - log(1 + x.second);
+		double s2 = log(1 + w2) - log(1 + x.second);
+		if(cfg.verbose >= 2) printf("detect false end boundary: u1 = %d, u2 = %d, w1 = %.2lf, w2 = %.2lf, s1 = %.2lf, s2 = %.2lf, u1 = %d-%d, u2 = %d-%d\n",
+				u1, u2, w1, w2, s1, s2, gr.get_vertex_info(u1).lpos, gr.get_vertex_info(u1).rpos, gr.get_vertex_info(u2).lpos, gr.get_vertex_info(u2).rpos); 
+		//gr.remove_edge(p.first);
+	}
+
 	return 0;
 }

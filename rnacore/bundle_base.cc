@@ -41,6 +41,7 @@ int bundle_base::add_hit(const hit &ht)
 	if(ht.pos < lpos) lpos = ht.pos;
 
 	int32_t p = ht.rpos;
+	// TODO parameter
 	if(ht.mpos > ht.rpos && ht.mpos <= ht.rpos + 10000) p = ht.mpos;
 	if(p > rpos) rpos = p;
 

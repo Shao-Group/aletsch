@@ -40,7 +40,7 @@ parameters::parameters()
 	max_num_junctions_to_combine = 500;
 
 	// for bridging paired-end reads
-	bridge_end_relaxing = 10;
+	bridge_end_relaxing = 5;
 	bridge_dp_solution_size = 10;
 	bridge_dp_stack_size = 5;
 	min_bridging_score = 1.5;
