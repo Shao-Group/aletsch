@@ -106,6 +106,9 @@ int scallop::assemble()
 		b = thread_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 3);
 		if(b == true) continue;
 
+		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, DBL_MAX);
+		if(b == true) continue;
+
 		/*
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_MULTIPLE, 1, 0.01);
 		if(b == true) continue;
@@ -511,6 +514,7 @@ bool scallop::thread_single_smallest_edge(int i, double max_ratio, double &ratio
 	MI s;
 	if(et == i) s = hs.get_successors(e);
 	if(es == i) s = hs.get_predecessors(e);
+
 	if(s.size() != 1) return false;
 
 	if(r > max_ratio)
@@ -551,8 +555,25 @@ bool scallop::thread_single_smallest_edge(int i, double max_ratio, double &ratio
 	{
 		int32_t p1 = gr.get_vertex_info(i).rpos;
 		int32_t p2 = gr.get_vertex_info(i).lpos;
-		printf("thread smallest edge, edge = %d, weight = %.2lf, ratio = %.3lf, vertex = %d, pos = (%d, %d)\n", 
-				e, we, r, i, p1, p2);
+		printf("thread smallest edge, edge = %d, weight = %.2lf, ratio = %.3lf, vertex = %d, pos = (%d, %d), e = %d, f = %d\n", 
+				e, we, r, i, p1, p2, e, f);
+
+		/*
+		PEEI pei;
+		edge_iterator it1, it2;
+		for(pei = gr.in_edges(i), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+		{
+			double w = gr.get_edge_weight(*it1);
+			int e = e2i[*it1];
+			printf(" in-edge of node %d, e = %d, w = %.2lf\n", i, e, w);
+		}
+		for(pei = gr.out_edges(i), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+		{
+			double w = gr.get_edge_weight(*it1);
+			int e = e2i[*it1];
+			printf(" out-edge of node %d, e = %d, w = %.2lf\n", i, e, w);
+		}
+		*/
 	}
 	return true;
 }
@@ -588,10 +609,11 @@ int scallop::target_single_smallest_in_edge(int x, double max_ratio)
 
 		int bigger = 0;
 		PEEI pei = gr.out_edges(k);
+		double sum = gr.get_out_weights(k);
 		for(edge_iterator it1 = pei.first; it1 != pei.second; it1++)
 		{
 			double w2 = gr.get_edge_weight(*it1);
-			if(w2 >= w) bigger++;
+			if(w2 / sum >= r) bigger++;
 		}
 		if(bigger <= 1) continue;
 
@@ -642,10 +664,11 @@ int scallop::target_single_smallest_out_edge(int x, double max_ratio)
 
 		int bigger = 0;
 		PEEI pei = gr.in_edges(k);
+		double sum = gr.get_in_weights(k);
 		for(edge_iterator it1 = pei.first; it1 != pei.second; it1++)
 		{
 			double w2 = gr.get_edge_weight(*it1);
-			if(w2 >= w) bigger++;
+			if(w2 / sum >= r) bigger++;
 		}
 		if(bigger <= 1) continue;
 
@@ -2661,43 +2684,22 @@ int scallop::compute_smallest_out_edge(int x, double &ratio)
 
 int scallop::compute_smallest_edge(int x, double &ratio)
 {
-	int e = -1;
-	ratio = DBL_MAX;
-	edge_iterator it1, it2;
-	PEEI pei;
-	double sum1 = 0;
-	double sum2 = 0;
-	for(pei = gr.in_edges(x), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
-	{
-		double w = gr.get_edge_weight(*it1);
-		sum1 += w;
-	}
-	for(pei = gr.out_edges(x), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
-	{
-		double w = gr.get_edge_weight(*it1);
-		sum2 += w;
-	}
+	double r1, r2;
+	int e1 = compute_smallest_in_edge(x, r1);
+	int e2 = compute_smallest_out_edge(x, r2);
 
-	assert(sum1 >= SMIN);
-	assert(sum2 >= SMIN);
-	for(pei = gr.in_edges(x), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	if(e1 < 0 || e2 < 0) return -1;
+	
+	if(r1 < r2) 
 	{
-		double w = gr.get_edge_weight(*it1);
-		double r = w * 1.0 / sum1;
-		if(r >= ratio) continue;
-		ratio = r;
-		e = e2i[*it1];
+		ratio = r1;
+		return e1;
 	}
-	for(pei = gr.out_edges(x), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	else 
 	{
-		double w = gr.get_edge_weight(*it1);
-		double r = w * 1.0 / sum2;
-		if(r >= ratio) continue;
-		ratio = r;
-		e = e2i[*it1];
+		ratio = r2;
+		return e2;
 	}
-	assert(e >= 0);
-	return e;
 }
 
 int scallop::print()
