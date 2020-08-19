@@ -79,8 +79,8 @@ int scallop::assemble()
 		b = remove_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
 		if(b == true) continue;
 
-		b = target_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
-		if(b == true) continue;
+		//b = target_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
+		//if(b == true) continue;
 
 		b = resolve_splittable_vertex(SPLITTABLE_HYPER, 1, cfg.max_decompose_error_ratio[SPLITTABLE_HYPER]);
 		if(b == true) continue;
