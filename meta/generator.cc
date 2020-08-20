@@ -116,7 +116,7 @@ int generator::generate(bundle_base &bb, int index)
 	bd.gid = "gene." + tostring(sp.sample_id) + "." + tostring(index);
 	bd.build_fragments();
 	bd.bridge();
-	bd.filter_multialigned_hits();
+	//bd.filter_multialigned_hits();
 
 	// TODO, storing reads
 	// TODO, don't keep bridged reads
