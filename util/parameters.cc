@@ -64,7 +64,7 @@ parameters::parameters()
 	preview_infer_ratio = 0.8;
 	
 	// for identifying subgraphs
-	min_subregion_gap = 3;
+	min_subregion_gap = 25;
 	min_subregion_overlap = 1.5;		// used to be 1.5
 	min_subregion_length = 15;			// used to be 15
 	min_subregion_pvalue = 0.01;
