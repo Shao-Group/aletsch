@@ -170,9 +170,9 @@ int graph_builder::remove_opposite_junctions()
 
 int graph_builder::build_regions()
 {
-	map<int, pair<int, char>> s;
-	s.insert(make_pair(bd.lpos, make_pair(START_BOUNDARY, '?')));
-	s.insert(make_pair(bd.rpos, make_pair(END_BOUNDARY, '?')));
+	MPI s;
+	s.insert(PI(bd.lpos, START_BOUNDARY));
+	s.insert(PI(bd.rpos, END_BOUNDARY));
 	for(int i = 0; i < junctions.size(); i++)
 	{
 		junction &jc = junctions[i];
@@ -183,33 +183,35 @@ int graph_builder::build_regions()
 		int32_t l = jc.lpos;
 		int32_t r = jc.rpos;
 
-		if(s.find(l) == s.end()) s.insert(make_pair(l, make_pair(LEFT_SPLICE, jc.strand)));
-		else if(s[l].first == RIGHT_SPLICE) s[l] = make_pair(LEFT_RIGHT_SPLICE, jc.strand);
+		if(s.find(l) == s.end()) s.insert(PI(l, LEFT_SPLICE));
+		else if(s[l] == RIGHT_SPLICE) s[l] = LEFT_RIGHT_SPLICE;
 
-		if(s.find(r) == s.end()) s.insert(make_pair(r, make_pair(RIGHT_SPLICE, jc.strand)));
-		else if(s[r].first == LEFT_SPLICE) s[r] = make_pair(LEFT_RIGHT_SPLICE, jc.strand);
+		if(s.find(r) == s.end()) s.insert(PI(r, RIGHT_SPLICE));
+		else if(s[r] == LEFT_SPLICE) s[r] = LEFT_RIGHT_SPLICE;
 	}
 
-	vector<pair<int, pair<int, char>>> v(s.begin(), s.end());
+	for(int i = 0; i < pexons.size(); i++)
+	{
+		partial_exon &p = pexons[i];
+		if(s.find(p.lpos) != s.end()) s.insert(PI(p.lpos, p.ltype));
+		if(s.find(p.rpos) != s.end()) s.insert(PI(p.rpos, p.rtype));
+	}
+
+	vector<PPI> v(s.begin(), s.end());
 	sort(v.begin(), v.end());
 
 	regions.clear();
 	for(int k = 0; k < v.size() - 1; k++)
 	{
-		int32_t l = v[k + 0].first;
+		int32_t l = v[k].first;
 		int32_t r = v[k + 1].first;
-		int ltype = v[k + 0].second.first; 
-		int rtype = v[k + 1].second.first; 
-		char ls = v[k + 0].second.second;
-		char rs = v[k + 1].second.second;
+		int ltype = v[k].second; 
+		int rtype = v[k + 1].second; 
 
 		if(ltype == LEFT_RIGHT_SPLICE) ltype = RIGHT_SPLICE;
 		if(rtype == LEFT_RIGHT_SPLICE) rtype = LEFT_SPLICE;
 
-		bool smooth = false;
-		if(ltype == RIGHT_SPLICE && rtype == LEFT_SPLICE && ls == rs) smooth = true;
-
-		regions.push_back(region(l, r, ltype, rtype, &(bd.mmap), &(bd.imap), cfg, sp, smooth));
+		regions.push_back(region(l, r, ltype, rtype, &(bd.mmap), &(bd.imap), cfg, sp));
 	}
 
 	return 0;

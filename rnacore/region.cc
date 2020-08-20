@@ -19,11 +19,11 @@ region::region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype)
 } 
 */
 
-region::region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype, const split_interval_map *_mmap, const split_interval_map *_imap, const parameters &c, const sample_profile &s, bool smooth)
+region::region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype, const split_interval_map *_mmap, const split_interval_map *_imap, const parameters &c, const sample_profile &s)
 	:lpos(_lpos), rpos(_rpos), mmap(_mmap), imap(_imap), ltype(_ltype), rtype(_rtype), cfg(c), sp(s)
 {
 	build_join_interval_map();
-	if(smooth) smooth_join_interval_map();
+	if(ltype == RIGHT_SPLICE && rtype == LEFT_SPLICE) smooth_join_interval_map();
 	build_partial_exons();
 	//calculate_significance();
 } 
