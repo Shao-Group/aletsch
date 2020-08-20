@@ -108,7 +108,7 @@ int assembler::transform(bundle &cb, splice_graph &gr, bool revising)
 	if(revising == true)
 	{
 		identify_boundaries(gr, cfg);
-		//remove_false_boundaries(gr, cb, cfg);
+		remove_false_boundaries(gr, cb, cfg);
 		refine_splice_graph(gr);
 	}
 	return 0;
