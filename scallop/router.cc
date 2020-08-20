@@ -446,13 +446,57 @@ int router::split_plain_vertex()
 
 	if(eqn3.s.size() <= 0 || eqn3.t.size() <= 0) return 0;
 
-	ratio = eqn2.e;
-	eqn3.e = ratio;
-
+	// here recompute e and ratio
+	eqn2.e = compute_balance_ratio(eqn2);
+	eqn3.e = compute_balance_ratio(eqn2);
 	eqns.push_back(eqn2);
 	eqns.push_back(eqn3);
 
+	ratio = eqn2.e > eqn3.e ? eqn2.e : eqn3.e;
+
 	return 0;
+}
+
+double router::compute_balance_ratio(equation &eqn)
+{
+	double s1 = 0;
+	double t1 = 0;
+	for(int i = 0; i < eqn.s.size(); i++)
+	{
+		int e = eqn.s[i];
+		double w = gr.get_edge_weight(i2e[e]);
+		s1 += w;
+	}
+	for(int i = 0; i < eqn.t.size(); i++)
+	{
+		int e = eqn.t[i];
+		double w = gr.get_edge_weight(i2e[e]);
+		t1 += w;
+	}
+
+	double s2 = 0;
+	double t2 = 0;
+	for(int i = 0; i < gr.in_degree(root); i++)
+	{
+		int e = u2e[i];
+		double w = gr.get_edge_weight(i2e[e]);
+		s2 += w;
+	}
+	for(int i = gr.in_degree(root); i < gr.degree(root); i++)
+	{
+		int e = u2e[i];
+		double w = gr.get_edge_weight(i2e[e]);
+		t2 += w;
+	}
+
+	s2 -= s1;
+	t2 -= t1;
+
+	double r1 = (s1 < t1) ? (t1 - s1) / s1 : (s1 - t1) / t1;
+	double r2 = (s2 < t2) ? (t2 - s2) / s2 : (s2 - t2) / t2;
+
+	double r = r1 >= r2 ? r1 : r2;
+	return r;
 }
 
 int router::split_mixed_vertex()

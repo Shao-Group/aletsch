@@ -79,13 +79,13 @@ int scallop::assemble()
 		b = resolve_splittable_vertex(SPLITTABLE_PURE, 1, cfg.max_decompose_error_ratio[SPLITTABLE_PURE]);
 		if(b == true) continue;
 
-		b = resolve_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
-		if(b == true) continue;
-
 		b = resolve_splittable_vertex(SPLITTABLE_HYPER, 1, cfg.max_decompose_error_ratio[SPLITTABLE_HYPER]);
 		if(b == true) continue;
 
 		b = resolve_splittable_vertex(SPLITTABLE_SIMPLE, 1, cfg.max_decompose_error_ratio[SPLITTABLE_SIMPLE]);
+		if(b == true) continue;
+
+		b = resolve_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
 		if(b == true) continue;
 
 		b = thread_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 1);
@@ -853,9 +853,10 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 		if(s == i && z >= 1 && vs[0] + vs[z + 0] <= 1) continue;
 		if(t == i && z >= 1 && vs[3] + vs[z + 3] <= 1) continue;
 
+		double w = gr.get_edge_weight(i2e[e]);
+
 		if(r < 0.01)
 		{
-			double w = gr.get_edge_weight(i2e[e]);
 			if(cfg.verbose >= 2) printf("resolve small edge, edge = %d, weight = %.2lf, ratio = %.2lf, vertex = (%d, %d), degree = (%d, %d)\n", 
 					e, w, r, s, t, gr.out_degree(s), gr.in_degree(t));
 
@@ -887,8 +888,6 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 	return true;
 }
 
-
-
 bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 {
 	int root = -1;
@@ -914,7 +913,7 @@ bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 
 		rt.build();
 
-		//printf("type = %d, degree = %d, rt.degree = %d\n", type, degree, rt.degree);
+		printf("splittable: type = %d, degree = %d, rt.degree = %d, rt.ratio = %.3lf\n", type, degree, rt.degree, rt.ratio);
 
 		assert(rt.eqns.size() == 2);
 
@@ -961,7 +960,6 @@ bool scallop::resolve_unsplittable_vertex(int type, int degree, double max_ratio
 
 		if(cfg.verbose >= 2) printf("catch unsplittable vertex, type = %d, degree = %d, vertex = %d, %d-%d, ratio = %.5lf, degree = (%d, %d)\n",
 				rt.type, rt.degree, i, gr.get_vertex_info(i).lpos, gr.get_vertex_info(i).rpos, rt.ratio, gr.in_degree(i), gr.out_degree(i));
-
 
 		if(rt.type != type) continue;
 		if(rt.degree > degree) continue;
@@ -2775,7 +2773,10 @@ int scallop::compute_smallest_edge(int x, double &ratio)
 
 	if(e1 < 0 || e2 < 0) return -1;
 	
-	if(r1 < r2) 
+	//double w1 = gr.get_edge_weight(i2e[e1]);
+	//double w2 = gr.get_edge_weight(i2e[e2]);
+	//if(w1 < w2) 
+	if(r1 < r2)
 	{
 		ratio = r1;
 		return e1;

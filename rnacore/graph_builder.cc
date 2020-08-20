@@ -488,8 +488,15 @@ int graph_builder::classify_partial_exons()
 			else if(junctions[mj[p]].count < pe.ave) b = true;
 		}
 
-		if(b == true) pe.pvalue = 0;
-		else pe.pvalue = 1;
+		if(b == true) 
+		{
+			pe.pvalue = 0;
+		}
+		else 
+		{
+			pe.pvalue = 1;
+			pe.ave *= 0.5;
+		}
 	}
 	return 0;
 }

@@ -68,6 +68,7 @@ public:
 	// decompose splitable vertex
 	int split_plain_vertex();									// for splitable vertices
 	int split_mixed_vertex();									// for splitable vertices
+	double compute_balance_ratio(equation &eqn);
 
 	// decompose unsplitable vertex with greedy algorithm
 	int thread();												// for unsplitable vertices
