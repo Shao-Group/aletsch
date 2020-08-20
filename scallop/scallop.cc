@@ -94,6 +94,9 @@ int scallop::assemble()
 		b = thread_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 2);
 		if(b == true) continue;
 
+		b = thread_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 3);
+		if(b == true) continue;
+
 		b = resolve_splittable_vertex(SPLITTABLE_PURE, INT_MAX, cfg.max_decompose_error_ratio[SPLITTABLE_PURE]);
 		if(b == true) continue;
 
@@ -101,9 +104,6 @@ int scallop::assemble()
 		if(b == true) continue;
 
 		b = resolve_splittable_vertex(SPLITTABLE_SIMPLE, INT_MAX, cfg.max_decompose_error_ratio[SPLITTABLE_SIMPLE]);
-		if(b == true) continue;
-
-		b = thread_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 3);
 		if(b == true) continue;
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, DBL_MAX);
@@ -913,15 +913,17 @@ bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 
 		rt.build();
 
-		printf("splittable: type = %d, degree = %d, rt.degree = %d, rt.ratio = %.3lf\n", type, degree, rt.degree, rt.ratio);
 
 		assert(rt.eqns.size() == 2);
 
 		int balance = abs((int)(rt.eqns[0].s.size() - rt.eqns[0].t.size())) + abs((int)(gr.in_degree(i) - rt.eqns[0].s.size()) - (int)(gr.out_degree(i) - rt.eqns[0].t.size()));
 
+		printf("splittable: type = %d, degree = %d, rt.degree = %d, rt.ratio = %.3lf, balance = %d\n", type, degree, rt.degree, rt.ratio, balance);
+
 		if(rt.ratio > max_ratio) continue;
-		if(balance > min_balance) continue;
-		if(balance == min_balance && rt.ratio > min_ratio) continue;
+		if(rt.ratio > min_ratio) continue;
+		//if(balance > min_balance) continue;
+		//if(balance == min_balance && rt.ratio > min_ratio) continue;
 
 		root = i;
 		min_ratio = rt.ratio;

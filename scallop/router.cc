@@ -492,8 +492,13 @@ double router::compute_balance_ratio(equation &eqn)
 	s2 -= s1;
 	t2 -= t1;
 
-	double r1 = (s1 < t1) ? (t1 - s1) / s1 : (s1 - t1) / t1;
-	double r2 = (s2 < t2) ? (t2 - s2) / s2 : (s2 - t2) / t2;
+	s1 = log(1 + s1);
+	s2 = log(1 + s2);
+	t1 = log(1 + t1);
+	t2 = log(1 + t2);
+
+	double r1 = (s1 < t1) ? t1 / s1 : s1 / t1;
+	double r2 = (s2 < t2) ? t2 / s2 : s2 / t2;
 
 	double r = r1 >= r2 ? r1 : r2;
 	return r;
