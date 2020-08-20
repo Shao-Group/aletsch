@@ -172,6 +172,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int
 	hx.filter_nodes(gx);
 
 	if(cfg.verbose >= 2) gx.print();
+	if(cfg.verbose >= 2) hx.print_nodes();
 
 	/*
 	if(gx.num_vertices() <= 40) 
