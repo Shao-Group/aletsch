@@ -82,9 +82,6 @@ int scallop::assemble()
 		b = resolve_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
 		if(b == true) continue;
 
-		//b = target_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
-		//if(b == true) continue;
-
 		b = resolve_splittable_vertex(SPLITTABLE_HYPER, 1, cfg.max_decompose_error_ratio[SPLITTABLE_HYPER]);
 		if(b == true) continue;
 
@@ -962,7 +959,7 @@ bool scallop::resolve_unsplittable_vertex(int type, int degree, double max_ratio
 		router rt(i, gr, e2i, i2e, mpi, cfg);
 		rt.classify();
 
-		if(cfg.verbose >= 2) printf("catch unsplittable vertex, type = %d, degree = %d, vertex = %d, %d-%d, ratio = %.3lf, degree = (%d, %d)\n",
+		if(cfg.verbose >= 2) printf("catch unsplittable vertex, type = %d, degree = %d, vertex = %d, %d-%d, ratio = %.5lf, degree = (%d, %d)\n",
 				rt.type, rt.degree, i, gr.get_vertex_info(i).lpos, gr.get_vertex_info(i).rpos, rt.ratio, gr.in_degree(i), gr.out_degree(i));
 
 
