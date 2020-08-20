@@ -396,17 +396,22 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 		
 		int xd = gr.out_degree(i + 1);
 		int yd = gr.in_degree(i + 2);
-		double wt = (xd < yd) ? x.ave : y.ave;
+
+		double wt = x.ave;
+		if(xd < yd) wt = x.ave;
+		else if(xd > yd) wt = y.ave;
+		else if(x.ave < y.ave) wt = x.ave;
+		else if(x.ave > y.ave) wt = y.ave;
+		//double wt = (xd < yd) ? x.ave : y.ave;
 		//int32_t xr = compute_overlap(mmap, x.rpos - 1);
 		//int32_t yl = compute_overlap(mmap, y.lpos);
 		//double wt = xr < yl ? xr : yl;
 
 		edge_descriptor p = gr.add_edge(i + 1, i + 2);
-		double w = wt;
-		if(w < cfg.min_guaranteed_edge_weight) w = cfg.min_guaranteed_edge_weight;
-		gr.set_edge_weight(p, w);
+		if(wt < cfg.min_guaranteed_edge_weight) wt = cfg.min_guaranteed_edge_weight;
+		gr.set_edge_weight(p, wt);
 		edge_info ei;
-		ei.weight = w;
+		ei.weight = wt;
 		gr.set_edge_info(p, ei);
 	}
 
@@ -495,7 +500,7 @@ int graph_builder::classify_partial_exons()
 		else 
 		{
 			pe.pvalue = 1;
-			pe.ave *= 0.5;
+			//pe.ave *= 0.3;
 		}
 	}
 	return 0;
