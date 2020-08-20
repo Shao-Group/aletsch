@@ -66,6 +66,7 @@ private:
 	bool target_smallest_edges(double max_ratio);
 	bool remove_smallest_edges(double max_ratio);
 	bool thread_smallest_edges(double max_ratio, int degree);
+	bool resolve_smallest_edges(double max_ratio);
 	bool resolve_trivial_vertex(int type, bool fast, double jump_ratio);
 	bool resolve_single_trivial_vertex(int i, double jump_ratio);
 	bool resolve_splittable_vertex(int type, int degree, double max_ratio);
@@ -73,6 +74,8 @@ private:
 	bool resolve_hyper_edge(int fsize);
 	bool resolve_mixed_vertex(int type);
 	bool resolve_mixed_smallest_edges();
+	bool resolve_trivial_vertex_fast(double jump_ratio);
+	bool resolve_single_trivial_vertex_fast(int i, double jump_ratio);
 
 	// smooth vertex
 	int balance_vertex(int x);

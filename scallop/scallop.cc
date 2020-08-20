@@ -64,19 +64,22 @@ int scallop::assemble()
 		b = resolve_broken_vertex();
 		if(b == true) continue;
 
+		b = resolve_trivial_vertex_fast(cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
+		if(b == true) continue;
+
 		b = resolve_trivial_vertex(1, true, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 		if(b == true) continue;
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, 1, 0.01);
 		if(b == true) continue;
 
-		b = remove_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
+		b = resolve_splittable_vertex(SPLITTABLE_PURE, 1, cfg.max_decompose_error_ratio[SPLITTABLE_PURE]);
+		if(b == true) continue;
+
+		b = resolve_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
 		if(b == true) continue;
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, INT_MAX, cfg.max_decompose_error_ratio[UNSPLITTABLE_SINGLE]);
-		if(b == true) continue;
-
-		b = resolve_splittable_vertex(SPLITTABLE_PURE, 1, cfg.max_decompose_error_ratio[SPLITTABLE_PURE]);
 		if(b == true) continue;
 
 		b = target_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
@@ -713,10 +716,11 @@ bool scallop::remove_single_smallest_out_edge(int i, double max_ratio, double &r
 	double w = gr.get_edge_weight(i2e[e]);
 	int bigger = 0;
 	PEEI pei = gr.in_edges(i);
+	double sum = gr.get_in_weights(i);
 	for(edge_iterator it1 = pei.first; it1 != pei.second; it1++)
 	{
 		double w2 = gr.get_edge_weight(*it1);
-		if(w2 >= w) bigger++;
+		if(w2 / sum >= r) bigger++;
 	}
 	if(bigger <= 1) return false;
 
@@ -760,10 +764,11 @@ bool scallop::remove_single_smallest_in_edge(int i, double max_ratio, double &ra
 	double w = gr.get_edge_weight(i2e[e]);
 	int bigger = 0;
 	PEEI pei = gr.out_edges(i);
+	double sum = gr.get_out_weights(i);
 	for(edge_iterator it1 = pei.first; it1 != pei.second; it1++)
 	{
 		double w2 = gr.get_edge_weight(*it1);
-		if(w2 >= w) bigger++;
+		if(w2 / sum >= r) bigger++;
 	}
 	if(bigger <= 1) return false;
 
@@ -823,6 +828,81 @@ bool scallop::remove_single_smallest_edge(int i, double max_ratio, double &ratio
 	hs.remove(e);
 	return true;
 }
+
+bool scallop::resolve_smallest_edges(double max_ratio)
+{
+	int se = -1;
+	int root = -1;
+	double ratio = max_ratio;
+	bool flag = false;
+	//for(set<int>::iterator it = nonzeroset.begin(); it != nonzeroset.end(); it++)
+	//for(int i = 1; i < gr.num_vertices() - 1; i++)
+	vector<int> vv(nonzeroset.begin(), nonzeroset.end());
+	for(int k = 0; k < vv.size(); k++)
+	{
+		int i = vv[k];
+		if(gr.in_degree(i) <= 1) continue;
+		if(gr.out_degree(i) <= 1) continue;
+
+		double r;
+		int e = compute_smallest_edge(i, r);
+
+		if(e == -1) continue;
+
+		int s = i2e[e]->source();
+		int t = i2e[e]->target();
+		assert(s == i || t == i);
+
+		if(gr.out_degree(s) <= 1) continue;
+		if(gr.in_degree(t) <= 1) continue;
+
+		if(hs.right_extend(e) && hs.left_extend(e)) continue;
+		if(t == i && hs.right_extend(e)) continue;
+		if(s == i && hs.left_extend(e)) continue;
+
+		//if(gr.mixed_strand_vertex(i)) continue;
+		// check if there are at least two possible ways 
+		// for e to go to the dther side
+		vector<int> vs = gr.get_strand_degree(i);
+		int z = gr.get_edge_info(i2e[e]).strand;
+		if(s == i && z >= 1 && vs[0] + vs[z + 0] <= 1) continue;
+		if(t == i && z >= 1 && vs[3] + vs[z + 3] <= 1) continue;
+
+		if(r < 0.01)
+		{
+			double w = gr.get_edge_weight(i2e[e]);
+			if(cfg.verbose >= 2) printf("resolve small edge, edge = %d, weight = %.2lf, ratio = %.2lf, vertex = (%d, %d), degree = (%d, %d)\n", 
+					e, w, r, s, t, gr.out_degree(s), gr.in_degree(t));
+
+			remove_edge(e);
+			hs.remove(e);
+			flag = true;
+			continue;
+		}
+
+		if(ratio < r) continue;
+
+		ratio = r;
+		se = e;
+		root = i;
+	}
+
+	if(flag == true) return true;
+	if(se == -1) return false;
+
+	double sw = gr.get_edge_weight(i2e[se]);
+	int s = i2e[se]->source();
+	int t = i2e[se]->target();
+	if(cfg.verbose >= 2) printf("resolve small edge, edge = %d, weight = %.2lf, ratio = %.2lf, vertex = (%d, %d), degree = (%d, %d)\n", 
+			se, sw, ratio, s, t, gr.out_degree(s), gr.in_degree(t));
+
+	remove_edge(se);
+	hs.remove(se);
+
+	return true;
+}
+
+
 
 bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 {
@@ -1077,6 +1157,7 @@ bool scallop::resolve_trivial_vertex(int type, bool fast, double jump_ratio)
 		{
 			if(cfg.verbose >= 2) printf("resolve trivial vertex %d, %d-%d, type = %d, ratio = %.2lf, degree = (%d, %d), fast = %c\n", 
 					i, gr.get_vertex_info(i).lpos, gr.get_vertex_info(i).rpos, type, r, gr.in_degree(i), gr.out_degree(i), fast ? 'T' : 'F');
+
 			decompose_trivial_vertex(i);
 			flag = true;
 			continue;
@@ -1098,7 +1179,6 @@ bool scallop::resolve_trivial_vertex(int type, bool fast, double jump_ratio)
 			ratio, gr.in_degree(root), gr.out_degree(root));
 
 	decompose_trivial_vertex(root);
-
 	assert(gr.degree(root) == 0);
 	return true;
 }
@@ -1122,6 +1202,21 @@ bool scallop::resolve_single_trivial_vertex(int i, double jump_ratio)
 
 	return true;
 }
+
+bool scallop::resolve_trivial_vertex_fast(double jump_ratio)
+{
+	bool flag = false;
+	//for(set<int>::iterator it = nonzeroset.begin(); it != nonzeroset.end(); it++)
+	vector<int> vv(nonzeroset.begin(), nonzeroset.end());
+	for(int k = 0; k < vv.size(); k++)
+	{
+		int i = vv[k];
+		bool b = resolve_single_trivial_vertex(i, jump_ratio);
+		if(b == true) flag = true;
+	}
+	return flag;
+}
+
 
 bool scallop::resolve_mixed_vertex(int type)
 {
