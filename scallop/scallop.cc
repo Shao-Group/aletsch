@@ -2742,7 +2742,8 @@ int scallop::compute_smallest_in_edge(int x, double &ratio)
 	}
 	if(e == -1) return -1;
 	assert(sum1 >= SMIN);
-	ratio = minw / sum1;
+	ratio = log(1 + minw) / log(1 + sum1);
+	//ratio = minw / sum1;
 	return e;
 }
 
@@ -2763,7 +2764,8 @@ int scallop::compute_smallest_out_edge(int x, double &ratio)
 	}
 	if(e == -1) return -1;
 	assert(sum1 >= SMIN);
-	ratio = minw / sum1;
+	ratio = log(1 + minw) / log(1 + sum1);
+	//ratio = minw / sum1;
 	return e;
 }
 
