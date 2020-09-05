@@ -121,6 +121,8 @@ int generator::generate(bundle_base &bb, int index)
 	// TODO, storing reads
 	// TODO, don't keep bridged reads
 
+	bd.print(index);
+
 	vcb.push_back(std::move(bd));
 	return 0;
 }

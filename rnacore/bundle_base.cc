@@ -41,6 +41,7 @@ int bundle_base::add_hit(const hit &ht)
 	if(ht.pos < lpos) lpos = ht.pos;
 
 	int32_t p = ht.rpos;
+
 	// TODO parameter
 	if(ht.mpos > ht.rpos && ht.mpos <= ht.rpos + 10000) p = ht.mpos;
 	if(p > rpos) rpos = p;
@@ -103,8 +104,13 @@ int bundle_base::clear()
 	rpos = 0;
 	strand = '.';
 	hits.clear();
+	frgs.clear();
+	grps.clear();
 	hcst.clear();
 	fcst.clear();
+	pcst.clear();
+	qcst.clear();
+	gcst.clear();
 	mmap.clear();
 	imap.clear();
 	return 0;
@@ -165,8 +171,14 @@ int bundle_base::print(int index)
 		if(hits[i].xs == '-') nq++;
 	}
 
-	printf("tid = %d, range = %s:%d-%d, orient = %c, #hits = %lu, +/-/. = %d / %d / %d\n",
-			tid, chrm.c_str(), lpos, rpos, strand, hits.size(), np, nq, n0);
+	printf("tid = %d, range = %s:%d-%d, orient = %c, #hits = %lu, +/-/. = %d / %d / %d, frgs = %lu, grps = %lu, mmap = %lu, imap = %lu.",
+			tid, chrm.c_str(), lpos, rpos, strand, hits.size(), np, nq, n0, frgs.size(), grps.size(), mmap.size(), imap.size());
+	hcst.print_size();
+	fcst.print_size();
+	pcst.print_size();
+	qcst.print_size();
+	gcst.print_size();
+	printf("\n");
 
 	return 0;
 }

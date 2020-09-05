@@ -133,6 +133,14 @@ int chain_set::remove(int h)
 	return 0;
 }
 
+int chain_set::get_strand(int h) const
+{
+	if(h < 0) return -1;
+	if(hmap.find(h) == hmap.end()) return -1;
+	const auto &p = hmap.at(h);
+	return p[2];
+}
+
 vector<int32_t> chain_set::get_chain(int h) const
 {
 	vector<int32_t> v;
@@ -150,6 +158,20 @@ PVI3 chain_set::get(int h) const
 	if(hmap.find(h) == hmap.end()) return pvi;
 	const auto &p = hmap.at(h);
 	return chains[p[0]][p[1]];
+}
+
+int chain_set::print_size()
+{
+	int c = 0;
+	for(int i = 0; i < chains.size(); i++)
+	{
+		for(int j = 0; j < chains[i].size(); j++)
+		{
+			c += chains[i][j].first.size();
+		}
+	}
+	printf("chain_set: %lu groups, %lu stored hits, %d chain-units.", pmap.size(), hmap.size(), c);
+	return 0;
 }
 
 int chain_set::print()

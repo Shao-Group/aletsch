@@ -10,35 +10,27 @@ See LICENSE for licensing.
 
 #include <algorithm>
 
-graph_cluster::graph_cluster(splice_graph &g, bundle_base &d, int max_gap, bool b)
-	: gr(g), bd(d), max_partition_gap(max_gap), store_hits(b)
+graph_cluster::graph_cluster(splice_graph &g, bundle_base &d, int max_gap)
+	: gr(g), bd(d), max_partition_gap(max_gap)
 {
 	group_pereads();
+	for(int k = 0; k < groups.size(); k++) build_clusters(k);
 } 
-
-int graph_cluster::build_pereads_clusters(vector<pereads_cluster> &vc)
-{
-	for(int k = 0; k < groups.size(); k++)
-	{
-		build_pereads_clusters(k, vc);
-	}
-	return 0;
-}
 
 int graph_cluster::group_pereads()
 {
 	typedef pair< vector<int>, vector<int> > PVV;
 	map<PVV, int> findex;
 
-	extend.clear();
 	groups.clear();
 	for(int i = 0; i < bd.frgs.size(); i++)
 	{
 		// only group unbridged fragments
+		/* TODO
 		if(bd.frgs[i][2] >= 1) continue;
 		if(bd.frgs[i][2] <= -1) continue;
-
 		bd.frgs[i][2] = -1;		// assume cannot be bridged
+		*/
 
 		int h1 = bd.frgs[i][0];
 		int h2 = bd.frgs[i][1];
@@ -60,7 +52,8 @@ int graph_cluster::group_pereads()
 		if(b1 == false || b2 == false)  continue;
 		if(v1.size() == 0 || v2.size() == 0) continue;
 
-		bd.frgs[i][2] = 0;			// to be bridged
+		// TODO
+		//bd.frgs[i][2] = 0;			// to be bridged
 
 		PVV pvv(v1, v2);
 		if(findex.find(pvv) == findex.end())
@@ -68,14 +61,6 @@ int graph_cluster::group_pereads()
 			vector<int> v;
 			v.push_back(i);
 			findex.insert(pair<PVV, int>(pvv, groups.size()));
-			int32_t p1 = gr.get_vertex_info(v1.front()).lpos;
-			int32_t p2 = gr.get_vertex_info(v1.back()).rpos;
-			int32_t p3 = gr.get_vertex_info(v2.front()).lpos;
-			int32_t p4 = gr.get_vertex_info(v2.back()).rpos;
-			extend.push_back(p1);
-			extend.push_back(p2);
-			extend.push_back(p3);
-			extend.push_back(p4);
 			groups.push_back(v);
 		}
 		else
@@ -90,9 +75,9 @@ int graph_cluster::group_pereads()
 	return 0;
 }
 
-int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
+int graph_cluster::build_pereads_clusters(int c)
 {
-	const vector<int> &fs = groups[g];
+	const vector<int> &fs = groups[c];
 	vector<vector<int32_t>> vv;
 	for(int i = 0; i < fs.size(); i++)
 	{
@@ -112,17 +97,23 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 
 	for(int i = 0; i < zz.size(); i++)
 	{
-		if(zz[i].size() == 0) continue;
+		if(zz[i].size() <= 0) continue;
+
+		int g = bd.grps.size();
 
 		int h1 = bd.frgs[fs[zz[i][0]]][0];
 		int h2 = bd.frgs[fs[zz[i][0]]][1];
 		assert(bd.hits[h1].rpos <= bd.hits[h2].rpos);
 		assert(bd.hits[h1].pos <= bd.hits[h2].pos);
 
-		pereads_cluster pc;
-		pc.count = 0;
-		pc.chain1 = bd.hcst.get(h1).first;
-		pc.chain2 = bd.hcst.get(h2).first;
+		AI6 pc;
+		const vector<int32_t> &c1 = bd.hcst.get_chain(h1);
+		const vector<int32_t> &c2 = bd.hcst.get_chain(h2);
+		int s1 = bd.hcst.get_strand(h1);
+		int s2 = bd.hcst.get_strand(h2);
+
+		if(c1.size() >= 1) pcst.add(c1, g, s1);
+		if(c2.size() >= 1) qcst.add(c2, g, s2);
 
 		vector<int32_t> bounds(4, 0);
 		bounds[0] = bd.hits[h1].pos;
@@ -135,33 +126,23 @@ int graph_cluster::build_pereads_clusters(int g, vector<pereads_cluster> &vc)
 			h1 = bd.frgs[fs[zz[i][k]]][0];
 			h2 = bd.frgs[fs[zz[i][k]]][1];
 
-			pc.bounds[0] += bd.hits[h1].pos  - bounds[0];
-			pc.bounds[1] += bd.hits[h1].rpos - bounds[1];
-			pc.bounds[2] += bd.hits[h2].pos  - bounds[2];
-			pc.bounds[3] += bd.hits[h2].rpos - bounds[3];
+			pc[0] += bd.hits[h1].pos  - bounds[0];
+			pc[1] += bd.hits[h1].rpos - bounds[1];
+			pc[2] += bd.hits[h2].pos  - bounds[2];
+			pc[3] += bd.hits[h2].rpos - bounds[3];
 
-			pc.frlist.push_back(fs[zz[i][k]]);
-			pc.count++;
-			
-			if(store_hits == true)
-			{
-				pc.hits1.push_back(bd.hits[h1]);
-				pc.hits2.push_back(bd.hits[h2]);
-			}
+			int f = fs[zz[i][k]];
+			bd.frgs[f][2] = g;
 		}
 
-		if(pc.count <= 0) continue;
+		pc[0] = pc[0] / pc[4] + bounds[0];  
+		pc[1] = pc[1] / pc[4] + bounds[1];
+		pc[2] = pc[2] / pc[4] + bounds[2]; 
+		pc[3] = pc[3] / pc[4] + bounds[3];
+		pc[4] = zz[i].size();
+		pc[5] = 0;
 
-		pc.bounds[0] = pc.bounds[0] / pc.count + bounds[0];  
-		pc.bounds[1] = pc.bounds[1] / pc.count + bounds[1];
-		pc.bounds[2] = pc.bounds[2] / pc.count + bounds[2]; 
-		pc.bounds[3] = pc.bounds[3] / pc.count + bounds[3];
-		pc.extend[0] = extend[g * 4 + 0];
-		pc.extend[1] = extend[g * 4 + 1];
-		pc.extend[2] = extend[g * 4 + 2];
-		pc.extend[3] = extend[g * 4 + 3];
-
-		vc.push_back(pc);
+		bd.grps.push_back(std:move(pc));
 	}
 
 	return 0;

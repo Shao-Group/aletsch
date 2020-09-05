@@ -87,3 +87,9 @@ int bundle::combine(const bundle &bb)
 	for(SIMI z = bb.imap.begin(); z != bb.imap.end(); z++) imap += *z;
 	return 0;
 }
+
+int bundle::print(int index)
+{
+	bundle_base::print(index);
+	return 0;
+}

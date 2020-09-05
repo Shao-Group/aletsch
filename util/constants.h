@@ -88,6 +88,7 @@ typedef pair<int32_t, set<int> > PISI;
 typedef map<int, double> MID;
 typedef map<int32_t, set<int> > MISI;
 typedef array<int, 3> AI3;
+typedef array<int, 6> AI6;
 typedef pair<vector<int32_t>, int> PVI;
 typedef pair<vector<int32_t>, AI3> PVI3;
 

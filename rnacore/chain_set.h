@@ -23,13 +23,15 @@ public:
 	vector<vector<PVI3>> chains;
 
 public:
-	int add(const chain_set &cst);							// if h < 0, don't store the handle
+	int add(const chain_set &cst);						// if h < 0, don't store the handle
 	int add(const vector<int32_t> &v, const AI3 &a);	// if h < 0, don't store the handle
 	int add(const vector<int32_t> &v, int h, char xs);	// if h < 0, don't store the handle
 	int remove(int h);									// remove handle and decrease count
 	int clear();										// clear everything
 	int print();										// print
+	int print_size();									// print
 	PVI3 get(int h) const;								// get chain and return count
+	int get_strand(int h) const;						// get strand
 	vector<int32_t> get_chain(int h) const;				// get chain
 	vector<int32_t> get_splices() const;				// get the set of all splices
 };

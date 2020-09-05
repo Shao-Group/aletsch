@@ -8,7 +8,6 @@ See LICENSE for licensing.
 #define __GRAPH_CLUSTER_H__
 
 #include "splice_graph.h"
-#include "pereads_cluster.h"
 #include "phase_set.h"
 #include "bundle_base.h"
 
@@ -17,7 +16,7 @@ using namespace std;
 class graph_cluster
 {
 public:
-	graph_cluster(splice_graph &gr, bundle_base &bd, int max_gap, bool b);
+	graph_cluster(splice_graph &gr, bundle_base &bd, int max_gap);
 
 public:
 	splice_graph &gr;				// given splice graph
@@ -25,16 +24,11 @@ public:
 
 private:
 	vector<vector<int>> groups;
-	vector<int32_t> extend;
 	int max_partition_gap;
-	bool store_hits;
-
-public:
-	int build_pereads_clusters(vector<pereads_cluster> &vc);
 
 private:
 	int group_pereads();
-	int build_pereads_clusters(int g, vector<pereads_cluster> &vc);
+	int build_clusters(int g);
 	vector<vector<int>> partition(vector<vector<int32_t>> &fs, int r);
 };
 
