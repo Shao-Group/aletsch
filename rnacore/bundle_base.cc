@@ -241,6 +241,174 @@ int bundle_base::build_fragments()
 	return 0;
 }
 
+int bundle_base::group_fragments(splice_graph &gr, int max_gap)
+{
+	vector<vector<int>> groups;
+	group_fragments(gr, groups);
+	for(int k = 0; k < groups.size(); k++)
+	{
+		group_fragments(groups[k], max_gap);
+	}
+	return 0;
+}
+
+int bundle_base::group_fragments(splice_graph &gr, vector<vector<int>> &groups)
+{
+	typedef pair< vector<int>, vector<int> > PVV;
+	map<PVV, int> findex;
+	groups.clear();
+
+	for(int i = 0; i < frgs.size(); i++)
+	{
+		frgs[i][2] = -1;
+
+		int h1 = frgs[i][0];
+		int h2 = frgs[i][1];
+
+		assert(hits[h1].hid >= 0);
+		assert(hits[h2].hid >= 0);
+
+		if(hits[h1].pos > hits[h2].pos) continue;
+		if(hits[h1].rpos > hits[h2].rpos) continue;
+
+		vector<int> v1;
+		vector<int> v2;
+		const vector<int32_t> &chain1 = hcst.get_chain(h1);
+		const vector<int32_t> &chain2 = hcst.get_chain(h2);
+
+		// TODO, don't group with a graph
+		bool b1 = align_hit_to_splice_graph(hits[h1], chain1, gr, v1);
+		bool b2 = align_hit_to_splice_graph(hits[h2], chain2, gr, v2);
+
+		if(b1 == false || b2 == false)  continue;
+		if(v1.size() == 0 || v2.size() == 0) continue;
+
+		PVV pvv(v1, v2);
+		if(findex.find(pvv) == findex.end())
+		{
+			vector<int> v;
+			v.push_back(i);
+			findex.insert(pair<PVV, int>(pvv, groups.size()));
+			groups.push_back(v);
+		}
+		else
+		{
+			int k = findex[pvv];
+			groups[k].push_back(i);
+		}
+	}
+
+	//for(int k = 0; k < groups.size(); k++) printf("group %d contains %lu frags\n", k, groups[k].size());
+
+	return 0;
+}
+
+int bundle_base::group_fragments(const vector<int> &fs, int max_gap)
+{
+	vector<vector<int32_t>> vv;
+	for(int i = 0; i < fs.size(); i++)
+	{
+		int h1 = frgs[fs[i]][0];
+		int h2 = frgs[fs[i]][1];
+
+		vector<int32_t> v;
+		v.push_back(hits[h1].pos);
+		v.push_back(hits[h1].rpos);
+		v.push_back(hits[h2].pos);
+		v.push_back(hits[h2].rpos);
+		v.push_back(i);
+		vv.push_back(v);
+	}
+
+	vector<vector<int>> zz = partition(vv, 0, max_gap);
+
+	for(int i = 0; i < zz.size(); i++)
+	{
+		if(zz[i].size() <= 0) continue;
+
+		int g = grps.size();
+
+		int h1 = frgs[fs[zz[i][0]]][0];
+		int h2 = frgs[fs[zz[i][0]]][1];
+		assert(hits[h1].rpos <= hits[h2].rpos);
+		assert(hits[h1].pos <= hits[h2].pos);
+
+		AI6 pc;
+		const vector<int32_t> &c1 = hcst.get_chain(h1);
+		const vector<int32_t> &c2 = hcst.get_chain(h2);
+		int s1 = hcst.get_strand(h1);
+		int s2 = hcst.get_strand(h2);
+
+		if(c1.size() >= 1) pcst.add(c1, g, s1);
+		if(c2.size() >= 1) qcst.add(c2, g, s2);
+
+		vector<int32_t> bounds(4, 0);
+		bounds[0] = hits[h1].pos;
+		bounds[1] = hits[h1].rpos;
+		bounds[2] = hits[h2].pos;
+		bounds[3] = hits[h2].rpos;
+
+		for(int k = 0; k < zz[i].size(); k++)
+		{
+			int f = fs[zz[i][k]];
+			h1 = frgs[f][0];
+			h2 = frgs[f][1];
+
+			pc[0] += hits[h1].pos  - bounds[0];
+			pc[1] += hits[h1].rpos - bounds[1];
+			pc[2] += hits[h2].pos  - bounds[2];
+			pc[3] += hits[h2].rpos - bounds[3];
+
+			frgs[f][2] = g;
+		}
+
+		pc[0] = pc[0] / pc[4] + bounds[0];  
+		pc[1] = pc[1] / pc[4] + bounds[1];
+		pc[2] = pc[2] / pc[4] + bounds[2]; 
+		pc[3] = pc[3] / pc[4] + bounds[3];
+		pc[4] = zz[i].size();
+		pc[5] = 0;
+
+		grps.push_back(std:move(pc));
+	}
+	return 0;
+}
+
+vector<vector<int>> bundle_base::partition(vector<vector<int32_t>> &fs, int r, int max_partition_gap)
+{
+	vector<vector<int>> vv;
+	if(fs.size() == 0) return vv;
+
+	if(r >= 4)
+	{
+		vector<int> v;
+		for(int k = 0; k < fs.size(); k++) v.push_back(fs[k][4]);
+		vv.push_back(v);
+		return vv;
+	}
+
+	if(r == 0) sort(fs.begin(), fs.end(), compare_rank0);	
+	if(r == 1) sort(fs.begin(), fs.end(), compare_rank1);	
+	if(r == 2) sort(fs.begin(), fs.end(), compare_rank2);	
+	if(r == 3) sort(fs.begin(), fs.end(), compare_rank3);	
+
+	int pre = 0;
+	for(int k = 1; k <= fs.size(); k++)
+	{
+		if(k < fs.size()) assert(fs[k][r] >= fs[k - 1][r]);
+		if(k < fs.size() && fs[k][r] - fs[k - 1][r] <= max_partition_gap) continue;
+
+		vector< vector<int32_t> > fs1;
+		for(int i = pre; i < k; i++) fs1.push_back(fs[i]);
+
+		vector< vector<int> > vv1 = partition(fs1, r + 1);
+		vv.insert(vv.end(), vv1.begin(), vv1.end());
+
+		pre = k;
+	}
+	return vv;
+}
+
 int bundle_base::build_phase_set(phase_set &ps, splice_graph &gr)
 {
 	vector<int> fb(hits.size(), -1);
@@ -559,3 +727,8 @@ int bundle_base::filter_multialigned_hits()
 	//printf("filter %d / %d multialigned fragments / hits, total %lu frags %lu reads\n", cnt1, cnt2, frgs.size(), hits.size());
 	return 0;
 }
+
+bool compare_rank0(const vector<int32_t> &x, const vector<int32_t> &y) { return x[0] < y[0]; }
+bool compare_rank1(const vector<int32_t> &x, const vector<int32_t> &y) { return x[1] < y[1]; }
+bool compare_rank2(const vector<int32_t> &x, const vector<int32_t> &y) { return x[2] < y[2]; }
+bool compare_rank3(const vector<int32_t> &x, const vector<int32_t> &y) { return x[3] < y[3]; }
