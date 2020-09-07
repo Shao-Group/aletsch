@@ -243,8 +243,14 @@ int bundle_base::build_fragments()
 
 int bundle_base::group_fragments(splice_graph &gr, int max_gap)
 {
+	grps.clear();
+	pcst.clear();
+	qcst.clear();
+	gcst.clear();
+
 	vector<vector<int>> groups;
 	group_fragments(gr, groups);
+
 	for(int k = 0; k < groups.size(); k++)
 	{
 		group_fragments(groups[k], max_gap);
