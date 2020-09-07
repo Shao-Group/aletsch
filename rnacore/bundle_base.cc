@@ -369,7 +369,7 @@ int bundle_base::group_fragments(const vector<int> &fs, int max_gap)
 		pc[4] = zz[i].size();
 		pc[5] = 0;
 
-		grps.push_back(std:move(pc));
+		grps.push_back(std::move(pc));
 	}
 	return 0;
 }
@@ -401,7 +401,7 @@ vector<vector<int>> bundle_base::partition(vector<vector<int32_t>> &fs, int r, i
 		vector< vector<int32_t> > fs1;
 		for(int i = pre; i < k; i++) fs1.push_back(fs[i]);
 
-		vector< vector<int> > vv1 = partition(fs1, r + 1);
+		vector< vector<int> > vv1 = partition(fs1, r + 1, max_partition_gap);
 		vv.insert(vv.end(), vv1.begin(), vv1.end());
 
 		pre = k;
