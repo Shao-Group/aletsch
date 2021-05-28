@@ -1,0 +1,2 @@
+1, improve insertsize estimation; now underestimated
+2, accept bundle, using number of reads with splices
