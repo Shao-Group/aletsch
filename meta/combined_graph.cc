@@ -886,8 +886,30 @@ int combined_graph::print(int index)
 		pereads += vc[i].extend.size();
 	}
 
-	printf("combined-graph %d: sid = %d, gid = %s, #combined = %d, chrm = %s, strand = %c, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phases = %lu, #pereads = %lu / %d\n", 
-			index, sid, gid.c_str(), num_combined, chrm.c_str(), strand, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), ps.pmap.size(), vc.size(), pereads);
+	int32_t lj = -1, rj = -1;
+	for(int i = 0; i < junctions.size(); i++)
+	{
+		TI32 p = junctions[i].first;
+		DI d = junctions[i].second;
+		if(lj == -1 || p.first.first < lj) lj = p.first.first; 
+		if(rj == -1 || p.first.second > rj) rj = p.first.second; 
+	}
+	int sb = -1, tb = -1;
+	for(int i = 0; i < sbounds.size(); i++)
+	{
+		int32_t p = sbounds[i].first;
+		DI d = sbounds[i].second;
+		if(sb == -1 || p < sb) sb = p;
+	}
+	for(int i = 0; i < tbounds.size(); i++)
+	{
+		int32_t p = tbounds[i].first;
+		DI d = tbounds[i].second;
+		if(tb == -1 || p > tb) tb = p;
+	}
+
+	printf("combined-graph %d: sid = %d, gid = %s, #combined = %d, chrm = %s, strand = %c, range = %d-%d, junc = %d-%d, #regions = %lu, #sbounds = %lu, #tbounds = %lu, #junctions = %lu, #phases = %lu, #pereads = %lu / %d\n", 
+			index, sid, gid.c_str(), num_combined, chrm.c_str(), strand, sb, tb, lj, rj, regions.size(), sbounds.size(), tbounds.size(), junctions.size(), ps.pmap.size(), vc.size(), pereads);
 
 	return 0;
 

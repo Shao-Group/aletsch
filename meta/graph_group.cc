@@ -142,7 +142,10 @@ int graph_group::build_similarity(const vector<int> &ss, vector<PPID> &vpid, boo
 			int c = gset[j].get_overlapped_splice_positions(gset[i].splices);
 			double r = c * 1.0 / (gset[i].splices.size() + gset[j].splices.size() - c);
 
-			//printf("graph-similarity: b = %c, r = %.3lf, c = %d, size1 = %lu, size2 = %lu\n", b ? 'T' : 'F', r, c, gset[i].splices.size(), gset[j].splices.size());
+			printf("graph-similarity: r = %.3lf, c = %d, size1 = %lu, size2 = %lu, g1 = \n", r, c, gset[i].splices.size(), gset[j].splices.size());
+			gset[i].print(i);
+			gset[j].print(j);
+			printf("\n");
 
 			if(c <= 1.50) continue;
 			if(r < min_similarity) continue;
