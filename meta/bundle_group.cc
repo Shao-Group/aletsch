@@ -130,6 +130,7 @@ int bundle_group::build_splice_index()
 
 int bundle_group::build_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local)
 {
+	printf("START BUILD SIMILARITY; cfg.max_num_junctions_to_combine = %d, ss.size() =%lu\n", cfg.max_num_junctions_to_combine, ss.size());
 	for(int xi = 0; xi < ss.size(); xi++)
 	{
 		int i = ss[xi];
