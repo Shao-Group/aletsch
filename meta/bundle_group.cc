@@ -34,6 +34,7 @@ int bundle_group::resolve()
 	boost::asio::thread_pool pool1(cfg.max_threads);
 	for(auto &z: sindex)
 	{
+		printf("AAA: %d\n", z.first);
 		const set<int> &s = z.second;
 		boost::asio::post(pool1, [this, &s]{ this->process_subset1(s); });
 	}
@@ -47,6 +48,7 @@ int bundle_group::resolve()
 	boost::asio::thread_pool pool2(cfg.max_threads);
 	for(auto &z: sindex)
 	{
+		printf("BBB: %d\n", z.first);
 		const set<int> &s = z.second;
 		boost::asio::post(pool2, [this, &s, &ds]{ this->process_subset2(s, ds); });
 	}
