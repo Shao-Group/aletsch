@@ -148,7 +148,8 @@ int bundle_group::build_similarity(const vector<int> &ss, vector<PPID> &vpid, bo
 			int c = it - vv.begin();
 			double r = c * 1.0 / (splices[i].size() + splices[j].size() - c);
 
-			//printf("graph-similarity: b = %c, r = %.3lf, c = %d, size1 = %lu, size2 = %lu\n", b ? 'T' : 'F', r, c, splices[i].size(), splices[j].size());
+			printf("graph-similarity: r = %.3lf, c = %d, size1 = %lu, size2 = %lu, sp1 = %d-%d, sp2 = %d-%d\n", 
+					r, c, splices[i].size(), splices[j].size(), splices[i].front(), splices[i].back(), splices[j].front(), splices[j].back());
 
 			if(c <= 1.50) continue;
 			if(r < min_similarity) continue;
