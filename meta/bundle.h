@@ -37,7 +37,6 @@ public:
 	int copy_meta_information(const bundle &bb);
 	int combine(const bundle &bb);
 	int bridge();
-	int print(int index);
 	int clear();
 };
 

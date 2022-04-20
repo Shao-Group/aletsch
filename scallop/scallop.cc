@@ -918,7 +918,7 @@ bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 
 		int balance = abs((int)(rt.eqns[0].s.size() - rt.eqns[0].t.size())) + abs((int)(gr.in_degree(i) - rt.eqns[0].s.size()) - (int)(gr.out_degree(i) - rt.eqns[0].t.size()));
 
-		printf("splittable: type = %d, degree = %d, rt.degree = %d, rt.ratio = %.3lf, balance = %d\n", type, degree, rt.degree, rt.ratio, balance);
+		if(cfg.verbose >= 2) printf("splittable: type = %d, degree = %d, rt.degree = %d, rt.ratio = %.3lf, balance = %d\n", type, degree, rt.degree, rt.ratio, balance);
 
 		if(rt.ratio > max_ratio) continue;
 		if(rt.ratio > min_ratio) continue;

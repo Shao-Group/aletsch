@@ -34,7 +34,6 @@ int bundle_group::resolve()
 	boost::asio::thread_pool pool1(cfg.max_threads);
 	for(auto &z: sindex)
 	{
-		printf("AAA: %d\n", z.first);
 		const set<int> &s = z.second;
 		boost::asio::post(pool1, [this, &s]{ this->process_subset1(s); });
 	}
@@ -48,7 +47,6 @@ int bundle_group::resolve()
 	boost::asio::thread_pool pool2(cfg.max_threads);
 	for(auto &z: sindex)
 	{
-		printf("BBB: %d\n", z.first);
 		const set<int> &s = z.second;
 		boost::asio::post(pool2, [this, &s, &ds]{ this->process_subset2(s, ds); });
 	}
@@ -132,7 +130,7 @@ int bundle_group::build_splice_index()
 
 int bundle_group::build_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local)
 {
-	printf("START BUILD SIMILARITY; cfg.max_num_junctions_to_combine = %d, ss.size() =%lu\n", cfg.max_num_junctions_to_combine, ss.size());
+	//printf("START BUILD SIMILARITY; cfg.max_num_junctions_to_combine = %d, ss.size() =%lu\n", cfg.max_num_junctions_to_combine, ss.size());
 	for(int xi = 0; xi < ss.size(); xi++)
 	{
 		int i = ss[xi];

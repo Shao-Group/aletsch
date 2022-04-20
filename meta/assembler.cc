@@ -41,6 +41,10 @@ int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 
 	if(gv.size() >= 2)
 	{
+		// print
+		printf("\n");
+		for(int k = 0; k < gv.size(); k++) gv[k]->print(k);
+
 		bridge(gv);
 		assemble(gv, ts, instance);
 	}
@@ -63,6 +67,7 @@ int assembler::assemble(vector<bundle*> gv, transcript_set &ts, int instance)
 {
 	assert(gv.size() >= 2);
 	int subindex = 0;
+
 
 	// combined bundle
 	bundle bx(cfg, gv[0]->sp);
@@ -153,8 +158,10 @@ int assembler::bridge(vector<bundle*> gv)
 			if(bs.opt[j].type <= 0) continue;
 			cnt1 += 1;
 			cnt2 += bd.update_bridges(vc[j].frlist, bs.opt[j].chain);
+			vc[j].print(j);
 		}
-		if(cfg.verbose >= 2) printf("further bridge %d / %lu clusters, %d / %d fragments\n", cnt1, vc.size(), cnt2, unbridged);
+		//if(cfg.verbose >= 2) 
+		printf("further bridge %d / %lu clusters, %d / %d fragments\n", cnt1, vc.size(), cnt2, unbridged);
 	}
 	return 0;
 }
