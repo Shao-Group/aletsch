@@ -147,7 +147,9 @@ int bundle_group::build_similarity(const vector<int> &ss, vector<PPID> &vpid, bo
 			vector<int32_t> vv(splices[i].size() + splices[j].size(), 0);
 			vector<int32_t>::iterator it = set_intersection(splices[i].begin(), splices[i].end(), splices[j].begin(), splices[j].end(), vv.begin());
 			int c = it - vv.begin();
-			double r = c * 1.0 / (splices[i].size() + splices[j].size() - c);
+			//double r = c * 1.0 / (splices[i].size() + splices[j].size() - c);
+			int small = splices[i].size() < splices[j].size() ? splices[i].size() : splices[j].size();
+			double r = c * 1.0 / small;
 
 			printf("graph-similarity: r = %.3lf, c = %d, size1 = %lu, size2 = %lu, sp1 = %d-%d, sp2 = %d-%d\n", 
 					r, c, splices[i].size(), splices[j].size(), splices[i].front(), splices[i].back(), splices[j].front(), splices[j].back());

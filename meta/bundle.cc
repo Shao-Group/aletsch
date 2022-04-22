@@ -87,3 +87,23 @@ int bundle::combine(const bundle &bb)
 	for(SIMI z = bb.imap.begin(); z != bb.imap.end(); z++) imap += *z;
 	return 0;
 }
+
+int bundle::print(int index)
+{
+	printf("bundle %d: sample = %d, ", index, sp.sample_id);
+
+	// statistic xs
+	int n0 = 0, np = 0, nq = 0;
+	for(int i = 0; i < hits.size(); i++)
+	{
+		if(hits[i].xs == '.') n0++;
+		if(hits[i].xs == '+') np++;
+		if(hits[i].xs == '-') nq++;
+	}
+
+	printf("tid = %d, range = %s:%d-%d, orient = %c, #hits = %lu, +/-/. = %d / %d / %d\n",
+			tid, chrm.c_str(), lpos, rpos, strand, hits.size(), np, nq, n0);
+
+	return 0;
+}
+

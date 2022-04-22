@@ -91,6 +91,8 @@ int assembler::assemble(vector<bundle*> gv, transcript_set &ts, int instance)
 		splice_graph gr;
 		transform(bd, gr, true);
 
+		fix_missing_edges(gr, gx);
+
 		phase_set ps;
 		bd.build_phase_set(ps, gr);
 		px.combine(ps);
@@ -116,6 +118,37 @@ int assembler::transform(bundle &cb, splice_graph &gr, bool revising)
 		remove_false_boundaries(gr, cb, cfg);
 		refine_splice_graph(gr);
 	}
+	return 0;
+}
+
+int assembler::fix_missing_edges(splice_graph &gr, splice_graph &gx)
+{
+	// checking out-edges of 0
+	PEEI pi = gr.out_edges(0);
+	for(edge_iterator it = pi.first; it != pi.second; it++)
+	{
+		edge_descriptor e = (*it);
+		int t = e->target();
+		vertex_info vt = gr.get_vertex_info(t);
+		double wt = gr.get_vertex_weight(t);
+		int v = gx.locate_rbound(vt.rpos);
+		if(v == -1) continue;
+		if(gx.in_degree(v) != 1) continue;
+		vertex_info vv = gx.get_vertex_info(v);
+		edge_descriptor uv = *(gx.in_edges(v).first);
+		int u = uv->source();
+		double wuv = gx.get_edge_weight(uv);
+		if(u == 0) continue;
+		vertex_info vu = gx.get_vertex_info(u);
+		if(vu.rpos == vv.lpos) continue;
+		int s = gr.locate_rbound(vu.rpos);
+		if(s == -1) continue;
+
+		int32_t gap = vt.lpos - vv.lpos;
+		printf("fixing starting boundary t = %d-%d using u = %d-%d, v = %d-%d, gap = %d, wt = %.1lf, wuv = %.1lf\n", 
+				vt.lpos, vt.rpos, vu.lpos, vu.rpos, vv.lpos, vv.rpos, gap, wt, wuv);
+	}
+
 	return 0;
 }
 
@@ -158,7 +191,7 @@ int assembler::bridge(vector<bundle*> gv)
 			if(bs.opt[j].type <= 0) continue;
 			cnt1 += 1;
 			cnt2 += bd.update_bridges(vc[j].frlist, bs.opt[j].chain);
-			vc[j].print(j);
+			//vc[j].print(j);
 		}
 		//if(cfg.verbose >= 2) 
 		printf("further bridge %d / %lu clusters, %d / %d fragments\n", cnt1, vc.size(), cnt2, unbridged);
