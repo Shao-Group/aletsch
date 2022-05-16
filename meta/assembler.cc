@@ -105,6 +105,35 @@ int assembler::assemble(vector<bundle*> gv, transcript_set &ts, int instance)
 	return 0;
 }
 
+int assembler::refine_pairwise(bundle &cx, bundle &cy)
+{
+	// combined bundle
+	bundle cb(cfg, cx.sp);
+	cb.copy_meta_information(cx);
+	cb.combine(cx);
+	cb.combine(cy);
+	cb.set_gid(0);
+
+	// combined splice graph
+	splice_graph gr;
+	transform(cb, gr, false);
+
+	// individual graphs
+	splice_graph gx;
+	splice_graph gy;
+	transform(cx, gx, false);
+	transform(cy, gy, false);
+
+	refine_pairwise(gx, gr);
+	refine_pairwise(gy, gr);
+	return 0;
+}
+
+int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
+{
+	// TODO
+}
+
 int assembler::transform(bundle &cb, splice_graph &gr, bool revising)
 {
 	graph_builder gb(cb, cfg, cb.sp);
