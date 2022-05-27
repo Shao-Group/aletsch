@@ -275,7 +275,7 @@ int incubator::merge()
 
 int incubator::assemble()
 {
-	boost::asio::thread_pool pool(params[DEFAULT].max_threads); TODO
+	boost::asio::thread_pool pool(params[DEFAULT].max_threads); //TODO
 	//boost::asio::thread_pool pool(1);
 	mutex mylock;
 

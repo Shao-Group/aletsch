@@ -31,6 +31,16 @@ assembler::assembler(const parameters &p)
 
 int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 {
+	// TODO just try to refine and check
+	for(int i = 0; i < gv.size(); i++)
+	{
+		for(int j = i + 1; j < gv.size(); j++)
+		{
+			refine_pairwise(*(gv[i]), *(gv[j]));
+		}
+	}
+	return 0;
+
 	int subindex = 0;
 
 	if(gv.size() == 1)
@@ -112,7 +122,7 @@ int assembler::refine_pairwise(bundle &cx, bundle &cy)
 	cb.copy_meta_information(cx);
 	cb.combine(cx);
 	cb.combine(cy);
-	cb.set_gid(0);
+	cb.set_gid(0, 0);		// TODO, proper gid
 
 	// combined splice graph
 	splice_graph gr;
@@ -131,7 +141,53 @@ int assembler::refine_pairwise(bundle &cx, bundle &cy)
 
 int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
 {
-	// TODO
+	if(gx.strand != gr.strand) return 0;
+	int strand = 0;
+	if(gr.strand == '+') strand = 1;
+	else if(gr.strand == '-') strand = 2;
+	if(strand == 0) return 0; // TODO
+
+	// DP starting from the source 0
+	int n = gr.num_vertices() - 1;
+	vector<pereads_cluster> vc;
+	bridge_solver bs0(gr, vc, cfg);
+	vector<vector<entry>> table0; 
+	bs0.dynamic_programming(0, n, table0, strand);
+
+	// check all starting vertices of gx
+	PEEI pei = gx.out_edges(0);
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		int s = (*it)->source();
+		int t = (*it)->target();
+		assert(s == 0);
+		int32_t z = gx.get_vertex_info(t).lpos;
+		int v = gr.locate_vertex(z);
+
+		// if v is also a starting vertex continue;
+		if(gr.edge(0, v).second == true) continue;
+
+		vector<vector<int>> pb = bs0.trace_back(v, table0);
+
+		for(int j = 0; j < pb.size(); j++)
+		{
+			bridge_path p;
+			p.score = table0[v][j].stack.front();
+			p.stack = table0[v][j].stack;
+			p.v = pb[j];
+			build_intron_coordinates_from_path(gr, p.v, p.chain);
+
+			printf("bridging chain 0 %d -> %d: ", gr.get_vertex_info(0).lpos, z);
+			printv(p.chain);
+			printf("\n");
+
+			//p.chain = filter_pseudo_introns(p.chain);
+			//piers[b].bridges.push_back(p);
+			break;
+		}
+	}
+	
+	return 0;
 }
 
 int assembler::transform(bundle &cb, splice_graph &gr, bool revising)

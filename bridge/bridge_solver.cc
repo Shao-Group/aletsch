@@ -45,6 +45,11 @@ bridge_solver::bridge_solver(splice_graph &g, vector<pereads_cluster> &v, const 
 	//print();
 }
 
+bridge_solver::bridge_solver(splice_graph &g, vector<pereads_cluster> &v, const parameters &c)
+	: gr(g), vc(v), cfg(c)
+{
+}
+
 int bridge_solver::build_bridging_vertices()
 {
 	vpairs.clear();

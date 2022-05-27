@@ -33,6 +33,7 @@ class bridge_solver
 {
 public:
 	bridge_solver(splice_graph &gr, vector<pereads_cluster> &vc, const parameters &cfg, int low, int high);
+	bridge_solver(splice_graph &gr, vector<pereads_cluster> &vc, const parameters &cfg);
 
 public:
 	splice_graph &gr;						// given splice graph
@@ -57,7 +58,6 @@ public:
 	int collect_unbridged_clusters(vector<pereads_cluster> &v);
 	int write_bridged_reads(BGZF *fout);
 
-private:
 	int add_adjacent_edges();
 	int build_pseudo_introns();
 	int remove_adjacent_edges();
