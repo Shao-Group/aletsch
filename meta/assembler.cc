@@ -36,6 +36,7 @@ int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 	{
 		for(int j = i + 1; j < gv.size(); j++)
 		{
+			printf("trying to refine pair %d and %d\n", i, j);
 			refine_pairwise(*(gv[i]), *(gv[j]));
 		}
 	}
@@ -141,6 +142,7 @@ int assembler::refine_pairwise(bundle &cx, bundle &cy)
 
 int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
 {
+	printf("refine gr and gx: strand = %c and %c\n", gx.strand, gr.strand);
 	if(gx.strand != gr.strand) return 0;
 	int strand = 0;
 	if(gr.strand == '+') strand = 1;
@@ -165,6 +167,8 @@ int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
 		int v = gr.locate_vertex(z);
 
 		// if v is also a starting vertex continue;
+		printf("start vertex of gx = %d, locating to gr.v = %d, (0, %d) = %c\n", t, v, gr.edge(0, v).second ? 'T' : 'F');
+
 		if(gr.edge(0, v).second == true) continue;
 
 		vector<vector<int>> pb = bs0.trace_back(v, table0);
