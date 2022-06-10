@@ -167,7 +167,7 @@ int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
 		int v = gr.locate_vertex(z);
 
 		// if v is also a starting vertex continue;
-		printf("start vertex of gx = %d, locating to gr.v = %d, (0, %d) = %c\n", t, v, gr.edge(0, v).second ? 'T' : 'F');
+		printf("start vertex of gx = %d, locating to gr.v = %d, (0, %d) = %c\n", t, v, v, gr.edge(0, v).second ? 'T' : 'F');
 
 		if(gr.edge(0, v).second == true) continue;
 
