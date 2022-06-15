@@ -135,8 +135,8 @@ int assembler::refine_pairwise(bundle &cx, bundle &cy)
 	transform(cx, gx, false);
 	transform(cy, gy, false);
 
-	refine_pairwise(gx, gr);
-	refine_pairwise(gy, gr);
+	//refine_pairwise(gx, gr);
+	//refine_pairwise(gy, gr);
 	return 0;
 }
 
