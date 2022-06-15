@@ -36,7 +36,7 @@ int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 	{
 		for(int j = i + 1; j < gv.size(); j++)
 		{
-			printf("trying to refine pair %d and %d, samples %d and %s, files %s and %s\n", i, j, gv[i]->sp.sample_id, gv[j]->sp.sample_id, gv[i]->sp.align_file.c_str(), gv[j]->sp.align_file.c_str());
+			printf("trying to refine pair %d and %d, samples %d and %d, files %s and %s\n", i, j, gv[i]->sp.sample_id, gv[j]->sp.sample_id, gv[i]->sp.align_file.c_str(), gv[j]->sp.align_file.c_str());
 			refine_pairwise(*(gv[i]), *(gv[j]));
 		}
 	}
