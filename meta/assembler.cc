@@ -135,8 +135,8 @@ int assembler::refine_pairwise(bundle &cx, bundle &cy)
 	transform(cx, gx, false);
 	transform(cy, gy, false);
 
-	//refine_pairwise(gx, gr);
-	//refine_pairwise(gy, gr);
+	refine_pairwise(gx, gr);
+	refine_pairwise(gy, gr);
 	return 0;
 }
 
@@ -155,6 +155,8 @@ int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
 	bridge_solver bs0(gr, vc, cfg);
 	vector<vector<entry>> table0; 
 	bs0.dynamic_programming(0, n, table0, strand);
+
+	return 0;
 
 	// check all starting vertices of gx
 	PEEI pei = gx.out_edges(0);
