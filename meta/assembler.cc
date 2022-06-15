@@ -156,8 +156,6 @@ int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
 	vector<vector<entry>> table0; 
 	bs0.dynamic_programming(0, n, table0, strand);
 
-	return 0;
-
 	// check all starting vertices of gx
 	PEEI pei = gx.out_edges(0);
 	for(edge_iterator it = pei.first; it != pei.second; it++)
@@ -167,6 +165,8 @@ int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
 		assert(s == 0);
 		int32_t z = gx.get_vertex_info(t).lpos;
 		int v = gr.locate_vertex(z);
+
+		if(v < 0 || v >= gr.num_vertices()) continue;
 
 		// if v is also a starting vertex continue;
 		printf("start vertex of gx = %d, locating to gr.v = %d, (0, %d) = %c\n", t, v, v, gr.edge(0, v).second ? 'T' : 'F');
