@@ -188,6 +188,21 @@ int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
 			printv(p.chain);
 			printf("\n");
 
+			// annotate path
+			vector<int32_t> pt;
+			pt.push_back(gr.get_vertex_info(0).lpos);
+			pt.insert(pt.end(), p.chain.begin(), p.chain.end());
+			pt.push_back(z);
+			vector<int32_t> vv, nn;
+			annotate_path(gx, pt, vv, nn);
+			assert(vv.size() == nn.size());
+			assert(vv.size() % 2 == 0);
+			for(int k = 0; k < vv.size() / 2; k++)
+			{
+				printf(" region: %10d - %10d, type = %1d, annotate = %2d\n", vv[k * 2 + 0], vv[k * 2 + 1], nn[k * 2 + 0], nn[k * 2 + 1]);
+			}
+			printf("\n");
+
 			//p.chain = filter_pseudo_introns(p.chain);
 			//piers[b].bridges.push_back(p);
 			break;

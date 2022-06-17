@@ -35,6 +35,7 @@ int build_intron_coordinates_from_path(splice_graph &gr, const vector<int> &v, v
 int check_strand_from_intron_coordinates(splice_graph &gr, const vector<int32_t> &v);
 int annotate_path(splice_graph &gr, const vector<int32_t> &v, vector<int32_t> &vv, vector<int> &nn);
 int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &vv, vector<int> &nn);
+int annotate_junction(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &vv, vector<int> &nn);
 bool build_path_from_exon_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv);
 bool build_path_from_intron_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv);
 bool build_path_from_mixed_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv);

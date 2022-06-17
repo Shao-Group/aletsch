@@ -207,8 +207,25 @@ int annotate_path(splice_graph &gr, const vector<int32_t> &v, vector<int32_t> &v
 	{
 		annotate_segment(gr, v[i * 2 + 0], v[i * 2 + 1], vv, nn);
 		if(i == v.size() / 2 - 1) break;
-		// TODO annotate junction
+		annotate_junction(gr, v[i * 2 + 1], v[i * 2 + 2], vv, nn);
 	}
+	return 0;
+}
+
+int annotate_junction(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &vv, vector<int> &nn)
+{
+	assert(p1 < p2);
+	int x1 = gr.locate_rbound(p1);
+	int x2 = gr.locate_lbound(p2);
+
+	vv.push_back(p1);
+	vv.push_back(p2);
+	nn.push_back(2);
+
+	if(x1 < 0 || x2 < 0) nn.push_back(-1);
+	else if(gr.edge(x1, x2).second == true) nn.push_back(1);
+	else nn.push_back(-1);
+
 	return 0;
 }
 
