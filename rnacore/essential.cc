@@ -248,6 +248,8 @@ int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &
 		const vertex_info &vi = gr.get_vertex_info(k);
 		assert(p < vi.rpos);
 
+		printf("p = %d, p2 = %d, vi = %d-%d, k = %d, n = %d\n", p, p2, vi.lpos, vi.rpos, k, n);
+
 		if(p2 < vi.lpos)
 		{
 			vv.push_back(p);
