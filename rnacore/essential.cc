@@ -231,7 +231,7 @@ int annotate_junction(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> 
 
 int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &vv, vector<int> &nn)
 {
-	assert(p1 < p2);
+	if(p1 >= p2) return 0;
 	assert(gr.num_vertices() >= 3);
 	int n = gr.num_vertices() - 1;
 
