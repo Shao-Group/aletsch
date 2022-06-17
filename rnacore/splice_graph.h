@@ -111,6 +111,7 @@ public:
 
 	// indexes and queries
 	int build_vertex_index();
+	int locate_vertex0(int32_t p, int a, int b);
 	int locate_vertex(int32_t p, int a, int b);
 	int locate_vertex(int32_t p);
 	int locate_lbound(int32_t p);

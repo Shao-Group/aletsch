@@ -195,6 +195,69 @@ int check_strand_from_intron_coordinates(splice_graph &gr, const vector<int32_t>
 	return 0;
 }
 
+int annotate_path(splice_graph &gr, const vector<int32_t> &v, vector<int32_t> &vv, vector<int> &nn)
+{
+	// assume v[1..n-1] encodes intron-chain coordinates
+	vv.clear();
+	nn.clear();
+	assert(v.size() % 2 == 0);
+	if(v.size() <= 0) return false;
+
+	for(int i = 0; i < v.size() / 2; i++)
+	{
+		annotate_segment(gr, v[i * 2 + 0], v[i * 2 + 1], vv, nn);
+		if(i == v.size() / 2 - 1) break;
+		// TODO annotate junction
+	}
+	return 0;
+}
+
+int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &vv, vector<int> &nn)
+{
+	assert(p1 < p2);
+	assert(gr.num_vertices() >= 3);
+	int n = gr.num_vertices() - 1;
+	if(p1 >= gr.get_vertex_info(n).lpos) return 0;
+
+	int x1 = gr.locate_vertex(p1, 1, n);
+	int x2 = gr.locate_vertex(p2, 1, n);
+	assert(1 <= x1 && x1 <= x2 && x2 <= n - 1);
+
+	int32_t p = p1;
+	int k = x1;
+	while(true)
+	{
+		const vertex_info &vi = gr.get_vertex_info(k);
+		assert(p < vi.rpos);
+
+		if(p < vi.lpos)
+		{
+			vv.push_back(p);
+			vv.push_back(vi.lpos);
+			nn.push_back(1);
+			nn.push_back(-1);
+			p = p1;
+			continue;
+		}
+
+		if(p2 < vi.rpos)
+		{
+			vv.push_back(p);
+			vv.push_back(p2);
+			nn.push_back(1);
+			nn.push_back(1);
+			break;
+		}
+
+		vv.push_back(p);
+		vv.push_back(vi.rpos);
+		nn.push_back(1);
+		nn.push_back(1);
+		p = vi.rpos;
+	}
+	return 0;
+}
+
 bool build_path_from_exon_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv)
 {
 	// assume v encodes exon-chain coordinates

@@ -1097,10 +1097,15 @@ int splice_graph::locate_rbound(int32_t p)
 
 int splice_graph::locate_vertex(int32_t p)
 {
-	return locate_vertex(p, 0, num_vertices());
+	int m = locate_vertex(p, 1, num_vertices() - 1);
+	assert(m >= 1 && m <= num_vertices() - 1);
+	if(m == num_vertices()) return -1;
+	const vertex_info &v = get_vertex_info(m);
+	if(p >= v.lpos && p < v.rpos) return m;
+	else return -1;
 }
 
-int splice_graph::locate_vertex(int32_t p, int a, int b)
+int splice_graph::locate_vertex0(int32_t p, int a, int b)
 {
 	if(a >= b) return -1;
 	int m = (a + b) / 2;
@@ -1110,6 +1115,22 @@ int splice_graph::locate_vertex(int32_t p, int a, int b)
 	if(p < v.lpos) return locate_vertex(p, a, m);
 	return locate_vertex(p, m + 1, b);
 }
+
+int splice_graph::locate_vertex(int32_t p, int a, int b)
+{
+	// return the leftmost vertex v such that p < v.rpos
+	// when this function is called, vertex b (exclusive)
+	// won't be checked
+	if(a >= b) return b;
+	int m = (a + b) / 2;
+	assert(m >= a && m < b);
+	assert(m >= 0 && m < num_vertices());
+	const vertex_info &v = get_vertex_info(m);
+	if(p >= v.lpos && p < v.rpos) return m;
+	if(p < v.lpos) return locate_vertex(p, a, m);
+	return locate_vertex(p, m + 1, b);
+}
+
 
 int splice_graph::draw(const string &file, const MIS &mis, const MES &mes, double len, const vector<int> &tp, bool footer)
 {
