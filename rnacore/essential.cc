@@ -250,7 +250,7 @@ int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &
 
 		printf("p = %d, p2 = %d, vi = %d-%d, k = %d, n = %d\n", p, p2, vi.lpos, vi.rpos, k, n);
 
-		if(p2 < vi.lpos)
+		if(p2 <= vi.lpos)
 		{
 			vv.push_back(p);
 			vv.push_back(p2);
@@ -269,7 +269,7 @@ int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &
 			continue;
 		}
 
-		if(p2 < vi.rpos)
+		if(p2 <= vi.rpos)
 		{
 			vv.push_back(p);
 			vv.push_back(p2);
