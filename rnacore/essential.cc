@@ -265,7 +265,7 @@ int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &
 			vv.push_back(vi.lpos);
 			nn.push_back(1);
 			nn.push_back(-1);
-			p = p1;
+			p = vi.lpos;
 			continue;
 		}
 
