@@ -219,16 +219,23 @@ int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &
 	int n = gr.num_vertices() - 1;
 	if(p1 >= gr.get_vertex_info(n).lpos) return 0;
 
-	int x1 = gr.locate_vertex(p1, 1, n);
-	int x2 = gr.locate_vertex(p2, 1, n);
-	assert(1 <= x1 && x1 <= x2 && x2 <= n - 1);
-
 	int32_t p = p1;
-	int k = x1;
-	while(true)
+	int k = gr.locate_vertex(p1, 1, n);
+	assert(1 <= k && k <= n - 1);
+
+	while(k <= n - 1)
 	{
 		const vertex_info &vi = gr.get_vertex_info(k);
 		assert(p < vi.rpos);
+
+		if(p2 < vi.lpos)
+		{
+			vv.push_back(p);
+			vv.push_back(p2);
+			nn.push_back(1);
+			nn.push_back(-1);
+			break;	
+		}
 
 		if(p < vi.lpos)
 		{
@@ -254,7 +261,19 @@ int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &
 		nn.push_back(1);
 		nn.push_back(1);
 		p = vi.rpos;
+		k++;
+
+		if(k == n)
+		{
+			vv.push_back(p);
+			vv.push_back(p2);
+			nn.push_back(1);
+			nn.push_back(-1);
+			break;
+		}
 	}
+
+	assert(vv.back() == p2);
 	return 0;
 }
 
