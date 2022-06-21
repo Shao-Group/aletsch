@@ -235,7 +235,7 @@ int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &
 	assert(gr.num_vertices() >= 3);
 	int n = gr.num_vertices() - 1;
 
-	printf("annotate-segment %d-%d: rightmost pos of gr = %d\n", p1, p2, gr.get_vertex_info(n).lpos);
+	//printf("annotate-segment %d-%d: rightmost pos of gr = %d\n", p1, p2, gr.get_vertex_info(n).lpos);
 
 	if(p1 >= gr.get_vertex_info(n).lpos) return 0;
 
@@ -248,7 +248,7 @@ int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &
 		const vertex_info &vi = gr.get_vertex_info(k);
 		assert(p < vi.rpos);
 
-		printf("p = %d, p2 = %d, vi = %d-%d, k = %d, n = %d\n", p, p2, vi.lpos, vi.rpos, k, n);
+		//printf("p = %d, p2 = %d, vi = %d-%d, k = %d, n = %d\n", p, p2, vi.lpos, vi.rpos, k, n);
 
 		if(p2 <= vi.lpos)
 		{

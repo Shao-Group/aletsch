@@ -149,15 +149,37 @@ int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
 	else if(gr.strand == '-') strand = 2;
 	if(strand == 0) return 0; // TODO
 
-	// DP starting from the source 0
+	// build index for all starting and ending positions
 	int n = gr.num_vertices() - 1;
+	set<int32_t> sset;
+	set<int32_t> tset;
+	PEEI pei = gx.out_edges(0);
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		int s = (*it)->source();
+		int t = (*it)->target();
+		assert(s == 0);
+		int32_t z = gx.get_vertex_info(t).lpos;
+		sset.insert(z);
+	}
+	pei = gx.in_edges(n);
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		int s = (*it)->source();
+		int t = (*it)->target();
+		assert(t == n);
+		int32_t z = gx.get_vertex_info(s).rpos;
+		tset.insert(z);
+	}
+
+	// DP starting from the source 0
 	vector<pereads_cluster> vc;
 	bridge_solver bs0(gr, vc, cfg);
 	vector<vector<entry>> table0; 
 	bs0.dynamic_programming(0, n, table0, strand);
 
 	// check all starting vertices of gx
-	PEEI pei = gx.out_edges(0);
+	pei = gx.out_edges(0);
 	for(edge_iterator it = pei.first; it != pei.second; it++)
 	{
 		int s = (*it)->source();
@@ -184,8 +206,11 @@ int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
 			p.v = pb[j];
 			build_intron_coordinates_from_path(gr, p.v, p.chain);
 
-			printf("bridging chain 0 %d -> %d: ", gr.get_vertex_info(0).lpos, z);
+			printf("bridging chain %d -> %d: ", gr.get_vertex_info(0).lpos, z);
 			printv(p.chain);
+			printf("\n");
+			printf("chain.score = %.2lf, chain.stack = ", p.score);
+			printv(p.stack);
 			printf("\n");
 
 			// annotate path
@@ -199,7 +224,8 @@ int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
 			assert(vv.size() % 2 == 0);
 			for(int k = 0; k < vv.size() / 2; k++)
 			{
-				printf(" region: %10d - %10d, type = %1d, annotate = %2d\n", vv[k * 2 + 0], vv[k * 2 + 1], nn[k * 2 + 0], nn[k * 2 + 1]);
+				printf(" region: %10d - %10d, type = %1d, annotate = %2d, lbound = %c, rbound = %c\n", vv[k * 2 + 0], vv[k * 2 + 1], nn[k * 2 + 0], nn[k * 2 + 1],
+						sset.find(vv[k*2+0]) == sset.end() ? 'F' : 'T', tset.find(vv[k*2+1]) == sset.end() ? 'F' : 'T');
 			}
 			printf("\n");
 
