@@ -150,7 +150,7 @@ int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
 	if(strand == 0) return 0; // TODO
 
 	// build index for all starting and ending positions
-	int n = gr.num_vertices() - 1;
+	int m = gx.num_vertices() - 1;
 	set<int32_t> sset;
 	set<int32_t> tset;
 	PEEI pei = gx.out_edges(0);
@@ -162,17 +162,18 @@ int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
 		int32_t z = gx.get_vertex_info(t).lpos;
 		sset.insert(z);
 	}
-	pei = gx.in_edges(n);
+	pei = gx.in_edges(m);
 	for(edge_iterator it = pei.first; it != pei.second; it++)
 	{
 		int s = (*it)->source();
 		int t = (*it)->target();
-		assert(t == n);
+		assert(t == m);
 		int32_t z = gx.get_vertex_info(s).rpos;
 		tset.insert(z);
 	}
 
 	// DP starting from the source 0
+	int n = gr.num_vertices() - 1;
 	vector<pereads_cluster> vc;
 	bridge_solver bs0(gr, vc, cfg);
 	vector<vector<entry>> table0; 
