@@ -219,6 +219,12 @@ int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
 			pt.push_back(gr.get_vertex_info(0).lpos);
 			pt.insert(pt.end(), p.chain.begin(), p.chain.end());
 			pt.push_back(z);
+
+			if(pt[0] == pt[1])
+			{
+				pt.erase(pt.begin());
+				pt.erase(pt.begin());
+			}
 			vector<int32_t> vv, nn;
 			annotate_path(gx, pt, vv, nn);
 			assert(vv.size() == nn.size());
