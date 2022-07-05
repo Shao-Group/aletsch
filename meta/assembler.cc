@@ -225,13 +225,14 @@ int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
 				pt.erase(pt.begin());
 				pt.erase(pt.begin());
 			}
-			vector<int32_t> vv, nn;
-			annotate_path(gx, pt, vv, nn);
+			vector<int32_t> vv, nn, pp;
+			annotate_path(gx, pt, vv, nn, pp);
 			assert(vv.size() == nn.size());
 			assert(vv.size() % 2 == 0);
 			for(int k = 0; k < vv.size() / 2; k++)
 			{
-				printf(" region: %9d - %9d, length = %5d, type = %1d, annotate = %2d, lbound = %c/%c, rbound = %c/%c\n", vv[k * 2 + 0], vv[k * 2 + 1], vv[k * 2 + 1] - vv[k * 2 + 0], nn[k * 2 + 0], nn[k * 2 + 1],
+				printf(" region: %9d - %9d, length = %5d, type = %1d, annotate = %2d, ltype = %d, rtype = %d, lbound = %c/%c, rbound = %c/%c\n", 
+						vv[k * 2 + 0], vv[k * 2 + 1], vv[k * 2 + 1] - vv[k * 2 + 0], nn[k * 2 + 0], nn[k * 2 + 1], pp[k * 2 + 0], pp[k * 2 + 1],
 						sset.find(vv[k*2+0]) == sset.end() ? 'F' : 'T', tset.find(vv[k*2+0]) == tset.end() ? 'F' : 'T', sset.find(vv[k*2+1]) == sset.end() ? 'F' : 'T', tset.find(vv[k*2+1]) == tset.end() ? 'F' : 'T');
 			}
 			printf("\n");

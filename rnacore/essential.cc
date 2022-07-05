@@ -195,24 +195,25 @@ int check_strand_from_intron_coordinates(splice_graph &gr, const vector<int32_t>
 	return 0;
 }
 
-int annotate_path(splice_graph &gr, const vector<int32_t> &v, vector<int32_t> &vv, vector<int> &nn)
+int annotate_path(splice_graph &gr, const vector<int32_t> &v, vector<int32_t> &vv, vector<int> &nn, vector<int> &pp)
 {
 	// assume v[1..n-1] encodes intron-chain coordinates
 	vv.clear();
 	nn.clear();
+	pp.clear();
 	assert(v.size() % 2 == 0);
 	if(v.size() <= 0) return 0;
 
 	for(int i = 0; i < v.size() / 2; i++)
 	{
-		annotate_segment(gr, v[i * 2 + 0], v[i * 2 + 1], vv, nn);
+		annotate_segment(gr, v[i * 2 + 0], v[i * 2 + 1], vv, nn, pp);
 		if(i == v.size() / 2 - 1) break;
-		annotate_junction(gr, v[i * 2 + 1], v[i * 2 + 2], vv, nn);
+		annotate_junction(gr, v[i * 2 + 1], v[i * 2 + 2], vv, nn, pp);
 	}
 	return 0;
 }
 
-int annotate_junction(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &vv, vector<int> &nn)
+int annotate_junction(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &vv, vector<int> &nn, vector<int> &pp)
 {
 	assert(p1 < p2);
 	int x1 = gr.locate_rbound(p1);
@@ -221,6 +222,8 @@ int annotate_junction(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> 
 	vv.push_back(p1);
 	vv.push_back(p2);
 	nn.push_back(2);
+	pp.push_back(gr.determine_position_right_type(p1));
+	pp.push_back(gr.determine_position_left_type(p2));
 
 	if(x1 < 0 || x2 < 0) nn.push_back(-1);
 	else if(gr.edge(x1, x2).second == true) nn.push_back(1);
@@ -229,7 +232,7 @@ int annotate_junction(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> 
 	return 0;
 }
 
-int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &vv, vector<int> &nn)
+int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &vv, vector<int> &nn, vector<int> &pp)
 {
 	if(p1 >= p2) return 0;
 	assert(gr.num_vertices() >= 3);
@@ -256,6 +259,8 @@ int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &
 			vv.push_back(p2);
 			nn.push_back(1);
 			nn.push_back(-1);
+			pp.push_back(gr.determine_position_left_type(p));
+			pp.push_back(gr.determine_position_right_type(p2));
 			break;	
 		}
 
@@ -265,6 +270,8 @@ int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &
 			vv.push_back(vi.lpos);
 			nn.push_back(1);
 			nn.push_back(-1);
+			pp.push_back(gr.determine_position_left_type(p));
+			pp.push_back(gr.determine_position_right_type(vi.lpos));
 			p = vi.lpos;
 			continue;
 		}
@@ -275,6 +282,8 @@ int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &
 			vv.push_back(p2);
 			nn.push_back(1);
 			nn.push_back(1);
+			pp.push_back(gr.determine_position_left_type(p));
+			pp.push_back(gr.determine_position_right_type(p2));
 			break;
 		}
 
@@ -282,6 +291,9 @@ int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &
 		vv.push_back(vi.rpos);
 		nn.push_back(1);
 		nn.push_back(1);
+		pp.push_back(gr.determine_position_left_type(p));
+		pp.push_back(gr.determine_position_right_type(vi.rpos));
+
 		p = vi.rpos;
 		k++;
 
@@ -291,6 +303,9 @@ int annotate_segment(splice_graph &gr, int32_t p1, int32_t p2, vector<int32_t> &
 			vv.push_back(p2);
 			nn.push_back(1);
 			nn.push_back(-1);
+			pp.push_back(gr.determine_position_left_type(p));
+			pp.push_back(gr.determine_position_right_type(p2));
+
 			break;
 		}
 	}

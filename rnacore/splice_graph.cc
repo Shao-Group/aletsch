@@ -1083,6 +1083,59 @@ int splice_graph::build_vertex_index()
 	return 0;
 }
 
+int splice_graph::determine_position_right_type(int32_t p)
+{
+	if(rindex.find(p) == rindex.end()) return -1;
+	int x = rindex[p];
+	int n = num_vertices() - 1;
+
+	if(edge(x, n).second == true) return END_BOUNDARY;
+
+	bool splice = false;
+	bool adjacent = false;
+	PEEI pei = out_edges(x);
+	vertex_info vx = get_vertex_info(x);
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = *it;
+		vertex_info vi = get_vertex_info(e->target());
+		if(vi.lpos == vx.rpos) adjacent = true;
+		if(vi.lpos >  vx.rpos) splice = true;
+	}
+
+	if(splice == true && adjacent == true) return RIGHT_MIXED;
+	if(splice == true) return RIGHT_SPLICE;
+	if(adjacent == true && determine_position_left_type(p) == LEFT_MIXED) return LEFT_MIXED;
+
+	return MIDDLE_CUT;
+}
+
+int splice_graph::determine_position_left_type(int32_t p)
+{
+	if(lindex.find(p) == lindex.end()) return -1;
+	int x = lindex[p];
+
+	if(edge(0, x).second == true) return START_BOUNDARY;
+
+	bool splice = false;
+	bool adjacent = false;
+	PEEI pei = in_edges(x);
+	vertex_info vx = get_vertex_info(x);
+	for(edge_iterator it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = *it;
+		vertex_info vi = get_vertex_info(e->source());
+		if(vi.rpos == vx.lpos) adjacent = true;
+		if(vi.rpos <  vx.lpos) splice = true;
+	}
+
+	if(splice == true && adjacent == true) return LEFT_MIXED;
+	if(splice == true) return LEFT_SPLICE;
+	if(adjacent == true && determine_position_right_type(p) == RIGHT_MIXED) return RIGHT_MIXED;
+
+	return MIDDLE_CUT;
+}
+
 int splice_graph::locate_lbound(int32_t p)
 {
 	if(lindex.find(p) == lindex.end()) return -1;

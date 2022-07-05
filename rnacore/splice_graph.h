@@ -116,6 +116,8 @@ public:
 	int locate_vertex(int32_t p);
 	int locate_lbound(int32_t p);
 	int locate_rbound(int32_t p);
+	int determine_position_left_type(int32_t p);
+	int determine_position_right_type(int32_t p);
 	int32_t get_total_length_of_vertices(const vector<int>& v) const;
 	
 	// strandness

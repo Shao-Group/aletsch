@@ -24,6 +24,8 @@ using namespace std;
 #define RIGHT_SPLICE 4
 #define LEFT_RIGHT_SPLICE 5
 #define MIDDLE_CUT 6
+#define LEFT_MIXED 7
+#define RIGHT_MIXED 8
 
 #define TRIVIAL 0
 #define NORMAL 1
