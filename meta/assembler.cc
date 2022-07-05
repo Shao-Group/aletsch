@@ -31,21 +31,12 @@ assembler::assembler(const parameters &p)
 
 int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 {
-	// TODO just try to refine and check
-	for(int i = 0; i < gv.size(); i++)
-	{
-		for(int j = i + 1; j < gv.size(); j++)
-		{
-			printf("trying to refine pair %d and %d, samples %d and %d, files %s and %s\n", i, j, gv[i]->sp.sample_id, gv[j]->sp.sample_id, gv[i]->sp.align_file.c_str(), gv[j]->sp.align_file.c_str());
-			refine_pairwise(*(gv[i]), *(gv[j]));
-		}
-	}
-	return 0;
-
 	int subindex = 0;
 
 	if(gv.size() == 1)
 	{
+		// TODO
+		return 0;
 		bundle &bd = *(gv[0]);
 		assemble(bd, ts, instance);
 	}
@@ -56,7 +47,10 @@ int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 		printf("\n");
 		for(int k = 0; k < gv.size(); k++) gv[k]->print(k);
 
-		bridge(gv);
+		bridge_pairwise(gv);
+		refine_pairwise(gv);
+		// TODO
+		return 0;
 		assemble(gv, ts, instance);
 	}
 	return 0;
@@ -116,6 +110,47 @@ int assembler::assemble(vector<bundle*> gv, transcript_set &ts, int instance)
 	return 0;
 }
 
+int assembler::refine_pairwise(vector<bundle*> gv)
+{
+	for(int i = 0; i < gv.size(); i++)
+	{
+		for(int j = i + 1; j < gv.size(); j++)
+		{
+			vector<bundle*> v;
+			v.push_back(gv[i]);
+			v.push_back(gv[j]);
+			printf("trying to refine pair %d and %d, samples %d and %d, files %s and %s\n", i, j, gv[i]->sp.sample_id, gv[j]->sp.sample_id, gv[i]->sp.align_file.c_str(), gv[j]->sp.align_file.c_str());
+			refine(v);
+		}
+	}
+	return 0;
+}
+
+int assembler::refine(vector<bundle*> gv)
+{
+	assert(gv.size() >= 2);
+
+	// construct combined bundle
+	bundle cb(cfg, gv[0]->sp);
+	cb.copy_meta_information(*(gv[0]));
+	for(int k = 0; k < gv.size(); k++) cb.combine(*(gv[k]));
+
+	// construct combined graph
+	splice_graph gr;
+	transform(cb, gr, false);
+
+	// bridge each individual bundle
+	for(int k = 0; k < gv.size(); k++)
+	{
+		bundle &bd = *(gv[k]);
+		splice_graph gx;
+		transform(bd, gx, false);
+		refine(gx, gr);
+	}
+	return 0;
+}
+
+/*
 int assembler::refine_pairwise(bundle &cx, bundle &cy)
 {
 	// combined bundle
@@ -139,8 +174,9 @@ int assembler::refine_pairwise(bundle &cx, bundle &cy)
 	refine_pairwise(gy, gr);
 	return 0;
 }
+*/
 
-int assembler::refine_pairwise(splice_graph &gx, splice_graph &gr)
+int assembler::refine(splice_graph &gx, splice_graph &gr)
 {
 	printf("refine gr and gx: strand = %c and %c\n", gx.strand, gr.strand);
 	if(gx.strand != gr.strand) return 0;
@@ -293,6 +329,21 @@ int assembler::fix_missing_edges(splice_graph &gr, splice_graph &gx)
 	return 0;
 }
 
+int assembler::bridge_pairwise(vector<bundle*> gv)
+{
+	for(int i = 0; i < gv.size(); i++)
+	{
+		for(int j = i + 1; j < gv.size(); j++)
+		{
+			vector<bundle*> v;
+			v.push_back(gv[i]);
+			v.push_back(gv[j]);
+			bridge(v);
+		}
+	}
+	return 0;
+}
+
 int assembler::bridge(vector<bundle*> gv)
 {
 	assert(gv.size() >= 2);
@@ -334,8 +385,9 @@ int assembler::bridge(vector<bundle*> gv)
 			cnt2 += bd.update_bridges(vc[j].frlist, bs.opt[j].chain);
 			//vc[j].print(j);
 		}
+
 		//if(cfg.verbose >= 2) 
-		printf("further bridge %d / %lu clusters, %d / %d fragments\n", cnt1, vc.size(), cnt2, unbridged);
+		printf("gid %s: further bridge %d / %lu clusters, %d / %d fragments\n", bd.gid.c_str(), cnt1, vc.size(), cnt2, unbridged);
 	}
 	return 0;
 }

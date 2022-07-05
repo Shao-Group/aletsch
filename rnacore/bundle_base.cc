@@ -21,6 +21,7 @@ bundle_base::bundle_base()
 	lpos = 1 << 30;
 	rpos = 0;
 	strand = '.';
+	unbridged = -1;
 }
 
 int bundle_base::add_hit_intervals(const hit &ht, bam1_t *b)
@@ -227,6 +228,19 @@ int bundle_base::build_fragments()
 
 	//printf("total hits = %lu, total fragments = %lu\n", hits.size(), frgs.size());
 	return 0;
+}
+
+int bundle_base::count_unbridged()
+{
+	unbridged = 0;
+	for(int i = 0; i < frgs.size(); i++)
+	{
+		// only group unbridged fragments
+		if(frgs[i][2] >= 1) continue;
+		if(frgs[i][2] <= -1) continue;
+		unbridged++;
+	}
+	return unbridged;
 }
 
 int bundle_base::build_phase_set(phase_set &ps, splice_graph &gr)

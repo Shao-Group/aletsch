@@ -26,10 +26,12 @@ public:
 	int assemble(bundle &cb, transcript_set &ts, int instance);
 	int assemble(vector<bundle*> gv, transcript_set &ts, int instance);
 	int assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int sid);
-	int refine_pairwise(bundle &cx, bundle &cy);
-	int refine_pairwise(splice_graph &gx, splice_graph &gr);
+	int refine_pairwise(vector<bundle*> gv);
+	int refine(vector<bundle*> gv);
+	int refine(splice_graph &gx, splice_graph &gr);
 	int transform(bundle &cb, splice_graph &gr, bool revising);
 	int fix_missing_edges(splice_graph &gr, splice_graph &gx);
+	int bridge_pairwise(vector<bundle*> gv);
 	int bridge(vector<bundle*> gv);
 };
 
