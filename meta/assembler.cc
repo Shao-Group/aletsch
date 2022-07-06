@@ -279,9 +279,9 @@ int assembler::refine(splice_graph &gx, splice_graph &gr)
 			//determine if it is correct
 
 			int m = vv.size() / 2;
+			bool accept = true;
 			if(m >= 3 && nn[m*2-1] == -1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2 && nn[m*2-5] == -1 && nn[m*2-6] == 1)
 			{
-				bool accept = true;
 				for(int k = m - 3; k >= 2; k--)
 				{
 					if(nn[k*2-1] == -1) accept = false;
@@ -297,8 +297,7 @@ int assembler::refine(splice_graph &gx, splice_graph &gr)
 				if(accept == true) printf("ACCEPT PATH, type = (-1,-1,-1), (1, 2, 1)\n");
 				else printf("REJECT PATH, type = (-1,-1,-1), (1, 2, 1)\n");
 			}
-
-			if(m >= 3 && nn[m*2-1] == 1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2 && nn[m*2-5] == -1 && nn[m*2-6] == 1)
+			else if(m >= 3 && nn[m*2-1] == 1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2 && nn[m*2-5] == -1 && nn[m*2-6] == 1)
 			{
 				bool accept = true;
 				for(int k = m - 3; k >= 2; k--)
@@ -315,8 +314,7 @@ int assembler::refine(splice_graph &gx, splice_graph &gr)
 				if(accept == true) printf("ACCEPT PATH, type = (1, -1, -1), (1, 2, 1)\n");
 				else printf("REJECT PATH, type = (1, -1, -1), (1, 2, 1)\n");
 			}
-
-			if(m >= 2 && nn[m*2-1] == -1 && nn[m*2-2] == 2 && nn[m*2-3] == -1 && nn[m*2-4] == 1)
+			else if(m >= 2 && nn[m*2-1] == -1 && nn[m*2-2] == 2 && nn[m*2-3] == -1 && nn[m*2-4] == 1)
 			{
 				bool accept = true;
 				for(int k = m - 2; k >= 2; k--)
@@ -333,8 +331,7 @@ int assembler::refine(splice_graph &gx, splice_graph &gr)
 				if(accept == true) printf("ACCEPT PATH, type = (-1, -1), (2, 1)\n");
 				else printf("REJECT PATH, type = (-1, -1), (2, 1)\n");
 			}
-
-			if(m >= 2 && nn[m*2-1] == -1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2)
+			else if(m >= 2 && nn[m*2-1] == -1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2)
 			{
 				bool accept = true;
 				for(int k = m - 2; k >= 2; k--)
@@ -351,8 +348,7 @@ int assembler::refine(splice_graph &gx, splice_graph &gr)
 				if(accept == true) printf("ACCEPT PATH, type = (-1, -1), (1, 2)\n");
 				else printf("REJECT PATH, type = (-1, -1), (1, 2)\n");
 			}
-
-			if(m >= 1 && nn[m*2-1] == -1 && nn[m*2-2] == 2)
+			else if(m >= 1 && nn[m*2-1] == -1 && nn[m*2-2] == 2)
 			{
 				bool accept = true;
 				for(int k = m - 1; k >= 2; k--)
@@ -363,8 +359,10 @@ int assembler::refine(splice_graph &gx, splice_graph &gr)
 				if(accept == true) printf("ACCEPT PATH, type = (-1), (2)\n");
 				else printf("REJECT PATH, type = (-1), (2)\n");
 			}
-
-			printf("REJECT PATH, other type\n");
+			else
+			{
+				printf("REJECT PATH, other type\n");
+			}
 
 			break;
 		}
