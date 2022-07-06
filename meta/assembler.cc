@@ -222,6 +222,10 @@ int assembler::refine(splice_graph &gx, splice_graph &gr)
 		int s = (*it)->source();
 		int t = (*it)->target();
 		assert(s == 0);
+
+		// TODO, do not refine isolated vertices
+		if(gx.edge(t, gx.num_vertices() - 1).second == true) continue;
+
 		int32_t z = gx.get_vertex_info(t).lpos;
 		int v = gr.locate_vertex(z);
 
