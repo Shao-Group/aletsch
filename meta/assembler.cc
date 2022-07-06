@@ -228,7 +228,7 @@ int assembler::refine(splice_graph &gx, splice_graph &gr)
 		if(v < 0 || v >= gr.num_vertices()) continue;
 
 		// if v is also a starting vertex continue;
-		printf("start vertex of gx = %d, locating to gr.v = %d, start = %c, end = %c\n", t, v, gr.edge(0, v).second ? 'T' : 'F', gr.edge(v, gr.num_vertices() - 1).second ? 'T' : 'F');
+		//printf("start vertex of gx = %d, locating to gr.v = %d, start = %c, end = %c\n", t, v, gr.edge(0, v).second ? 'T' : 'F', gr.edge(v, gr.num_vertices() - 1).second ? 'T' : 'F');
 
 		if(gr.edge(0, v).second == true) continue;
 		if(gr.edge(v, gr.num_vertices() - 1).second == true) continue;
@@ -275,6 +275,97 @@ int assembler::refine(splice_graph &gx, splice_graph &gr)
 
 			//p.chain = filter_pseudo_introns(p.chain);
 			//piers[b].bridges.push_back(p);
+
+			//determine if it is correct
+
+			int m = vv.size() / 2;
+			if(m >= 3 && nn[m*2-1] == -1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2 && nn[m*2-5] == -1 && nn[m*2-6] == 1)
+			{
+				bool accept = true;
+				for(int k = m - 3; k >= 2; k--)
+				{
+					if(nn[k*2-1] == -1) accept = false;
+					if(accept == false) break;
+				}
+				int32_t len1 = vv[m*2-1] - vv[m*2-2];
+				int32_t len2 = vv[m*2-3] - vv[m*2-4];
+				int32_t len3 = vv[m*2-5] - vv[m*2-6];
+
+				if(len2 < len1 || len2 < len3) accept = false;
+				if(len1 > 100 || len3 > 100) accept = false;
+
+				if(accept == true) printf("ACCEPT PATH, type = (-1,-1,-1), (1, 2, 1)\n");
+				else printf("REJECT PATH, type = (-1,-1,-1), (1, 2, 1)\n");
+			}
+
+			if(m >= 3 && nn[m*2-1] == 1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2 && nn[m*2-5] == -1 && nn[m*2-6] == 1)
+			{
+				bool accept = true;
+				for(int k = m - 3; k >= 2; k--)
+				{
+					if(nn[k*2-1] == -1) accept = false;
+					if(accept == false) break;
+				}
+				int32_t len2 = vv[m*2-3] - vv[m*2-4];
+				int32_t len3 = vv[m*2-5] - vv[m*2-6];
+
+				if(len2 < len3) accept = false;
+				if(len3 > 100) accept = false;
+
+				if(accept == true) printf("ACCEPT PATH, type = (1, -1, -1), (1, 2, 1)\n");
+				else printf("REJECT PATH, type = (1, -1, -1), (1, 2, 1)\n");
+			}
+
+			if(m >= 2 && nn[m*2-1] == -1 && nn[m*2-2] == 2 && nn[m*2-3] == -1 && nn[m*2-4] == 1)
+			{
+				bool accept = true;
+				for(int k = m - 2; k >= 2; k--)
+				{
+					if(nn[k*2-1] == -1) accept = false;
+					if(accept == false) break;
+				}
+				int32_t len1 = vv[m*2-1] - vv[m*2-2];
+				int32_t len2 = vv[m*2-3] - vv[m*2-4];
+
+				if(len1 < len2) accept = false;
+				if(len2 > 100) accept = false;
+
+				if(accept == true) printf("ACCEPT PATH, type = (-1, -1), (2, 1)\n");
+				else printf("REJECT PATH, type = (-1, -1), (2, 1)\n");
+			}
+
+			if(m >= 2 && nn[m*2-1] == -1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2)
+			{
+				bool accept = true;
+				for(int k = m - 2; k >= 2; k--)
+				{
+					if(nn[k*2-1] == -1) accept = false;
+					if(accept == false) break;
+				}
+				int32_t len1 = vv[m*2-1] - vv[m*2-2];
+				int32_t len2 = vv[m*2-3] - vv[m*2-4];
+
+				if(len2 < len1) accept = false;
+				if(len1 > 100) accept = false;
+
+				if(accept == true) printf("ACCEPT PATH, type = (-1, -1), (1, 2)\n");
+				else printf("REJECT PATH, type = (-1, -1), (1, 2)\n");
+			}
+
+			if(m >= 1 && nn[m*2-1] == -1 && nn[m*2-2] == 2)
+			{
+				bool accept = true;
+				for(int k = m - 1; k >= 2; k--)
+				{
+					if(nn[k*2-1] == -1) accept = false;
+					if(accept == false) break;
+				}
+				if(accept == true) printf("ACCEPT PATH, type = (-1), (2)\n");
+				else printf("REJECT PATH, type = (-1), (2)\n");
+			}
+
+			printf("REJECT PATH, other type\n");
+
 			break;
 		}
 	}
