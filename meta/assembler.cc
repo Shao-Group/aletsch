@@ -123,6 +123,11 @@ int assembler::refine_pairwise(vector<bundle*> gv)
 			refine(v);
 		}
 	}
+	for(int i = 0; i < gv.size(); i++)
+	{
+		printf("print borrowed paths for bundle %d\n", i);
+		gv[i]->print_borrowed_paths();
+	}
 	return 0;
 }
 
@@ -142,10 +147,7 @@ int assembler::refine(vector<bundle*> gv)
 	// bridge each individual bundle
 	for(int k = 0; k < gv.size(); k++)
 	{
-		bundle &bd = *(gv[k]);
-		splice_graph gx;
-		transform(bd, gx, false);
-		refine(gx, gr);
+		refine(gv[k], gr);
 	}
 	return 0;
 }
@@ -176,8 +178,11 @@ int assembler::refine_pairwise(bundle &cx, bundle &cy)
 }
 */
 
-int assembler::refine(splice_graph &gx, splice_graph &gr)
+int assembler::refine(bundle *bd, splice_graph &gr)
 {
+	splice_graph gx;
+	transform(*bd, gx, false);
+
 	printf("refine gr and gx: strand = %c and %c\n", gx.strand, gr.strand);
 	if(gx.strand != gr.strand) return 0;
 	int strand = 0;
@@ -284,6 +289,8 @@ int assembler::refine(splice_graph &gx, splice_graph &gr)
 
 			int m = vv.size() / 2;
 			bool accept = true;
+			vector<int32_t> bpath;
+			double bweight = -1;
 			
 			if(m >= 3 && nn[m*2-1] == -1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2 && nn[m*2-5] == -1 && nn[m*2-6] == 1)
 			{
@@ -300,7 +307,17 @@ int assembler::refine(splice_graph &gx, splice_graph &gr)
 				if(len2 < len1 || len2 < len3) accept = false;
 				if(len1 > 100 || len3 > 100) accept = false;
 
-				if(accept == true) printf("ACCEPT PATH, type = (-1,-1,-1), (1, 2, 1)\n");
+				if(accept == true)
+				{
+					printf("ACCEPT PATH, type = (-1,-1,-1), (1, 2, 1)\n");
+					bpath.push_back(0 + vv[m*2-6]);
+					bpath.push_back(0 + vv[m*2-5]);
+					bpath.push_back(0 - vv[m*2-4]);
+					bpath.push_back(0 - vv[m*2-3]);
+					bpath.push_back(0 + vv[m*2-2]);
+					bpath.push_back(0 + vv[m*2-1]);
+					bweight = p.score;
+				}
 				else printf("REJECT PATH, type = (-1,-1,-1), (1, 2, 1)\n");
 			}
 			else if(m >= 3 && nn[m*2-1] == 1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2 && nn[m*2-5] == -1 && nn[m*2-6] == 1)
@@ -317,7 +334,15 @@ int assembler::refine(splice_graph &gx, splice_graph &gr)
 				if(len2 < len3) accept = false;
 				if(len3 > 100) accept = false;
 
-				if(accept == true) printf("ACCEPT PATH, type = (1, -1, -1), (1, 2, 1)\n");
+				if(accept == true)
+				{
+					printf("ACCEPT PATH, type = (1, -1, -1), (1, 2, 1)\n");
+					bpath.push_back(0 - vv[m*2-4]);
+					bpath.push_back(0 - vv[m*2-3]);
+					bpath.push_back(0 + vv[m*2-2]);
+					bpath.push_back(0 + vv[m*2-1]);
+					bweight = p.score;
+				}
 				else printf("REJECT PATH, type = (1, -1, -1), (1, 2, 1)\n");
 			}
 			else if(m >= 2 && nn[m*2-1] == -1 && nn[m*2-2] == 2 && nn[m*2-3] == -1 && nn[m*2-4] == 1)
@@ -334,7 +359,15 @@ int assembler::refine(splice_graph &gx, splice_graph &gr)
 				if(len1 < len2) accept = false;
 				if(len2 > 100) accept = false;
 
-				if(accept == true) printf("ACCEPT PATH, type = (-1, -1), (2, 1)\n");
+				if(accept == true)
+				{
+					bpath.push_back(0 - vv[m*2-4]);
+					bpath.push_back(0 - vv[m*2-3]);
+					bpath.push_back(0 + vv[m*2-2]);
+					bpath.push_back(0 + vv[m*2-1]);
+					bweight = p.score;
+					printf("ACCEPT PATH, type = (-1, -1), (2, 1)\n");
+				}
 				else printf("REJECT PATH, type = (-1, -1), (2, 1)\n");
 			}
 			else if(m >= 2 && nn[m*2-1] == -1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2)
@@ -351,7 +384,15 @@ int assembler::refine(splice_graph &gx, splice_graph &gr)
 				if(len2 < len1) accept = false;
 				if(len1 > 100) accept = false;
 
-				if(accept == true) printf("ACCEPT PATH, type = (-1, -1), (1, 2)\n");
+				if(accept == true)
+				{
+					bpath.push_back(0 + vv[m*2-4]);
+					bpath.push_back(0 + vv[m*2-3]);
+					bpath.push_back(0 - vv[m*2-2]);
+					bpath.push_back(0 - vv[m*2-1]);
+					bweight = p.score;
+					printf("ACCEPT PATH, type = (-1, -1), (1, 2)\n");
+				}
 				else printf("REJECT PATH, type = (-1, -1), (1, 2)\n");
 			}
 			else if(m >= 1 && nn[m*2-1] == -1 && nn[m*2-2] == 2)
@@ -362,12 +403,23 @@ int assembler::refine(splice_graph &gx, splice_graph &gr)
 					if(nn[k*2-1] == -1) accept = false;
 					if(accept == false) break;
 				}
-				if(accept == true) printf("ACCEPT PATH, type = (-1), (2)\n");
+				if(accept == true) 
+				{
+					printf("ACCEPT PATH, type = (-1), (2)\n");
+					bpath.push_back(0 - vv[m*2-2]);
+					bpath.push_back(0 - vv[m*2-1]);
+					bweight = p.score;
+				}
 				else printf("REJECT PATH, type = (-1), (2)\n");
 			}
 			else
 			{
 				printf("REJECT PATH, other type\n");
+			}
+
+			if(accept == true)
+			{
+				bd->add_borrowed_path(bpath, bweight);
 			}
 
 			break;

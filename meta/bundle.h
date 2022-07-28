@@ -27,10 +27,12 @@ public:
 	bundle(bundle &&cb) = default;
 
 public:
+	string gid;
 	const parameters &cfg;
 	const sample_profile &sp;
 	int num_combined;
-	string gid;
+	vector<vector<int32_t>> borrowed_paths;
+	vector<double> borrowed_weights;
 
 public:
 	int set_gid(int instance, int subindex);
@@ -39,6 +41,8 @@ public:
 	int print(int k);
 	int bridge();
 	int clear();
+	int add_borrowed_path(const vector<int32_t> &v, double w);
+	int print_borrowed_paths();
 };
 
 #endif

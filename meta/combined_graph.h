@@ -20,7 +20,6 @@ See LICENSE for licensing.
 #include "interval_map.h"
 #include "constants.h"
 #include "parameters.h"
-#include "sample_profile.h"
 
 using namespace std;
 

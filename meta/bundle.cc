@@ -107,3 +107,20 @@ int bundle::print(int index)
 	return 0;
 }
 
+int bundle::add_borrowed_path(const vector<int32_t> &v, double w)
+{
+	borrowed_paths.push_back(v);
+	borrowed_weights.push_back(w);
+	return 0;
+}
+
+int bundle::print_borrowed_paths()
+{
+	for(int k = 0; k < borrowed_paths.size(); k++)
+	{
+		printf("borrowed path %d: weight = %.2lf, path = ", k, borrowed_weights[k]);
+		printv(borrowed_paths[k]);
+		printf("\n");
+	}
+	return 0;
+}
