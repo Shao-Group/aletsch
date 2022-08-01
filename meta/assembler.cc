@@ -359,10 +359,10 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 
 				if(accept == true)
 				{
-					bpath.push_back(0 - vv[m*2-4]);
-					bpath.push_back(0 - vv[m*2-3]);
-					bpath.push_back(0 + vv[m*2-2]);
-					bpath.push_back(0 + vv[m*2-1]);
+					bpath.push_back(0 + vv[m*2-4]);
+					bpath.push_back(0 + vv[m*2-3]);
+					bpath.push_back(0 - vv[m*2-2]);
+					bpath.push_back(0 - vv[m*2-1]);
 					bweight = p.score;
 					printf("ACCEPT PATH, type = (-1, -1), (2, 1)\n");
 				}
@@ -383,10 +383,10 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 
 				if(accept == true)
 				{
-					bpath.push_back(0 + vv[m*2-4]);
-					bpath.push_back(0 + vv[m*2-3]);
-					bpath.push_back(0 - vv[m*2-2]);
-					bpath.push_back(0 - vv[m*2-1]);
+					bpath.push_back(0 - vv[m*2-4]);
+					bpath.push_back(0 - vv[m*2-3]);
+					bpath.push_back(0 + vv[m*2-2]);
+					bpath.push_back(0 + vv[m*2-1]);
 					bweight = p.score;
 					printf("ACCEPT PATH, type = (-1, -1), (1, 2)\n");
 				}
