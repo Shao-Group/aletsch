@@ -31,7 +31,7 @@ public:
 	int32_t tid;					// chromosome ID
 	int32_t lpos;					// the leftmost boundary on reference
 	int32_t rpos;					// the rightmost boundary on reference
-	int unbridged;					// number of to-be-bridged fragments
+	//int unbridged;					// number of to-be-bridged fragments
 	vector<hit> hits;				// hits
 	vector<AI3> frgs;				// fragments <hit1, hit2, type>, type: -1: cannot be bridged; 0: to-be-bridged; 1: bridge with empty; 2: bridge with extra splices
 	chain_set hcst;					// chain set for hits 

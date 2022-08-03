@@ -21,7 +21,7 @@ bundle_base::bundle_base()
 	lpos = 1 << 30;
 	rpos = 0;
 	strand = '.';
-	unbridged = -1;
+	//unbridged = -1;
 }
 
 int bundle_base::add_hit_intervals(const hit &ht, bam1_t *b)
@@ -232,7 +232,7 @@ int bundle_base::build_fragments()
 
 int bundle_base::count_unbridged()
 {
-	unbridged = 0;
+	int unbridged = 0;
 	for(int i = 0; i < frgs.size(); i++)
 	{
 		// only group unbridged fragments

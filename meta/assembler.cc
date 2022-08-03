@@ -47,11 +47,45 @@ int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 		printf("\n");
 		for(int k = 0; k < gv.size(); k++) gv[k]->print(k);
 
-		bridge_pairwise(gv);
-		refine_pairwise(gv);
+		vector<vector<PID>> sim;
+		build_similarity(gv, sim);
+		bridge_pairwise(gv, sim);
+		refine_pairwise(gv, sim);
 		// TODO
 		return 0;
 		assemble(gv, ts, instance);
+	}
+	return 0;
+}
+
+int assembler::build_similarity(vector<bundle*> &gv, vector<vector<PID>> &sim)
+{
+	vector<vector<int32_t>> splices;
+	for(int i = 0; i < gv.size(); i++)
+	{
+		vector<int32_t> v = gv[i]->hcst.get_splices();
+		sort(v.begin(), v.end());
+		splices.push_back(std::move(v));
+	}
+
+	sim.resize(gv.size());
+	for(int i = 0; i < gv.size(); i++)
+	{
+		for(int j = 0; j < gv.size(); j++)
+		{
+			if(i == j) continue;
+
+			vector<int32_t> vv(splices[i].size() + splices[j].size(), 0);
+			vector<int32_t>::iterator it = set_intersection(splices[i].begin(), splices[i].end(), splices[j].begin(), splices[j].end(), vv.begin());
+			int c = it - vv.begin();
+			double r = c * 1.0 / splices[i].size();
+
+			if(c <= 0) continue;
+			sim[i].push_back(PID(j, c));
+
+			sort(sim[i].begin(), sim[i].end(),
+					[](const PID &a, const PID &b) { return a.second > b.second; });
+		}
 	}
 	return 0;
 }
@@ -110,16 +144,18 @@ int assembler::assemble(vector<bundle*> gv, transcript_set &ts, int instance)
 	return 0;
 }
 
-int assembler::refine_pairwise(vector<bundle*> gv)
+int assembler::refine_pairwise(vector<bundle*> gv, vector<vector<PID>> &sim)
 {
 	for(int i = 0; i < gv.size(); i++)
 	{
-		for(int j = i + 1; j < gv.size(); j++)
+		for(int k = 0; k < sim[i].size(); k++)
 		{
+			int j = sim[i][k].first;
 			vector<bundle*> v;
 			v.push_back(gv[i]);
 			v.push_back(gv[j]);
-			printf("trying to refine pair %d and %d, samples %d and %d, files %s and %s\n", i, j, gv[i]->sp.sample_id, gv[j]->sp.sample_id, gv[i]->sp.align_file.c_str(), gv[j]->sp.align_file.c_str());
+			printf("trying to refine pair %d and %d, sim = %.2lf, samples %d and %d, files %s and %s\n", 
+					i, j, sim[i][k].second, gv[i]->sp.sample_id, gv[j]->sp.sample_id, gv[i]->sp.align_file.c_str(), gv[j]->sp.align_file.c_str());
 			refine(v);
 		}
 	}
@@ -473,12 +509,16 @@ int assembler::fix_missing_edges(splice_graph &gr, splice_graph &gx)
 	return 0;
 }
 
-int assembler::bridge_pairwise(vector<bundle*> gv)
+int assembler::bridge_pairwise(vector<bundle*> gv, vector<vector<PID>> &sim)
 {
 	for(int i = 0; i < gv.size(); i++)
 	{
-		for(int j = i + 1; j < gv.size(); j++)
+		int c = gv[i]->count_unbridged();
+		if(c <= 0) continue;
+
+		for(int k = 0; k < sim[i].size(); k++)
 		{
+			int j = sim[i][k].first;
 			vector<bundle*> v;
 			v.push_back(gv[i]);
 			v.push_back(gv[j]);
@@ -515,11 +555,7 @@ int assembler::bridge(vector<bundle*> gv)
 
 		int cnt1 = 0;
 		int cnt2 = 0;
-		int unbridged = 0;
-		for(int j = 0; j < bd.frgs.size(); j++)
-		{
-			if(bd.frgs[j][2] <= 0) unbridged++;
-		}
+		int unbridged = bd.count_unbridged();
 
 		assert(vc.size() == bs.opt.size());
 		for(int j = 0; j < vc.size(); j++)

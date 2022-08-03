@@ -124,3 +124,15 @@ int bundle::print_borrowed_paths()
 	}
 	return 0;
 }
+
+/*
+int bundle::count_unbridged_fragments()
+{
+	int c = 0;
+	for(int j = 0; j < frgs.size(); j++)
+	{
+		if(frgs[j][2] <= 0) c++;
+	}
+	return c;
+}
+*/

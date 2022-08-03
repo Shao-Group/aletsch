@@ -22,16 +22,17 @@ public:
 	const parameters &cfg;
 
 public:
+	int build_similarity(vector<bundle*> &gv, vector<vector<PID>> &sim);
 	int resolve(vector<bundle*> gv, transcript_set &ts, int instance);
 	int assemble(bundle &cb, transcript_set &ts, int instance);
 	int assemble(vector<bundle*> gv, transcript_set &ts, int instance);
 	int assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int sid);
-	int refine_pairwise(vector<bundle*> gv);
+	int refine_pairwise(vector<bundle*> gv, vector<vector<PID>> &sim);
 	int refine(vector<bundle*> gv);
 	int refine(bundle *bd, splice_graph &gr);
 	int transform(bundle &cb, splice_graph &gr, bool revising);
 	int fix_missing_edges(splice_graph &gr, splice_graph &gx);
-	int bridge_pairwise(vector<bundle*> gv);
+	int bridge_pairwise(vector<bundle*> gv, vector<vector<PID>> &sim);
 	int bridge(vector<bundle*> gv);
 };
 

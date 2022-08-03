@@ -43,6 +43,7 @@ public:
 	int clear();
 	int add_borrowed_path(const vector<int32_t> &v, double w);
 	int print_borrowed_paths();
+	//int count_unbridged_fragments();
 };
 
 #endif
