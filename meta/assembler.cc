@@ -163,6 +163,7 @@ int assembler::refine_pairwise(vector<bundle*> gv, vector<vector<PID>> &sim)
 	{
 		printf("print borrowed paths for bundle %d\n", i);
 		gv[i]->print_borrowed_paths();
+		gv[i]->digest_borrowed_paths();
 	}
 	return 0;
 }
@@ -452,7 +453,7 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 
 			if(accept == true)
 			{
-				bd->add_borrowed_path(bpath, bweight);
+				bd->save_borrowed_path(bpath, bweight);
 			}
 
 			break;
@@ -523,6 +524,9 @@ int assembler::bridge_pairwise(vector<bundle*> gv, vector<vector<PID>> &sim)
 			v.push_back(gv[i]);
 			v.push_back(gv[j]);
 			bridge(v);
+
+			printf("trying to bridge pair %d and %d, sim = %.2lf, samples %d and %d, files %s and %s\n", 
+					i, j, sim[i][k].second, gv[i]->sp.sample_id, gv[j]->sp.sample_id, gv[i]->sp.align_file.c_str(), gv[j]->sp.align_file.c_str());
 		}
 	}
 	return 0;

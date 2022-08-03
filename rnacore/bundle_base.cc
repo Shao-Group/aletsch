@@ -33,6 +33,28 @@ int bundle_base::add_hit_intervals(const hit &ht, bam1_t *b)
 	return 0;
 }
 
+int bundle_base::add_borrowed_path(const vector<int32_t> &p, double w)
+{
+	assert(p.size() % 2 == 0);
+	for(int k = 0; k < p.size() / 2; k++)
+	{
+		int p1 = p[k*2+0];
+		int p2 = p[k*2+1];
+		if(p1 >= 0 && p2 >= 0)
+		{
+			mmap += make_pair(ROI(p1, p2), (int)(w));
+		}
+		else if(p1 < 0 && p2 < 0)
+		{
+			vector<int32_t> v;
+			v.push_back(0 - p1);
+			v.push_back(0 - p2);
+			hcst.add(v, -1, strand);
+		}
+	}
+	return 0;
+}
+
 int bundle_base::add_hit(const hit &ht)
 {
 	// store new hit
