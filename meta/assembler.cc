@@ -520,8 +520,7 @@ int assembler::bridge_pairwise(vector<bundle*> gv, vector<vector<PID>> &sim)
 			v.push_back(gv[j]);
 			bridge(v);
 
-			printf("trying to bridge pair %d and %d, sim = %.2lf, samples %d and %d, files %s and %s\n", 
-					i, j, sim[i][k].second, gv[i]->sp.sample_id, gv[j]->sp.sample_id, gv[i]->sp.align_file.c_str(), gv[j]->sp.align_file.c_str());
+			//printf("trying to bridge pair %d and %d, sim = %.2lf, samples %d and %d, files %s and %s\n", i, j, sim[i][k].second, gv[i]->sp.sample_id, gv[j]->sp.sample_id, gv[i]->sp.align_file.c_str(), gv[j]->sp.align_file.c_str());
 		}
 	}
 	return 0;
@@ -566,7 +565,7 @@ int assembler::bridge(vector<bundle*> gv)
 		}
 
 		//if(cfg.verbose >= 2) 
-		printf("gid %s: further bridge %d / %lu clusters, %d / %d fragments\n", bd.gid.c_str(), cnt1, vc.size(), cnt2, unbridged);
+		//printf("gid %s: further bridge %d / %lu clusters, %d / %d fragments\n", bd.gid.c_str(), cnt1, vc.size(), cnt2, unbridged);
 	}
 	return 0;
 }
