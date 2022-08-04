@@ -35,8 +35,6 @@ int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 
 	if(gv.size() == 1)
 	{
-		// TODO
-		return 0;
 		bundle &bd = *(gv[0]);
 		assemble(bd, ts, instance);
 	}
@@ -50,9 +48,7 @@ int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 		vector<vector<PID>> sim;
 		build_similarity(gv, sim);
 		bridge_pairwise(gv, sim);
-		refine_pairwise(gv, sim);
-		// TODO
-		return 0;
+		//refine_pairwise(gv, sim);
 		assemble(gv, ts, instance);
 	}
 	return 0;
@@ -106,7 +102,6 @@ int assembler::assemble(vector<bundle*> gv, transcript_set &ts, int instance)
 {
 	assert(gv.size() >= 2);
 	int subindex = 0;
-
 
 	// combined bundle
 	bundle bx(cfg, gv[0]->sp);
@@ -181,7 +176,7 @@ int assembler::refine(vector<bundle*> gv)
 	splice_graph gr;
 	transform(cb, gr, false);
 
-	// bridge each individual bundle
+	// refine each individual bundle
 	for(int k = 0; k < gv.size(); k++)
 	{
 		refine(gv[k], gr);
