@@ -42,6 +42,8 @@ int bundle_base::add_borrowed_path(const vector<int32_t> &p, double w)
 		int p2 = p[k*2+1];
 		if(p1 >= 0 && p2 >= 0)
 		{
+			if(p1 < lpos) lpos = p1;
+			if(p2 > rpos) rpos = p2;
 			mmap += make_pair(ROI(p1, p2), (int)(w));
 		}
 		else if(p1 < 0 && p2 < 0)
