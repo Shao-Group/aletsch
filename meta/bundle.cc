@@ -139,6 +139,9 @@ int bundle::digest_borrowed_paths()
 	for(auto &x: m)
 	{
 		add_borrowed_path(x.first, x.second);
+		printf("add borrowed path, w = %.2lf, p = ", x.second);
+		printv(x.first);
+		printf("\n");
 	}
 	return 0;
 }

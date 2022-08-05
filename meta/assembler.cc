@@ -220,7 +220,7 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 	splice_graph gx;
 	transform(*bd, gx, false);
 
-	printf("refine gr and gx: strand = %c and %c\n", gx.strand, gr.strand);
+	//printf("refine gr and gx: strand = %c and %c\n", gx.strand, gr.strand);
 	if(gx.strand != gr.strand) return 0;
 	int strand = 0;
 	if(gr.strand == '+') strand = 1;

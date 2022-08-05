@@ -258,7 +258,6 @@ int graph_builder::link_partial_exons()
 		MPI::iterator li = rm.find(b.lpos);
 		MPI::iterator ri = lm.find(b.rpos);
 
-		/*
 		if(ri == lm.end() || li == rm.end())
 		{
 			// print for testing
@@ -269,7 +268,9 @@ int graph_builder::link_partial_exons()
 			for(int k = 0; k < junctions.size(); k++) junctions[k].print("X", k);
 			printf("\n");
 		}
-		*/
+
+		if(li != rm.end()) printf("cannot find b.lpos = %d\n", b.lpos);
+		if(ri != lm.end()) printf("cannot find b.rpos = %d\n", b.rpos);
 
 		assert(li != rm.end());
 		assert(ri != lm.end());
