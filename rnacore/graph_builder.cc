@@ -269,8 +269,8 @@ int graph_builder::link_partial_exons()
 			printf("\n");
 		}
 
-		if(li != rm.end()) printf("cannot find b.lpos = %d\n", b.lpos);
-		if(ri != lm.end()) printf("cannot find b.rpos = %d\n", b.rpos);
+		//if(li != rm.end()) printf("cannot find b.lpos = %d\n", b.lpos);
+		//if(ri != lm.end()) printf("cannot find b.rpos = %d\n", b.rpos);
 
 		assert(li != rm.end());
 		assert(ri != lm.end());
