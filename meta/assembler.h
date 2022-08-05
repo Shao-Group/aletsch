@@ -24,8 +24,9 @@ public:
 public:
 	int build_similarity(vector<bundle*> &gv, vector<vector<PID>> &sim);
 	int resolve(vector<bundle*> gv, transcript_set &ts, int instance);
-	int assemble(bundle &cb, transcript_set &ts, int instance);
+	int pairwise_assemble(vector<bundle*> gv, transcript_set &ts, vector<vector<PID>> &sim, int instance);
 	int assemble(vector<bundle*> gv, transcript_set &ts, int instance);
+	int assemble(bundle &cb, transcript_set &ts, int instance);
 	int assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int sid);
 	int refine_pairwise(vector<bundle*> gv, vector<vector<PID>> &sim);
 	int refine(vector<bundle*> gv);
