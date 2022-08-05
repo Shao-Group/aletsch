@@ -118,6 +118,7 @@ int assembler::pairwise_assemble(vector<bundle*> gv, transcript_set &ts, vector<
 		transform(bi, gi, false);	// TODO
 		bi.build_phase_set(pi, gi);
 
+		printf("assemble instance %d subindex %d, sample id = %d\n", instance, subindex, bi.sp.sample_id);
 		assemble(gi, pi, ts, bi.sp.sample_id);
 
 		for(int k = 0; k < sim[i].size(); k++)
@@ -149,7 +150,10 @@ int assembler::pairwise_assemble(vector<bundle*> gv, transcript_set &ts, vector<
 			//fix_missing_edges(gr, gx);
 
 			// assemble combined instance
+			printf("assemble combined %d and %d (out of %lu), instance %d subindex %d\n", i, j, sim[i].size(), instance, subindex);
 			assemble(gx, px, ts, -1);
+
+			if(k >= 10) break;
 		}
 	}
 	return 0;
