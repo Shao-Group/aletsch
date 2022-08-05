@@ -289,12 +289,14 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 			p.v = pb[j];
 			build_intron_coordinates_from_path(gr, p.v, p.chain);
 
+			/*
 			printf("bridging chain %d -> %d: ", gr.get_vertex_info(0).lpos, z);
 			printv(p.chain);
 			printf("\n");
 			printf("chain.score = %.2lf, chain.stack = ", p.score);
 			printv(p.stack);
 			printf("\n");
+			*/
 
 			// annotate path
 			vector<int32_t> pt;
@@ -311,6 +313,8 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 			annotate_path(gx, pt, vv, nn, pp);
 			assert(vv.size() == nn.size());
 			assert(vv.size() % 2 == 0);
+
+			/*
 			for(int k = 0; k < vv.size() / 2; k++)
 			{
 				printf(" region: %9d - %9d, length = %5d, type = %1d, annotate = %2d, ltype = %d, rtype = %d, lbound = %c/%c, rbound = %c/%c\n", 
@@ -318,6 +322,7 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 						sset.find(vv[k*2+0]) == sset.end() ? 'F' : 'T', tset.find(vv[k*2+0]) == tset.end() ? 'F' : 'T', sset.find(vv[k*2+1]) == sset.end() ? 'F' : 'T', tset.find(vv[k*2+1]) == tset.end() ? 'F' : 'T');
 			}
 			printf("\n");
+			*/
 
 			//p.chain = filter_pseudo_introns(p.chain);
 			//piers[b].bridges.push_back(p);
@@ -346,7 +351,7 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 
 				if(accept == true)
 				{
-					printf("ACCEPT PATH, type = (-1,-1,-1), (1, 2, 1)\n");
+					//printf("ACCEPT PATH, type = (-1,-1,-1), (1, 2, 1)\n");
 					bpath.push_back(0 + vv[m*2-6]);
 					bpath.push_back(0 + vv[m*2-5]);
 					bpath.push_back(0 - vv[m*2-4]);
@@ -355,7 +360,7 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 					bpath.push_back(0 + vv[m*2-1]);
 					bweight = p.score;
 				}
-				else printf("REJECT PATH, type = (-1,-1,-1), (1, 2, 1)\n");
+				//else printf("REJECT PATH, type = (-1,-1,-1), (1, 2, 1)\n");
 			}
 			else if(m >= 3 && nn[m*2-1] == 1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2 && nn[m*2-5] == -1 && nn[m*2-6] == 1)
 			{
@@ -372,14 +377,14 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 
 				if(accept == true)
 				{
-					printf("ACCEPT PATH, type = (1, -1, -1), (1, 2, 1)\n");
+					//printf("ACCEPT PATH, type = (1, -1, -1), (1, 2, 1)\n");
 					bpath.push_back(0 - vv[m*2-4]);
 					bpath.push_back(0 - vv[m*2-3]);
 					bpath.push_back(0 + vv[m*2-2]);
 					bpath.push_back(0 + vv[m*2-1]);
 					bweight = p.score;
 				}
-				else printf("REJECT PATH, type = (1, -1, -1), (1, 2, 1)\n");
+				//else printf("REJECT PATH, type = (1, -1, -1), (1, 2, 1)\n");
 			}
 			else if(m >= 2 && nn[m*2-1] == -1 && nn[m*2-2] == 2 && nn[m*2-3] == -1 && nn[m*2-4] == 1)
 			{
@@ -401,9 +406,9 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 					bpath.push_back(0 - vv[m*2-2]);
 					bpath.push_back(0 - vv[m*2-1]);
 					bweight = p.score;
-					printf("ACCEPT PATH, type = (-1, -1), (2, 1)\n");
+					//printf("ACCEPT PATH, type = (-1, -1), (2, 1)\n");
 				}
-				else printf("REJECT PATH, type = (-1, -1), (2, 1)\n");
+				//else printf("REJECT PATH, type = (-1, -1), (2, 1)\n");
 			}
 			else if(m >= 2 && nn[m*2-1] == -1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2)
 			{
@@ -425,9 +430,9 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 					bpath.push_back(0 + vv[m*2-2]);
 					bpath.push_back(0 + vv[m*2-1]);
 					bweight = p.score;
-					printf("ACCEPT PATH, type = (-1, -1), (1, 2)\n");
+					//printf("ACCEPT PATH, type = (-1, -1), (1, 2)\n");
 				}
-				else printf("REJECT PATH, type = (-1, -1), (1, 2)\n");
+				//else printf("REJECT PATH, type = (-1, -1), (1, 2)\n");
 			}
 			else if(m >= 1 && nn[m*2-1] == -1 && nn[m*2-2] == 2)
 			{
@@ -438,17 +443,17 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 				}
 				if(accept == true) 
 				{
-					printf("ACCEPT PATH, type = (-1), (2)\n");
+					//printf("ACCEPT PATH, type = (-1), (2)\n");
 					bpath.push_back(0 - vv[m*2-2]);
 					bpath.push_back(0 - vv[m*2-1]);
 					bweight = p.score;
 				}
-				else printf("REJECT PATH, type = (-1), (2)\n");
+				//else printf("REJECT PATH, type = (-1), (2)\n");
 			}
 			else
 			{
 				accept = false;
-				printf("REJECT PATH, other type\n");
+				//printf("REJECT PATH, other type\n");
 			}
 
 			if(accept == true)
