@@ -57,6 +57,7 @@ int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 
 		//refine_pairwise(gv, sim);
 		bridge(gv);
+		refine(gv);
 		assemble(gv, ts, instance);
 		//pairwise_assemble(gv, ts, sim, instance);
 	}
@@ -243,6 +244,11 @@ int assembler::refine(vector<bundle*> gv)
 	for(int k = 0; k < gv.size(); k++)
 	{
 		refine(gv[k], gr);
+
+		// TODO: be careful when calling refine in refine_pairwise
+		printf("print borrowed paths for bundle %d\n", k);
+		gv[k]->print_borrowed_paths();
+		gv[k]->digest_borrowed_paths();
 	}
 	return 0;
 }
