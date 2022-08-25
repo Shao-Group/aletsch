@@ -154,7 +154,7 @@ int bundle_group::build_similarity(const vector<int> &ss, vector<PPID> &vpid, bo
 			printf("graph-similarity: r = %.3lf, c = %d, size1 = %lu, size2 = %lu, sp1 = %d-%d, sp2 = %d-%d\n", 
 					r, c, splices[i].size(), splices[j].size(), splices[i].front(), splices[i].back(), splices[j].front(), splices[j].back());
 
-			if(c <= 1.50) continue;
+			if(c <= 0.50) continue;
 			if(r < min_similarity) continue;
 
 			if(local == true) vpid.push_back(PPID(PI(xi, xj), r));
