@@ -45,6 +45,7 @@ int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 		printf("\n");
 		for(int k = 0; k < gv.size(); k++) gv[k]->print(k);
 
+		/*
 		vector<vector<PID>> sim;
 		build_similarity(gv, sim);
 		bridge_pairwise(gv, sim);
@@ -52,10 +53,12 @@ int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 		sim.clear();
 		build_similarity(gv, sim);
 		bridge_pairwise(gv, sim);
+		*/
 
 		//refine_pairwise(gv, sim);
-		//bridge(gv);
-		pairwise_assemble(gv, ts, sim, instance);
+		bridge(gv);
+		assemble(gv, ts, instance);
+		//pairwise_assemble(gv, ts, sim, instance);
 	}
 	return 0;
 }
