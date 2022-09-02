@@ -287,8 +287,6 @@ int32_t get_overlapped_length(const join_interval_map &m1, const join_interval_m
 		int32_t y2 = upper(j2->first);
 		assert(x1 < y1 && x2 < y2);
 
-		printf("comparing [%d, %d] and [%d %d]\n", x1, y1, x2, y2);
-
 		if(y1 <= y2)
 		{
 			if(x1 >= x2) len += (y1 - x1);
