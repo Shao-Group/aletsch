@@ -69,6 +69,10 @@ int compute_sum_overlap(const split_interval_map &imap, SIMI &p, SIMI &q);
 
 set<int> get_overlapped_set(const interval_set_map &ism, int32_t x, int32_t y);
 
+// get the overlapped length of two join_interval_map
+int32_t get_overlapped_length(const join_interval_map &m1, const join_interval_map &m2);
+int32_t get_total_length(const join_interval_map &m);
+
 // evaluate a region
 int evaluate_rectangle(const split_interval_map &imap, int ll, int rr, double &ave, double &dev, double &max);
 int evaluate_triangle(const split_interval_map &imap, int ll, int rr, double &ave, double &dev);
@@ -79,5 +83,6 @@ int print_interval_set_map(const interval_set_map &ism);
 // testing
 int test_split_interval_map();
 int test_interval_set_map();
+int test_join_interval_map();
 
 #endif

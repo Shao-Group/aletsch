@@ -28,6 +28,11 @@ int bundle_group::resolve()
 	build_splices();
 	build_splice_index();
 
+	build_join_interval_maps();
+	build_join_interval_map_index();
+
+	test_overlap_similarity();
+
 	// round one
 	min_similarity = cfg.max_grouping_similarity;
 	min_group_size = cfg.max_group_size;
@@ -67,7 +72,7 @@ int bundle_group::process_subset1(const set<int> &s)
 	gmutex.unlock();
 
 	vector<PPID> vpid;
-	build_similarity(ss, vpid, true);
+	build_splice_similarity(ss, vpid, true);
 
 	gmutex.lock();
 	vector<PPID> v = filter(ss, vpid);
@@ -84,7 +89,7 @@ int bundle_group::process_subset2(const set<int> &s, disjoint_set &ds)
 	vector<int> ss = filter(s);
 
 	vector<PPID> vpid;
-	build_similarity(ss, vpid, false);
+	build_splice_similarity(ss, vpid, false);
 
 	vector<PPID> v = filter(vpid);
 
@@ -102,6 +107,21 @@ int bundle_group::build_splices()
 	{
 		vector<int32_t> v = gset[i].hcst.get_splices();
 		splices.push_back(std::move(v));
+	}
+	return 0;
+}
+
+int bundle_group::build_join_interval_maps()
+{
+	jmaps.clear();
+	for(int i = 0; i < gset.size(); i++)
+	{
+		join_interval_map jmap;
+		for(SIMI it = gset[i].mmap.begin(); it != gset[i].mmap.end(); it++)
+		{
+			jmap += make_pair(it->first, 1);
+		}
+		jmaps.push_back(std::move(jmap));
 	}
 	return 0;
 }
@@ -130,7 +150,23 @@ int bundle_group::build_splice_index()
 	return 0;
 }
 
-int bundle_group::build_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local)
+int bundle_group::build_join_interval_map_index()
+{
+	jindex.clear();
+	for(int k = 0; k < jmaps.size(); k++)
+	{
+		if(jmaps[k].begin() == jmaps[k].end()) continue;
+		int32_t x = lower(jmaps[k].begin()->first);
+		int32_t y = upper(jmaps[k].rbegin()->first);
+
+		set<int> s;
+		s.insert(k);
+		jindex += make_pair(interval32(x, y), s);
+	}
+	return 0;
+}
+
+int bundle_group::build_splice_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local)
 {
 	//printf("START BUILD SIMILARITY; cfg.max_num_junctions_to_combine = %d, ss.size() =%lu\n", cfg.max_num_junctions_to_combine, ss.size());
 	for(int xi = 0; xi < ss.size(); xi++)
@@ -165,6 +201,60 @@ int bundle_group::build_similarity(const vector<int> &ss, vector<PPID> &vpid, bo
 	}
 
 	sort(vpid.begin(), vpid.end(), [](const PPID &x, const PPID &y){ return x.second > y.second; });
+
+	return 0;
+}
+
+int bundle_group::test_overlap_similarity()
+{
+	vector<PPID> vpid;
+	for(ISMI it = jindex.begin(); it != jindex.end(); it++)
+	{
+		const set<int> &s = it->second;
+		vector<int> v(s.begin(), s.end());
+		build_overlap_similarity(v, vpid, false);
+	}
+	return 0;
+}
+
+int bundle_group::build_overlap_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local)
+{
+	//printf("START BUILD SIMILARITY; cfg.max_num_junctions_to_combine = %d, ss.size() =%lu\n", cfg.max_num_junctions_to_combine, ss.size());
+	for(int xi = 0; xi < ss.size(); xi++)
+	{
+		int i = ss[xi];
+		for(int xj = 0; xj < ss.size(); xj++)
+		{
+			int j = ss[xj];
+			if(i >= j) continue;
+
+			assert(gset[i].chrm == gset[j].chrm);
+			assert(gset[i].strand == gset[j].strand);
+
+			int32_t len = get_overlapped_length(jmaps[i], jmaps[j]);
+			int32_t len1 = get_total_length(jmaps[i]);
+			int32_t len2 = get_total_length(jmaps[j]);
+
+			vector<int32_t> vv(splices[i].size() + splices[j].size(), 0);
+			vector<int32_t>::iterator it = set_intersection(splices[i].begin(), splices[i].end(), splices[j].begin(), splices[j].end(), vv.begin());
+			int c = it - vv.begin();
+			int small = splices[i].size() < splices[j].size() ? splices[i].size() : splices[j].size();
+			double r = c * 1.0 / small;
+
+			printf("combined-similarity: r = %.3lf, c = %d, sp1 = %lu, sp2 = %lu, len1 = %d, len2 = %d, overlap1 = %.1lf, overlap2 = %.1lf\n", 
+					r, c, splices[i].size(), splices[j].size(), len1, len2, len * 100.0 / len1, len * 100.0 / len2);
+
+			/*
+			if(c <= 0.50) continue;
+			if(r < min_similarity) continue;
+
+			if(local == true) vpid.push_back(PPID(PI(xi, xj), r));
+			else vpid.push_back(PPID(PI(i, j), r));
+			*/
+		}
+	}
+
+	//sort(vpid.begin(), vpid.end(), [](const PPID &x, const PPID &y){ return x.second > y.second; });
 
 	return 0;
 }

@@ -9,11 +9,14 @@ See LICENSE for licensing.
 
 #include "parameters.h"
 #include "incubator.h"
+#include "interval_map.h"
 
 using namespace std;
 
 int main(int argc, const char **argv)
 {
+	//test_join_interval_map();
+	//return 0;
 	setbuf(stdout, NULL);
 	vector<parameters> params(NUM_DATA_TYPES);
 	for(int i = 0; i < NUM_DATA_TYPES; i++)

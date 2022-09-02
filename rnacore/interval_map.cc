@@ -273,6 +273,52 @@ set<int> get_overlapped_set(const interval_set_map &ism, int32_t x, int32_t y)
 	return s;
 }
 
+int32_t get_overlapped_length(const join_interval_map &m1, const join_interval_map &m2)
+{
+	JIMI j1 = m1.begin();
+	JIMI j2 = m2.begin();
+
+	int32_t len = 0;
+	while(j1 != m1.end() && j2 != m2.end())
+	{
+		int32_t x1 = lower(j1->first);
+		int32_t y1 = upper(j1->first);
+		int32_t x2 = lower(j2->first);
+		int32_t y2 = upper(j2->first);
+		assert(x1 < y1 && x2 < y2);
+
+		printf("comparing [%d, %d] and [%d %d]\n", x1, y1, x2, y2);
+
+		if(y1 <= y2)
+		{
+			if(x1 >= x2) len += (y1 - x1);
+			else if(y1 >= x2) len += (y1 - x2);
+			j1++;
+		}
+		else
+		{
+			if(x2 >= x1) len += (y2 - x2);
+			else if(y2 >= x1) len += (y2 - x1);
+			j2++;
+		}
+	}
+	return len;
+}
+
+int32_t get_total_length(const join_interval_map &m1)
+{
+
+	int32_t len = 0;
+	for(JIMI j1 = m1.begin(); j1 != m1.end(); j1++)
+	{
+		int32_t x1 = lower(j1->first);
+		int32_t y1 = upper(j1->first);
+		assert(x1 < y1);
+		len += y1 - x1;
+	}
+	return len;
+}
+
 int test_split_interval_map()
 {
 	split_interval_map imap;
@@ -385,5 +431,23 @@ int print_interval_set_map(const interval_set_map &ism)
 		}
 		printf("\n");
 	}
+	return 0;
+}
+
+int test_join_interval_map()
+{
+	join_interval_map m1;
+	join_interval_map m2;
+
+	m1 += make_pair(ROI(6, 7), 3);
+	m1 += make_pair(ROI(1, 2), 1);
+	m1 += make_pair(ROI(2, 5), 1);
+
+	m2 += make_pair(ROI(1, 3), 3);
+	m2 += make_pair(ROI(3, 4), 3);
+	m2 += make_pair(ROI(5, 7), 1);
+
+	int32_t len = get_overlapped_length(m1, m2);
+	printf("overlapped length = %d\n", len);
 	return 0;
 }
