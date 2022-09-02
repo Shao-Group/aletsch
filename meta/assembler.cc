@@ -57,7 +57,7 @@ int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 
 		//refine_pairwise(gv, sim);
 		bridge(gv);
-		refine(gv);
+		//refine(gv);
 		assemble(gv, ts, instance);
 		//pairwise_assemble(gv, ts, sim, instance);
 	}
