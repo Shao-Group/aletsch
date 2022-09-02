@@ -39,6 +39,7 @@ int bundle_group::resolve()
 	}
 	pool1.join();
 	stats(1);
+	print();
 
 	// round two
 	disjoint_set ds(gset.size());
@@ -53,6 +54,7 @@ int bundle_group::resolve()
 	pool2.join();
 	build_groups(ds);
 	stats(2);
+	print();
 
 	sindex.clear();
 	return 0;
@@ -284,9 +286,8 @@ int bundle_group::print()
 		for(int i = 0; i < gvv[k].size(); i++)
 		{
 			int g = gvv[k][i];
-			printf("(%d, %s), ", g, gset[g].gid.c_str());
+			printf(" graph %d, gid = %s, splices = %lu, hits = %lu\n", g, gset[g].gid.c_str(), splices[g].size(), gset[g].hits.size());
 		}
-		printf("\n");
 	}
 	printf("\n");
 	return 0;
