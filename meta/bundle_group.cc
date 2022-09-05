@@ -202,7 +202,7 @@ int bundle_group::build_splice_similarity(const vector<int> &ss, vector<PPID> &v
 					r, c, splices[i].size(), splices[j].size(), splices[i].front(), splices[i].back(), splices[j].front(), splices[j].back());
 
 			if(c <= 0.50) continue;
-			if(r < min_similarity) continue;
+			//if(r < min_similarity) continue;
 
 			if(local == true) vpid.push_back(PPID(PI(xi, xj), r));
 			else vpid.push_back(PPID(PI(i, j), r));
