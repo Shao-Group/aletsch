@@ -200,7 +200,7 @@ int assembler::assemble(vector<bundle*> gv, transcript_set &ts, int instance)
 	}
 
 	// assemble combined instance
-	assemble(gx, px, ts, -1);
+	//assemble(gx, px, ts, -1);
 	return 0;
 }
 
