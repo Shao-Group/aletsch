@@ -50,7 +50,7 @@ private:
 	int build_splice_index();
 	int build_join_interval_map_index();
 	int process_subset1(const set<int> &ss);
-	int process_subset2(const set<int> &ss, disjoint_set &ds);
+	int process_subset2(const set<int> &ss, disjoint_set &ds, int sim);
 	int build_splice_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local);
 	int build_overlap_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local);
 	int augment_disjoint_set(const vector<PPID> &vpid, disjoint_set &ds);

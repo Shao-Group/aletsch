@@ -31,7 +31,7 @@ int bundle_group::resolve()
 	build_join_interval_maps();
 	build_join_interval_map_index();
 
-	test_overlap_similarity();
+	//test_overlap_similarity();
 
 	// round one
 	min_similarity = cfg.max_grouping_similarity;
@@ -54,8 +54,15 @@ int bundle_group::resolve()
 	for(auto &z: sindex)
 	{
 		const set<int> &s = z.second;
-		boost::asio::post(pool2, [this, &s, &ds]{ this->process_subset2(s, ds); });
+		boost::asio::post(pool2, [this, &s, &ds]{ this->process_subset2(s, ds, 1); });
 	}
+
+	for(auto &z: jindex)
+	{
+		const set<int> &s = z.second;
+		boost::asio::post(pool2, [this, &s, &ds]{ this->process_subset2(s, ds, 2); });
+	}
+
 	pool2.join();
 	build_groups(ds);
 	stats(2);
@@ -84,12 +91,14 @@ int bundle_group::process_subset1(const set<int> &s)
 	return 0;
 }
 
-int bundle_group::process_subset2(const set<int> &s, disjoint_set &ds)
+int bundle_group::process_subset2(const set<int> &s, disjoint_set &ds, int sim)
 {
 	vector<int> ss = filter(s);
 
 	vector<PPID> vpid;
-	build_splice_similarity(ss, vpid, false);
+
+	if(sim == 1) build_splice_similarity(ss, vpid, false);
+	if(sim == 2) build_overlap_similarity(ss, vpid, false);
 
 	vector<PPID> v = filter(vpid);
 
@@ -235,15 +244,6 @@ int bundle_group::build_overlap_similarity(const vector<int> &ss, vector<PPID> &
 			int32_t len1 = get_total_length(jmaps[i]);
 			int32_t len2 = get_total_length(jmaps[j]);
 
-			vector<int32_t> vv(splices[i].size() + splices[j].size(), 0);
-			vector<int32_t>::iterator it = set_intersection(splices[i].begin(), splices[i].end(), splices[j].begin(), splices[j].end(), vv.begin());
-			int c = it - vv.begin();
-			int small = splices[i].size() < splices[j].size() ? splices[i].size() : splices[j].size();
-			double r = c * 1.0 / small;
-
-			printf("combined-similarity: r = %.3lf, c = %d, sp1 = %lu, sp2 = %lu, len1 = %d, len2 = %d, overlap1 = %.1lf, overlap2 = %.1lf\n", 
-					r, c, splices[i].size(), splices[j].size(), len1, len2, len * 100.0 / len1, len * 100.0 / len2);
-
 			/*
 			if(c <= 0.50) continue;
 			if(r < min_similarity) continue;
@@ -251,10 +251,28 @@ int bundle_group::build_overlap_similarity(const vector<int> &ss, vector<PPID> &
 			if(local == true) vpid.push_back(PPID(PI(xi, xj), r));
 			else vpid.push_back(PPID(PI(i, j), r));
 			*/
+
+			double o1 = len * 100.0 / len1;
+			double o2 = len * 100.0 / len2;
+			double oo = o1 > o2 ? o1 : o2;
+
+			vector<int32_t> vv(splices[i].size() + splices[j].size(), 0);
+			vector<int32_t>::iterator it = set_intersection(splices[i].begin(), splices[i].end(), splices[j].begin(), splices[j].end(), vv.begin());
+			int c = it - vv.begin();
+			int small = splices[i].size() < splices[j].size() ? splices[i].size() : splices[j].size();
+			double r = c * 1.0 / small;
+
+			printf("combined-similarity: r = %.3lf, c = %d, sp1 = %lu, sp2 = %lu, len1 = %d, len2 = %d, o1 = %.1lf, o2 = %.1lf, oo = %.1lf\n", 
+					r, c, splices[i].size(), splices[j].size(), len1, len2, o1, o2, oo);
+
+			if(oo < 0.75) continue;
+			if(local == true) vpid.push_back(PPID(PI(xi, xj), oo));
+			else vpid.push_back(PPID(PI(i, j), oo));
+
 		}
 	}
 
-	//sort(vpid.begin(), vpid.end(), [](const PPID &x, const PPID &y){ return x.second > y.second; });
+	sort(vpid.begin(), vpid.end(), [](const PPID &x, const PPID &y){ return x.second > y.second; });
 
 	return 0;
 }
