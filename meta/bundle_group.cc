@@ -265,7 +265,7 @@ int bundle_group::build_overlap_similarity(const vector<int> &ss, vector<PPID> &
 			printf("combined-similarity: r = %.3lf, c = %d, sp1 = %lu, sp2 = %lu, len1 = %d, len2 = %d, o1 = %.1lf, o2 = %.1lf, oo = %.1lf\n", 
 					r, c, splices[i].size(), splices[j].size(), len1, len2, o1, o2, oo);
 
-			if(oo < 0.75) continue;
+			if(oo < 0.25) continue;
 			if(local == true) vpid.push_back(PPID(PI(xi, xj), oo));
 			else vpid.push_back(PPID(PI(i, j), oo));
 
