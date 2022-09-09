@@ -1300,8 +1300,8 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 		vertex_info v1 = gr.get_vertex_info(u1);
 		vertex_info v2 = gr.get_vertex_info(u2);
 
-		//if(h1.rpos - v1.lpos <= cfg.bridge_end_relaxing) continue;
-		//if(v2.rpos - h2.pos  <= cfg.bridge_end_relaxing) continue;
+		if(h1.rpos - v1.lpos <= cfg.bridge_end_relaxing) continue;
+		if(v2.rpos - h2.pos  <= cfg.bridge_end_relaxing) continue;
 
 		//printf("%s: u1 = %d, %d-%d, u2 = %d, %d-%d, h1.rpos = %d, h2.lpos = %d\n", h1.qname.c_str(), u1, v1.lpos, v1.rpos, u2, v2.lpos, v2.rpos, h1.rpos, h2.pos);
 
