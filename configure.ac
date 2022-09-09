@@ -75,7 +75,7 @@ AC_CONFIG_FILES([Makefile
 				 gtf/Makefile
 				 graph/Makefile
 				 rnacore/Makefile
-				 scallop/Makefile
+				 scallop2/Makefile
 				 bridge/Makefile
 				 meta/Makefile])
 AC_OUTPUT

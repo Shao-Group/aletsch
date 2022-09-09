@@ -8,7 +8,6 @@ See LICENSE for licensing.
 #include "generator.h"
 #include "assembler.h"
 #include "filter.h"
-#include "cluster.h"
 #include "parameters.h"
 #include "graph_reviser.h"
 #include "bridge_solver.h"

@@ -50,6 +50,8 @@ using namespace std;
 #define FR_FIRST 1
 #define FR_SECOND 2
 
+#define EMPTY_VERTEX -9
+
 // positions
 #define IDENTICAL 0
 #define FALL_RIGHT 1

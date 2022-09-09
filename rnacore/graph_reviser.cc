@@ -1288,7 +1288,7 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 	map<int, int> fb2;		// start
 	for(int i = 0; i < bb.frgs.size(); i++)
 	{
-		if(bb.frgs[i][2] >= 1) continue;
+		if(bb.frgs[i][2] != 0) continue;
 		hit &h1 = bb.hits[bb.frgs[i][0]];
 		hit &h2 = bb.hits[bb.frgs[i][1]];
 		int u1 = gr.locate_vertex(h1.rpos - 1);
@@ -1326,8 +1326,7 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 		double w = gr.get_vertex_weight(x.first);
 		double z = log(1 + w) / log(1 + x.second);
 		double s = log(1 + w) - log(1 + x.second);
-		//if(cfg.verbose >= 2) 
-			printf("detect false end boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.rpos, x.second, x.first, w, vi.type, z, s); 
+		if(cfg.verbose >= 2) printf("detect false end boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.rpos, x.second, x.first, w, vi.type, z, s); 
 		if(s > 1) continue;
 		gr.remove_edge(p.first);
 	}
@@ -1340,8 +1339,7 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 		double w = gr.get_vertex_weight(x.first);
 		double z = log(1 + w) / log(1 + x.second);
 		double s = log(1 + w) - log(1 + x.second);
-		//if(cfg.verbose >= 2) 
-			printf("detect false start boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.lpos, x.second, x.first, w, vi.type, z, s); 
+		if(cfg.verbose >= 2) printf("detect false start boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.lpos, x.second, x.first, w, vi.type, z, s); 
 		if(s > 1) continue;
 		gr.remove_edge(p.first);
 	}

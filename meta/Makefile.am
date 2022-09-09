@@ -4,7 +4,7 @@ GTF_INCLUDE = $(top_srcdir)/gtf
 UTIL_INCLUDE = $(top_srcdir)/util
 GRAPH_INCLUDE = $(top_srcdir)/graph
 RNACORE_INCLUDE = $(top_srcdir)/rnacore
-SCALLOP_INCLUDE = $(top_srcdir)/scallop
+SCALLOP_INCLUDE = $(top_srcdir)/scallop2
 BRIDGE_INCLUDE = $(top_srcdir)/bridge
 
 libmeta_a_CPPFLAGS = -std=c++11 -I$(GTF_INCLUDE) -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE) -I$(SCALLOP_INCLUDE) -I$(RNACORE_INCLUDE) -I$(BRIDGE_INCLUDE)
