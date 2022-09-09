@@ -1304,13 +1304,13 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 
 		//printf("%s: u1 = %d, %d-%d, u2 = %d, %d-%d, h1.rpos = %d, h2.lpos = %d\n", h1.qname.c_str(), u1, v1.lpos, v1.rpos, u2, v2.lpos, v2.rpos, h1.rpos, h2.pos);
 
-		if(gr.get_vertex_info(u1).rpos == h1.rpos)
+		//if(gr.get_vertex_info(u1).rpos == h1.rpos)
 		{
 			if(fb1.find(u1) != fb1.end()) fb1[u1]++;
 			else fb1.insert(make_pair(u1, 1));
 		}
 
-		if(gr.get_vertex_info(u2).lpos == h2.pos)
+		//if(gr.get_vertex_info(u2).lpos == h2.pos)
 		{
 			if(fb2.find(u2) != fb2.end()) fb2[u2]++;
 			else fb2.insert(make_pair(u2, 1));
@@ -1346,97 +1346,6 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 	}
 	return 0;
 }
-
-/*
-bool bundle::tackle_false_boundaries()
-{
-	bool b = false;
-	vector<int> points(pexons.size(), 0);
-	for(int k = 0; k < br.fragments.size(); k++)
-	{
-		fragment &fr = br.fragments[k];
-
-		if(fr.paths.size() != 1) continue;
-		if(fr.paths[0].type != 2) continue;
-		if(br.breads.find(fr.h1->qname) != br.breads.end()) continue;
-
-		vector<int> v = align_fragment(fr);
-		if(v.size() <= 1) continue;
-
-		int32_t offset1 = (fr.lpos - pexons[v.front()].lpos);
-		int32_t offset2 = (pexons[v.back()].rpos - fr.rpos);
-
-		int32_t tlen = 0;
-		for(int i = 0; i < v.size(); i++)
-		{
-			int32_t l = pexons[v[i]].rpos - pexons[v[i]].lpos;
-			tlen += l;
-		}
-		tlen -= offset1;
-		tlen -= offset2;
-
-		// print
-		//fr.print(99);
-		if(verbose >= 2) printf("break fragment %s: total-length = %d, bridge-length = %d\n", fr.h1->qname.c_str(), tlen, fr.paths[0].length);
-
-		if(tlen < insertsize_low / 2.0) continue;
-		if(tlen > insertsize_high * 2.0) continue;
-		if(tlen >= fr.paths[0].length) continue;
-
-		for(int i = 0; i < v.size() - 1; i++)
-		{
-			partial_exon &px = pexons[v[i + 0]];
-			partial_exon &py = pexons[v[i + 1]];
-			if(px.rtype == END_BOUNDARY) 
-			{
-				if(verbose >= 2) printf("break ending vertex %d, pos = %d\n", v[i], px.rpos);
-				points[v[i + 0]] += 1;
-			}
-			if(py.ltype == START_BOUNDARY) 
-			{
-				if(verbose >= 2) printf("break starting vertex %d, pos = %d\n", v[i + 1], py.lpos);
-				points[v[i + 1]] += 1;
-			}
-		}
-	}
-
-	for(int k = 0; k < points.size(); k++)
-	{
-		if(points[k] <= 0) continue;
-		vertex_info vi = gr.get_vertex_info(k + 1);
-		if(vi.type == EMPTY_VERTEX) continue;
-		PEB p = gr.edge(k + 1, gr.num_vertices() - 1);
-		if(p.second == false) continue;
-		double w = gr.get_vertex_weight(k + 1);
-		double z = log(1 + w) / log(1 + points[k]);
-		double s = log(1 + w) - log(1 + points[k]);
-		if(verbose >= 2) printf("tackle false end boundary %d with %d reads, vertex = %d, w = %.2lf, z = %.2lf, s = %.2lf\n", pexons[k].rpos, points[k], k + 1, w, z, s);
-		if(s > 1.5) continue;
-		vi.type = EMPTY_VERTEX;
-		gr.set_vertex_info(k + 1, vi);
-		b = true;
-	}
-
-	for(int k = 0; k < points.size(); k++)
-	{
-		if(points[k] <= 0) continue;
-		vertex_info vi = gr.get_vertex_info(k + 1);
-		if(vi.type == EMPTY_VERTEX) continue;
-		PEB p = gr.edge(0, k + 1);
-		if(p.second == false) continue;
-		double w = gr.get_vertex_weight(k + 1);
-		double z = log(1 + w) / log(1 + points[k]);
-		double s = log(1 + w) - log(1 + points[k]);
-		if(verbose >= 2) printf("tackle false start boundary %d with %d reads, vertex = %d, w = %.2lf, z = %.2lf, s = %.2lf\n", pexons[k].lpos, points[k], k + 1, w, z, s);
-		if(s > 1.5) continue;
-		vi.type = EMPTY_VERTEX;
-		gr.set_vertex_info(k + 1, vi);
-		b = true;
-	}
-
-	return b;
-}
-*/
 
 int catch_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters &cfg)
 {
