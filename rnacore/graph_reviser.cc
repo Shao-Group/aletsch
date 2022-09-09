@@ -1325,7 +1325,8 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 		double w = gr.get_vertex_weight(x.first);
 		double z = log(1 + w) / log(1 + x.second);
 		double s = log(1 + w) - log(1 + x.second);
-		if(cfg.verbose >= 2) printf("detect false end boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.rpos, x.second, x.first, w, vi.type, z, s); 
+		//if(cfg.verbose >= 2) 
+			printf("detect false end boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.rpos, x.second, x.first, w, vi.type, z, s); 
 		if(s > 1) continue;
 		gr.remove_edge(p.first);
 	}
@@ -1338,12 +1339,104 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 		double w = gr.get_vertex_weight(x.first);
 		double z = log(1 + w) / log(1 + x.second);
 		double s = log(1 + w) - log(1 + x.second);
-		if(cfg.verbose >= 2) printf("detect false start boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.lpos, x.second, x.first, w, vi.type, z, s); 
+		//if(cfg.verbose >= 2) 
+			printf("detect false start boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.lpos, x.second, x.first, w, vi.type, z, s); 
 		if(s > 1) continue;
 		gr.remove_edge(p.first);
 	}
 	return 0;
 }
+
+/*
+bool bundle::tackle_false_boundaries()
+{
+	bool b = false;
+	vector<int> points(pexons.size(), 0);
+	for(int k = 0; k < br.fragments.size(); k++)
+	{
+		fragment &fr = br.fragments[k];
+
+		if(fr.paths.size() != 1) continue;
+		if(fr.paths[0].type != 2) continue;
+		if(br.breads.find(fr.h1->qname) != br.breads.end()) continue;
+
+		vector<int> v = align_fragment(fr);
+		if(v.size() <= 1) continue;
+
+		int32_t offset1 = (fr.lpos - pexons[v.front()].lpos);
+		int32_t offset2 = (pexons[v.back()].rpos - fr.rpos);
+
+		int32_t tlen = 0;
+		for(int i = 0; i < v.size(); i++)
+		{
+			int32_t l = pexons[v[i]].rpos - pexons[v[i]].lpos;
+			tlen += l;
+		}
+		tlen -= offset1;
+		tlen -= offset2;
+
+		// print
+		//fr.print(99);
+		if(verbose >= 2) printf("break fragment %s: total-length = %d, bridge-length = %d\n", fr.h1->qname.c_str(), tlen, fr.paths[0].length);
+
+		if(tlen < insertsize_low / 2.0) continue;
+		if(tlen > insertsize_high * 2.0) continue;
+		if(tlen >= fr.paths[0].length) continue;
+
+		for(int i = 0; i < v.size() - 1; i++)
+		{
+			partial_exon &px = pexons[v[i + 0]];
+			partial_exon &py = pexons[v[i + 1]];
+			if(px.rtype == END_BOUNDARY) 
+			{
+				if(verbose >= 2) printf("break ending vertex %d, pos = %d\n", v[i], px.rpos);
+				points[v[i + 0]] += 1;
+			}
+			if(py.ltype == START_BOUNDARY) 
+			{
+				if(verbose >= 2) printf("break starting vertex %d, pos = %d\n", v[i + 1], py.lpos);
+				points[v[i + 1]] += 1;
+			}
+		}
+	}
+
+	for(int k = 0; k < points.size(); k++)
+	{
+		if(points[k] <= 0) continue;
+		vertex_info vi = gr.get_vertex_info(k + 1);
+		if(vi.type == EMPTY_VERTEX) continue;
+		PEB p = gr.edge(k + 1, gr.num_vertices() - 1);
+		if(p.second == false) continue;
+		double w = gr.get_vertex_weight(k + 1);
+		double z = log(1 + w) / log(1 + points[k]);
+		double s = log(1 + w) - log(1 + points[k]);
+		if(verbose >= 2) printf("tackle false end boundary %d with %d reads, vertex = %d, w = %.2lf, z = %.2lf, s = %.2lf\n", pexons[k].rpos, points[k], k + 1, w, z, s);
+		if(s > 1.5) continue;
+		vi.type = EMPTY_VERTEX;
+		gr.set_vertex_info(k + 1, vi);
+		b = true;
+	}
+
+	for(int k = 0; k < points.size(); k++)
+	{
+		if(points[k] <= 0) continue;
+		vertex_info vi = gr.get_vertex_info(k + 1);
+		if(vi.type == EMPTY_VERTEX) continue;
+		PEB p = gr.edge(0, k + 1);
+		if(p.second == false) continue;
+		double w = gr.get_vertex_weight(k + 1);
+		double z = log(1 + w) / log(1 + points[k]);
+		double s = log(1 + w) - log(1 + points[k]);
+		if(verbose >= 2) printf("tackle false start boundary %d with %d reads, vertex = %d, w = %.2lf, z = %.2lf, s = %.2lf\n", pexons[k].lpos, points[k], k + 1, w, z, s);
+		if(s > 1.5) continue;
+		vi.type = EMPTY_VERTEX;
+		gr.set_vertex_info(k + 1, vi);
+		b = true;
+	}
+
+	return b;
+}
+*/
 
 int catch_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters &cfg)
 {
