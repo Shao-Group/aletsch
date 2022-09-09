@@ -1288,7 +1288,7 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 	map<int, int> fb2;		// start
 	for(int i = 0; i < bb.frgs.size(); i++)
 	{
-		if(bb.frgs[i][2] != 0) continue;
+		if(bb.frgs[i][2] >= 1) continue;
 		hit &h1 = bb.hits[bb.frgs[i][0]];
 		hit &h2 = bb.hits[bb.frgs[i][1]];
 		int u1 = gr.locate_vertex(h1.rpos - 1);
