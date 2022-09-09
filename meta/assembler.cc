@@ -45,11 +45,11 @@ int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 		printf("\n");
 		for(int k = 0; k < gv.size(); k++) gv[k]->print(k);
 
+		/*
 		vector<vector<PID>> sim;
 		build_similarity(gv, sim);
 		bridge_pairwise(gv, sim);
 
-		/*
 		sim.clear();
 		build_similarity(gv, sim);
 		bridge_pairwise(gv, sim);
@@ -59,7 +59,7 @@ int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 		bridge(gv);
 		//refine(gv);
 		assemble(gv, ts, instance);
-		pairwise_assemble(gv, ts, sim, instance);
+		//pairwise_assemble(gv, ts, sim, instance);
 	}
 	return 0;
 }
@@ -122,10 +122,9 @@ int assembler::pairwise_assemble(vector<bundle*> gv, transcript_set &ts, vector<
 		transform(bi, gi, false);	// TODO
 		bi.build_phase_set(pi, gi);
 
-		/*
+		// TODO
 		printf("assemble instance %d subindex %d, sample id = %d\n", instance, subindex, bi.sp.sample_id);
 		assemble(gi, pi, ts, bi.sp.sample_id);
-		*/
 
 		for(int k = 0; k < sim[i].size(); k++)
 		{
@@ -202,7 +201,7 @@ int assembler::assemble(vector<bundle*> gv, transcript_set &ts, int instance)
 	}
 
 	// assemble combined instance
-	assemble(gx, px, ts, -1);
+	//assemble(gx, px, ts, -1);
 	return 0;
 }
 
