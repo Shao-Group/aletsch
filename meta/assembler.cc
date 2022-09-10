@@ -24,19 +24,19 @@ See LICENSE for licensing.
 #include <boost/asio/thread_pool.hpp>
 #include <boost/pending/disjoint_sets.hpp>
 
-assembler::assembler(const parameters &p)
-	: cfg(p)
+assembler::assembler(const parameters &c, vector<transcript_set> &v, mutex &m, thread_pool &p)
+	: cfg(c), tsets(v), mylock(m), pool(p)
 {
 }
 
-int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
+int assembler::resolve(vector<bundle*> gv, int instance)
 {
 	int subindex = 0;
 
 	if(gv.size() == 1)
 	{
 		bundle &bd = *(gv[0]);
-		assemble(bd, ts, instance);
+		assemble(bd, instance);
 	}
 
 	if(gv.size() >= 2)
@@ -58,7 +58,7 @@ int assembler::resolve(vector<bundle*> gv, transcript_set &ts, int instance)
 		//refine_pairwise(gv, sim);
 		bridge(gv);
 		//refine(gv);
-		assemble(gv, ts, instance);
+		assemble(gv, instance);
 		//pairwise_assemble(gv, ts, sim, instance);
 	}
 	return 0;
@@ -96,7 +96,7 @@ int assembler::build_similarity(vector<bundle*> &gv, vector<vector<PID>> &sim)
 	return 0;
 }
 
-int assembler::assemble(bundle &bd, transcript_set &ts, int instance)
+int assembler::assemble(bundle &bd, int instance)
 {
 	bd.set_gid(instance, 0);
 	splice_graph gr;
@@ -104,10 +104,12 @@ int assembler::assemble(bundle &bd, transcript_set &ts, int instance)
 
 	phase_set ps;
 	bd.build_phase_set(ps, gr);
-	assemble(gr, ps, ts, bd.sp.sample_id);
+	assemble(gr, ps, bd.sp.sample_id);
+	bd.clear();
 	return 0;
 }
 
+/*
 int assembler::pairwise_assemble(vector<bundle*> gv, transcript_set &ts, vector<vector<PID>> &sim, int instance)
 {
 	assert(gv.size() >= 2);
@@ -163,8 +165,9 @@ int assembler::pairwise_assemble(vector<bundle*> gv, transcript_set &ts, vector<
 	}
 	return 0;
 }
+*/
 
-int assembler::assemble(vector<bundle*> gv, transcript_set &ts, int instance)
+int assembler::assemble(vector<bundle*> gv, int instance)
 {
 	assert(gv.size() >= 2);
 	int subindex = 0;
@@ -197,7 +200,8 @@ int assembler::assemble(vector<bundle*> gv, transcript_set &ts, int instance)
 		bd.build_phase_set(ps, gr);
 		px.combine(ps);
 
-		assemble(gr, ps, ts, bd.sp.sample_id);
+		assemble(gr, ps, bd.sp.sample_id);
+		bd.clear();
 	}
 
 	// assemble combined instance
@@ -205,6 +209,7 @@ int assembler::assemble(vector<bundle*> gv, transcript_set &ts, int instance)
 	return 0;
 }
 
+/*
 int assembler::refine_pairwise(vector<bundle*> gv, vector<vector<PID>> &sim)
 {
 	for(int i = 0; i < gv.size(); i++)
@@ -254,7 +259,6 @@ int assembler::refine(vector<bundle*> gv)
 	return 0;
 }
 
-/*
 int assembler::refine_pairwise(bundle &cx, bundle &cy)
 {
 	// combined bundle
@@ -278,7 +282,6 @@ int assembler::refine_pairwise(bundle &cx, bundle &cy)
 	refine_pairwise(gy, gr);
 	return 0;
 }
-*/
 
 int assembler::refine(bundle *bd, splice_graph &gr)
 {
@@ -354,15 +357,6 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 			p.v = pb[j];
 			build_intron_coordinates_from_path(gr, p.v, p.chain);
 
-			/*
-			printf("bridging chain %d -> %d: ", gr.get_vertex_info(0).lpos, z);
-			printv(p.chain);
-			printf("\n");
-			printf("chain.score = %.2lf, chain.stack = ", p.score);
-			printv(p.stack);
-			printf("\n");
-			*/
-
 			// annotate path
 			vector<int32_t> pt;
 			pt.push_back(gr.get_vertex_info(0).lpos);
@@ -378,16 +372,6 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 			annotate_path(gx, pt, vv, nn, pp);
 			assert(vv.size() == nn.size());
 			assert(vv.size() % 2 == 0);
-
-			/*
-			for(int k = 0; k < vv.size() / 2; k++)
-			{
-				printf(" region: %9d - %9d, length = %5d, type = %1d, annotate = %2d, ltype = %d, rtype = %d, lbound = %c/%c, rbound = %c/%c\n", 
-						vv[k * 2 + 0], vv[k * 2 + 1], vv[k * 2 + 1] - vv[k * 2 + 0], nn[k * 2 + 0], nn[k * 2 + 1], pp[k * 2 + 0], pp[k * 2 + 1],
-						sset.find(vv[k*2+0]) == sset.end() ? 'F' : 'T', tset.find(vv[k*2+0]) == tset.end() ? 'F' : 'T', sset.find(vv[k*2+1]) == sset.end() ? 'F' : 'T', tset.find(vv[k*2+1]) == tset.end() ? 'F' : 'T');
-			}
-			printf("\n");
-			*/
 
 			//p.chain = filter_pseudo_introns(p.chain);
 			//piers[b].bridges.push_back(p);
@@ -532,6 +516,7 @@ int assembler::refine(bundle *bd, splice_graph &gr)
 	
 	return 0;
 }
+*/
 
 int assembler::transform(bundle &cb, splice_graph &gr, bool revising)
 {
@@ -580,6 +565,7 @@ int assembler::fix_missing_edges(splice_graph &gr, splice_graph &gx)
 	return 0;
 }
 
+/*
 int assembler::bridge_pairwise(vector<bundle*> gv, vector<vector<PID>> &sim)
 {
 	for(int i = 0; i < gv.size(); i++)
@@ -594,12 +580,12 @@ int assembler::bridge_pairwise(vector<bundle*> gv, vector<vector<PID>> &sim)
 			v.push_back(gv[i]);
 			v.push_back(gv[j]);
 			bridge(v);
-
 			//printf("trying to bridge pair %d and %d, sim = %.2lf, samples %d and %d, files %s and %s\n", i, j, sim[i][k].second, gv[i]->sp.sample_id, gv[j]->sp.sample_id, gv[i]->sp.align_file.c_str(), gv[j]->sp.align_file.c_str());
 		}
 	}
 	return 0;
 }
+*/
 
 int assembler::bridge(vector<bundle*> gv)
 {
@@ -645,7 +631,7 @@ int assembler::bridge(vector<bundle*> gv)
 	return 0;
 }
 
-int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &tx, int sid)
+int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 {
 	gx.extend_strands();
 
@@ -668,33 +654,36 @@ int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &tx, int
 	}
 	*/
 
-	transcript_set ts(tx.chrm, tx.single_exon_overlap);
 	for(int k = 0; k < 5; k++)
 	{
-		splice_graph gr(gx);
-		hyper_set hs(hx);
-
-		gr.gid = gx.gid + "." + tostring(k);
-		scallop sx(gr, hs, cfg, k == 0 ? false : true);
-		sx.assemble();
-
-		int z = 0;
-		for(int i = 0; i < sx.trsts.size(); i++)
+		boost::asio::post(pool, [this, gx, hx, k, sid]
 		{
-			transcript &t = sx.trsts[i];
-			z++;
-			t.RPKM = 0;
-			ts.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-		}
-		if(cfg.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges, phases = %lu\n", gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges(), px.pmap.size());
-	}
+			splice_graph gr(gx);
+			hyper_set hs(hx);
 
-	vector<transcript> v = ts.get_transcripts(2);
-	for(int i = 0; i < v.size(); i++)
-	{
-		transcript &t = v[i];
-		t.RPKM = 0;
-		tx.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+			gr.gid = gx.gid + "." + tostring(k);
+			scallop sx(gr, hs, this->cfg, k == 0 ? false : true);
+			sx.assemble();
+
+			transcript_set ts(gr.chrm, this->cfg.min_single_exon_clustering_overlap);
+
+			int z = 0;
+			for(int i = 0; i < sx.trsts.size(); i++)
+			{
+				transcript &t = sx.trsts[i];
+				z++;
+				t.RPKM = 0;
+				ts.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+			}
+
+			if(this->cfg.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges\n", 
+					gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges());
+
+			mylock.lock();
+			tsets.push_back(ts);
+			mylock.unlock();
+		});
+
 	}
 
 	return 0;

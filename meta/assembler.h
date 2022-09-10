@@ -12,29 +12,39 @@ See LICENSE for licensing.
 #include "transcript_set.h"
 #include "splice_graph.h"
 #include <mutex>
+#include <thread>
+#include <boost/asio/post.hpp>
+#include <boost/asio/thread_pool.hpp>
+#include <boost/pending/disjoint_sets.hpp>
+
+typedef boost::asio::thread_pool thread_pool;
 
 class assembler
 {
 public:
-	assembler(const parameters &cfg);
+	assembler(const parameters &cfg, vector<transcript_set> &tsets, mutex &mylock, thread_pool &pool);
 
 public:
 	const parameters &cfg;
+	vector<transcript_set> &tsets;
+	thread_pool &pool;
+	mutex &mylock;
 
 public:
+	int resolve(vector<bundle*> gv, int instance);
 	int build_similarity(vector<bundle*> &gv, vector<vector<PID>> &sim);
-	int resolve(vector<bundle*> gv, transcript_set &ts, int instance);
-	int pairwise_assemble(vector<bundle*> gv, transcript_set &ts, vector<vector<PID>> &sim, int instance);
-	int assemble(vector<bundle*> gv, transcript_set &ts, int instance);
-	int assemble(bundle &cb, transcript_set &ts, int instance);
-	int assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int sid);
+	int assemble(vector<bundle*> gv, int instance);
+	int assemble(bundle &cb, int instance);
+	int assemble(splice_graph &gx, phase_set &px, int sid);
+	int transform(bundle &cb, splice_graph &gr, bool revising);
+	int fix_missing_edges(splice_graph &gr, splice_graph &gx);
+	int bridge(vector<bundle*> gv);
+
 	int refine_pairwise(vector<bundle*> gv, vector<vector<PID>> &sim);
 	int refine(vector<bundle*> gv);
 	int refine(bundle *bd, splice_graph &gr);
-	int transform(bundle &cb, splice_graph &gr, bool revising);
-	int fix_missing_edges(splice_graph &gr, splice_graph &gx);
+	int pairwise_assemble(vector<bundle*> gv, transcript_set &ts, vector<vector<PID>> &sim, int instance);
 	int bridge_pairwise(vector<bundle*> gv, vector<vector<PID>> &sim);
-	int bridge(vector<bundle*> gv);
 };
 
 #endif

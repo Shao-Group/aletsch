@@ -19,11 +19,6 @@ See LICENSE for licensing.
 #include <sstream>
 #include <iostream>
 #include <algorithm>
-#include <thread>
-#include <ctime>
-#include <boost/asio/post.hpp>
-#include <boost/asio/thread_pool.hpp>
-#include <boost/pending/disjoint_sets.hpp>
 
 incubator::incubator(vector<parameters> &v)
 	: params(v), tmerge("", params[DEFAULT].min_single_exon_clustering_overlap)
@@ -293,7 +288,12 @@ int incubator::assemble()
 				assert(vb[v[j]] == false);
 				vb[v[j]] = true;
 			}
-			boost::asio::post(pool, [this, gv, instance, &mylock]{ this->assemble(gv, instance, mylock); });
+			boost::asio::post(pool, [this, gv, instance, &mylock, &pool]{ 
+					//this->assemble(gv, instance, mylock, pool); 
+					//transcript_set ts(gv.front()->chrm, params[DEFAULT].min_single_exon_clustering_overlap);
+					assembler asmb(params[DEFAULT], tsets, mylock, pool);
+					asmb.resolve(gv, instance);
+			});
 			instance++;
 		}
 	}
@@ -432,7 +432,8 @@ int incubator::generate(sample_profile &sp, int tid, string chrm, mutex &mylock)
 	return 0;
 }
 
-int incubator::assemble(vector<bundle*> gv, int instance, mutex &mylock)
+/*
+int incubator::assemble(vector<bundle*> gv, int instance, mutex &mylock, thread_pool &pool)
 {
 	if(gv.size() == 0) return 0;
 
@@ -449,6 +450,7 @@ int incubator::assemble(vector<bundle*> gv, int instance, mutex &mylock)
 
 	return 0;
 }
+*/
 
 int incubator::write_individual_gtf(int id, const vector<transcript> &vt, const vector<int> &ct, const vector<pair<int, double>> &v)
 {
