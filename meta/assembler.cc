@@ -645,7 +645,7 @@ int assembler::bridge(vector<bundle*> gv)
 	return 0;
 }
 
-int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int sid)
+int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &tx, int sid)
 {
 	gx.extend_strands();
 
@@ -668,7 +668,8 @@ int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int
 	}
 	*/
 
-	for(int k = 0; k < 3; k++)
+	transcript_set ts(tx.chrm, tx.single_exon_overlap);
+	for(int k = 0; k < 5; k++)
 	{
 		splice_graph gr(gx);
 		hyper_set hs(hx);
@@ -686,6 +687,14 @@ int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int
 			ts.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		}
 		if(cfg.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges, phases = %lu\n", gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges(), px.pmap.size());
+	}
+
+	vector<transcript> v = ts.get_transcripts(2);
+	for(int i = 0; i < v.size(); i++)
+	{
+		transcript &t = v[i];
+		t.RPKM = 0;
+		tx.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	}
 
 	return 0;
