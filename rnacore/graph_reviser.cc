@@ -194,7 +194,7 @@ bool remove_small_exons(splice_graph &gr, int min_exon)
 	for(int i = 1; i < gr.num_vertices() - 1; i++)
 	{
 		vertex_info vi = gr.get_vertex_info(i);
-		if(vi.type == EMPTY_VERTEX) continue;
+		//if(vi.type == EMPTY_VERTEX) continue;
 
 		bool b = true;
 		edge_iterator it1, it2;
@@ -227,9 +227,9 @@ bool remove_small_exons(splice_graph &gr, int min_exon)
 		// only consider boundary small exons
 		if(gr.edge(0, i).second == false && gr.edge(i, gr.num_vertices() - 1).second == false) continue;
 
-		//gr.clear_vertex(i);
-		vi.type = EMPTY_VERTEX;
-		gr.set_vertex_info(i, vi);
+		gr.clear_vertex(i);
+		//vi.type = EMPTY_VERTEX;
+		//gr.set_vertex_info(i, vi);
 
 		flag = true;
 	}
@@ -324,7 +324,7 @@ bool remove_inner_boundaries(splice_graph &gr)
 	for(int i = 1; i < gr.num_vertices() - 1; i++)
 	{
 		vertex_info vi = gr.get_vertex_info(i);
-		if(vi.type == EMPTY_VERTEX) continue;
+		//if(vi.type == EMPTY_VERTEX) continue;
 
 		if(gr.in_degree(i) != 1) continue;
 		if(gr.out_degree(i) != 1) continue;
@@ -348,9 +348,9 @@ bool remove_inner_boundaries(splice_graph &gr)
 
 		//if(verbose >= 2) printf("remove inner boundary: vertex = %d, weight = %.2lf, length = %d, pos = %d-%d\n", i, gr.get_vertex_weight(i), vi.length, vi.lpos, vi.rpos);
 
-		//gr.clear_vertex(i);
-		vi.type = EMPTY_VERTEX;
-		gr.set_vertex_info(i, vi);
+		gr.clear_vertex(i);
+		//vi.type = EMPTY_VERTEX;
+		//gr.set_vertex_info(i, vi);
 
 		flag = true;
 	}
@@ -363,7 +363,7 @@ bool remove_intron_contamination(splice_graph &gr, double ratio)
 	for(int i = 1; i < gr.num_vertices(); i++)
 	{
 		vertex_info vi = gr.get_vertex_info(i);
-		if(vi.type == EMPTY_VERTEX) continue;
+		//if(vi.type == EMPTY_VERTEX) continue;
 
 		if(gr.in_degree(i) != 1) continue;
 		if(gr.out_degree(i) != 1) continue;
@@ -395,9 +395,9 @@ bool remove_intron_contamination(splice_graph &gr, double ratio)
 
 		//if(verbose >= 2) printf("clear intron contamination %d, weight = %.2lf, length = %d, edge weight = %.2lf\n", i, wv, vi.length, we); 
 
-		//gr.clear_vertex(i);
-		vi.type = EMPTY_VERTEX;
-		gr.set_vertex_info(i, vi);
+		gr.clear_vertex(i);
+		//vi.type = EMPTY_VERTEX;
+		//gr.set_vertex_info(i, vi);
 
 
 		flag = true;
