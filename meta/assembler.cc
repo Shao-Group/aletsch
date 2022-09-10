@@ -668,7 +668,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int
 	}
 	*/
 
-	for(int k = 0; k < 5; k++)
+	for(int k = 0; k < 3; k++)
 	{
 		splice_graph gr(gx);
 		hyper_set hs(hx);
