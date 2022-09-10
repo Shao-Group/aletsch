@@ -30,7 +30,7 @@ typedef map<int, int> MI;
 class scallop
 {
 public:
-	scallop(splice_graph &gr, hyper_set &hs, const parameters &c);
+	scallop(splice_graph &gr, hyper_set &hs, const parameters &c, bool random_ordering = false);
 	virtual ~scallop();
 
 public:
@@ -38,6 +38,7 @@ public:
 
 public:
 	const parameters &cfg;				// parameters
+	bool random_ordering;				// if shuffling vertices
 	splice_graph &gr;					// splice graph
 	hyper_set &hs;						// hyper edges
 	MEI e2i;							// edge map, from edge to index

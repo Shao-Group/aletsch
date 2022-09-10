@@ -668,8 +668,20 @@ int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int
 	}
 	*/
 
-	scallop sx(gx, hx, cfg);
+	splice_graph gy(gx);
+	hyper_set hy(hx);
+
+	assert(gx.gid == gy.gid);
+	string gidx = gx.gid + "." + tostring(0);
+	string gidy = gy.gid + "." + tostring(1);
+	gx.gid = gidx;
+	gy.gid = gidy;
+
+	scallop sx(gx, hx, cfg, false);
 	sx.assemble();
+
+	scallop sy(gy, hy, cfg, true);
+	sy.assemble();
 
 	int z = 0;
 	for(int k = 0; k < sx.trsts.size(); k++)
@@ -679,8 +691,17 @@ int assembler::assemble(splice_graph &gx, phase_set &px, transcript_set &ts, int
 		t.RPKM = 0;
 		ts.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	}
-
 	if(cfg.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges, phases = %lu\n", gx.gid.c_str(), z, gx.num_vertices(), gx.num_edges(), px.pmap.size());
+
+	z = 0;
+	for(int k = 0; k < sy.trsts.size(); k++)
+	{
+		transcript &t = sy.trsts[k];
+		z++;
+		t.RPKM = 0;
+		ts.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+	}
+	if(cfg.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges, phases = %lu\n", gy.gid.c_str(), z, gy.num_vertices(), gy.num_edges(), px.pmap.size());
 	//gx.print();
 
 	return 0;
