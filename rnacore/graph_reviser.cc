@@ -1328,6 +1328,8 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 		double s = log(1 + w) - log(1 + x.second);
 		if(cfg.verbose >= 2) printf("detect false end boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.rpos, x.second, x.first, w, vi.type, z, s); 
 		if(s > 1) continue;
+		vi.type = EMPTY_VERTEX;
+		gr.set_vertex_info(x.first, vi);
 		gr.remove_edge(p.first);
 	}
 
@@ -1341,7 +1343,9 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 		double s = log(1 + w) - log(1 + x.second);
 		if(cfg.verbose >= 2) printf("detect false start boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.lpos, x.second, x.first, w, vi.type, z, s); 
 		if(s > 1) continue;
-		gr.remove_edge(p.first);
+		vi.type = EMPTY_VERTEX;
+		gr.set_vertex_info(x.first, vi);
+		//gr.remove_edge(p.first);
 	}
 	return 0;
 }

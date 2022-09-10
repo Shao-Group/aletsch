@@ -2575,17 +2575,29 @@ int scallop::collect_path(int e)
 	v.insert(v.begin(), 0);
 	v.push_back(n);
 
-	path p;
-	p.length = mi;
-	p.abd = gr.get_edge_weight(i2e[e]);
-	p.reads = med[i2e[e]];
-	//p.abd = med[i2e[e]] / mi;
-	//p.reads = gr.get_edge_weight(i2e[e]);
-	p.v = v;
-	if(gr.get_edge_info(i2e[e]).strand == 1) p.strand = '+';
-	if(gr.get_edge_info(i2e[e]).strand == 2) p.strand = '-';
-	if(p.strand == '.') p.strand = gr.strand;
-	paths.push_back(p);
+	// filter empty-vertex
+	bool empty = false;
+	for(int i = 0; i < v.size(); i++)
+	{
+		if(gr.get_vertex_info(v[i]).type == EMPTY_VERTEX) empty = true;
+		if(empty == true) break;
+	}
+
+	if(empty == false)
+	{
+		path p;
+		p.length = mi;
+		p.abd = gr.get_edge_weight(i2e[e]);
+		p.reads = med[i2e[e]];
+		//p.abd = med[i2e[e]] / mi;
+		//p.reads = gr.get_edge_weight(i2e[e]);
+		p.v = v;
+
+		if(gr.get_edge_info(i2e[e]).strand == 1) p.strand = '+';
+		if(gr.get_edge_info(i2e[e]).strand == 2) p.strand = '-';
+		if(p.strand == '.') p.strand = gr.strand;
+		paths.push_back(p);
+	}
 
 	gr.remove_edge(i2e[e]);
 	e2i.erase(i2e[e]);
