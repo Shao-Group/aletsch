@@ -100,6 +100,7 @@ private:
 	int summarize_vertices();
 	int draw_splice_graph(const string &file);
 	vector<int> topological_sort();
+	int build_transcripts();
 };
 
 #endif

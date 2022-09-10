@@ -8,6 +8,7 @@ See LICENSE for licensing.
 
 #include "scallop.h"
 #include "config.h"
+#include "essential.h"
 
 #include <cstdio>
 #include <iostream>
@@ -102,6 +103,8 @@ int scallop::assemble()
 	greedy_decompose();
 
 	trsts.clear();
+	build_transcripts();
+
 	//gr.output_transcripts(trsts, paths);
 	
 	// TODO, not output nonfull-length ones 
@@ -1527,5 +1530,20 @@ int scallop::draw_splice_graph(const string &file)
 	
 	vector<int> tp = topological_sort();
 	gr.draw(file, mis, mes, 4.5, tp);
+	return 0;
+}
+
+
+int scallop::build_transcripts()
+{
+	trsts.clear();
+	for(int i = 0; i < paths.size(); i++)
+	{
+		string tid = gr.gid + "." + tostring(i);
+		transcript trst;
+		path &p = paths[i];
+		build_transcript(gr, trst, p.v, gr.strand, p.abd, tid);
+		trsts.push_back(trst);
+	}
 	return 0;
 }
