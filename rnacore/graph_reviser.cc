@@ -193,6 +193,9 @@ bool remove_small_exons(splice_graph &gr, int min_exon)
 	bool flag = false;
 	for(int i = 1; i < gr.num_vertices() - 1; i++)
 	{
+		vertex_info vi = gr.get_vertex_info(i);
+		if(vi.type == EMPTY_VERTEX) continue;
+
 		bool b = true;
 		edge_iterator it1, it2;
 		PEEI pei;
@@ -224,7 +227,10 @@ bool remove_small_exons(splice_graph &gr, int min_exon)
 		// only consider boundary small exons
 		if(gr.edge(0, i).second == false && gr.edge(i, gr.num_vertices() - 1).second == false) continue;
 
-		gr.clear_vertex(i);
+		//gr.clear_vertex(i);
+		vi.type = EMPTY_VERTEX;
+		gr.set_vertex_info(i, vi);
+
 		flag = true;
 	}
 	return flag;
@@ -317,6 +323,9 @@ bool remove_inner_boundaries(splice_graph &gr)
 	int n = gr.num_vertices() - 1;
 	for(int i = 1; i < gr.num_vertices() - 1; i++)
 	{
+		vertex_info vi = gr.get_vertex_info(i);
+		if(vi.type == EMPTY_VERTEX) continue;
+
 		if(gr.in_degree(i) != 1) continue;
 		if(gr.out_degree(i) != 1) continue;
 
@@ -328,7 +337,6 @@ bool remove_inner_boundaries(splice_graph &gr)
 		it1 = pei.first;
 		it2 = pei.second;
 		edge_descriptor e2 = (*it1);
-		vertex_info vi = gr.get_vertex_info(i);
 		int s = e1->source();
 		int t = e2->target();
 
@@ -340,7 +348,10 @@ bool remove_inner_boundaries(splice_graph &gr)
 
 		//if(verbose >= 2) printf("remove inner boundary: vertex = %d, weight = %.2lf, length = %d, pos = %d-%d\n", i, gr.get_vertex_weight(i), vi.length, vi.lpos, vi.rpos);
 
-		gr.clear_vertex(i);
+		//gr.clear_vertex(i);
+		vi.type = EMPTY_VERTEX;
+		gr.set_vertex_info(i, vi);
+
 		flag = true;
 	}
 	return flag;
@@ -351,6 +362,9 @@ bool remove_intron_contamination(splice_graph &gr, double ratio)
 	bool flag = false;
 	for(int i = 1; i < gr.num_vertices(); i++)
 	{
+		vertex_info vi = gr.get_vertex_info(i);
+		if(vi.type == EMPTY_VERTEX) continue;
+
 		if(gr.in_degree(i) != 1) continue;
 		if(gr.out_degree(i) != 1) continue;
 
@@ -364,7 +378,6 @@ bool remove_intron_contamination(splice_graph &gr, double ratio)
 		int s = e1->source();
 		int t = e2->target();
 		double wv = gr.get_vertex_weight(i);
-		vertex_info vi = gr.get_vertex_info(i);
 
 		if(s == 0) continue;
 		if(t == gr.num_vertices() - 1) continue;
@@ -382,7 +395,11 @@ bool remove_intron_contamination(splice_graph &gr, double ratio)
 
 		//if(verbose >= 2) printf("clear intron contamination %d, weight = %.2lf, length = %d, edge weight = %.2lf\n", i, wv, vi.length, we); 
 
-		gr.clear_vertex(i);
+		//gr.clear_vertex(i);
+		vi.type = EMPTY_VERTEX;
+		gr.set_vertex_info(i, vi);
+
+
 		flag = true;
 	}
 	return flag;
@@ -1330,7 +1347,7 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 		if(s > 1) continue;
 		vi.type = EMPTY_VERTEX;
 		gr.set_vertex_info(x.first, vi);
-		gr.remove_edge(p.first);
+		//gr.remove_edge(p.first);
 	}
 
 	for(auto &x : fb2)
