@@ -1330,7 +1330,7 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 		if(s > 1) continue;
 		vi.type = EMPTY_VERTEX;
 		gr.set_vertex_info(x.first, vi);
-		//gr.remove_edge(p.first);
+		gr.remove_edge(p.first);
 	}
 
 	for(auto &x : fb2)
@@ -1345,7 +1345,7 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 		if(s > 1) continue;
 		vi.type = EMPTY_VERTEX;
 		gr.set_vertex_info(x.first, vi);
-		//gr.remove_edge(p.first);
+		gr.remove_edge(p.first);
 	}
 	return 0;
 }
