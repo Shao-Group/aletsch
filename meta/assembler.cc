@@ -658,6 +658,9 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 	{
 		boost::asio::post(pool, [this, gx, hx, k, sid]
 		{
+			printf("XXXXXXXXXXXXXX k = %d, sid = %d\n", k, sid);
+
+			/*
 			splice_graph gr(gx);
 			hyper_set hs(hx);
 
@@ -682,8 +685,8 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 			mylock.lock();
 			tsets.push_back(ts);
 			mylock.unlock();
+			*/
 		});
-
 	}
 
 	return 0;
