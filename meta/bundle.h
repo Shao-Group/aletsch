@@ -40,7 +40,6 @@ public:
 	int combine(const bundle &bb);
 	int print(int k);
 	int bridge();
-	int clear();
 	int save_borrowed_path(const vector<int32_t> &v, double w);
 	int digest_borrowed_paths();
 	int print_borrowed_paths();
