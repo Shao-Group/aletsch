@@ -54,4 +54,11 @@ public:
 	vector<transcript> get_transcripts(int min_count) const;
 };
 
+class transcript_set_pool
+{
+public:
+	int count;
+	vector<transcript_set> tsets;
+};
+
 #endif

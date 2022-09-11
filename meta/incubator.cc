@@ -291,7 +291,7 @@ int incubator::assemble()
 			boost::asio::post(pool, [this, gv, instance, &mylock, &pool]{ 
 					//this->assemble(gv, instance, mylock, pool); 
 					//transcript_set ts(gv.front()->chrm, params[DEFAULT].min_single_exon_clustering_overlap);
-					assembler asmb(params[DEFAULT], tsets, mylock, pool);
+					assembler asmb(params[DEFAULT], this->tspool, mylock, pool);
 					asmb.resolve(gv, instance);
 			});
 			instance++;
@@ -307,9 +307,9 @@ int incubator::rearrange()
 	// filtering with count
 	/*
 	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
-	for(int i = 0; i < tsets.size(); i++)
+	for(int i = 0; i < tspool.tsets.size(); i++)
 	{
-		transcript_set &t = tsets[i];
+		transcript_set &t = tspool.tsets[i];
 		assert(t.chrm == tmerge.chrm);
 		boost::asio::post(pool, [&t]{ t.filter(2); });
 	}
@@ -317,7 +317,7 @@ int incubator::rearrange()
 	*/
 
 	// random sort
-	std::random_shuffle(tsets.begin(), tsets.end());
+	std::random_shuffle(tspool.tsets.begin(), tspool.tsets.end());
 
 	// merge
 	mutex mylock;
@@ -325,17 +325,17 @@ int incubator::rearrange()
 
 	int t = params[DEFAULT].max_threads;
 	if(t <= 0) t = 1;
-	int n = ceil(1.0 * tsets.size() / t);
+	int n = ceil(1.0 * tspool.tsets.size() / t);
 
 	tmerge.mt.clear();
 	for(int i = 0; i < t; i++)
 	{
 		int a = (i + 0) * n;
 		int b = (i + 1) * n;
-		if(b >= tsets.size()) b = tsets.size();
+		if(b >= tspool.tsets.size()) b = tspool.tsets.size();
 		boost::asio::post(pool2, [this, &mylock, a, b]{ 
 				transcript_set ts(this->tmerge.chrm, params[DEFAULT].min_single_exon_clustering_overlap);
-				for(int k = a; k < b; k++) ts.add(this->tsets[k], TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+				for(int k = a; k < b; k++) ts.add(this->tspool.tsets[k], TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 				mylock.lock();
 				this->tmerge.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 				mylock.unlock();
@@ -343,7 +343,7 @@ int incubator::rearrange()
 	}
 	pool2.join();
 
-	tsets.clear();
+	tspool.tsets.clear();
 	return 0;
 }
 
@@ -484,7 +484,7 @@ int incubator::save_transcript_set(const transcript_set &ts, mutex &mylock)
 {
 	if(ts.mt.size() == 0) return 0;
 	mylock.lock();
-	tsets.push_back(ts);
+	tspool.tsets.push_back(ts);
 	mylock.unlock();
 	return 0;
 }
