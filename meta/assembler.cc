@@ -654,14 +654,14 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 	}
 	*/
 
-	for(int k = 0; k < 20; k++)
+	for(int k = 0; k < 5; k++)
 	{
 		boost::asio::post(pool, [this, gx, hx, k, sid]
 		{
 			splice_graph gr(gx);
 			hyper_set hs(hx);
 
-			gr.gid = gx.gid + "." + tostring(k);
+			gr.gid = gr.gid + "." + tostring(k);
 			scallop sx(gr, hs, this->cfg, k == 0 ? false : true);
 			sx.assemble();
 
