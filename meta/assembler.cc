@@ -105,7 +105,7 @@ int assembler::assemble(bundle &bd, int instance)
 	phase_set ps;
 	bd.build_phase_set(ps, gr);
 	assemble(gr, ps, bd.sp.sample_id);
-	bd.clear();
+	//bd.clear();
 	return 0;
 }
 
@@ -201,7 +201,7 @@ int assembler::assemble(vector<bundle*> gv, int instance)
 		px.combine(ps);
 
 		assemble(gr, ps, bd.sp.sample_id);
-		bd.clear();
+		//bd.clear();
 	}
 
 	// assemble combined instance
