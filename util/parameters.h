@@ -42,6 +42,7 @@ public:
 	double min_grouping_similarity;
 	double max_grouping_similarity;
 	int max_num_junctions_to_combine;
+	int assembly_repeats;
 
 	// for bridging paired-end reads
 	int bridge_end_relaxing;

@@ -657,7 +657,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 	mutex &mt = mylock;	
 	transcript_set_pool &tsp = tspool;
 	parameters pa = cfg;
-	for(int k = 0; k < 5; k++)
+	for(int k = 0; k < cfg.assembly_repeats; k++)
 	{
 		boost::asio::post(pool, [gx, hx, k, sid, pa, &mt, &tsp] {
 
