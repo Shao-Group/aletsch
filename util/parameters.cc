@@ -91,7 +91,7 @@ parameters::parameters()
 	max_dp_table_size = 10000;
 	
 	// for filtering paths
-	min_transcript_coverage = 1.0;
+	min_transcript_coverage = 2.0;
 	min_transcript_length_base = 100;
 	min_transcript_length_increase = 20;
 	min_single_exon_transcript_coverage = 3.5;
@@ -483,10 +483,12 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 		}
 	}
 
+	/*
 	if(min_surviving_edge_weight < 0.1 + min_transcript_coverage) 
 	{
 		min_surviving_edge_weight = 0.1 + min_transcript_coverage;
 	}
+	*/
 
 	return 0;
 }
@@ -540,9 +542,9 @@ int parameters::print_help()
 	printf(" %-46s  %s\n", "-r/--assembly_repeats <integer>",  "the number of repeats for consensus assembly, default: 5");
 	printf(" %-46s  %s\n", "--min_bridging_score <float>",  "the minimum score for bridging a paired-end reads, default: 1.5");
 	printf(" %-46s  %s\n", "--min_splice_bundary_hits <integer>",  "the minimum number of spliced reads required to support a junction, default: 1");
-	printf(" %-46s  %s\n", "--min_transcript_coverage <float>",  "minimum coverage required for a multi-exon transcript, default: 1.0");
-	printf(" %-46s  %s\n", "--min_transcript_length_base <integer>",  "default: 150");
-	printf(" %-46s  %s\n", "--min_transcript_length_increase <integer>",  "default: 50, minimum length of a transcript: base + #exons * increase");
+	printf(" %-46s  %s\n", "--min_transcript_coverage <float>",  "minimum coverage required for a multi-exon transcript, default: 2.0");
+	printf(" %-46s  %s\n", "--min_transcript_length_base <integer>",  "default: 100");
+	printf(" %-46s  %s\n", "--min_transcript_length_increase <integer>",  "default: 20, minimum length of a transcript: base + #exons * increase");
 	printf(" %-46s  %s\n", "--min_single_exon_coverage <float>",  "minimum coverage required for a single-exon transcript, default: 20");
 	printf(" %-46s  %s\n", "--min_single_exon_transcript_length <integer>",  "minimum length of single-exon transcript, default: 250");
 	printf(" %-46s  %s\n", "--min_single_exon_clustering_overlap <float>",  "minimum overlaping ratio to merge two single-exon transcripts, default: 0.8");

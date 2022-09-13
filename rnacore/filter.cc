@@ -305,15 +305,17 @@ bool verify_length_coverage(const transcript &t, const parameters &cfg)
 	int e = t.exons.size();
 	int minl = cfg.min_transcript_length_base + e * cfg.min_transcript_length_increase;
 
+	/*
 	if(t.gene_id == "instance.0.228.0")
 	{
 		t.write(cout);
 		printf("e = %d, minl = %d\n", e, minl);
 	}
+	*/
 
-	if(e >= 2 && t.length() < minl) return false;
-	if(e >= 2 && t.coverage < cfg.min_transcript_coverage) return false;
 	if(e == 1 && t.length() < cfg.min_single_exon_transcript_length) return false;
-	if(e == 1 && t.coverage < cfg.min_single_exon_transcript_coverage) return false;
+	if(e >= 2 && t.length() < minl) return false;
+	if(e == 1 && t.coverage < cfg.min_single_exon_transcript_coverage * cfg.assembly_repeats) return false;
+	if(e >= 2 && t.coverage < cfg.min_transcript_coverage * cfg.assembly_repeats) return false;
 	return true;
 }

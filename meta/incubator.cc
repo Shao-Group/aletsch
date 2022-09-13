@@ -362,8 +362,7 @@ int incubator::postprocess()
 
 			transcript &t = v[k].trst;
 
-			// TODO
-			//if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
+			if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
 			if(verify_exon_length(t, params[DEFAULT]) == false) continue;
 
 			t.write(ss, -1, v[k].samples.size());
