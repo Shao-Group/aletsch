@@ -204,6 +204,7 @@ int assembler::assemble(vector<bundle*> gv, int instance)
 		bd.clear();
 	}
 
+	bx.clear();
 	// assemble combined instance
 	//assemble(gx, px, ts, -1);
 	return 0;
