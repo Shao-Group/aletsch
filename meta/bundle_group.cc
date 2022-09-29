@@ -198,7 +198,7 @@ int bundle_group::build_splice_similarity(const vector<int> &ss, vector<PPID> &v
 			int small = splices[i].size() < splices[j].size() ? splices[i].size() : splices[j].size();
 			double r = c * 1.0 / small;
 
-			printf("graph-similarity: r = %.3lf, c = %d, size1 = %lu, size2 = %lu, sp1 = %d-%d, sp2 = %d-%d\n", 
+			if(cfg.verbose >= 2) printf("graph-similarity: r = %.3lf, c = %d, size1 = %lu, size2 = %lu, sp1 = %d-%d, sp2 = %d-%d\n", 
 					r, c, splices[i].size(), splices[j].size(), splices[i].front(), splices[i].back(), splices[j].front(), splices[j].back());
 
 			if(c <= 0.50) continue;
@@ -262,7 +262,7 @@ int bundle_group::build_overlap_similarity(const vector<int> &ss, vector<PPID> &
 			int small = splices[i].size() < splices[j].size() ? splices[i].size() : splices[j].size();
 			double r = c * 1.0 / small;
 
-			printf("combined-similarity: r = %.3lf, c = %d, sp1 = %lu, sp2 = %lu, len1 = %d, len2 = %d, o1 = %.1lf, o2 = %.1lf, oo = %.1lf\n", 
+			if(cfg.verbose >= 2) printf("combined-similarity: r = %.3lf, c = %d, sp1 = %lu, sp2 = %lu, len1 = %d, len2 = %d, o1 = %.1lf, o2 = %.1lf, oo = %.1lf\n", 
 					r, c, splices[i].size(), splices[j].size(), len1, len2, o1, o2, oo);
 
 			if(oo < 0.75) continue;
