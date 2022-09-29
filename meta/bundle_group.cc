@@ -44,7 +44,7 @@ int bundle_group::resolve()
 	}
 	pool1.join();
 	stats(1);
-	print();
+	if(cfg.verbose >= 2) print();
 
 	// round two
 	disjoint_set ds(gset.size());
@@ -66,7 +66,7 @@ int bundle_group::resolve()
 	pool2.join();
 	build_groups(ds);
 	stats(2);
-	print();
+	if(cfg.verbose >= 2) print();
 
 	sindex.clear();
 	return 0;
