@@ -75,6 +75,8 @@ int incubator::resolve()
 		printf("step 1: generate graphs for individual bam/sam files, %s", ctime(&mytime));
 		generate(chrm);
 
+		break;
+
 		mytime = time(NULL);
 		printf("step 2: merge splice graphs, %s", ctime(&mytime));
 		merge();
