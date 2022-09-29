@@ -39,7 +39,9 @@ public:
 	double insertsize_ave;
 	double insertsize_std;
 	vector<double> insertsize_profile;
-	vector<hts_itr_t*> iters;
+	vector<vector<hts_itr_t*>> iters;
+	vector<vector<int32_t>> start1;
+	vector<vector<int32_t>> start2;
 
 public:
 	int load_profile(const string &dir);

@@ -21,8 +21,8 @@ See LICENSE for licensing.
 #include "hyper_set.h"
 #include "assembler.h"
 
-generator::generator(sample_profile &s, vector<bundle> &v, transcript_set &t, const parameters &c, int tid)
-	: vcb(v), ts(t), cfg(c), sp(s), target_id(tid)
+generator::generator(sample_profile &s, vector<bundle> &v, transcript_set &t, const parameters &c, int tid, int rid)
+	: vcb(v), ts(t), cfg(c), sp(s), target_id(tid), region_id(rid)
 {
 	index = 0;
 	sp.open_align_file();
@@ -35,7 +35,7 @@ generator::~generator()
 
 int generator::resolve()
 {
-	if(target_id < 0) return 0;
+	if(target_id < 0 || region_id < 0) return 0;
 
 	int index = 0;
 	bundle_base bb1;
@@ -44,12 +44,21 @@ int generator::resolve()
 	int hid = 0;
     bam1_t *b1t = bam_init1();
 
-	hts_itr_t *iter = sp.iters[target_id];
+	hts_itr_t *iter = sp.iters[target_id][region_id];
 	if(iter == NULL) return 0;
 
+	int32_t start1 = sp.start1[target_id][region_id];
+	int32_t start2 = sp.start2[target_id][region_id];
+	int32_t new_start1 = start1;
+	int32_t new_start2 = start2;
+
+	bool term1 = false, term2 = false;
 	while(sam_itr_next(sp.sfn, iter, b1t) >= 0)
 	{
 		bam1_core_t &p = b1t->core;
+
+		if(p.pos < cfg.region_partition_length * region_id) continue;
+		if(p.pos < start1 && p.pos < start2) continue;
 
 		if((p.flag & 0x4) >= 1) continue;											// read is not mapped
 		if((p.flag & 0x100) >= 1 && cfg.use_second_alignment == false) continue;	// secondary alignment
@@ -68,14 +77,23 @@ int generator::resolve()
 			generate(bb1, index);
 			bb1.clear();
 			index++;
+			if(ht.pos >= cfg.region_partition_length * (1 + region_id)) term1 = true;
 		}
+		if(bb1.hits.size() <= 0 && ht.pos >= cfg.region_partition_length * (1 + region_id)) term1 = true;
+		if(term1 == true) new_start1 = ht.pos;
+
 
 		if(bb2.hits.size() >= 1 && (ht.tid != bb2.tid || ht.pos > bb2.rpos + cfg.min_bundle_gap))
 		{
 			generate(bb2, index);
 			bb2.clear();
 			index++;
+			if(ht.pos >= cfg.region_partition_length * (1 + region_id)) term2 = true;
 		}
+		if(bb2.hits.size() <= 0 && ht.pos >= cfg.region_partition_length * (1 + region_id)) term2 = true;
+		if(term2 == true) new_start2 = ht.pos;
+
+		if(term1 == true && term2 == true) break;
 
 		// add hit
 		if(cfg.uniquely_mapped_only == true && ht.nh != 1) continue;
@@ -83,8 +101,12 @@ int generator::resolve()
 		if(sp.library_type != UNSTRANDED && ht.strand == '-' && ht.xs == '+') continue;
 		//if(sp.library_type == UNSTRANDED && sp.bam_with_xs == 1 && ht.xs == '.') continue;
 		if(sp.library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
-		if(sp.library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit_intervals(ht, b1t);
-		if(sp.library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit_intervals(ht, b1t);
+
+		if(sp.library_type != UNSTRANDED && ht.strand == '+' && ht.pos >= start1 && term1 == false) bb1.add_hit_intervals(ht, b1t);
+		if(sp.library_type != UNSTRANDED && ht.strand == '-' && ht.pos >= start2 && term2 == false) bb2.add_hit_intervals(ht, b1t);
+
+		// TODO, handle unstranded case
+		assert(sp.library_type != UNSTRANDED);
 		if(sp.library_type == UNSTRANDED) bb1.add_hit_intervals(ht, b1t);
 
 		/*
@@ -101,6 +123,9 @@ int generator::resolve()
 	generate(bb2, index++);
 	bb1.clear();
 	bb2.clear();
+
+	if(region_id < sp.start1[target_id].size() - 1) sp.start1[target_id][region_id + 1] = new_start1;
+	if(region_id < sp.start2[target_id].size() - 1) sp.start2[target_id][region_id + 1] = new_start2;
 
 	return 0;
 }

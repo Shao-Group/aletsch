@@ -43,6 +43,7 @@ public:
 	double max_grouping_similarity;
 	int max_num_junctions_to_combine;
 	int assembly_repeats;
+	int32_t region_partition_length;
 
 	// for bridging paired-end reads
 	int bridge_end_relaxing;

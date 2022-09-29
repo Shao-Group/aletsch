@@ -24,13 +24,14 @@ using namespace std;
 class generator
 {
 public:
-	generator(sample_profile &sp, vector<bundle> &cbv, transcript_set &ts, const parameters &c, int target_id);
+	generator(sample_profile &sp, vector<bundle> &cbv, transcript_set &ts, const parameters &c, int target_id, int region_id);
 	~generator();
 
 private:
 	const parameters &cfg;
 	sample_profile &sp;
 	int target_id;
+	int region_id;
 
 	vector<bundle> &vcb;
 	transcript_set &ts;
