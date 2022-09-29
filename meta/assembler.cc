@@ -42,10 +42,10 @@ int assembler::resolve(vector<bundle*> gv, int instance)
 	if(gv.size() >= 2)
 	{
 		// print
+		/*
 		printf("\n");
 		for(int k = 0; k < gv.size(); k++) gv[k]->print(k);
 
-		/*
 		vector<vector<PID>> sim;
 		build_similarity(gv, sim);
 		bridge_pairwise(gv, sim);
@@ -558,7 +558,7 @@ int assembler::fix_missing_edges(splice_graph &gr, splice_graph &gx)
 		if(s == -1) continue;
 
 		int32_t gap = vt.lpos - vv.lpos;
-		printf("fixing starting boundary t = %d-%d using u = %d-%d, v = %d-%d, gap = %d, wt = %.1lf, wuv = %.1lf\n", 
+		if(cfg.verbose >= 2) printf("fixing starting boundary t = %d-%d using u = %d-%d, v = %d-%d, gap = %d, wt = %.1lf, wuv = %.1lf\n", 
 				vt.lpos, vt.rpos, vu.lpos, vu.rpos, vv.lpos, vv.rpos, gap, wt, wuv);
 	}
 
