@@ -52,7 +52,6 @@ int generator::resolve()
 	int32_t new_start1 = start1;
 	int32_t new_start2 = start2;
 
-	printf("generate target %d, region %d, starts = %d/%d\n", target_id, region_id, start1, start2);
 
 	bool term1 = false, term2 = false;
 	while(sam_itr_next(sp.sfn, iter, b1t) >= 0)
@@ -79,20 +78,34 @@ int generator::resolve()
 			generate(bb1, index);
 			bb1.clear();
 			index++;
-			if(ht.pos >= sp.region_partition_length * (1 + region_id)) term1 = true;
+			if(ht.pos >= sp.region_partition_length * (1 + region_id) && term1 == false)
+			{
+				term1 = true;
+				new_start1 = ht.pos;
+			}
 		}
-		if(bb1.hits.size() <= 0 && ht.pos >= sp.region_partition_length * (1 + region_id)) term1 = true;
-		if(term1 == true) new_start1 = ht.pos;
+		if(bb1.hits.size() <= 0 && ht.pos >= sp.region_partition_length * (1 + region_id) && term1 == false) 
+		{
+			term1 = true;
+			new_start1 = ht.pos;
+		}
 
 		if(bb2.hits.size() >= 1 && (ht.tid != bb2.tid || ht.pos > bb2.rpos + cfg.min_bundle_gap))
 		{
 			generate(bb2, index);
 			bb2.clear();
 			index++;
-			if(ht.pos >= sp.region_partition_length * (1 + region_id)) term2 = true;
+			if(ht.pos >= sp.region_partition_length * (1 + region_id) && term2 == false)
+			{
+				term2 = true;
+				new_start2 = ht.pos;
+			}
 		}
-		if(bb2.hits.size() <= 0 && ht.pos >= sp.region_partition_length * (1 + region_id)) term2 = true;
-		if(term2 == true) new_start2 = ht.pos;
+		if(bb2.hits.size() <= 0 && ht.pos >= sp.region_partition_length * (1 + region_id) && term2 == false) 
+		{
+			term2 = true;
+			new_start2 = ht.pos;
+		}
 
 		if(term1 == true && term2 == true) break;
 
@@ -124,6 +137,8 @@ int generator::resolve()
 	generate(bb2, index++);
 	bb1.clear();
 	bb2.clear();
+
+	printf("generate target %d, region %d, starts = %d/%d, next starts = %d/%d\n", target_id, region_id, start1, start2, new_start1, new_start2);
 
 	if(region_id < sp.start1[target_id].size() - 1) sp.start1[target_id][region_id + 1] = new_start1;
 	if(region_id < sp.start2[target_id].size() - 1) sp.start2[target_id][region_id + 1] = new_start2;

@@ -169,27 +169,31 @@ int sample_profile::read_index_iterators()
 
 	iters.clear();
 	iters.resize(hdr->n_targets);
+	start1.resize(hdr->n_targets);
+	start2.resize(hdr->n_targets);
 	for(int i = 0; i < hdr->n_targets; i++)
 	{
 		int k = 0;
 		while(true)
 		{
 			int32_t s = (k + 0) * region_partition_length;
-			int32_t t = (k + 1) * region_partition_length;
+			int32_t t = (k + 2) * region_partition_length;
 			string query0 = string(hdr->target_name[i]);
 			string query = string(hdr->target_name[i]) + ":" + to_string(s) + "-" + to_string(t);
-			hts_itr_t *iter = sam_itr_querys(idx, hdr, query0.c_str());
+
+			printf("build index for target-id %d, %d-%d, query = %s\n", i, s, t, query.c_str());
+
+			hts_itr_t *iter = sam_itr_querys(idx, hdr, query.c_str());
+
+			if(k >= 10) break;
 			//hts_itr_t *iter = sam_itr_queryi(idx, i, s, t);
 
-			printf("build index for target-id %d, %d-%d, query0 = %s\n", i, s, t, query.c_str());
-
-			if(iter == NULL) printf("AAAA\n");
-			else printf("BBB\n");
+			//if(iter == NULL) printf("AAAA\n");
+			//else printf("BBB\n");
 			
-			break;
 			iters[i].push_back(iter);
-			start1[i].push_back(k * region_partition_length);
-			start2[i].push_back(k * region_partition_length);
+			start1[i].push_back(s);
+			start2[i].push_back(s);
 			k++;
 		}
 		assert(iters[i].size() == start1[i].size());

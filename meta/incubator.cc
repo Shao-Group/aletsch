@@ -48,11 +48,6 @@ int incubator::resolve()
 	build_sample_index();
 
 	// get max region
-	int max_region = 0;
-	for(int k = 0; k < samples.size(); k++)
-	{
-		if(max_region < samples[k].start1.size()) max_region = samples[k].start1.size();
-	}
 
 	time_t mytime;
 	for(auto &x: sindex)
@@ -75,16 +70,21 @@ int incubator::resolve()
 		if(chrm == "chr14_GL000009v2_random") continue;
 		*/
 
+		int max_region = 0;
+		for(auto &z: x.second)
+		{
+			if(max_region < samples[z.first].start1[z.second].size()) 
+				max_region = samples[z.first].start1[z.second].size();
+		}
+
 		for(int k = 0; k < max_region; k++)
 		{
 			mytime = time(NULL);
-			printf("start processing chrm %s, region %d, %s", chrm.c_str(), k, ctime(&mytime));
+			printf("start processing chrm %s, region %d, max-region = %d, %s", chrm.c_str(), k, max_region, ctime(&mytime));
 
 			mytime = time(NULL);
 			printf("step 1: generate graphs for individual bam/sam files, %s", ctime(&mytime));
 			generate(chrm, k);
-
-			break;
 
 			mytime = time(NULL);
 			printf("step 2: merge splice graphs, %s", ctime(&mytime));
