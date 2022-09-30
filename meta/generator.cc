@@ -138,10 +138,11 @@ int generator::resolve()
 	bb1.clear();
 	bb2.clear();
 
-	printf("generate target %d, region %d, starts = %d/%d, next starts = %d/%d\n", target_id, region_id, start1, start2, new_start1, new_start2);
+	printf("generate target %d, region %d, starts = %d/%d, next starts = %d/%d, terms=%c/%c, hid = %d\n", 
+			target_id, region_id, start1, start2, new_start1, new_start2, term1 ? 'T' : 'F', term2 ? 'T' : 'F', hid);
 
-	if(region_id < sp.start1[target_id].size() - 1) sp.start1[target_id][region_id + 1] = new_start1;
-	if(region_id < sp.start2[target_id].size() - 1) sp.start2[target_id][region_id + 1] = new_start2;
+	if(term1 && region_id < sp.start1[target_id].size() - 1) sp.start1[target_id][region_id + 1] = new_start1;
+	if(term2 && region_id < sp.start2[target_id].size() - 1) sp.start2[target_id][region_id + 1] = new_start2;
 
 	return 0;
 }
