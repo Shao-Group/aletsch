@@ -39,7 +39,7 @@ parameters::parameters()
 	max_grouping_similarity = 0.90;
 	max_num_junctions_to_combine = 500;
 	assembly_repeats = 5;
-	region_partition_length = 10000000;
+	//region_partition_length = 10000000;
 
 	// for bridging paired-end reads
 	bridge_end_relaxing = 5;

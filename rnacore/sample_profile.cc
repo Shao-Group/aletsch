@@ -7,6 +7,7 @@ See LICENSE for licensing.
 #include "sample_profile.h"
 #include "htslib/bgzf.h"
 #include "constants.h"
+#include <cassert>
 
 mutex sample_profile::bam_lock;
 mutex sample_profile::gtf_lock;
@@ -22,6 +23,7 @@ sample_profile::sample_profile(int id)
 	insertsize_low = 80;
 	insertsize_high = 500;
 	insertsize_median = 250;
+	region_partition_length = 10000000;
 	library_type = UNSTRANDED;
 	bam_with_xs = 0;
 }
@@ -166,10 +168,22 @@ int sample_profile::read_index_iterators()
 	hts_idx_t *idx = sam_index_load(sfn, index_file.c_str());
 
 	iters.clear();
+	iters.resize(hdr->n_targets);
 	for(int i = 0; i < hdr->n_targets; i++)
 	{
-		hts_itr_t *iter = sam_itr_querys(idx, hdr, hdr->target_name[i]);
-		iters.push_back(iter);
+		int k = 0;
+		while(true)
+		{
+			string query = string(hdr->target_name[i]) + ":" + to_string(k * region_partition_length);
+			hts_itr_t *iter = sam_itr_querys(idx, hdr, query.c_str());
+			if(iter == NULL) break;
+			iters[i].push_back(iter);
+			start1[i].push_back(k * region_partition_length);
+			start2[i].push_back(k * region_partition_length);
+			k++;
+		}
+		assert(iters[i].size() == start1[i].size());
+		assert(iters[i].size() == start2[i].size());
 	}
 
 	hts_idx_destroy(idx);
@@ -181,7 +195,10 @@ int sample_profile::free_index_iterators()
 {
 	for(int i = 0; i < iters.size(); i++)
 	{
-		hts_itr_destroy(iters[i]);
+		for(int k = 0; k < iters[i].size(); k++)
+		{
+			hts_itr_destroy(iters[i][k]);
+		}
 	}
 	return 0;
 }

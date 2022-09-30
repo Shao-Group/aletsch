@@ -52,6 +52,8 @@ int generator::resolve()
 	int32_t new_start1 = start1;
 	int32_t new_start2 = start2;
 
+	printf("generate target %d, region %d, starts = %d/%d\n", target_id, region_id, start1, start2);
+
 	bool term1 = false, term2 = false;
 	while(sam_itr_next(sp.sfn, iter, b1t) >= 0)
 	{

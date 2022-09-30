@@ -38,6 +38,7 @@ public:
 	int insertsize_median;
 	double insertsize_ave;
 	double insertsize_std;
+	int region_partition_length;
 	vector<double> insertsize_profile;
 	vector<vector<hts_itr_t*>> iters;
 	vector<vector<int32_t>> start1;
