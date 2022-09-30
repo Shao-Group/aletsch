@@ -47,6 +47,13 @@ int incubator::resolve()
 
 	build_sample_index();
 
+	// get max region
+	int max_region = 0;
+	for(int k = 0; k < samples.size(); k++)
+	{
+		if(max_region < samples[k].start1.size()) max_region = samples[k].start1.size();
+	}
+
 	time_t mytime;
 	for(auto &x: sindex)
 	{
@@ -68,35 +75,38 @@ int incubator::resolve()
 		if(chrm == "chr14_GL000009v2_random") continue;
 		*/
 
-		mytime = time(NULL);
-		printf("start processing chrm %s, %s", chrm.c_str(), ctime(&mytime));
+		for(int k = 0; k < max_region; k++)
+		{
+			mytime = time(NULL);
+			printf("start processing chrm %s, region %d, %s", chrm.c_str(), k, ctime(&mytime));
 
-		mytime = time(NULL);
-		printf("step 1: generate graphs for individual bam/sam files, %s", ctime(&mytime));
-		generate(chrm);
+			mytime = time(NULL);
+			printf("step 1: generate graphs for individual bam/sam files, %s", ctime(&mytime));
+			generate(chrm, k);
 
-		break;
+			break;
 
-		mytime = time(NULL);
-		printf("step 2: merge splice graphs, %s", ctime(&mytime));
-		merge();
+			mytime = time(NULL);
+			printf("step 2: merge splice graphs, %s", ctime(&mytime));
+			merge();
 
-		mytime = time(NULL);
-		printf("step 3: assemble merged splice graphs, %s", ctime(&mytime));
-		assemble();
+			mytime = time(NULL);
+			printf("step 3: assemble merged splice graphs, %s", ctime(&mytime));
+			assemble();
 
-		groups.clear();
+			groups.clear();
 
-		mytime = time(NULL);
-		printf("step 4: rearrange transcript sets, %s", ctime(&mytime));
-		rearrange();
+			mytime = time(NULL);
+			printf("step 4: rearrange transcript sets, %s", ctime(&mytime));
+			rearrange();
 
-		mytime = time(NULL);
-		printf("step 5: postprocess and write assembled transcripts, %s", ctime(&mytime));
-		postprocess();
+			mytime = time(NULL);
+			printf("step 5: postprocess and write assembled transcripts, %s", ctime(&mytime));
+			postprocess();
 
-		mytime = time(NULL);
-		printf("finish processing chrm %s, %s\n", chrm.c_str(), ctime(&mytime));
+			mytime = time(NULL);
+			printf("finish processing chrm %s, region %d, %s\n", chrm.c_str(), k, ctime(&mytime));
+		}
 	}
 
 	free_samples();
@@ -238,7 +248,7 @@ int incubator::build_sample_index()
 	return 0;
 }
 
-int incubator::generate(string chrm)
+int incubator::generate(string chrm, int rid)
 {
 	if(sindex.find(chrm) == sindex.end()) return 0;
 	const vector<PI> &v = sindex[chrm];
@@ -253,7 +263,7 @@ int incubator::generate(string chrm)
 		int sid = v[i].first;
 		int tid = v[i].second;
 		sample_profile &sp = samples[sid];
-		boost::asio::post(pool, [this, &mylock, &sp, chrm, tid]{ this->generate(sp, tid, chrm, mylock); });
+		boost::asio::post(pool, [this, &mylock, &sp, chrm, tid, rid]{ this->generate(sp, tid, rid, chrm, mylock); });
 	}
 
 	pool.join();
@@ -400,11 +410,13 @@ int incubator::postprocess()
 	return 0;
 }
 
-int incubator::generate(sample_profile &sp, int tid, string chrm, mutex &mylock)
+int incubator::generate(sample_profile &sp, int tid, int rid, string chrm, mutex &mylock)
 {	
+	if(rid >= sp.start1.size()) return 0;
+
 	vector<bundle> v;
 	transcript_set ts(chrm, params[DEFAULT].min_single_exon_clustering_overlap);
-	generator gt(sp, v, ts, params[sp.data_type], tid);
+	generator gt(sp, v, ts, params[sp.data_type], tid, rid);
 	gt.resolve();
 	save_transcript_set(ts, mylock);
 
@@ -429,7 +441,7 @@ int incubator::generate(sample_profile &sp, int tid, string chrm, mutex &mylock)
 		}
 	}
 	mylock.unlock();
-	printf("finish processing tid = %d of sample %s\n", tid, sp.align_file.c_str());
+	printf("finish processing tid = %d, rid = %d, of sample %s\n", tid, rid, sp.align_file.c_str());
 	return 0;
 }
 

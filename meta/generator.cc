@@ -57,7 +57,7 @@ int generator::resolve()
 	{
 		bam1_core_t &p = b1t->core;
 
-		if(p.pos < cfg.region_partition_length * region_id) continue;
+		if(p.pos < sp.region_partition_length * region_id) continue;
 		if(p.pos < start1 && p.pos < start2) continue;
 
 		if((p.flag & 0x4) >= 1) continue;											// read is not mapped
@@ -77,20 +77,19 @@ int generator::resolve()
 			generate(bb1, index);
 			bb1.clear();
 			index++;
-			if(ht.pos >= cfg.region_partition_length * (1 + region_id)) term1 = true;
+			if(ht.pos >= sp.region_partition_length * (1 + region_id)) term1 = true;
 		}
-		if(bb1.hits.size() <= 0 && ht.pos >= cfg.region_partition_length * (1 + region_id)) term1 = true;
+		if(bb1.hits.size() <= 0 && ht.pos >= sp.region_partition_length * (1 + region_id)) term1 = true;
 		if(term1 == true) new_start1 = ht.pos;
-
 
 		if(bb2.hits.size() >= 1 && (ht.tid != bb2.tid || ht.pos > bb2.rpos + cfg.min_bundle_gap))
 		{
 			generate(bb2, index);
 			bb2.clear();
 			index++;
-			if(ht.pos >= cfg.region_partition_length * (1 + region_id)) term2 = true;
+			if(ht.pos >= sp.region_partition_length * (1 + region_id)) term2 = true;
 		}
-		if(bb2.hits.size() <= 0 && ht.pos >= cfg.region_partition_length * (1 + region_id)) term2 = true;
+		if(bb2.hits.size() <= 0 && ht.pos >= sp.region_partition_length * (1 + region_id)) term2 = true;
 		if(term2 == true) new_start2 = ht.pos;
 
 		if(term1 == true && term2 == true) break;

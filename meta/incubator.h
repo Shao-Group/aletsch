@@ -45,7 +45,7 @@ public:
 public:
 	int resolve();
 
-	int generate(string chrm);
+	int generate(string chrm, int rid);
 	int merge();
 	int assemble();
 	int rearrange();
@@ -56,7 +56,7 @@ private:
 	int init_samples();
 	int free_samples();
 	int build_sample_index();
-	int generate(sample_profile &sp, int tid, string chrm, mutex &mylock);
+	int generate(sample_profile &sp, int tid, int rid, string chrm, mutex &mylock);
 	int assemble(vector<bundle*> gv, int instance, mutex &mylock, thread_pool &pool);
 	int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);
 	int save_transcript_set(const transcript_set &ts, mutex &mylock);
