@@ -24,19 +24,19 @@ See LICENSE for licensing.
 #include <boost/asio/thread_pool.hpp>
 #include <boost/pending/disjoint_sets.hpp>
 
-assembler::assembler(const parameters &c, transcript_set_pool &v, mutex &m, thread_pool &p)
-	: cfg(c), tspool(v), mylock(m), pool(p)
+assembler::assembler(const parameters &c, transcript_set_pool &v, mutex &m, thread_pool &p, int r, int g, int i)
+	: cfg(c), tspool(v), mylock(m), pool(p), rid(r), gid(g), instance(i)
 {
 }
 
-int assembler::resolve(vector<bundle*> gv, int instance)
+int assembler::resolve(vector<bundle*> gv)
 {
 	int subindex = 0;
 
 	if(gv.size() == 1)
 	{
 		bundle &bd = *(gv[0]);
-		assemble(bd, instance);
+		assemble(bd);
 	}
 
 	if(gv.size() >= 2)
@@ -58,7 +58,7 @@ int assembler::resolve(vector<bundle*> gv, int instance)
 		//refine_pairwise(gv, sim);
 		bridge(gv);
 		//refine(gv);
-		assemble(gv, instance);
+		assemble(gv);
 		//pairwise_assemble(gv, ts, sim, instance);
 	}
 	return 0;
@@ -96,9 +96,9 @@ int assembler::build_similarity(vector<bundle*> &gv, vector<vector<PID>> &sim)
 	return 0;
 }
 
-int assembler::assemble(bundle &bd, int instance)
+int assembler::assemble(bundle &bd)
 {
-	bd.set_gid(instance, 0);
+	bd.set_gid(rid, gid, instance, 0);
 	splice_graph gr;
 	transform(bd, gr, true);
 
@@ -109,65 +109,7 @@ int assembler::assemble(bundle &bd, int instance)
 	return 0;
 }
 
-/*
-int assembler::pairwise_assemble(vector<bundle*> gv, transcript_set &ts, vector<vector<PID>> &sim, int instance)
-{
-	assert(gv.size() >= 2);
-	int subindex = 0;
-
-	for(int i = 0; i < gv.size(); i++)
-	{
-		bundle &bi = *(gv[i]);
-		bi.set_gid(instance, subindex++);
-		splice_graph gi;
-		phase_set pi;
-		transform(bi, gi, false);	// TODO
-		bi.build_phase_set(pi, gi);
-
-		// TODO
-		printf("assemble instance %d subindex %d, sample id = %d\n", instance, subindex, bi.sp.sample_id);
-		assemble(gi, pi, ts, bi.sp.sample_id);
-
-		for(int k = 0; k < sim[i].size(); k++)
-		{
-			int j = sim[i][k].first;
-			bundle &bj = *(gv[j]);
-			bj.set_gid(instance, subindex++);
-			splice_graph gj;
-			phase_set pj;
-			transform(bj, gj, false);	// TODO
-			bj.build_phase_set(pj, gj);
-
-			// combined bundle
-			bundle bx(cfg, gv[i]->sp);
-			bx.copy_meta_information(*(gv[i]));
-			bx.combine(*(gv[i]));
-			bx.combine(*(gv[j]));
-			bx.set_gid(instance, subindex++);
-
-			// combined graph
-			splice_graph gx;
-			transform(bx, gx, false);	// TODO
-
-			// combined phase set 
-			phase_set px;
-			px.combine(pi);
-			px.combine(pj);
-
-			//fix_missing_edges(gr, gx);
-
-			// assemble combined instance
-			printf("assemble combined %d and %d (out of %lu), instance %d subindex %d\n", i, j, sim[i].size(), instance, subindex);
-			assemble(gx, px, ts, -1);
-
-			if(k >= 10) break;
-		}
-	}
-	return 0;
-}
-*/
-
-int assembler::assemble(vector<bundle*> gv, int instance)
+int assembler::assemble(vector<bundle*> gv)
 {
 	assert(gv.size() >= 2);
 	int subindex = 0;
@@ -176,7 +118,7 @@ int assembler::assemble(vector<bundle*> gv, int instance)
 	bundle bx(cfg, gv[0]->sp);
 	bx.copy_meta_information(*(gv[0]));
 	for(int k = 0; k < gv.size(); k++) bx.combine(*(gv[k]));
-	bx.set_gid(instance, subindex++);
+	bx.set_gid(rid, gid, instance, subindex++);
 
 	// combined graph
 	splice_graph gx;
@@ -189,7 +131,7 @@ int assembler::assemble(vector<bundle*> gv, int instance)
 	for(int k = 0; k < gv.size(); k++)
 	{
 		bundle &bd = *(gv[k]);
-		bd.set_gid(instance, subindex++);
+		bd.set_gid(rid, gid, instance, subindex++);
 
 		splice_graph gr;
 		transform(bd, gr, true);
@@ -209,315 +151,6 @@ int assembler::assemble(vector<bundle*> gv, int instance)
 	//assemble(gx, px, ts, -1);
 	return 0;
 }
-
-/*
-int assembler::refine_pairwise(vector<bundle*> gv, vector<vector<PID>> &sim)
-{
-	for(int i = 0; i < gv.size(); i++)
-	{
-		for(int k = 0; k < sim[i].size(); k++)
-		{
-			int j = sim[i][k].first;
-			vector<bundle*> v;
-			v.push_back(gv[i]);
-			v.push_back(gv[j]);
-			//printf("trying to refine pair %d and %d, sim = %.2lf, samples %d and %d, files %s and %s\n", i, j, sim[i][k].second, gv[i]->sp.sample_id, gv[j]->sp.sample_id, gv[i]->sp.align_file.c_str(), gv[j]->sp.align_file.c_str());
-			refine(v);
-		}
-	}
-	for(int i = 0; i < gv.size(); i++)
-	{
-		//printf("print borrowed paths for bundle %d\n", i);
-		//gv[i]->print_borrowed_paths();
-		gv[i]->digest_borrowed_paths();
-	}
-	return 0;
-}
-
-int assembler::refine(vector<bundle*> gv)
-{
-	assert(gv.size() >= 2);
-
-	// construct combined bundle
-	bundle cb(cfg, gv[0]->sp);
-	cb.copy_meta_information(*(gv[0]));
-	for(int k = 0; k < gv.size(); k++) cb.combine(*(gv[k]));
-
-	// construct combined graph
-	splice_graph gr;
-	transform(cb, gr, false);
-
-	// refine each individual bundle
-	for(int k = 0; k < gv.size(); k++)
-	{
-		refine(gv[k], gr);
-
-		// TODO: be careful when calling refine in refine_pairwise
-		printf("print borrowed paths for bundle %d\n", k);
-		gv[k]->print_borrowed_paths();
-		gv[k]->digest_borrowed_paths();
-	}
-	return 0;
-}
-
-int assembler::refine_pairwise(bundle &cx, bundle &cy)
-{
-	// combined bundle
-	bundle cb(cfg, cx.sp);
-	cb.copy_meta_information(cx);
-	cb.combine(cx);
-	cb.combine(cy);
-	cb.set_gid(0, 0);		// TODO, proper gid
-
-	// combined splice graph
-	splice_graph gr;
-	transform(cb, gr, false);
-
-	// individual graphs
-	splice_graph gx;
-	splice_graph gy;
-	transform(cx, gx, false);
-	transform(cy, gy, false);
-
-	refine_pairwise(gx, gr);
-	refine_pairwise(gy, gr);
-	return 0;
-}
-
-int assembler::refine(bundle *bd, splice_graph &gr)
-{
-	splice_graph gx;
-	transform(*bd, gx, false);
-
-	//printf("refine gr and gx: strand = %c and %c\n", gx.strand, gr.strand);
-	if(gx.strand != gr.strand) return 0;
-	int strand = 0;
-	if(gr.strand == '+') strand = 1;
-	else if(gr.strand == '-') strand = 2;
-	if(strand == 0) return 0; // TODO
-
-	// build index for all starting and ending positions
-	int m = gx.num_vertices() - 1;
-	set<int32_t> sset;
-	set<int32_t> tset;
-	PEEI pei = gx.out_edges(0);
-	for(edge_iterator it = pei.first; it != pei.second; it++)
-	{
-		int s = (*it)->source();
-		int t = (*it)->target();
-		assert(s == 0);
-		int32_t z = gx.get_vertex_info(t).lpos;
-		sset.insert(z);
-	}
-	pei = gx.in_edges(m);
-	for(edge_iterator it = pei.first; it != pei.second; it++)
-	{
-		int s = (*it)->source();
-		int t = (*it)->target();
-		assert(t == m);
-		int32_t z = gx.get_vertex_info(s).rpos;
-		tset.insert(z);
-	}
-
-	// DP starting from the source 0
-	int n = gr.num_vertices() - 1;
-	vector<pereads_cluster> vc;
-	bridge_solver bs0(gr, vc, cfg);
-	vector<vector<entry>> table0; 
-	bs0.dynamic_programming(0, n, table0, strand);
-
-	// check all starting vertices of gx
-	pei = gx.out_edges(0);
-	for(edge_iterator it = pei.first; it != pei.second; it++)
-	{
-		int s = (*it)->source();
-		int t = (*it)->target();
-		assert(s == 0);
-
-		// TODO, do not refine isolated vertices
-		if(gx.edge(t, gx.num_vertices() - 1).second == true) continue;
-
-		int32_t z = gx.get_vertex_info(t).lpos;
-		int v = gr.locate_vertex(z);
-
-		if(v < 0 || v >= gr.num_vertices()) continue;
-
-		// if v is also a starting vertex continue;
-		//printf("start vertex of gx = %d, locating to gr.v = %d, start = %c, end = %c\n", t, v, gr.edge(0, v).second ? 'T' : 'F', gr.edge(v, gr.num_vertices() - 1).second ? 'T' : 'F');
-
-		if(gr.edge(0, v).second == true) continue;
-		if(gr.edge(v, gr.num_vertices() - 1).second == true) continue;
-
-		vector<vector<int>> pb = bs0.trace_back(v, table0);
-
-		for(int j = 0; j < pb.size(); j++)
-		{
-			bridge_path p;
-			p.score = table0[v][j].stack.front();
-			p.stack = table0[v][j].stack;
-			p.v = pb[j];
-			build_intron_coordinates_from_path(gr, p.v, p.chain);
-
-			// annotate path
-			vector<int32_t> pt;
-			pt.push_back(gr.get_vertex_info(0).lpos);
-			pt.insert(pt.end(), p.chain.begin(), p.chain.end());
-			pt.push_back(z);
-
-			if(pt[0] == pt[1])
-			{
-				pt.erase(pt.begin());
-				pt.erase(pt.begin());
-			}
-			vector<int32_t> vv, nn, pp;
-			annotate_path(gx, pt, vv, nn, pp);
-			assert(vv.size() == nn.size());
-			assert(vv.size() % 2 == 0);
-
-			//p.chain = filter_pseudo_introns(p.chain);
-			//piers[b].bridges.push_back(p);
-
-			//determine if it is correct
-
-			int m = vv.size() / 2;
-			bool accept = true;
-			vector<int32_t> bpath;
-			double bweight = -1;
-			
-			if(m >= 3 && nn[m*2-1] == -1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2 && nn[m*2-5] == -1 && nn[m*2-6] == 1)
-			{
-				if(m == 3) accept = false;
-				for(int k = m - 3; k >= 2; k--)
-				{
-					if(nn[k*2-1] == -1) accept = false;
-					if(accept == false) break;
-				}
-				int32_t len1 = vv[m*2-1] - vv[m*2-2];
-				int32_t len2 = vv[m*2-3] - vv[m*2-4];
-				int32_t len3 = vv[m*2-5] - vv[m*2-6];
-
-				if(len2 < len1 || len2 < len3) accept = false;
-				if(len1 > 100 || len3 > 100) accept = false;
-
-				if(accept == true)
-				{
-					//printf("ACCEPT PATH, type = (-1,-1,-1), (1, 2, 1)\n");
-					bpath.push_back(0 + vv[m*2-6]);
-					bpath.push_back(0 + vv[m*2-5]);
-					bpath.push_back(0 - vv[m*2-4]);
-					bpath.push_back(0 - vv[m*2-3]);
-					bpath.push_back(0 + vv[m*2-2]);
-					bpath.push_back(0 + vv[m*2-1]);
-					bweight = p.score;
-				}
-				//else printf("REJECT PATH, type = (-1,-1,-1), (1, 2, 1)\n");
-			}
-			else if(m >= 3 && nn[m*2-1] == 1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2 && nn[m*2-5] == -1 && nn[m*2-6] == 1)
-			{
-				for(int k = m - 3; k >= 2; k--)
-				{
-					if(nn[k*2-1] == -1) accept = false;
-					if(accept == false) break;
-				}
-				int32_t len2 = vv[m*2-3] - vv[m*2-4];
-				int32_t len3 = vv[m*2-5] - vv[m*2-6];
-
-				if(len2 < len3) accept = false;
-				if(len3 > 100) accept = false;
-
-				if(accept == true)
-				{
-					//printf("ACCEPT PATH, type = (1, -1, -1), (1, 2, 1)\n");
-					bpath.push_back(0 - vv[m*2-4]);
-					bpath.push_back(0 - vv[m*2-3]);
-					bpath.push_back(0 + vv[m*2-2]);
-					bpath.push_back(0 + vv[m*2-1]);
-					bweight = p.score;
-				}
-				//else printf("REJECT PATH, type = (1, -1, -1), (1, 2, 1)\n");
-			}
-			else if(m >= 2 && nn[m*2-1] == -1 && nn[m*2-2] == 2 && nn[m*2-3] == -1 && nn[m*2-4] == 1)
-			{
-				for(int k = m - 2; k >= 2; k--)
-				{
-					if(nn[k*2-1] == -1) accept = false;
-					if(accept == false) break;
-				}
-				int32_t len1 = vv[m*2-1] - vv[m*2-2];
-				int32_t len2 = vv[m*2-3] - vv[m*2-4];
-
-				if(len1 < len2) accept = false;
-				if(len2 > 100) accept = false;
-
-				if(accept == true)
-				{
-					bpath.push_back(0 + vv[m*2-4]);
-					bpath.push_back(0 + vv[m*2-3]);
-					bpath.push_back(0 - vv[m*2-2]);
-					bpath.push_back(0 - vv[m*2-1]);
-					bweight = p.score;
-					//printf("ACCEPT PATH, type = (-1, -1), (2, 1)\n");
-				}
-				//else printf("REJECT PATH, type = (-1, -1), (2, 1)\n");
-			}
-			else if(m >= 2 && nn[m*2-1] == -1 && nn[m*2-2] == 1 && nn[m*2-3] == -1 && nn[m*2-4] == 2)
-			{
-				for(int k = m - 2; k >= 2; k--)
-				{
-					if(nn[k*2-1] == -1) accept = false;
-					if(accept == false) break;
-				}
-				int32_t len1 = vv[m*2-1] - vv[m*2-2];
-				int32_t len2 = vv[m*2-3] - vv[m*2-4];
-
-				if(len2 < len1) accept = false;
-				if(len1 > 100) accept = false;
-
-				if(accept == true)
-				{
-					bpath.push_back(0 - vv[m*2-4]);
-					bpath.push_back(0 - vv[m*2-3]);
-					bpath.push_back(0 + vv[m*2-2]);
-					bpath.push_back(0 + vv[m*2-1]);
-					bweight = p.score;
-					//printf("ACCEPT PATH, type = (-1, -1), (1, 2)\n");
-				}
-				//else printf("REJECT PATH, type = (-1, -1), (1, 2)\n");
-			}
-			else if(m >= 1 && nn[m*2-1] == -1 && nn[m*2-2] == 2)
-			{
-				for(int k = m - 1; k >= 2; k--)
-				{
-					if(nn[k*2-1] == -1) accept = false;
-					if(accept == false) break;
-				}
-				if(accept == true) 
-				{
-					//printf("ACCEPT PATH, type = (-1), (2)\n");
-					bpath.push_back(0 - vv[m*2-2]);
-					bpath.push_back(0 - vv[m*2-1]);
-					bweight = p.score;
-				}
-				//else printf("REJECT PATH, type = (-1), (2)\n");
-			}
-			else
-			{
-				accept = false;
-				//printf("REJECT PATH, other type\n");
-			}
-
-			if(accept == true)
-			{
-				bd->save_borrowed_path(bpath, bweight);
-			}
-
-			break;
-		}
-	}
-	
-	return 0;
-}
-*/
 
 int assembler::transform(bundle &cb, splice_graph &gr, bool revising)
 {
@@ -565,28 +198,6 @@ int assembler::fix_missing_edges(splice_graph &gr, splice_graph &gx)
 
 	return 0;
 }
-
-/*
-int assembler::bridge_pairwise(vector<bundle*> gv, vector<vector<PID>> &sim)
-{
-	for(int i = 0; i < gv.size(); i++)
-	{
-		int c = gv[i]->count_unbridged();
-		if(c <= 0) continue;
-
-		for(int k = 0; k < sim[i].size(); k++)
-		{
-			int j = sim[i][k].first;
-			vector<bundle*> v;
-			v.push_back(gv[i]);
-			v.push_back(gv[j]);
-			bridge(v);
-			//printf("trying to bridge pair %d and %d, sim = %.2lf, samples %d and %d, files %s and %s\n", i, j, sim[i][k].second, gv[i]->sp.sample_id, gv[j]->sp.sample_id, gv[i]->sp.align_file.c_str(), gv[j]->sp.align_file.c_str());
-		}
-	}
-	return 0;
-}
-*/
 
 int assembler::bridge(vector<bundle*> gv)
 {

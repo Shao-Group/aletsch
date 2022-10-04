@@ -13,11 +13,16 @@ See LICENSE for licensing.
 #include "constants.h"
 #include "interval_map.h"
 #include <mutex>
+#include <boost/asio/post.hpp>
+#include <boost/asio/thread_pool.hpp>
+#include <boost/pending/disjoint_sets.hpp>
+
+typedef boost::asio::thread_pool thread_pool;
 
 class bundle_group
 {
 public:
-	bundle_group(string c, char s, const parameters &cfg);
+	bundle_group(string c, char s, int r, const parameters &cfg, thread_pool &pool);
 	bundle_group(const bundle_group &p) = default;
 	bundle_group(bundle_group &&p) = default;
 
@@ -27,14 +32,16 @@ public:
 	vector<vector<int32_t>> splices;	// splices for all bundles
 	vector<join_interval_map> jmaps;	// join interval maps for all bundles
 	vector<vector<int>> gvv;			// merged graphs
-	string chrm;
-	char strand;
+	string chrm;						// chrm name
+	char strand;						// strandness
+	int rid;							// region id
+	thread_pool &tpool;					// thread pool
+	mutex gmutex;						// global mutex
 
 private:
 	MISI sindex;				// splice index
 	interval_set_map jindex;	// index for jmaps
 	vector<bool> grouped;		// track grouped graphs
-	static mutex gmutex;		// global mutex
 	double min_similarity;		// minimum similarity for this round
 	int min_group_size;			// minimum #graphs to form a group
 

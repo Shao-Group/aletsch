@@ -34,6 +34,14 @@ int bundle::set_gid(int instance, int subindex)
 	return 0;
 }
 
+int bundle::set_gid(int rid, int g, int instance, int subindex)
+{
+	char name[10240];
+	sprintf(name, "instance.%d.%d.%d.%d", rid, g, instance, subindex);
+	gid = name;
+	return 0;
+}
+
 int bundle::copy_meta_information(const bundle &bb)
 {
 	chrm = bb.chrm;

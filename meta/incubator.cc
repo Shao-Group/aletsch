@@ -21,7 +21,8 @@ See LICENSE for licensing.
 #include <algorithm>
 
 incubator::incubator(vector<parameters> &v)
-	: params(v), tmerge("", params[DEFAULT].min_single_exon_clustering_overlap)
+	: params(v), tpool(params[DEFAULT].max_threads),
+	tmerge("", params[DEFAULT].min_single_exon_clustering_overlap) 
 {
 	if(params[DEFAULT].profile_only == true) return;
 	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str());
@@ -46,6 +47,8 @@ int incubator::resolve()
 	if(params[DEFAULT].profile_only == true) return 0;
 
 	build_sample_index();
+
+	init_bundle_groups();
 
 	// get max region
 
@@ -80,33 +83,21 @@ int incubator::resolve()
 		for(int k = 0; k < max_region; k++)
 		{
 			mytime = time(NULL);
-			printf("start processing chrm %s, region %d, max-region = %d, %s", chrm.c_str(), k, max_region, ctime(&mytime));
+			printf("processing chrm %s, region %d, max-region = %d, %s", chrm.c_str(), k, max_region, ctime(&mytime));
 
-			mytime = time(NULL);
-			printf("step 1: generate graphs for individual bam/sam files, %s", ctime(&mytime));
-			generate(chrm, k);
-
-			mytime = time(NULL);
-			printf("step 2: merge splice graphs, %s", ctime(&mytime));
-			merge();
-
-			mytime = time(NULL);
-			printf("step 3: assemble merged splice graphs, %s", ctime(&mytime));
-			assemble();
-
-			groups.clear();
-
-			mytime = time(NULL);
-			printf("step 4: rearrange transcript sets, %s", ctime(&mytime));
-			rearrange();
-
-			mytime = time(NULL);
-			printf("step 5: postprocess and write assembled transcripts, %s", ctime(&mytime));
-			postprocess();
-
-			mytime = time(NULL);
-			printf("finish processing chrm %s, region %d, %s\n", chrm.c_str(), k, ctime(&mytime));
+			generate_merge_assemble(chrm, k);
 		}
+
+		// TODO
+		/*
+		mytime = time(NULL);
+		printf("postprocess and write assembled transcripts for chrm %s, %s", chrm.c_str(), ctime(&mytime));
+		rearrange();
+		postprocess();
+
+		mytime = time(NULL);
+		printf("finish processing chrm %s, %s\n", chrm.c_str(), ctime(&mytime));
+		*/
 	}
 
 	free_samples();
@@ -154,31 +145,31 @@ int incubator::init_samples()
 		sample_profile &sp = samples[i];
 		boost::asio::post(pool, [this, &sp] 
 		{
-				const parameters &cfg = this->params[sp.data_type];
+			const parameters &cfg = this->params[sp.data_type];
 
-				if(cfg.profile_only == true)
-				{
-					previewer pre(cfg, sp);
-					pre.infer_library_type();
-					if(sp.data_type == PAIRED_END) pre.infer_insertsize();
-					if(cfg.profile_dir != "") sp.save_profile(cfg.profile_dir);
-					return;
-				}
+			if(cfg.profile_only == true)
+			{
+				previewer pre(cfg, sp);
+				pre.infer_library_type();
+				if(sp.data_type == PAIRED_END) pre.infer_insertsize();
+				if(cfg.profile_dir != "") sp.save_profile(cfg.profile_dir);
+				return;
+			}
 
-				if(cfg.profile_dir != "")
-				{
-					sp.load_profile(cfg.profile_dir);
-				}
-				else
-				{
-					previewer pre(cfg, sp);
-					pre.infer_library_type();
-					if(sp.data_type == PAIRED_END) pre.infer_insertsize();
-				}
+			if(cfg.profile_dir != "")
+			{
+				sp.load_profile(cfg.profile_dir);
+			}
+			else
+			{
+				previewer pre(cfg, sp);
+				pre.infer_library_type();
+				if(sp.data_type == PAIRED_END) pre.infer_insertsize();
+			}
 
-				sp.read_index_iterators(); 
-				string bdir = cfg.output_bridged_bam_dir;
-				if(bdir != "") sp.init_bridged_bam(bdir);
+			sp.read_index_iterators(); 
+			string bdir = cfg.output_bridged_bam_dir;
+			if(bdir != "") sp.init_bridged_bam(bdir);
 		});
 	}
 	pool.join();
@@ -248,69 +239,130 @@ int incubator::build_sample_index()
 	return 0;
 }
 
-int incubator::generate(string chrm, int rid)
+int incubator::init_bundle_groups()
+{
+	for(auto &x: sindex)
+	{
+		string chrm = x.first;
+		int max_region = 0;
+		for(auto &z: x.second)
+		{
+			if(max_region < samples[z.first].start1[z.second].size()) 
+				max_region = samples[z.first].start1[z.second].size();
+		}
+
+		for(int k = 0; k < max_region; k++)
+		{
+			bundle_group g1(chrm, '+', k, params[DEFAULT], tpool);
+			bundle_group g2(chrm, '-', k, params[DEFAULT], tpool);
+			bundle_group g3(chrm, '.', k, params[DEFAULT], tpool);
+			grps.push_back(std::move(g1));
+			grps.push_back(std::move(g2));
+			grps.push_back(std::move(g3));
+		}
+	}
+	return 0;
+}
+
+int incubator::get_bundle_group(string chrm, int rid)
+{
+	for(int k = 0; k < grps.size(); k++)
+	{
+		if(grps[k].chrm != chrm) continue;
+		if(grps[k].rid != rid) continue;
+		return k;
+	}
+	return -1;
+}
+
+int incubator::generate_merge_assemble(string chrm, int rid)
 {
 	if(sindex.find(chrm) == sindex.end()) return 0;
 	const vector<PI> &v = sindex[chrm];
 	if(v.size() == 0) return 0;
 
-	int num_threads = params[DEFAULT].max_threads;
-	boost::asio::thread_pool pool(num_threads);			// thread pool
-	mutex mylock;										// lock for 
-
+	mutex group_lock;
+	vector<mutex> sample_locks(v.size());
 	for(int i = 0; i < v.size(); i++)
 	{
 		int sid = v[i].first;
 		int tid = v[i].second;
 		sample_profile &sp = samples[sid];
-		boost::asio::post(pool, [this, &mylock, &sp, chrm, tid, rid]{ this->generate(sp, tid, rid, chrm, mylock); });
+		mutex &sample_lock = sample_locks[i];
+		boost::asio::post(tpool, [this, &group_lock, &sample_lock, &sp, chrm, tid, rid]{ 
+			this->generate(sp, tid, rid, chrm, group_lock, sample_lock); 
+		});
 	}
 
-	pool.join();
-	print_groups();
+	boost::asio::post(tpool, [this, &sample_locks]{ 
+		for(int k = 0; k < sample_locks.size(); k++) sample_locks[k].lock();
 
-	return 0;
-}
-
-int incubator::merge()
-{
-	for(int k = 0; k < groups.size(); k++) groups[k].resolve();
-	print_groups();
-	return 0;
-}
-
-int incubator::assemble()
-{
-	boost::asio::thread_pool pool(params[DEFAULT].max_threads); //TODO
-	//boost::asio::thread_pool pool(1);
-	mutex mylock;
-
-	int instance = 0;
-	for(int i = 0; i < groups.size(); i++)
-	{
-		vector<bool> vb(groups[i].gset.size(), false);
-		for(int k = 0; k < groups[i].gvv.size(); k++)
+		int bi = this->get_bundle_group(chrm, rid);
+		for(int i = 0; i < 3; i++)
 		{
-			const vector<int> &v = groups[i].gvv[k];
-			if(v.size() == 0) continue;
-			vector<bundle*> gv;
-			for(int j = 0; j < v.size(); j++)
-			{
-				gv.push_back(&(groups[i].gset[v[j]]));
-				assert(vb[v[j]] == false);
-				vb[v[j]] = true;
-			}
-			boost::asio::post(pool, [this, gv, instance, &mylock, &pool]{ 
-					//this->assemble(gv, instance, mylock, pool); 
-					//transcript_set ts(gv.front()->chrm, params[DEFAULT].min_single_exon_clustering_overlap);
-					assembler asmb(params[DEFAULT], this->tspool, mylock, pool);
-					asmb.resolve(gv, instance);
-			});
-			instance++;
+			bundle_group &g = this->grps[bi + i];
+			g.resolve(); 
+			this->assemble(g, rid, i);
 		}
-	}
-	pool.join();
 
+		for(int k = 0; k < sample_locks.size(); k++) sample_locks[k].unlock();
+	});
+
+	return 0;
+}
+
+int incubator::generate(sample_profile &sp, int tid, int rid, string chrm, mutex &group_lock, mutex &sample_lock)
+{	
+	if(rid >= sp.start1.size()) return 0;
+
+	sample_lock.lock();
+
+	vector<bundle> v;
+	transcript_set ts(chrm, params[DEFAULT].min_single_exon_clustering_overlap);
+	generator gt(sp, v, ts, params[sp.data_type], tid, rid);
+	gt.resolve();
+	save_transcript_set(ts, tlock);
+
+	group_lock.lock();
+	int bi = get_bundle_group(chrm, rid);
+	assert(bi != -1);
+	for(int k = 0; k < v.size(); k++)
+	{
+		if(v[k].strand == '+') grps[bi + 0].gset.push_back(setd::move(v[k]));
+		if(v[k].strand == '-') grps[bi + 1].gset.push_back(setd::move(v[k]));
+		if(v[k].strand == '.') grps[bi + 2].gset.push_back(setd::move(v[k]));
+	}
+	group_lock.unlock();
+
+	printf("finish processing tid = %d, rid = %d, of sample %s\n", tid, rid, sp.align_file.c_str());
+
+	sample_lock.unlock();
+	return 0;
+}
+
+int incubator::assemble(bundle_group &g, int rid, int gid)
+{
+	int instance = 0;
+	vector<bool> vb(g.gset.size(), false);
+	for(int k = 0; k < g.gvv.size(); k++)
+	{
+		const vector<int> &v = groups[i].gvv[k];
+		if(v.size() == 0) continue;
+		vector<bundle*> gv;
+		for(int j = 0; j < v.size(); j++)
+		{
+			gv.push_back(&(g.gset[v[j]]));
+			assert(vb[v[j]] == false);
+			vb[v[j]] = true;
+		}
+		boost::asio::post(tpool, [this, gv, instance, &tlock, &tpool]{ 
+				//this->assemble(gv, instance, mylock, pool); 
+				//transcript_set ts(gv.front()->chrm, params[DEFAULT].min_single_exon_clustering_overlap);
+				assembler asmb(params[DEFAULT], this->tspool, tlock, tpool, rid, gid, instance);
+				asmb.resolve(gv);
+				});
+		instance++;
+	}
 	return 0;
 }
 
@@ -410,61 +462,6 @@ int incubator::postprocess()
 	return 0;
 }
 
-int incubator::generate(sample_profile &sp, int tid, int rid, string chrm, mutex &mylock)
-{	
-	if(rid >= sp.start1.size()) return 0;
-
-	vector<bundle> v;
-	transcript_set ts(chrm, params[DEFAULT].min_single_exon_clustering_overlap);
-	generator gt(sp, v, ts, params[sp.data_type], tid, rid);
-	gt.resolve();
-	save_transcript_set(ts, mylock);
-
-	mylock.lock();
-	for(int k = 0; k < v.size(); k++)
-	{
-		bool found = false;
-		for(int i = 0; i < groups.size(); i++)
-		{
-			if(groups[i].chrm != v[k].chrm) continue;
-			if(groups[i].strand != v[k].strand) continue;
-			groups[i].gset.push_back(std::move(v[k]));
-			found = true;
-			break;
-		}
-
-		if(found == false)
-		{
-			bundle_group gp(v[k].chrm, v[k].strand, params[DEFAULT]);
-			gp.gset.push_back(std::move(v[k]));
-			groups.push_back(std::move(gp));
-		}
-	}
-	mylock.unlock();
-	printf("finish processing tid = %d, rid = %d, of sample %s\n", tid, rid, sp.align_file.c_str());
-	return 0;
-}
-
-/*
-int incubator::assemble(vector<bundle*> gv, int instance, mutex &mylock, thread_pool &pool)
-{
-	if(gv.size() == 0) return 0;
-
-	transcript_set ts(gv.front()->chrm, params[DEFAULT].min_single_exon_clustering_overlap);
-
-	//printf("assemble instance %d with %lu graphs\n", instance, gv.size());
-	//for(int k = 0; k < gv.size(); k++) gv[k]->print(k);
-
-	assembler asmb(params[DEFAULT]);
-	asmb.resolve(gv, ts, instance);
-
-	save_transcript_set(ts, mylock);
-	for(int i = 0; i > gv.size(); i++) gv[i]->clear();
-
-	return 0;
-}
-*/
-
 int incubator::write_individual_gtf(int id, const vector<transcript> &vt, const vector<int> &ct, const vector<pair<int, double>> &v)
 {
 	assert(id >= 0 && id < samples.size());
@@ -502,7 +499,7 @@ int incubator::save_transcript_set(const transcript_set &ts, mutex &mylock)
 	return 0;
 }
 
-int incubator::print_groups()
+int incubator::print_groups(const vector<bundle_group> &groups)
 {
 	for(int k = 0; k < groups.size(); k++)
 	{

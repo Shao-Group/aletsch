@@ -12,13 +12,14 @@ See LICENSE for licensing.
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
 
-mutex bundle_group::gmutex;
+//mutex bundle_group::gmutex;
 
-bundle_group::bundle_group(string c, char s, const parameters &f)
-	: cfg(f)
+bundle_group::bundle_group(string c, char s, int r, const parameters &f, thread_pool &p)
+	: cfg(f), tpool(p)
 {
 	chrm = c;
 	strand = s;
+	rid = r;
 }
 
 int bundle_group::resolve()
@@ -36,13 +37,18 @@ int bundle_group::resolve()
 	// round one
 	min_similarity = cfg.max_grouping_similarity;
 	min_group_size = cfg.max_group_size;
-	boost::asio::thread_pool pool1(cfg.max_threads);
+	map<int32_t, mutex> mx;
 	for(auto &z: sindex)
 	{
-		const set<int> &s = z.second;
-		boost::asio::post(pool1, [this, &s]{ this->process_subset1(s); });
+		set<int> &s = z.second;
+		mutex m;
+		mx.insert(make_pair(z.first, std::move(m)));
+		mx[z.first].lock();
+		boost::asio::post(tpool, [this, &s, &mx, &z]{ this->process_subset1(s, mx[z.first]); });
 	}
-	pool1.join();
+
+	for(auto &z: mx) z.second.lock();
+
 	stats(1);
 	if(cfg.verbose >= 2) print();
 
@@ -50,29 +56,40 @@ int bundle_group::resolve()
 	disjoint_set ds(gset.size());
 	min_similarity = cfg.min_grouping_similarity;
 	min_group_size = 1;
-	boost::asio::thread_pool pool2(cfg.max_threads);
+	map<int32_t, mutex> sx;
+	map<int32_t, mutex> jx;
 	for(auto &z: sindex)
 	{
 		const set<int> &s = z.second;
-		boost::asio::post(pool2, [this, &s, &ds]{ this->process_subset2(s, ds, 1); });
+		mutex m;
+		sx.insert(make_pair(z.first, std::move(m)));
+		sx[z.first].lock();
+		boost::asio::post(tpool, [this, &s, &ds, &sx]{ this->process_subset2(s, ds, 1, sx[z.first]); });
 	}
 
 	for(auto &z: jindex)
 	{
 		const set<int> &s = z.second;
-		boost::asio::post(pool2, [this, &s, &ds]{ this->process_subset2(s, ds, 2); });
+		mutex m;
+		jx.insert(make_pair(z.first, std::move(m)));
+		jx[z.first].lock();
+		boost::asio::post(this->tpool, [this, &s, &ds, &jx]{ this->process_subset2(s, ds, 2, jx[z.first]); });
 	}
 
-	pool2.join();
+	for(auto &z: sx) z.second.lock();
+	for(auto &z: jx) z.second.lock();
+
 	build_groups(ds);
+
 	stats(2);
 	if(cfg.verbose >= 2) print();
 
 	sindex.clear();
+	jindex.clear();
 	return 0;
 }
 
-int bundle_group::process_subset1(const set<int> &s)
+int bundle_group::process_subset1(const set<int> &s, mutex &smutex)
 {
 	gmutex.lock();
 	vector<int> ss = filter(s);
@@ -88,10 +105,11 @@ int bundle_group::process_subset1(const set<int> &s)
 	build_groups(ss, ds);
 	gmutex.unlock();
 
+	smutex.unlock();
 	return 0;
 }
 
-int bundle_group::process_subset2(const set<int> &s, disjoint_set &ds, int sim)
+int bundle_group::process_subset2(const set<int> &s, disjoint_set &ds, int sim, mutex &smutex)
 {
 	vector<int> ss = filter(s);
 
@@ -106,6 +124,7 @@ int bundle_group::process_subset2(const set<int> &s, disjoint_set &ds, int sim)
 	augment_disjoint_set(v, ds);
 	gmutex.unlock();
 
+	smutex.unlock();
 	return 0;
 }
 
