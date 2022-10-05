@@ -37,17 +37,19 @@ int bundle_group::resolve()
 	// round one
 	min_similarity = cfg.max_grouping_similarity;
 	min_group_size = cfg.max_group_size;
-	map<int32_t, mutex> mx;
+
+	vector<mutex> mx(sindex.size());
+	int k = 0;
+	mutex gmutex;
 	for(auto &z: sindex)
 	{
 		set<int> &s = z.second;
-		mutex m;
-		mx.insert(make_pair(z.first, std::move(m)));
-		mx[z.first].lock();
-		boost::asio::post(tpool, [this, &s, &mx, &z]{ this->process_subset1(s, mx[z.first]); });
+		mx[k].lock();
+		boost::asio::post(tpool, [this, &s, &mx, &z, &gmutex, k]{ this->process_subset1(s, mx[k], gmutex); });
+		k++;
 	}
 
-	for(auto &z: mx) z.second.lock();
+	for(auto &z: mx) z.lock();
 
 	stats(1);
 	if(cfg.verbose >= 2) print();
@@ -56,28 +58,28 @@ int bundle_group::resolve()
 	disjoint_set ds(gset.size());
 	min_similarity = cfg.min_grouping_similarity;
 	min_group_size = 1;
-	map<int32_t, mutex> sx;
-	map<int32_t, mutex> jx;
+	vector<mutex> sx(sindex.size());
+	k = 0;
 	for(auto &z: sindex)
 	{
 		const set<int> &s = z.second;
-		mutex m;
-		sx.insert(make_pair(z.first, std::move(m)));
-		sx[z.first].lock();
-		boost::asio::post(tpool, [this, &s, &ds, &sx]{ this->process_subset2(s, ds, 1, sx[z.first]); });
+		sx[k].lock();
+		boost::asio::post(tpool, [this, &s, &ds, &sx, &gmutex, k]{ this->process_subset2(s, ds, 1, sx[k], gmutex); });
+		k++;
 	}
 
+	vector<mutex> jx(jindex.size());
+	k = 0;
 	for(auto &z: jindex)
 	{
 		const set<int> &s = z.second;
-		mutex m;
-		jx.insert(make_pair(z.first, std::move(m)));
-		jx[z.first].lock();
-		boost::asio::post(this->tpool, [this, &s, &ds, &jx]{ this->process_subset2(s, ds, 2, jx[z.first]); });
+		jx[k].lock();
+		boost::asio::post(this->tpool, [this, &s, &ds, &jx, &gmutex, k]{ this->process_subset2(s, ds, 2, jx[k], gmutex); });
+		k++;
 	}
 
-	for(auto &z: sx) z.second.lock();
-	for(auto &z: jx) z.second.lock();
+	for(auto &z: sx) z.lock();
+	for(auto &z: jx) z.lock();
 
 	build_groups(ds);
 
@@ -89,7 +91,7 @@ int bundle_group::resolve()
 	return 0;
 }
 
-int bundle_group::process_subset1(const set<int> &s, mutex &smutex)
+int bundle_group::process_subset1(const set<int> &s, mutex &smutex, mutex &gmutex)
 {
 	gmutex.lock();
 	vector<int> ss = filter(s);
@@ -109,7 +111,7 @@ int bundle_group::process_subset1(const set<int> &s, mutex &smutex)
 	return 0;
 }
 
-int bundle_group::process_subset2(const set<int> &s, disjoint_set &ds, int sim, mutex &smutex)
+int bundle_group::process_subset2(const set<int> &s, disjoint_set &ds, int sim, mutex &smutex, mutex &gmutex)
 {
 	vector<int> ss = filter(s);
 

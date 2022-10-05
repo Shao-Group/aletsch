@@ -41,6 +41,7 @@ public:
 	transcript_set tmerge;							// assembled transcripts for all samples
 	ofstream meta_gtf;								// meta gtf
 	thread_pool tpool;								// thread pool
+	mutex tlock;									// global lock for transcripts
 
 public:
 	int resolve();
@@ -56,14 +57,14 @@ private:
 	int free_samples();
 	int build_sample_index();
 	int init_bundle_groups();
-	int get_bundle_group(string chrm, int rid, char strand);
-	int generate_merge_assemble(string chrm, int rid, vector<bundle_group> &grps);
-	int generate(sample_profile &sp, int tid, int rid, string chrm, vector<bundle_group> &grps, mutex &group_lock, mutex &sample_lock);
+	int get_bundle_group(string chrm, int rid);
+	int generate_merge_assemble(string chrm, int rid);
+	int generate(sample_profile &sp, int tid, int rid, string chrm, mutex &group_lock, mutex &sample_lock);
 	int assemble(bundle_group &g, int rid, int gid);
 	int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);
 	int save_transcript_set(const transcript_set &ts, mutex &mylock);
 	int write_individual_gtf(int id, const vector<transcript> &vt, const vector<int> &ct, const vector<pair<int, double>> &v);
-	int print_groups(vector<bundle_group> &grps);
+	int print_groups(const vector<bundle_group> &grps);
 };
 
 #endif

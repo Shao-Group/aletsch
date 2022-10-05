@@ -23,8 +23,8 @@ class bundle_group
 {
 public:
 	bundle_group(string c, char s, int r, const parameters &cfg, thread_pool &pool);
-	bundle_group(const bundle_group &p) = default;
-	bundle_group(bundle_group &&p) = default;
+	//bundle_group(const bundle_group &p) = default;
+	//bundle_group(bundle_group &&p) = default;
 
 public:
 	const parameters &cfg;
@@ -36,7 +36,6 @@ public:
 	char strand;						// strandness
 	int rid;							// region id
 	thread_pool &tpool;					// thread pool
-	mutex gmutex;						// global mutex
 
 private:
 	MISI sindex;				// splice index
@@ -56,8 +55,8 @@ private:
 	int build_join_interval_maps();
 	int build_splice_index();
 	int build_join_interval_map_index();
-	int process_subset1(const set<int> &ss);
-	int process_subset2(const set<int> &ss, disjoint_set &ds, int sim);
+	int process_subset1(const set<int> &ss, mutex &m, mutex &g);
+	int process_subset2(const set<int> &ss, disjoint_set &ds, int sim, mutex &m, mutex &g);
 	int build_splice_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local);
 	int build_overlap_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local);
 	int augment_disjoint_set(const vector<PPID> &vpid, disjoint_set &ds);

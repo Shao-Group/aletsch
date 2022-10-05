@@ -256,9 +256,9 @@ int incubator::init_bundle_groups()
 			bundle_group g1(chrm, '+', k, params[DEFAULT], tpool);
 			bundle_group g2(chrm, '-', k, params[DEFAULT], tpool);
 			bundle_group g3(chrm, '.', k, params[DEFAULT], tpool);
-			grps.push_back(std::move(g1));
-			grps.push_back(std::move(g2));
-			grps.push_back(std::move(g3));
+			grps.push_back(bundle_group(chrm, '+', k, params[DEFAULT], tpool));
+			grps.push_back(bundle_group(chrm, '-', k, params[DEFAULT], tpool));
+			grps.push_back(bundle_group(chrm, '.', k, params[DEFAULT], tpool));
 		}
 	}
 	return 0;
@@ -294,7 +294,7 @@ int incubator::generate_merge_assemble(string chrm, int rid)
 		});
 	}
 
-	boost::asio::post(tpool, [this, &sample_locks]{ 
+	boost::asio::post(tpool, [this, &sample_locks, chrm, rid]{ 
 		for(int k = 0; k < sample_locks.size(); k++) sample_locks[k].lock();
 
 		int bi = this->get_bundle_group(chrm, rid);
@@ -328,9 +328,9 @@ int incubator::generate(sample_profile &sp, int tid, int rid, string chrm, mutex
 	assert(bi != -1);
 	for(int k = 0; k < v.size(); k++)
 	{
-		if(v[k].strand == '+') grps[bi + 0].gset.push_back(setd::move(v[k]));
-		if(v[k].strand == '-') grps[bi + 1].gset.push_back(setd::move(v[k]));
-		if(v[k].strand == '.') grps[bi + 2].gset.push_back(setd::move(v[k]));
+		if(v[k].strand == '+') grps[bi + 0].gset.push_back(std::move(v[k]));
+		if(v[k].strand == '-') grps[bi + 1].gset.push_back(std::move(v[k]));
+		if(v[k].strand == '.') grps[bi + 2].gset.push_back(std::move(v[k]));
 	}
 	group_lock.unlock();
 
@@ -346,7 +346,7 @@ int incubator::assemble(bundle_group &g, int rid, int gid)
 	vector<bool> vb(g.gset.size(), false);
 	for(int k = 0; k < g.gvv.size(); k++)
 	{
-		const vector<int> &v = groups[i].gvv[k];
+		const vector<int> &v = g.gvv[k];
 		if(v.size() == 0) continue;
 		vector<bundle*> gv;
 		for(int j = 0; j < v.size(); j++)
@@ -355,10 +355,10 @@ int incubator::assemble(bundle_group &g, int rid, int gid)
 			assert(vb[v[j]] == false);
 			vb[v[j]] = true;
 		}
-		boost::asio::post(tpool, [this, gv, instance, &tlock, &tpool]{ 
+		boost::asio::post(tpool, [this, gv, instance, rid, gid]{ 
 				//this->assemble(gv, instance, mylock, pool); 
 				//transcript_set ts(gv.front()->chrm, params[DEFAULT].min_single_exon_clustering_overlap);
-				assembler asmb(params[DEFAULT], this->tspool, tlock, tpool, rid, gid, instance);
+				assembler asmb(params[DEFAULT], this->tspool, this->tlock, this->tpool, rid, gid, instance);
 				asmb.resolve(gv);
 				});
 		instance++;
