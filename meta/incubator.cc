@@ -85,8 +85,12 @@ int incubator::resolve()
 			mytime = time(NULL);
 			printf("processing chrm %s, region %d, max-region = %d, %s", chrm.c_str(), k, max_region, ctime(&mytime));
 
-			generate_merge_assemble(chrm, k);
+			//boost::asio::post(tpool, [this, chrm, k]{ 
+			this->generate_merge_assemble(chrm, k);
+			//});
 		}
+
+		break;
 
 		// TODO
 		/*
@@ -99,6 +103,8 @@ int incubator::resolve()
 		printf("finish processing chrm %s, %s\n", chrm.c_str(), ctime(&mytime));
 		*/
 	}
+
+	tpool.join();
 
 	free_samples();
 	return 0;
@@ -283,30 +289,31 @@ int incubator::generate_merge_assemble(string chrm, int rid)
 
 	mutex group_lock;
 	vector<mutex> sample_locks(v.size());
+	for(int k = 0; k < sample_locks.size(); k++) sample_locks[k].lock();
+
 	for(int i = 0; i < v.size(); i++)
 	{
 		int sid = v[i].first;
 		int tid = v[i].second;
 		sample_profile &sp = samples[sid];
 		mutex &sample_lock = sample_locks[i];
+
 		boost::asio::post(tpool, [this, &group_lock, &sample_lock, &sp, chrm, tid, rid]{ 
 			this->generate(sp, tid, rid, chrm, group_lock, sample_lock); 
 		});
 	}
 
-	boost::asio::post(tpool, [this, &sample_locks, chrm, rid]{ 
-		for(int k = 0; k < sample_locks.size(); k++) sample_locks[k].lock();
+	for(int k = 0; k < sample_locks.size(); k++) sample_locks[k].lock();
 
-		int bi = this->get_bundle_group(chrm, rid);
-		for(int i = 0; i < 3; i++)
-		{
-			bundle_group &g = this->grps[bi + i];
-			g.resolve(); 
-			this->assemble(g, rid, i);
-		}
+	int bi = this->get_bundle_group(chrm, rid);
+	for(int i = 0; i < 3; i++)
+	{
+		bundle_group &g = this->grps[bi + i];
+		g.resolve(); 
+		this->assemble(g, rid, i);
+	}
 
-		for(int k = 0; k < sample_locks.size(); k++) sample_locks[k].unlock();
-	});
+	//for(int k = 0; k < sample_locks.size(); k++) sample_locks[k].unlock();
 
 	return 0;
 }
@@ -314,8 +321,6 @@ int incubator::generate_merge_assemble(string chrm, int rid)
 int incubator::generate(sample_profile &sp, int tid, int rid, string chrm, mutex &group_lock, mutex &sample_lock)
 {	
 	if(rid >= sp.start1.size()) return 0;
-
-	sample_lock.lock();
 
 	vector<bundle> v;
 	transcript_set ts(chrm, params[DEFAULT].min_single_exon_clustering_overlap);
@@ -360,7 +365,7 @@ int incubator::assemble(bundle_group &g, int rid, int gid)
 				//transcript_set ts(gv.front()->chrm, params[DEFAULT].min_single_exon_clustering_overlap);
 				assembler asmb(params[DEFAULT], this->tspool, this->tlock, this->tpool, rid, gid, instance);
 				asmb.resolve(gv);
-				});
+		});
 		instance++;
 	}
 	return 0;
