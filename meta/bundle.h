@@ -31,8 +31,6 @@ public:
 	const parameters &cfg;
 	const sample_profile &sp;
 	int num_combined;
-	vector<vector<int32_t>> borrowed_paths;
-	vector<double> borrowed_weights;
 
 public:
 	int set_gid(int instance, int subindex);
@@ -41,10 +39,6 @@ public:
 	int combine(const bundle &bb);
 	int print(int k);
 	int bridge();
-	int save_borrowed_path(const vector<int32_t> &v, double w);
-	int digest_borrowed_paths();
-	int print_borrowed_paths();
-	//int count_unbridged_fragments();
 };
 
 #endif

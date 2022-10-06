@@ -127,11 +127,18 @@ int bundle_base::clear()
 	lpos = 1 << 30;
 	rpos = 0;
 	strand = '.';
+	int n = hits.size();
+	int m = frgs.size();
 	hits.clear();
+	frgs.clear();
+	vector<hit>().swap(hits);
+	vector<AI3>().swap(frgs);
 	hcst.clear();
 	fcst.clear();
 	mmap.clear();
 	imap.clear();
+	split_interval_map().swap(mmap);
+	split_interval_map().swap(imap);
 	return 0;
 }
 

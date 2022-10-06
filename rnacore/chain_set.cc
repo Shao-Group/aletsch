@@ -175,6 +175,10 @@ int chain_set::clear()
 	hmap.clear();
 	pmap.clear();
 	chains.clear();
+	map<int, AI3>().swap(hmap);
+	map<int32_t, int>().swap(pmap);
+	for(int k = 0; k < chains.size(); k++) vector<PVI3>().swap(chains[k]);
+	vector<vector<PVI3>>().swap(chains);
 	return 0;
 }
 

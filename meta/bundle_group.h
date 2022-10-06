@@ -48,6 +48,7 @@ public:
 	//int add_graph(const bundle &gr);
 	int resolve();
 	int print();
+	int clear();
 	int stats(int k);
 
 private:

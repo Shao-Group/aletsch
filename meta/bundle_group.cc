@@ -91,6 +91,39 @@ int bundle_group::resolve()
 	return 0;
 }
 
+int bundle_group::clear()
+{
+	for(int k = 0; k < splices.size(); k++)
+	{
+		splices[k].clear();
+		vector<int32_t>().swap(splices[k]);
+	}
+	splices.clear();
+	vector<vector<int32_t>>().swap(splices);
+
+	for(auto &z: jmaps) join_interval_map().swap(z);
+	jmaps.clear();
+	vector<join_interval_map>().swap(jmaps);
+
+	for(int k = 0; k < gvv.size(); k++)
+	{
+		gvv[k].clear();
+		vector<int>().swap(gvv[k]);
+	}
+	gvv.clear();
+	vector<vector<int>>().swap(gvv);
+
+	sindex.clear();
+	MISI().swap(sindex);
+
+	jindex.clear();
+	interval_set_map().swap(jindex);
+
+	grouped.clear();
+	vector<bool>().swap(grouped);
+	return 0;
+}
+
 int bundle_group::process_subset1(const set<int> &s, mutex &smutex, mutex &gmutex)
 {
 	gmutex.lock();
@@ -402,7 +435,7 @@ int bundle_group::stats(int r)
 
 	for(map<int, int>::iterator it = m.begin(); it != m.end(); it++)
 	{
-		printf("round %d: chrm %s, strand %c, total %d graphs with combined %d graphs\n", r, chrm.c_str(), strand, it->second, it->first);
+		printf("bundle group stats: round %d, chrm %s, rid %d, strand %c, total %d graphs with combined %d graphs\n", r, chrm.c_str(), rid, strand, it->second, it->first);
 	}
 	return 0;
 }

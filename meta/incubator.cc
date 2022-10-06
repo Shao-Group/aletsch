@@ -21,8 +21,7 @@ See LICENSE for licensing.
 #include <algorithm>
 
 incubator::incubator(vector<parameters> &v)
-	: params(v), tpool(params[DEFAULT].max_threads),
-	tmerge("", params[DEFAULT].min_single_exon_clustering_overlap) 
+	: params(v), tmerge("", params[DEFAULT].min_single_exon_clustering_overlap) 
 {
 	if(params[DEFAULT].profile_only == true) return;
 	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str());
@@ -48,63 +47,29 @@ int incubator::resolve()
 
 	build_sample_index();
 
-	init_bundle_groups();
-
-	// get max region
-
 	time_t mytime;
 	for(auto &x: sindex)
 	{
 		string chrm = x.first;
 		tmerge.chrm = chrm;
 
-		// test
-		/*
-		size_t found = chrm.find("_");
-		if(found == string::npos) continue;
-		if(chrm != "chr11_KI270721v1_random") continue;
-		if(chrm == "chr1") continue;
-		if(chrm == "chr10") continue;
-		if(chrm == "chr11") continue;
-		if(chrm == "chr12") continue;
-		if(chrm == "chr13") continue;
-		if(chrm == "chr14") continue;
-		if(chrm == "chr11_KI270721v1_random") continue;
-		if(chrm == "chr14_GL000009v2_random") continue;
-		*/
+		thread_pool tpool(params[DEFAULT].max_threads);
+		init_bundle_groups(chrm, tpool);
 
-		int max_region = 0;
-		for(auto &z: x.second)
-		{
-			if(max_region < samples[z.first].start1[z.second].size()) 
-				max_region = samples[z.first].start1[z.second].size();
-		}
-
+		int max_region = get_max_region(chrm);
 		for(int k = 0; k < max_region; k++)
 		{
 			mytime = time(NULL);
 			printf("processing chrm %s, region %d, max-region = %d, %s", chrm.c_str(), k, max_region, ctime(&mytime));
-
-			//boost::asio::post(tpool, [this, chrm, k]{ 
-			this->generate_merge_assemble(chrm, k);
-			//});
+			generate_merge_assemble(chrm, k, tpool);
 		}
+		tpool.join();
 
-		break;
-
-		// TODO
-		/*
 		mytime = time(NULL);
 		printf("postprocess and write assembled transcripts for chrm %s, %s", chrm.c_str(), ctime(&mytime));
 		rearrange();
 		postprocess();
-
-		mytime = time(NULL);
-		printf("finish processing chrm %s, %s\n", chrm.c_str(), ctime(&mytime));
-		*/
 	}
-
-	tpool.join();
 
 	free_samples();
 	return 0;
@@ -245,27 +210,29 @@ int incubator::build_sample_index()
 	return 0;
 }
 
-int incubator::init_bundle_groups()
+int incubator::get_max_region(string chrm)
 {
-	for(auto &x: sindex)
-	{
-		string chrm = x.first;
-		int max_region = 0;
-		for(auto &z: x.second)
-		{
-			if(max_region < samples[z.first].start1[z.second].size()) 
-				max_region = samples[z.first].start1[z.second].size();
-		}
+	assert(sindex.find(chrm) != sindex.end());
 
-		for(int k = 0; k < max_region; k++)
-		{
-			bundle_group g1(chrm, '+', k, params[DEFAULT], tpool);
-			bundle_group g2(chrm, '-', k, params[DEFAULT], tpool);
-			bundle_group g3(chrm, '.', k, params[DEFAULT], tpool);
-			grps.push_back(bundle_group(chrm, '+', k, params[DEFAULT], tpool));
-			grps.push_back(bundle_group(chrm, '-', k, params[DEFAULT], tpool));
-			grps.push_back(bundle_group(chrm, '.', k, params[DEFAULT], tpool));
-		}
+	int max_region = 0;
+	for(auto &z: sindex[chrm])
+	{
+		if(max_region < samples[z.first].start1[z.second].size()) 
+			max_region = samples[z.first].start1[z.second].size();
+	}
+	return max_region;
+}
+
+int incubator::init_bundle_groups(string chrm, thread_pool &tpool)
+{
+	assert(sindex.find(chrm) != sindex.end());
+	grps.clear();
+	int m = get_max_region(chrm);
+	for(int k = 0; k < m; k++)
+	{
+		grps.push_back(bundle_group(chrm, '+', k, params[DEFAULT], tpool));
+		grps.push_back(bundle_group(chrm, '-', k, params[DEFAULT], tpool));
+		grps.push_back(bundle_group(chrm, '.', k, params[DEFAULT], tpool));
 	}
 	return 0;
 }
@@ -274,14 +241,15 @@ int incubator::get_bundle_group(string chrm, int rid)
 {
 	for(int k = 0; k < grps.size(); k++)
 	{
-		if(grps[k].chrm != chrm) continue;
+		//if(grps[k].chrm != chrm) continue;
+		assert(grps[k].chrm == chrm);
 		if(grps[k].rid != rid) continue;
 		return k;
 	}
 	return -1;
 }
 
-int incubator::generate_merge_assemble(string chrm, int rid)
+int incubator::generate_merge_assemble(string chrm, int rid, thread_pool &tpool)
 {
 	if(sindex.find(chrm) == sindex.end()) return 0;
 	const vector<PI> &v = sindex[chrm];
@@ -310,7 +278,8 @@ int incubator::generate_merge_assemble(string chrm, int rid)
 	{
 		bundle_group &g = this->grps[bi + i];
 		g.resolve(); 
-		this->assemble(g, rid, i);
+		this->assemble(g, rid, i, tpool);
+		g.clear();
 	}
 
 	//for(int k = 0; k < sample_locks.size(); k++) sample_locks[k].unlock();
@@ -339,13 +308,13 @@ int incubator::generate(sample_profile &sp, int tid, int rid, string chrm, mutex
 	}
 	group_lock.unlock();
 
-	printf("finish processing tid = %d, rid = %d, of sample %s\n", tid, rid, sp.align_file.c_str());
+	printf("finish generating tid = %d, rid = %d, of sample %s\n", tid, rid, sp.align_file.c_str());
 
 	sample_lock.unlock();
 	return 0;
 }
 
-int incubator::assemble(bundle_group &g, int rid, int gid)
+int incubator::assemble(bundle_group &g, int rid, int gid, thread_pool &tpool)
 {
 	int instance = 0;
 	vector<bool> vb(g.gset.size(), false);
@@ -360,10 +329,10 @@ int incubator::assemble(bundle_group &g, int rid, int gid)
 			assert(vb[v[j]] == false);
 			vb[v[j]] = true;
 		}
-		boost::asio::post(tpool, [this, gv, instance, rid, gid]{ 
+		boost::asio::post(tpool, [this, gv, instance, rid, gid, &tpool]{ 
 				//this->assemble(gv, instance, mylock, pool); 
 				//transcript_set ts(gv.front()->chrm, params[DEFAULT].min_single_exon_clustering_overlap);
-				assembler asmb(params[DEFAULT], this->tspool, this->tlock, this->tpool, rid, gid, instance);
+				assembler asmb(params[DEFAULT], this->tspool, this->tlock, tpool, rid, gid, instance);
 				asmb.resolve(gv);
 		});
 		instance++;
@@ -390,29 +359,31 @@ int incubator::rearrange()
 
 	// merge
 	mutex mylock;
-	boost::asio::thread_pool pool2(params[DEFAULT].max_threads);
 
 	int t = params[DEFAULT].max_threads;
 	if(t <= 0) t = 1;
 	int n = ceil(1.0 * tspool.tsets.size() / t);
 
 	tmerge.mt.clear();
+	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
 	for(int i = 0; i < t; i++)
 	{
 		int a = (i + 0) * n;
 		int b = (i + 1) * n;
 		if(b >= tspool.tsets.size()) b = tspool.tsets.size();
-		boost::asio::post(pool2, [this, &mylock, a, b]{ 
+		boost::asio::post(pool, [this, &mylock, a, b]{ 
 				transcript_set ts(this->tmerge.chrm, params[DEFAULT].min_single_exon_clustering_overlap);
 				for(int k = a; k < b; k++) ts.add(this->tspool.tsets[k], TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 				mylock.lock();
 				this->tmerge.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 				mylock.unlock();
-			});
+		});
 	}
-	pool2.join();
+	pool.join();
 
+	tspool.count = 0;
 	tspool.tsets.clear();
+	vector<transcript_set>().swap(tspool.tsets);
 	return 0;
 }
 

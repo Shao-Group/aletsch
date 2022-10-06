@@ -291,8 +291,8 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 				ts.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 			}
 
-			if(pa.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges\n", 
-					gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges());
+			if(pa.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges\n", gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges());
+			if(gr.num_vertices() >= 1000) printf("assemble %s: %d transcripts, large graph with %lu vertices and %lu edges\n", gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges());
 
 			mt.lock();
 			tsp.tsets.push_back(ts);
