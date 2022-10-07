@@ -23,7 +23,7 @@ sample_profile::sample_profile(int id)
 	insertsize_low = 80;
 	insertsize_high = 500;
 	insertsize_median = 250;
-	region_partition_length = 10000000;
+	region_partition_length = 3000000;
 	library_type = UNSTRANDED;
 	bam_with_xs = 0;
 }
