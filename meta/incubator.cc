@@ -24,7 +24,7 @@ incubator::incubator(vector<parameters> &v)
 	: params(v), tpool(params[DEFAULT].max_threads), gmutex(99999)
 {
 	if(params[DEFAULT].profile_only == true) return;
-	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str());
+	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str(), std::ofstream::out | std::ofstream::app);
 	if(meta_gtf.fail())
 	{
 		printf("cannot open output-get-file %s\n", params[DEFAULT].output_gtf_file.c_str());
@@ -48,9 +48,9 @@ int incubator::resolve()
 	build_sample_index();
 	init_bundle_groups();
 
+	time_t mytime;
 	for(auto &x: sindex)
 	{
-		time_t mytime;
 		string chrm = x.first;
 		int max_region = get_max_region(chrm);
 		for(int k = 0; k < max_region; k++)
@@ -60,11 +60,13 @@ int incubator::resolve()
 			generate_merge_assemble(chrm, k);
 		}
 
-		mytime = time(NULL);
-		printf("postprocess and write assembled transcripts for chrm %s, %s", chrm.c_str(), ctime(&mytime));
 	}
 	tpool.join();
+
+	mytime = time(NULL);
+	printf("postprocess and write assembled transcripts, %s", ctime(&mytime));
 	postprocess();
+
 	free_samples();
 	return 0;
 }
@@ -389,6 +391,15 @@ int incubator::postprocess()
 	for(int i = 0; i < grps.size(); i++)
 	{
 		transcript_set &tm = grps[i].tmerge;
+		int count = 0;
+		for(auto &it : tm.mt)
+		{
+			auto &v = it.second;
+			count += v.size();
+		}
+
+		//printf("bundle group %d, chrm %s, strand %c, rid %d, contains %d transcripts\n", i, grps[i].chrm.c_str(), grps[i].strand, grps[i].rid, count);
+
 		stringstream ss;
 		for(auto &it : tm.mt)
 		{
@@ -397,6 +408,7 @@ int incubator::postprocess()
 			{
 				//if(v[k].count <= 1) continue;
 				transcript &t = v[k].trst;
+				//t.write(cout);
 
 				if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
 				if(verify_exon_length(t, params[DEFAULT]) == false) continue;
