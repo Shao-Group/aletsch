@@ -83,15 +83,17 @@ int merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &v
 	return 0;
 }
 
-transcript_set::transcript_set(const string &c, double s)
+transcript_set::transcript_set(const string &c, int r, double s)
 {
 	chrm = c;
+	rid = r;
 	single_exon_overlap = s;
 }
 
-transcript_set::transcript_set(const transcript &t, int count, int sid, double overlap)
+transcript_set::transcript_set(const transcript &t, int r, int count, int sid, double overlap)
 {
 	chrm = t.seqname;
+	rid = r;
 	single_exon_overlap = overlap;
 
 	size_t h = t.get_intron_chain_hashing();
@@ -102,16 +104,25 @@ transcript_set::transcript_set(const transcript &t, int count, int sid, double o
 	mt.insert(make_pair(h, v));
 }
 
+int transcript_set::clear()
+{
+	mt.clear();
+	map<size_t, vector<trans_item>>().swap(mt);
+	return 0;
+}
+
 int transcript_set::add(const transcript &t, int count, int sid, int mode)
 {
-	transcript_set ts(t, count, sid, this->single_exon_overlap);
+	transcript_set ts(t, this->rid, count, sid, this->single_exon_overlap);
 	add(ts, mode);
 	return 0;
 }
 
 int transcript_set::add(const transcript_set &ts, int mode)
 {
-	//boost::asio::thread_pool pool(threads);
+	if(ts.chrm != this->chrm) return 0;
+	if(ts.rid != this->rid) return 0;
+
 	for(auto &x : ts.mt)
 	{
 		map<size_t, vector<trans_item>>::iterator z = mt.find(x.first);
@@ -122,15 +133,8 @@ int transcript_set::add(const transcript_set &ts, int mode)
 		else
 		{
 			merge_sorted_trans_items(z->second, x.second, mode, single_exon_overlap);
-			/*
-			vector<trans_item> &zz = z->second;
-			const vector<trans_item> &xx = x.second;
-			if(threads <= 0) merge_sorted_trans_items(zz, xx, mode);
-			else boost::asio::post(pool, [&zz, &xx, mode] { merge_sorted_trans_items(zz, xx, mode); });
-			*/
 		}
 	}
-	//pool.join();
 	return 0;
 }
 
@@ -163,7 +167,7 @@ int transcript_set::increase_count(int count)
 
 int transcript_set::print() const
 {
-	printf("transcript-set: chrm = %s, mt.size() = %lu\n", chrm.c_str(), mt.size());
+	printf("transcript-set: chrm = %s, rid = %d, mt.size() = %lu\n", chrm.c_str(), rid, mt.size());
 	return 0;
 }
 
@@ -207,4 +211,13 @@ pair<bool, trans_item> transcript_set::query(const transcript &t) const
 	}
 	p.first = true;
 	return p;
+}
+
+int transcript_set_pool::clear()
+{
+	count = 0;
+	for(int k = 0; k < tsets.size(); k++) tsets[k].clear();
+	tsets.clear();
+	vector<transcript_set>().swap(tsets);
+	return 0;
 }

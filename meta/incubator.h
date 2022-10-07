@@ -7,7 +7,6 @@ See LICENSE for licensing.
 #ifndef __INCUBATOR_H__
 #define __INCUBATOR_H__
 
-#include "splice_graph.h"
 #include "interval_map.h"
 #include "bundle.h"
 #include "bundle_group.h"
@@ -38,16 +37,18 @@ public:
 	map<string, vector<PI>> sindex;					// sample index
 	ofstream meta_gtf;								// meta gtf
 	vector<bundle_group> grps;						// bundle groups
-	transcript_set_pool tspool;						// a pool for ts
-	transcript_set tmerge;							// assembled transcripts for all samples
-	mutex tlock;									// global lock for transcripts
+	vector<mutex> gmutex;							// mutex for transcripts in each bundle_group
+	thread_pool tpool;
+	//transcript_set_pool tspool;					// a pool for ts
+	//transcript_set tmerge;						// assembled transcripts for all samples
+	//mutex tlock;									// global lock for transcripts
 
 public:
 	int resolve();
 
 	int merge();
 	int assemble();
-	int rearrange();
+	//int rearrange();
 	int postprocess();
 
 private:
@@ -55,16 +56,16 @@ private:
 	int init_samples();
 	int free_samples();
 	int build_sample_index();
-	int init_bundle_groups(string chrm, thread_pool &tpool);
+	int init_bundle_groups();
 	int get_max_region(string chrm);
 	int get_bundle_group(string chrm, int rid);
-	int generate_merge_assemble(string chrm, int rid, thread_pool &tpool);
-	int generate(sample_profile &sp, int tid, int rid, string chrm, mutex &group_lock, mutex &sample_lock);
-	int assemble(bundle_group &g, int rid, int gid, thread_pool &tpool);
-	int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);
-	int save_transcript_set(const transcript_set &ts, mutex &mylock);
+	int generate_merge_assemble(string chrm, int rid);
+	int generate(sample_profile &sp, int tid, int rid, string chrm, mutex &sample_lock);
+	int assemble(bundle_group &g, int rid, int gid, mutex &mtx);
 	int write_individual_gtf(int id, const vector<transcript> &vt, const vector<int> &ct, const vector<pair<int, double>> &v);
 	int print_groups(const vector<bundle_group> &grps);
+	//int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);
+	//int save_transcript_set(const transcript_set &ts, mutex &mylock);
 };
 
 #endif

@@ -36,11 +36,12 @@ int merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &v
 class transcript_set
 {
 public:
-	transcript_set(const string &c, double single_exon_overlap);
-	transcript_set(const transcript &t, int count, int sid, double single_exon_overlap);
+	transcript_set(const string &c, int rid, double single_exon_overlap);
+	transcript_set(const transcript &t, int rid, int count, int sid, double single_exon_overlap);
 
 public:
 	string chrm;
+	int rid;
 	map<size_t, vector<trans_item>> mt;
 	double single_exon_overlap;
 
@@ -50,6 +51,7 @@ public:
 	int increase_count(int count);
 	int filter(int min_count);
 	int print() const;
+	int clear();
 	pair<bool, trans_item> query(const transcript &t) const;
 	vector<transcript> get_transcripts(int min_count) const;
 };
@@ -59,6 +61,9 @@ class transcript_set_pool
 public:
 	int count;
 	vector<transcript_set> tsets;
+
+public:
+	int clear();
 };
 
 #endif

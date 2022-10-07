@@ -24,8 +24,8 @@ See LICENSE for licensing.
 #include <boost/asio/thread_pool.hpp>
 #include <boost/pending/disjoint_sets.hpp>
 
-assembler::assembler(const parameters &c, transcript_set_pool &v, mutex &m, thread_pool &p, int r, int g, int i)
-	: cfg(c), tspool(v), mylock(m), pool(p), rid(r), gid(g), instance(i)
+assembler::assembler(const parameters &c, transcript_set_pool &v, transcript_set &tm, mutex &m, thread_pool &p, int r, int g, int i)
+	: cfg(c), tspool(v), tmerge(tm), mylock(m), pool(p), rid(r), gid(g), instance(i)
 {
 }
 
@@ -268,15 +268,16 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 
 	mutex &mt = mylock;	
 	transcript_set_pool &tsp = tspool;
+	transcript_set &tm = tmerge;
 	parameters pa = cfg;
 	for(int k = 0; k < cfg.assembly_repeats; k++)
 	{
-		boost::asio::post(pool, [gx, hx, k, sid, pa, &mt, &tsp] {
+		boost::asio::post(pool, [this, gx, hx, k, sid, pa, &mt, &tsp, &tm] {
 
 			splice_graph gr(gx);
 			hyper_set hs(hx);
 
-			transcript_set ts(gr.chrm, pa.min_single_exon_clustering_overlap);
+			transcript_set ts(gr.chrm, this->rid, pa.min_single_exon_clustering_overlap);
 
 			gr.gid = gx.gid + "." + tostring(k);
 			scallop sx(gr, hs, pa, k == 0 ? false : true);
@@ -295,7 +296,8 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 			if(gr.num_vertices() >= 1000) printf("assemble %s: %d transcripts, large graph with %lu vertices and %lu edges\n", gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges());
 
 			mt.lock();
-			tsp.tsets.push_back(ts);
+			//tsp.tsets.push_back(ts);
+			tm.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 			mt.unlock();
 		});
 	}

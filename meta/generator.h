@@ -24,7 +24,7 @@ using namespace std;
 class generator
 {
 public:
-	generator(sample_profile &sp, vector<bundle> &cbv, transcript_set &ts, const parameters &c, int target_id, int region_id);
+	generator(sample_profile &sp, vector<bundle> &cbv, const parameters &c, int target_id, int region_id);
 	~generator();
 
 private:
@@ -32,9 +32,7 @@ private:
 	sample_profile &sp;
 	int target_id;
 	int region_id;
-
 	vector<bundle> &vcb;
-	transcript_set &ts;
 	int index;
 
 public:
@@ -44,7 +42,7 @@ private:
 	int generate(bundle_base &bb, int index);
 	int partition(splice_graph &gr, phase_set &hs, vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &hsv, vector< vector<pereads_cluster> > &ubv);
 	bool regional(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc);
-	bool assemble_single(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc);
+	//bool assemble_single(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc);
 };
 
 #endif

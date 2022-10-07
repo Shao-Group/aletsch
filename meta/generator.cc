@@ -21,8 +21,8 @@ See LICENSE for licensing.
 #include "hyper_set.h"
 #include "assembler.h"
 
-generator::generator(sample_profile &s, vector<bundle> &v, transcript_set &t, const parameters &c, int tid, int rid)
-	: vcb(v), ts(t), cfg(c), sp(s), target_id(tid), region_id(rid)
+generator::generator(sample_profile &s, vector<bundle> &v, const parameters &c, int tid, int rid)
+	: vcb(v), cfg(c), sp(s), target_id(tid), region_id(rid)
 {
 	index = 0;
 	sp.open_align_file();
@@ -194,6 +194,7 @@ bool generator::regional(splice_graph &gr, phase_set &ps, vector<pereads_cluster
 	return true;
 }
 
+/*
 bool generator::assemble_single(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc)
 {
 	transcript t;
@@ -217,6 +218,7 @@ bool generator::assemble_single(splice_graph &gr, phase_set &ps, vector<pereads_
 	ts.add(t, 2, sp.sample_id, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	return true;
 }
+*/
 
 int generator::partition(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &psv, vector< vector<pereads_cluster> > &ubv)
 {

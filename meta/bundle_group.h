@@ -12,6 +12,7 @@ See LICENSE for licensing.
 #include "bundle.h"
 #include "constants.h"
 #include "interval_map.h"
+#include "transcript_set.h"
 #include <mutex>
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
@@ -36,6 +37,8 @@ public:
 	char strand;						// strandness
 	int rid;							// region id
 	thread_pool &tpool;					// thread pool
+	transcript_set_pool tspool;			// transcripts for this bundle_group
+	transcript_set tmerge;				// merged transcripts
 
 private:
 	MISI sindex;				// splice index

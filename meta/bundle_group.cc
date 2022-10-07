@@ -15,7 +15,7 @@ See LICENSE for licensing.
 //mutex bundle_group::gmutex;
 
 bundle_group::bundle_group(string c, char s, int r, const parameters &f, thread_pool &p)
-	: cfg(f), tpool(p)
+	: cfg(f), tpool(p), tmerge(c, r, f.min_single_exon_clustering_overlap)
 {
 	chrm = c;
 	strand = s;
