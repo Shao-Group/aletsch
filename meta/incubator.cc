@@ -395,10 +395,19 @@ int incubator::postprocess()
 		for(auto &it : tm.mt)
 		{
 			auto &v = it.second;
-			count += v.size();
+			//if(v[k].count <= 1) continue;
+			for(int k = 0; k < v.size(); k++)
+			{
+				transcript &t = v[k].trst;
+			//t.write(cout);
+
+				if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
+				if(verify_exon_length(t, params[DEFAULT]) == false) continue;
+				count ++;
+			}
 		}
 
-		//printf("bundle group %d, chrm %s, strand %c, rid %d, contains %d transcripts\n", i, grps[i].chrm.c_str(), grps[i].strand, grps[i].rid, count);
+		printf("bundle group %d, chrm %s, strand %c, rid %d, contains %d transcripts\n", i, grps[i].chrm.c_str(), grps[i].strand, grps[i].rid, count);
 
 		stringstream ss;
 		for(auto &it : tm.mt)
