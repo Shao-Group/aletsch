@@ -339,6 +339,7 @@ int incubator::assemble(bundle_group &g, int rid, int gid, mutex &mtx)
 			assert(vb[v[j]] == false);
 			vb[v[j]] = true;
 		}
+		assert(g.rid == rid);
 		boost::asio::post(this->tpool, [this, &g, gv, instance, rid, gid, &mtx]{ 
 				assembler asmb(params[DEFAULT], g.tspool, g.tmerge, mtx, this->tpool, rid, gid, instance);
 				asmb.resolve(gv);

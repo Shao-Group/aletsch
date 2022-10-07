@@ -27,6 +27,7 @@ See LICENSE for licensing.
 assembler::assembler(const parameters &c, transcript_set_pool &v, transcript_set &tm, mutex &m, thread_pool &p, int r, int g, int i)
 	: cfg(c), tspool(v), tmerge(tm), mylock(m), pool(p), rid(r), gid(g), instance(i)
 {
+	assert(tmerge.rid == rid);
 }
 
 int assembler::resolve(vector<bundle*> gv)
@@ -272,12 +273,14 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 	parameters pa = cfg;
 	for(int k = 0; k < cfg.assembly_repeats; k++)
 	{
-		boost::asio::post(pool, [this, gx, hx, k, sid, pa, &mt, &tsp, &tm] {
+		boost::asio::post(pool, [gx, hx, k, sid, pa, &mt, &tsp, &tm] {
 
 			splice_graph gr(gx);
 			hyper_set hs(hx);
 
-			transcript_set ts(gr.chrm, this->rid, pa.min_single_exon_clustering_overlap);
+			transcript_set ts(gr.chrm, tm.rid, pa.min_single_exon_clustering_overlap);
+
+			//printf("A: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
 
 			gr.gid = gx.gid + "." + tostring(k);
 			scallop sx(gr, hs, pa, k == 0 ? false : true);
@@ -297,6 +300,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 
 			mt.lock();
 			//tsp.tsets.push_back(ts);
+			//printf("B: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
 			tm.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 			mt.unlock();
 		});

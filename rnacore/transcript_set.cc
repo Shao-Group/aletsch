@@ -121,6 +121,13 @@ int transcript_set::add(const transcript &t, int count, int sid, int mode)
 int transcript_set::add(const transcript_set &ts, int mode)
 {
 	if(ts.chrm != this->chrm) return 0;
+
+	if(ts.rid != this->rid)
+	{
+		printf("ts.rid = %d, this->rid = %d\n", ts.rid, this->rid);
+		assert(false);
+	}
+
 	if(ts.rid != this->rid) return 0;
 
 	for(auto &x : ts.mt)
