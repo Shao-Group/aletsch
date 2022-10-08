@@ -35,6 +35,7 @@ public:
 	vector<parameters> &params;						// parameters 
 	vector<sample_profile> samples;					// samples
 	map<string, vector<PI>> sindex;					// sample index
+	map<pair<string, char>, transcript_set> tts;	// transcripts for each chrm
 	ofstream meta_gtf;								// meta gtf
 	vector<bundle_group> grps;						// bundle groups
 	vector<mutex> gmutex;							// mutex for transcripts in each bundle_group
@@ -57,6 +58,7 @@ private:
 	int free_samples();
 	int build_sample_index();
 	int init_bundle_groups();
+	int init_transcript_sets();
 	int get_max_region(string chrm);
 	int get_bundle_group(string chrm, int rid);
 	int generate_merge_assemble(string chrm, int rid);

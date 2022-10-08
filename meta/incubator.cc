@@ -47,6 +47,7 @@ int incubator::resolve()
 
 	build_sample_index();
 	init_bundle_groups();
+	init_transcript_sets();
 
 	time_t mytime;
 	for(auto &x: sindex)
@@ -237,6 +238,22 @@ int incubator::init_bundle_groups()
 	return 0;
 }
 
+int incubator::init_transcript_sets()
+{
+	tts.clear();
+	for(auto &z : sindex)
+	{
+		string chrm = z.first;
+		transcript_set t1(chrm, -1, params[DEFAULT].min_single_exon_clustering_overlap);
+		transcript_set t2(chrm, -1, params[DEFAULT].min_single_exon_clustering_overlap);
+		transcript_set t3(chrm, -1, params[DEFAULT].min_single_exon_clustering_overlap);
+		tts.insert(make_pair(make_pair(chrm, '+'), t1));
+		tts.insert(make_pair(make_pair(chrm, '+'), t2));
+		tts.insert(make_pair(make_pair(chrm, '+'), t3));
+	}
+	return 0;
+}
+
 int incubator::get_bundle_group(string chrm, int rid)
 {
 	for(int k = 0; k < grps.size(); k++)
@@ -389,13 +406,32 @@ int incubator::rearrange(transcript_set_pool &tsp, transcritp_set &tmerge)
 
 int incubator::postprocess()
 {
+	boost::asio::thread_pool pool1(params[DEFAULT].max_threads);
+	for(auto &z: tts)
+	{
+		string chrm = z.first.first;
+		char strand = z.first.second;
+		transcript_set &ts = z.second;
+		boost::asio::post(pool1, [this, chrm, strand, &ts] 
+		{
+			for(int k = 0; k < this->grps.size(); k++)
+			{
+				if(this->grps[k].chrm != chrm) continue;
+				if(this->grps[k].strand != strand) continue;
+				ts.add(this->grps[k].tmerge, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+			}
+		});
+	}
+
 	vector<int> ct;
 	vector<transcript> vt;
 	vector<vector<pair<int, double>>> vv(samples.size());
 
-	for(int i = 0; i < grps.size(); i++)
+	for(auto &z: tts)
 	{
-		transcript_set &tm = grps[i].tmerge;
+		string chrm = z.first.first;
+		char strand = z.first.second;
+		transcript_set &tm = z.second;
 		int count = 0;
 		for(auto &it : tm.mt)
 		{
@@ -412,7 +448,7 @@ int incubator::postprocess()
 			}
 		}
 
-		printf("bundle group %d, chrm %s, strand %c, rid %d, contains %d transcripts\n", i, grps[i].chrm.c_str(), grps[i].strand, grps[i].rid, count);
+		printf("chrm %s, strand %c, contains %d transcripts\n", chrm.c_str(), strand, count);
 
 		stringstream ss;
 		for(auto &it : tm.mt)
