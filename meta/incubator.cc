@@ -418,7 +418,7 @@ int incubator::postprocess()
 			{
 				if(this->grps[k].chrm != chrm) continue;
 				if(this->grps[k].strand != strand) continue;
-				printf("arrange chrm %s, strand %c, grp %d\n", chrm.c_str(), strand, k);
+				//printf("arrange chrm %s, strand %c, grp %d\n", chrm.c_str(), strand, k);
 				ts.add(this->grps[k].tmerge, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 			}
 		});
@@ -451,7 +451,7 @@ int incubator::postprocess()
 			}
 		}
 
-		printf("chrm %s, strand %c, contains %d transcripts\n", chrm.c_str(), strand, count);
+		printf("collecting: chrm %s, strand %c, %d transcripts\n", chrm.c_str(), strand, count);
 
 		stringstream ss;
 		for(auto &it : tm.mt)
