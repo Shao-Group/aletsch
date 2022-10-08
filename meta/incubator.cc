@@ -414,6 +414,7 @@ int incubator::postprocess()
 		transcript_set &ts = z.second;
 		boost::asio::post(pool1, [this, chrm, strand, &ts] 
 		{
+			printf("arrange chrm %s, strand %c\n", chrm.c_str(), strand);
 			for(int k = 0; k < this->grps.size(); k++)
 			{
 				if(this->grps[k].chrm != chrm) continue;
@@ -422,6 +423,8 @@ int incubator::postprocess()
 			}
 		});
 	}
+
+	pool1.join();
 
 	vector<int> ct;
 	vector<transcript> vt;
