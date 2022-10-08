@@ -12,7 +12,7 @@ See LICENSE for licensing.
 mutex sample_profile::bam_lock;
 mutex sample_profile::gtf_lock;
 
-sample_profile::sample_profile(int id)
+sample_profile::sample_profile(int id, int32_t p)
 {
 	sample_id = id;
 	sfn = NULL;
@@ -23,7 +23,7 @@ sample_profile::sample_profile(int id)
 	insertsize_low = 80;
 	insertsize_high = 500;
 	insertsize_median = 250;
-	region_partition_length = 3000000;
+	region_partition_length = p;
 	library_type = UNSTRANDED;
 	bam_with_xs = 0;
 }

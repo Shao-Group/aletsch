@@ -39,7 +39,7 @@ parameters::parameters()
 	max_grouping_similarity = 0.90;
 	max_num_junctions_to_combine = 500;
 	assembly_repeats = 5;
-	//region_partition_length = 10000000;
+	region_partition_length = 1000000;
 
 	// for bridging paired-end reads
 	bridge_end_relaxing = 5;
@@ -211,6 +211,16 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 		else if(string(argv[i]) == "--assembly_repeats")
 		{
 			assembly_repeats = atoi(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "-g")
+		{
+			region_partition_length = atoi(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "--region_partition_length")
+		{
+			region_partition_length = atoi(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "--boost_precision")

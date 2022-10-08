@@ -85,7 +85,7 @@ int incubator::read_bam_list()
 	{
 		if(strlen(line) <= 0) continue;
 		stringstream sstr(line);
-		sample_profile sp(samples.size());
+		sample_profile sp(samples.size(), params[DEFAULT].region_partition_length);
 		char align_file[10240];
 		char index_file[10240];
 		char type[10240];
