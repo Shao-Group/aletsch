@@ -297,7 +297,11 @@ int incubator::generate_merge_assemble(string chrm, int rid)
 
 int incubator::generate(sample_profile &sp, int tid, int rid, string chrm, mutex &sample_lock)
 {	
-	if(rid >= sp.start1.size()) return 0;
+	if(rid >= sp.start1.size()) 
+	{
+		sample_lock.unlock();
+		return 0;
+	}
 
 	vector<bundle> v;
 	//transcript_set ts(chrm, params[DEFAULT].min_single_exon_clustering_overlap);
