@@ -254,8 +254,11 @@ int incubator::generate_merge_assemble(string chrm, int rid)
 	const vector<PI> &v = sindex[chrm];
 	if(v.size() == 0) return 0;
 
+	printf("AAA\n");
 	vector<mutex> sample_locks(v.size());
 	for(int k = 0; k < sample_locks.size(); k++) sample_locks[k].lock();
+
+	printf("BBB\n");
 
 	for(int i = 0; i < v.size(); i++)
 	{
@@ -264,12 +267,18 @@ int incubator::generate_merge_assemble(string chrm, int rid)
 		sample_profile &sp = samples[sid];
 		mutex &sample_lock = sample_locks[i];
 
+		printf("CCC %d\n", i);
+
 		boost::asio::post(this->tpool, [this, &sample_lock, &sp, chrm, tid, rid]{ 
 			this->generate(sp, tid, rid, chrm, sample_lock); 
 		});
 	}
 
+	printf("DDD\n");
+
 	for(int k = 0; k < sample_locks.size(); k++) sample_locks[k].lock();
+
+	printf("EEE\n");
 
 	int bi = this->get_bundle_group(chrm, rid);
 	for(int i = 0; i < 3; i++)
@@ -280,6 +289,8 @@ int incubator::generate_merge_assemble(string chrm, int rid)
 		this->assemble(g, rid, i, mtx);
 		g.clear();
 	}
+
+	printf("FFF\n");
 
 	return 0;
 }
