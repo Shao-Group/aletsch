@@ -52,8 +52,6 @@ int generator::resolve()
 	int32_t new_start1 = start1;
 	int32_t new_start2 = start2;
 
-	printf("in generator::resolve rid %d\n", region_id);
-
 	bool term1 = false, term2 = false;
 	while(sam_itr_next(sp.sfn, iter, b1t) >= 0)
 	{
@@ -131,8 +129,6 @@ int generator::resolve()
 		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit_intervals(ht, b1t);
 		*/
 	}
-
-	printf("end generator::resolve rid %d\n", region_id);
 
     bam_destroy1(b1t);
 
