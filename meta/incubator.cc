@@ -244,12 +244,12 @@ int incubator::init_transcript_sets()
 	for(auto &z : sindex)
 	{
 		string chrm = z.first;
-		transcript_set t1(chrm, -1, params[DEFAULT].min_single_exon_clustering_overlap);
-		transcript_set t2(chrm, -1, params[DEFAULT].min_single_exon_clustering_overlap);
-		transcript_set t3(chrm, -1, params[DEFAULT].min_single_exon_clustering_overlap);
+		transcript_set t1(chrm, -9, params[DEFAULT].min_single_exon_clustering_overlap);
+		transcript_set t2(chrm, -9, params[DEFAULT].min_single_exon_clustering_overlap);
+		transcript_set t3(chrm, -9, params[DEFAULT].min_single_exon_clustering_overlap);
 		tts.insert(make_pair(make_pair(chrm, '+'), t1));
-		tts.insert(make_pair(make_pair(chrm, '+'), t2));
-		tts.insert(make_pair(make_pair(chrm, '+'), t3));
+		tts.insert(make_pair(make_pair(chrm, '-'), t2));
+		tts.insert(make_pair(make_pair(chrm, '.'), t3));
 	}
 	return 0;
 }
@@ -414,11 +414,11 @@ int incubator::postprocess()
 		transcript_set &ts = z.second;
 		boost::asio::post(pool1, [this, chrm, strand, &ts] 
 		{
-			printf("arrange chrm %s, strand %c\n", chrm.c_str(), strand);
 			for(int k = 0; k < this->grps.size(); k++)
 			{
 				if(this->grps[k].chrm != chrm) continue;
 				if(this->grps[k].strand != strand) continue;
+				printf("arrange chrm %s, strand %c, grp %d\n", chrm.c_str(), strand, k);
 				ts.add(this->grps[k].tmerge, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 			}
 		});
