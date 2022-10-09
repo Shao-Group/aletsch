@@ -293,9 +293,13 @@ int incubator::generate_merge_assemble(string chrm, int rid)
 	{
 		bundle_group &g = this->grps[bi + i];
 		mutex &mtx = this->gmutex[bi + i];
-		g.resolve(); 
-		this->assemble(g, rid, i, mtx);
-		g.clear();
+
+		boost::asio::post(this->tpool, [this, &g, &mtx, rid, i]{ 
+			g.resolve(); 
+			this->assemble(g, rid, i, mtx);
+			g.clear();
+			//this->generate(sp, tid, rid, chrm, sample_lock); 
+		});
 	}
 
 	return 0;
