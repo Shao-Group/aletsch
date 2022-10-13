@@ -427,7 +427,11 @@ int bundle_base::update_bridges(const vector<int> &frlist, const vector<int32_t>
 			if(s == ss) fcst.add(chain, k, ss);
 			else if(s != '.' && ss == '.') fcst.add(chain, k, s);
 			else if(ss != '.' && s == '.') fcst.add(chain, k, ss);
-			else fcst.add(chain, k, '.');
+			else 
+			{
+				printf("h1 = %c, h2 = %c, ss = %c\n", h1.xs, h2.xs, ss);
+				fcst.add(chain, k, '.');
+			}
 		}
 
 		for(int k = 0; k < v1.size() / 2; k++)
