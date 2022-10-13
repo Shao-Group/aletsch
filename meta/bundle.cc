@@ -72,7 +72,7 @@ int bundle::bridge()
 		for(int k = 0; k < vc.size(); k++)
 		{
 			if(bs.opt[k].type <= 0) continue;
-			cnt += update_bridges(vc[k].frlist, bs.opt[k].chain);
+			cnt += update_bridges(vc[k].frlist, bs.opt[k].chain, bs.opt[k].strand);
 		}
 
 		//printf("total frags %lu, bridged frags = %d\n", bb.frgs.size(), cnt);

@@ -234,7 +234,7 @@ int assembler::bridge(vector<bundle*> gv)
 		{
 			if(bs.opt[j].type <= 0) continue;
 			cnt1 += 1;
-			cnt2 += bd.update_bridges(vc[j].frlist, bs.opt[j].chain);
+			cnt2 += bd.update_bridges(vc[j].frlist, bs.opt[j].chain, bs.opt[j].strand);
 			//vc[j].print(j);
 		}
 

@@ -47,6 +47,7 @@ int graph_builder::build_junctions()
 {
 	chain_set jcst;
 
+	printf("=============\n");
 	for(int i = 0; i < bd.hcst.chains.size(); i++)
 	{
 		for(int j = 0; j < bd.hcst.chains[i].size(); j++)

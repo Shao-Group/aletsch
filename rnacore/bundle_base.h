@@ -48,7 +48,7 @@ public:
 	int build_fragments();
 	int count_unbridged();
 	int build_phase_set(phase_set &ps, splice_graph &gr);
-	int update_bridges(const vector<int> &frlist, const vector<int32_t> &chain);
+	int update_bridges(const vector<int> &frlist, const vector<int32_t> &chain, int strand);
 	int filter_multialigned_hits();
 	int add_borrowed_path(const vector<int32_t> &p, double w);
 

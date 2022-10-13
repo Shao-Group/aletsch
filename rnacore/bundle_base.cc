@@ -360,7 +360,7 @@ int bundle_base::build_phase_set(phase_set &ps, splice_graph &gr)
 	return 0;
 }
 
-int bundle_base::update_bridges(const vector<int> &frlist, const vector<int32_t> &chain)
+int bundle_base::update_bridges(const vector<int> &frlist, const vector<int32_t> &chain, int strand)
 {
 	int cnt = 0;
 	for(int i = 0; i < frlist.size(); i++)
@@ -409,8 +409,23 @@ int bundle_base::update_bridges(const vector<int> &frlist, const vector<int32_t>
 		else
 		{
 			assert(chain.size() >= 2);
+
+			if(h1.xs != '.' && h2.xs != '.' && h1.xs != h2.xs) printf("h1 does not agree with h2 on hs\n");
+
+			char s = '.';
+			if(h1.xs != '.') s = h1.xs;
+			if(h2.xs != '.') s = h2.xs;
+
+			char ss = '.';
+			if(strand == 1) ss = '+';
+			if(strand == 2) ss = '-';
+
+			if(ss != '.' && s != '.' && s != ss) printf("ss and s does not agree\n");
+
 			frgs[k][2] = 2;
-			if(h1.xs == h2.xs) fcst.add(chain, k, h1.xs);
+			if(s == ss) fcst.add(chain, k, ss);
+			else if(s != '.' && ss == '.') fcst.add(chain, k, s);
+			else if(ss != '.' && s == '.') fcst.add(chain, k, ss);
 			else fcst.add(chain, k, '.');
 		}
 

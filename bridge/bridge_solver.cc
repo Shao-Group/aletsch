@@ -243,6 +243,7 @@ int bridge_solver::nominate(int strand)
 			for(int j = 0; j < pb.size(); j++)
 			{
 				bridge_path p;
+				//p.strand = strand;
 				p.score = table[bt][j].stack.front();
 				p.stack = table[bt][j].stack;
 				p.v = pb[j];
