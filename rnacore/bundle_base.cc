@@ -424,7 +424,11 @@ int bundle_base::update_bridges(const vector<int> &frlist, const vector<int32_t>
 			//if(ss != '.' && s != '.' && s != ss) printf("warning: ss and s does not agree\n");
 
 			frgs[k][2] = 2;
-			if(s == ss) fcst.add(chain, k, ss);
+			if(s == ss)
+			{
+				if(s == '.') printf("h1 = %c, h2 = %c, ss = %c\n", h1.xs, h2.xs, ss);
+				fcst.add(chain, k, ss);
+			}
 			else if(s != '.' && ss == '.') fcst.add(chain, k, s);
 			else if(ss != '.' && s == '.') fcst.add(chain, k, ss);
 			else 
