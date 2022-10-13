@@ -410,17 +410,18 @@ int bundle_base::update_bridges(const vector<int> &frlist, const vector<int32_t>
 		{
 			assert(chain.size() >= 2);
 
-			if(h1.xs != '.' && h2.xs != '.' && h1.xs != h2.xs) printf("h1 does not agree with h2 on hs\n");
+			//printf("warning: h1 does not agree with h2 on hs\n");
 
 			char s = '.';
 			if(h1.xs != '.') s = h1.xs;
 			if(h2.xs != '.') s = h2.xs;
+			if(h1.xs != '.' && h2.xs != '.' && h1.xs != h2.xs) s = '.';
 
 			char ss = '.';
 			if(strand == 1) ss = '+';
 			if(strand == 2) ss = '-';
 
-			if(ss != '.' && s != '.' && s != ss) printf("ss and s does not agree\n");
+			//if(ss != '.' && s != '.' && s != ss) printf("warning: ss and s does not agree\n");
 
 			frgs[k][2] = 2;
 			if(s == ss) fcst.add(chain, k, ss);

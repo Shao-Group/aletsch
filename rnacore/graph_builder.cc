@@ -47,7 +47,6 @@ int graph_builder::build_junctions()
 {
 	chain_set jcst;
 
-	printf("=============\n");
 	for(int i = 0; i < bd.hcst.chains.size(); i++)
 	{
 		for(int j = 0; j < bd.hcst.chains[i].size(); j++)
@@ -65,8 +64,6 @@ int graph_builder::build_junctions()
 				z.push_back(v[k * 2 + 1]);
 				jcst.add(z, a);
 			}
-
-			if(a[0] >= 1) printf("hcst: %d vs %d vs %d\n", a[0], a[1], a[2]);
 		}
 	}
 
@@ -87,8 +84,6 @@ int graph_builder::build_junctions()
 				z.push_back(v[k * 2 + 1]);
 				jcst.add(z, a);
 			}
-			
-			if(a[0] >= 1) printf("fcst: %d vs %d vs %d\n", a[0], a[1], a[2]);
 		}
 	}
 
@@ -113,12 +108,6 @@ int graph_builder::build_junctions()
 			if(jc.xs1 > jc.xs2) jc.strand = '+';
 			else if(jc.xs1 < jc.xs2) jc.strand = '-';
 			else jc.strand = '.';
-
-			// test
-			{
-				printf("JUNCTION: %d vs %d vs %d, strand = %c\n", jc.xs0, jc.xs1, jc.xs2, jc.strand);
-			}
-			//if(cfg.verbose >= 2) jc.print("chr1", i);
 
 			junctions.push_back(jc);
 		}
