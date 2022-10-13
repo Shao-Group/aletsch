@@ -29,7 +29,11 @@ int bundle_base::add_hit_intervals(const hit &ht, bam1_t *b)
 	add_hit(ht);
 	add_intervals(b);
 	vector<int32_t> v = ht.extract_splices(b);
-	if(v.size() >= 1) hcst.add(v, hits.size() - 1, ht.xs);
+	if(v.size() >= 1) 
+	{
+		if(ht.xs == '.') ht.print();
+		hcst.add(v, hits.size() - 1, ht.xs);
+	}
 	return 0;
 }
 
