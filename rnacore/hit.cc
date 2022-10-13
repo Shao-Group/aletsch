@@ -64,6 +64,16 @@ hit::hit(bam1_t *b, int id)
 	rpos = pos + (int32_t)bam_cigar2rlen(n_cigar, bam_get_cigar(b));
 }
 
+bool hit::contain_splices(bam1_t *b) const
+{
+	uint32_t *cigar = bam_get_cigar(b);
+    for(int k = 0; k < n_cigar; k++)
+	{
+		if(bam_cigar_op(cigar[k]) == BAM_CREF_SKIP) return true;
+	}
+	return false;
+}
+
 vector<int32_t> hit::extract_splices(bam1_t *b) const
 {
 	vector<int32_t> spos;

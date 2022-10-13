@@ -118,16 +118,17 @@ int generator::resolve()
 		if(sp.library_type != UNSTRANDED && ht.strand == '+' && ht.pos >= start1 && term1 == false) bb1.add_hit_intervals(ht, b1t);
 		if(sp.library_type != UNSTRANDED && ht.strand == '-' && ht.pos >= start2 && term2 == false) bb2.add_hit_intervals(ht, b1t);
 
-		// TODO, handle unstranded case
-		assert(sp.library_type != UNSTRANDED);
-		if(sp.library_type == UNSTRANDED) bb1.add_hit_intervals(ht, b1t);
+		//if(sp.library_type == UNSTRANDED && ht.pos >= start1 && term1 == false) bb1.add_hit_intervals(ht, b1t);
 
-		/*
-		if(sp.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit_intervals(ht, b1t);
-		if(sp.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit_intervals(ht, b1t);
-		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb1.add_hit_intervals(ht, b1t);
-		if(sp.library_type == UNSTRANDED && ht.xs == '.') bb2.add_hit_intervals(ht, b1t);
-		*/
+		// unstranded
+		if(sp.library_type == UNSTRANDED && ht.xs != '.' && ht.pos >= start1 && term1 == false) bb1.add_hit_intervals(ht, b1t);
+		//if(sp.library_type == UNSTRANDED && ht.xs == '-' && ht.pos >= start2 && term2 == false) bb2.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '.') 
+		{
+			bool b = ht.contain_splices(b1t);
+			if(b == false && ht.pos >= start1 && term1 == false) bb1.add_hit_intervals(ht, b1t);
+			//if(b == false && ht.pos >= start2 && term2 == false) bb2.add_hit_intervals(ht, b1t);
+		}
 	}
 
     bam_destroy1(b1t);

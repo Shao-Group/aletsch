@@ -90,6 +90,7 @@ public:
 	size_t get_qhash() const;
 	bool get_concordance() const;
 	vector<int32_t> extract_splices(bam1_t *b) const;
+	bool contain_splices(bam1_t *b) const;
 	//int get_aligned_intervals(vector<int64_t> &v) const;
 	//size_t get_phash() const;
 	//bool equal(const hit &h) const;
