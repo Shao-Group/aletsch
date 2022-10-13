@@ -64,6 +64,8 @@ int graph_builder::build_junctions()
 				z.push_back(v[k * 2 + 1]);
 				jcst.add(z, a);
 			}
+
+			if(a[0] >= 1) printf("hcst: %d vs %d vs %d\n", a[0], a[1], a[2]);
 		}
 	}
 
@@ -84,6 +86,8 @@ int graph_builder::build_junctions()
 				z.push_back(v[k * 2 + 1]);
 				jcst.add(z, a);
 			}
+			
+			if(a[0] >= 1) printf("fcst: %d vs %d vs %d\n", a[0], a[1], a[2]);
 		}
 	}
 
