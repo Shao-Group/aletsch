@@ -109,11 +109,14 @@ int graph_builder::build_junctions()
 			else if(jc.xs1 < jc.xs2) jc.strand = '-';
 			else jc.strand = '.';
 
+			/*
 			if(jc.strand == '.') 
 			{
 				printf("skip junction with . strand: %d-%d, %d vs %d vs %d\n", v[0], v[1], a[0], a[1], a[2]);
 				continue;
 			}
+			*/
+
 			junctions.push_back(jc);
 		}
 	}
