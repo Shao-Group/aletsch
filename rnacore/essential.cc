@@ -185,13 +185,13 @@ int check_strand_from_intron_coordinates(splice_graph &gr, const vector<int32_t>
 		if(pe.second == false) return -1;
 
 		int strand = gr.get_edge_info(pe.first).strand;
-		if(strand <= 0) printf("get a false strand: %d-%d\n", p, q);
+		//if(strand <= 0) printf("get a false strand: %d-%d\n", p, q);
 
 		if(strand == 1) b1 = true;
 		if(strand == 2) b2 = true;
 	}
 
-	if(b1 == false && b2 == false) printf("get a false strand\n");
+	//if(b1 == false && b2 == false) printf("get a false strand\n");
 
 	if(b1 == true && b2 == true) return -1;
 	if(b1 == true) return 1;

@@ -79,7 +79,7 @@ int chain_set::add(const vector<int32_t> &v, int h, char c)
 	if(c == '+') xs = 1;
 	if(c == '-') xs = 2;
 
-	if(xs == 0) printf("++++++++++++++++ h = %d\n", h);
+	//if(xs == 0) printf("++++++++++++++++ h = %d\n", h);
 
 	int32_t p = v[0];
 	if(pmap.find(p) == pmap.end())
