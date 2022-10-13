@@ -109,6 +109,11 @@ int graph_builder::build_junctions()
 			else if(jc.xs1 < jc.xs2) jc.strand = '-';
 			else jc.strand = '.';
 
+			// test
+			if(jc.strand == '.')
+			{
+				printf("SPECIAL JUNCTION: %d vs %d\n", jc.xs1, jc.xs2);
+			}
 			//if(cfg.verbose >= 2) jc.print("chr1", i);
 
 			junctions.push_back(jc);
