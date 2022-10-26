@@ -214,6 +214,9 @@ int incubator::get_max_region(string chrm)
 	int max_region = 0;
 	for(auto &z: sindex[chrm])
 	{
+		printf("get max-region: chrm = %s, z.first = %d, z.second = %d, samples[z.first].start1[z.second].size = %lu\n",
+				chrm.c_str(), z.first, z.second, samples[z.first].start1[z.second].size());
+
 		if(max_region < samples[z.first].start1[z.second].size()) 
 			max_region = samples[z.first].start1[z.second].size();
 	}
