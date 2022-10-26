@@ -267,6 +267,8 @@ int incubator::get_bundle_group(string chrm, int rid)
 
 int incubator::generate_merge_assemble(string chrm, int rid)
 {
+	if(rid <= 22) return 0;
+
 	if(sindex.find(chrm) == sindex.end()) return 0;
 	const vector<PI> &v = sindex[chrm];
 	if(v.size() == 0) return 0;
@@ -303,6 +305,8 @@ int incubator::generate_merge_assemble(string chrm, int rid)
 
 int incubator::generate(sample_profile &sp, int tid, int rid, string chrm, mutex &sample_lock)
 {	
+	printf("sp.start1.size = %lu, rid = %d, tid = %d, chrm = %s\n", sp.start1.size(), rid, tid, chrm.c_str());
+
 	if(rid >= sp.start1.size()) 
 	{
 		sample_lock.unlock();
