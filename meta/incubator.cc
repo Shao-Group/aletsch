@@ -279,8 +279,6 @@ int incubator::get_bundle_group(string chrm, int rid)
 
 int incubator::generate_merge_assemble(string chrm, int rid)
 {
-	if(rid <= 22) return 0;
-
 	if(sindex.find(chrm) == sindex.end()) return 0;
 	const vector<PI> &v = sindex[chrm];
 	if(v.size() == 0) return 0;
