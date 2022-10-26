@@ -320,7 +320,7 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 	sample_profile &sp = samples[sid];
 	int cid = get_chrm_index(chrm, sid);
 
-	printf("sp.start1[cid].size = %lu, sid = %d, rid = %d, tid = %d, cid = %d, chrm = %s\n", sp.start1[cid].size(), sid, rid, tid, cid, chrm.c_str());
+	//printf("sp.start1[cid].size = %lu, sid = %d, rid = %d, tid = %d, cid = %d, chrm = %s\n", sp.start1[cid].size(), sid, rid, tid, cid, chrm.c_str());
 
 	if(rid >= sp.start1[cid].size()) 
 	{
