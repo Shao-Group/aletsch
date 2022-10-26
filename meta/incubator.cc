@@ -207,6 +207,17 @@ int incubator::build_sample_index()
 	return 0;
 }
 
+int incubator::get_chrm_index(string chrm, int sid)
+{
+	assert(sindex.find(chrm) != sindex.end());
+
+	for(auto &z: sindex[chrm])
+	{
+		if(z.first == sid) return z.second;
+	}
+	return -1;
+}
+
 int incubator::get_max_region(string chrm)
 {
 	assert(sindex.find(chrm) != sindex.end());
@@ -214,9 +225,7 @@ int incubator::get_max_region(string chrm)
 	int max_region = 0;
 	for(auto &z: sindex[chrm])
 	{
-		printf("get max-region: chrm = %s, z.first = %d, z.second = %d, samples[z.first].start1[z.second].size = %lu\n",
-				chrm.c_str(), z.first, z.second, samples[z.first].start1[z.second].size());
-
+		//printf("get max-region: chrm = %s, z.first = %d, z.second = %d, samples[z.first].start1[z.second].size = %lu\n", chrm.c_str(), z.first, z.second, samples[z.first].start1[z.second].size());
 		if(max_region < samples[z.first].start1[z.second].size()) 
 			max_region = samples[z.first].start1[z.second].size();
 	}
@@ -283,11 +292,11 @@ int incubator::generate_merge_assemble(string chrm, int rid)
 	{
 		int sid = v[i].first;
 		int tid = v[i].second;
-		sample_profile &sp = samples[sid];
+		//sample_profile &sp = samples[sid];
 		mutex &sample_lock = sample_locks[i];
 
-		boost::asio::post(this->tpool, [this, &sample_lock, &sp, chrm, tid, rid]{ 
-			this->generate(sp, tid, rid, chrm, sample_lock); 
+		boost::asio::post(this->tpool, [this, &sample_lock, sid, chrm, tid, rid]{ 
+			this->generate(sid, tid, rid, chrm, sample_lock); 
 		});
 	}
 
@@ -306,11 +315,14 @@ int incubator::generate_merge_assemble(string chrm, int rid)
 	return 0;
 }
 
-int incubator::generate(sample_profile &sp, int tid, int rid, string chrm, mutex &sample_lock)
+int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lock)
 {	
-	printf("sp.start1.size = %lu, rid = %d, tid = %d, chrm = %s\n", sp.start1.size(), rid, tid, chrm.c_str());
+	sample_profile &sp = samples[sid];
+	int cid = get_chrm_index(chrm, sid);
 
-	if(rid >= sp.start1.size()) 
+	printf("sp.start1[cid].size = %lu, sid = %d, rid = %d, tid = %d, cid = %d, chrm = %s\n", sp.start1[cid].size(), sid, rid, tid, cid, chrm.c_str());
+
+	if(rid >= sp.start1[cid].size()) 
 	{
 		sample_lock.unlock();
 		return 0;
