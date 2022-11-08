@@ -148,10 +148,69 @@ int assembler::assemble(vector<bundle*> gv)
 	}
 
 	bx.clear();
+
 	// assemble combined instance
-	//assemble(gx, px, ts, -1);
+	assemble(gx, px, -1);
 	return 0;
 }
+
+/*
+int assembler::pairwise_assemble(vector<bundle*> gv, transcript_set &ts, vector<vector<PID>> &sim, int instance)
+{
+	assert(gv.size() >= 2);
+	int subindex = 0;
+
+	for(int i = 0; i < gv.size(); i++)
+	{
+		bundle &bi = *(gv[i]);
+		bi.set_gid(instance, subindex++);
+		splice_graph gi;
+		phase_set pi;
+		transform(bi, gi, false);	// TODO
+		bi.build_phase_set(pi, gi);
+
+		// TODO
+		printf("assemble instance %d subindex %d, sample id = %d\n", instance, subindex, bi.sp.sample_id);
+		assemble(gi, pi, ts, bi.sp.sample_id);
+
+		for(int k = 0; k < sim[i].size(); k++)
+		{
+			int j = sim[i][k].first;
+			bundle &bj = *(gv[j]);
+			bj.set_gid(instance, subindex++);
+			splice_graph gj;
+			phase_set pj;
+			transform(bj, gj, false);	// TODO
+			bj.build_phase_set(pj, gj);
+
+			// combined bundle
+			bundle bx(cfg, gv[i]->sp);
+			bx.copy_meta_information(*(gv[i]));
+			bx.combine(*(gv[i]));
+			bx.combine(*(gv[j]));
+			bx.set_gid(instance, subindex++);
+
+			// combined graph
+			splice_graph gx;
+			transform(bx, gx, false);	// TODO
+
+			// combined phase set 
+			phase_set px;
+			px.combine(pi);
+			px.combine(pj);
+
+			//fix_missing_edges(gr, gx);
+
+			// assemble combined instance
+			printf("assemble combined %d and %d (out of %lu), instance %d subindex %d\n", i, j, sim[i].size(), instance, subindex);
+			assemble(gx, px, ts, -1);
+
+			if(k >= 10) break;
+		}
+	}
+	return 0;
+}
+*/
 
 int assembler::transform(bundle &cb, splice_graph &gr, bool revising)
 {
