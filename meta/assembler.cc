@@ -143,7 +143,9 @@ int assembler::assemble(vector<bundle*> gv)
 		bd.build_phase_set(ps, gr);
 		px.combine(ps);
 
-		assemble(gr, ps, bd.sp.sample_id);
+		// test, don't assemble individual graph but just
+		// the combined graph
+		//assemble(gr, ps, bd.sp.sample_id);
 		bd.clear();
 	}
 
