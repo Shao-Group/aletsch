@@ -57,7 +57,8 @@ int assembler::resolve(vector<bundle*> gv)
 		*/
 
 		//refine_pairwise(gv, sim);
-		bridge(gv);
+		// TODO: try not to bridge
+		//bridge(gv);
 		//refine(gv);
 		assemble(gv);
 		//pairwise_assemble(gv, ts, sim, instance);
