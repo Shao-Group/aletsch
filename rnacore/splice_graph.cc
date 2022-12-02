@@ -1285,8 +1285,8 @@ int splice_graph::print_supports()
 		double w1 = get_edge_weight(e);
 		double w2 = get_edge_info(e).weight;
 		int strand = get_edge_info(e).strand;
-		edge_info ei = get_edge_info(e);
-		printf("edge (%d, %d) pos = %d-%d length = %d weight = (%.2lf, %.2lf) strand = %d count = %d\n", s, t, p1, p2, p2 - p1 + 1, w1, w2, strand, ei.count);
+		int c = get_edge_info(e).count;
+		printf("edge (%d, %d) pos = %d-%d length = %d weight = (%.2lf, %.2lf) strand = %d count = %d\n", s, t, p1, p2, p2 - p1 + 1, w1, w2, strand, c);
 	}
 	return 0;
 }
