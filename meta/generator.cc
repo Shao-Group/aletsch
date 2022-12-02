@@ -157,8 +157,10 @@ int generator::generate(bundle_base &bb, int index)
 	bd.chrm = string(buf);
 	bd.gid = "gene." + tostring(sp.sample_id) + "." + tostring(index);
 	bd.compute_strand(sp.library_type);
-	bd.build_fragments();
-	bd.bridge();
+
+	// TODO: try not even to bridge in individual samples
+	//bd.build_fragments();
+	//bd.bridge();
 	//bd.filter_multialigned_hits();
 
 	// TODO, storing reads
