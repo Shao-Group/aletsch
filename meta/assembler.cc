@@ -333,8 +333,10 @@ int assembler::support(splice_graph &gr, splice_graph &gx)
 
 		int32_t p = gr.get_vertex_info(t).lpos;
 		int k = gx.locate_vertex(p);
+		printf("p = %d, k = %d, %d->%d\n", p, k, s, t);
 		if(k < 0) continue;
 		PEB peb = gx.edge(0, k);
+		printf("edge = %c\n", peb.second ? 'T' : 'F');
 		if(peb.second == false) continue;
 
 		edge_info ei = gx.get_edge_info(peb.first);
