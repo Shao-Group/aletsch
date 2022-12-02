@@ -130,6 +130,7 @@ int assembler::assemble(vector<bundle*> gv)
 	phase_set px;
 
 	// assemble individual bundle
+	printf("-----\n");
 	for(int k = 0; k < gv.size(); k++)
 	{
 		bundle &bd = *(gv[k]);
@@ -137,6 +138,9 @@ int assembler::assemble(vector<bundle*> gv)
 
 		splice_graph gr;
 		transform(bd, gr, true);
+
+		printf("print %d/%lu individual graph %s\n", k, gv.size(), gr.gid.c_str());
+		gr.print_supports();
 
 		fix_missing_edges(gr, gx);
 		support(gr, gx);
@@ -154,8 +158,9 @@ int assembler::assemble(vector<bundle*> gv)
 	bx.clear();
 
 	// assemble combined instance
-	printf("print support of graph %s with %ld graphs\n", gx.gid.c_str(), gv.size());
+	printf("print combined graph %s with %lu graphs\n", gx.gid.c_str(), gv.size());
 	gx.print_supports();
+	printf("======\n");
 	printf("\n");
 
 	assemble(gx, px, -1);
