@@ -142,7 +142,7 @@ int assembler::assemble(vector<bundle*> gv)
 		printf("print %d/%lu individual graph %s\n", k, gv.size(), gr.gid.c_str());
 		gr.print_supports();
 
-		fix_missing_edges(gr, gx);
+		//fix_missing_edges(gr, gx);
 		support(gr, gx);
 
 		phase_set ps;
@@ -342,6 +342,7 @@ int assembler::support(splice_graph &gr, splice_graph &gx)
 		edge_info ei = gx.get_edge_info(peb.first);
 		ei.count++;
 		gx.set_edge_info(e, ei);
+		printf("ei.count = %d/%d\n", ei.count, gx.get_edge_info(e).count);
 	}
 
 	// calculate the support of ending vertices
