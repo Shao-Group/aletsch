@@ -133,6 +133,7 @@ public:
 	int print_vertex(int i);
 	int print_nontrivial_vertices();
 	int print_weights();
+	int print_supports();
 	int print();
 	int stat_strandness();
 };

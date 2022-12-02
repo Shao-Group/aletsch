@@ -26,7 +26,7 @@ public:
 	int sdist;			// shortest distance to s
 	int tdist;			// shortest distance to t
 	int type;			// for various usage
-	int count;			// #samples supportin
+	int count;			// #samples supporting
 	char lstrand;		// left side strand
 	char rstrand;		// right side strand	
 	bool regional;		// if the partial-exon is regional

@@ -1265,6 +1265,32 @@ int splice_graph::print_weights()
 	return 0;
 }
 
+int splice_graph::print_supports()
+{
+	for(int i = 0; i < num_vertices(); i++)
+	{
+		vertex_info vi = get_vertex_info(i);
+		printf("vertex %d, range = [%d, %d), length = %d, weight = %.2lf, count = %d\n", i, vi.lpos, vi.rpos, vi.rpos - vi.lpos, get_vertex_weight(i), vi.count);
+	}
+
+	edge_iterator it1, it2;
+	PEEI pei;
+	for(pei = edges(), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	{
+		edge_descriptor e = (*it1);
+		int s = e->source();
+		int t = e->target();
+		int32_t p1 = get_vertex_info(s).rpos;
+		int32_t p2 = get_vertex_info(t).lpos;
+		double w1 = get_edge_weight(e);
+		double w2 = get_edge_info(e).weight;
+		int strand = get_edge_info(e).strand;
+		edge_info ei = get_edge_info(e);
+		printf("edge (%d, %d) pos = %d-%d length = %d weight = (%.2lf, %.2lf) strand = %d count = %d\n", s, t, p1, p2, p2 - p1 + 1, w1, w2, strand, ei.count);
+	}
+	return 0;
+}
+
 int32_t splice_graph::get_total_length_of_vertices(const vector<int>& v) const
 {
 	if(v.size() == 0) return 0;

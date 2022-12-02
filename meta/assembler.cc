@@ -139,6 +139,7 @@ int assembler::assemble(vector<bundle*> gv)
 		transform(bd, gr, true);
 
 		fix_missing_edges(gr, gx);
+		support(gr, gx);
 
 		phase_set ps;
 		bd.build_phase_set(ps, gr);
@@ -153,6 +154,10 @@ int assembler::assemble(vector<bundle*> gv)
 	bx.clear();
 
 	// assemble combined instance
+	printf("print support of graph %s with %ld graphs\n", gx.gid.c_str(), gv.size());
+	gx.print_supports();
+	printf("\n");
+
 	assemble(gx, px, -1);
 	return 0;
 }
@@ -257,6 +262,99 @@ int assembler::fix_missing_edges(splice_graph &gr, splice_graph &gx)
 		int32_t gap = vt.lpos - vv.lpos;
 		if(cfg.verbose >= 2) printf("fixing starting boundary t = %d-%d using u = %d-%d, v = %d-%d, gap = %d, wt = %.1lf, wuv = %.1lf\n", 
 				vt.lpos, vt.rpos, vu.lpos, vu.rpos, vv.lpos, vv.rpos, gap, wt, wuv);
+	}
+
+	return 0;
+}
+
+int assembler::support(splice_graph &gr, splice_graph &gx)
+{
+	// calculate the support of vertices
+	for(int i = 1; i < gx.num_vertices() - 1; i++)
+	{
+		vertex_info vi = gx.get_vertex_info(i);
+		assert(vi.lpos < vi.rpos);
+		int kl = gr.locate_vertex(vi.lpos);
+		int kr = gr.locate_vertex(vi.rpos - 1);
+		if(kl < 0 || kr < 0) continue;
+		assert(kl >= 1 && kl < gr.num_vertices() - 1);
+		assert(kr >= 1 && kr < gr.num_vertices() - 1);
+
+		bool cont = true;
+		for(int j = kl + 1; j <= kr; j++)
+		{
+			if(gr.get_vertex_info(j).lpos != gr.get_vertex_info(j - 1).rpos) cont = false;
+			if(cont == false) break;
+		}
+
+		if(cont == false) continue;
+
+		vi.count++;
+		gx.set_vertex_info(i, vi);
+	}
+
+	// calculate the support of junctions
+	edge_iterator it;
+	PEEI pei = gx.edges();
+	for(it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = (*it);
+		int s = e->source();
+		int t = e->target();
+
+		if(s == 0) continue;
+		if(t == gx.num_vertices() - 1) continue;
+		if(gx.get_vertex_info(s).rpos == gx.get_vertex_info(t).lpos) continue;
+
+		int kl = gr.locate_rbound(gx.get_vertex_info(s).rpos);
+		int kr = gr.locate_lbound(gx.get_vertex_info(t).lpos);
+		if(kl == -1 || kr == -1) continue;
+
+		if(gr.edge(kl, kr).second == false) continue;
+
+		edge_info ei = gx.get_edge_info(e);
+		ei.count++;
+		gx.set_edge_info(e, ei);
+	}
+
+	// calculate the support of starting vertices
+	pei = gr.out_edges(0);
+	for(it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = (*it);
+		int s = e->source();
+		int t = e->target();
+		assert(s == 0);
+
+		int32_t p = gr.get_vertex_info(t).lpos;
+		int k = gx.locate_vertex(p);
+		if(k < 0) continue;
+		PEB peb = gx.edge(0, k);
+		if(peb.second == false) continue;
+
+		edge_info ei = gx.get_edge_info(peb.first);
+		ei.count++;
+		gx.set_edge_info(e, ei);
+	}
+
+	// calculate the support of ending vertices
+	pei = gr.in_edges(gr.num_vertices() - 1);
+	for(it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = (*it);
+		int s = e->source();
+		int t = e->target();
+		assert(t == gr.num_vertices() - 1);
+
+		int32_t p = gr.get_vertex_info(s).rpos;
+		int k = gx.locate_vertex(p - 1);
+		if(k < 0) continue;
+		PEB peb = gx.edge(k, gx.num_vertices() - 1);
+		if(peb.second == false) continue;
+
+		edge_info ei = gx.get_edge_info(peb.first);
+		ei.count++;
+		gx.set_edge_info(e, ei);
 	}
 
 	return 0;
