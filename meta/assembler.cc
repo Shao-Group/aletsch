@@ -369,6 +369,9 @@ int assembler::support(splice_graph &gr, splice_graph &gx)
 		gx.set_edge_info(e, ei);
 	}
 
+	printf("00000\n");
+	gx.print_supports();
+	printf("00000\n");
 	return 0;
 }
 
