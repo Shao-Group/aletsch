@@ -145,6 +145,10 @@ int assembler::assemble(vector<bundle*> gv)
 		//fix_missing_edges(gr, gx);
 		support(gr, gx);
 
+		printf("print combined graph %s with %lu graphs after %d graph\n", gx.gid.c_str(), gv.size(), k);
+		gx.print_supports();
+		printf("------\n");
+
 		phase_set ps;
 		bd.build_phase_set(ps, gr);
 		px.combine(ps);
