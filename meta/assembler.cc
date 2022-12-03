@@ -145,9 +145,9 @@ int assembler::assemble(vector<bundle*> gv)
 		//fix_missing_edges(gr, gx);
 		support(gr, gx);
 
-		printf("print combined graph %s with %lu graphs after %d graph\n", gx.gid.c_str(), gv.size(), k);
-		gx.print_supports();
-		printf("------\n");
+		//printf("print combined graph %s with %lu graphs after %d graph\n", gx.gid.c_str(), gv.size(), k);
+		//gx.print_supports();
+		//printf("------\n");
 
 		phase_set ps;
 		bd.build_phase_set(ps, gr);
@@ -337,16 +337,13 @@ int assembler::support(splice_graph &gr, splice_graph &gx)
 
 		int32_t p = gr.get_vertex_info(t).lpos;
 		int k = gx.locate_vertex(p);
-		printf("p = %d, k = %d, %d->%d\n", p, k, s, t);
 		if(k < 0) continue;
 		PEB peb = gx.edge(0, k);
-		printf("edge = %c\n", peb.second ? 'T' : 'F');
 		if(peb.second == false) continue;
 
 		edge_info ei = gx.get_edge_info(peb.first);
 		ei.count++;
-		gx.set_edge_info(e, ei);
-		printf("ei.count = %d/%d\n", ei.count, gx.get_edge_info(e).count);
+		gx.set_edge_info(peb.first, ei);
 	}
 
 	// calculate the support of ending vertices
@@ -366,12 +363,9 @@ int assembler::support(splice_graph &gr, splice_graph &gx)
 
 		edge_info ei = gx.get_edge_info(peb.first);
 		ei.count++;
-		gx.set_edge_info(e, ei);
+		gx.set_edge_info(peb.first, ei);
 	}
 
-	printf("00000\n");
-	gx.print_supports();
-	printf("00000\n");
 	return 0;
 }
 
