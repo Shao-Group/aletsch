@@ -199,6 +199,7 @@ bool scallop::resolve_broken_vertex()
 		ve.push_back(e2i[e]);
 	}
 
+    if(ve.size() == 0) printf("\nBug: %s, vertex %d\n", gr.gid.c_str(), x);
 	assert(ve.size() >= 1);
 	for(int k = 0; k < ve.size(); k++)
 	{

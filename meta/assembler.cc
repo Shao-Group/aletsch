@@ -139,8 +139,19 @@ int assembler::assemble(vector<bundle*> gv)
 		splice_graph gr;
 		transform(bd, gr, true);
 
-		printf("print %d/%lu individual graph %s\n", k, gv.size(), gr.gid.c_str());
-		gr.print_supports();
+        //test4: calculate gr supports based on other grs
+        /*for(int j = 0; j < gv.size(); j++)
+        {
+            bundle &bd2 = *(gv[j]);
+            bd2.set_gid(rid, gid, instance, subindex++);
+            splice_graph gr2;
+            transform(bd2, gr2, true);
+
+            support(gr2, gr);
+        }*/ //test4 end
+
+		//printf("print %d/%lu individual graph %s\n", k, gv.size(), gr.gid.c_str());
+        //gr.print_supports();
 
 		//fix_missing_edges(gr, gx);
 		support(gr, gx);
@@ -166,6 +177,8 @@ int assembler::assemble(vector<bundle*> gv)
 	gx.print_supports();
 	printf("======\n");
 	printf("\n");
+
+    gx.print_closed_st_stats();
 
 	assemble(gx, px, -1);
 	return 0;
@@ -299,6 +312,7 @@ int assembler::support(splice_graph &gr, splice_graph &gx)
 		if(cont == false) continue;
 
 		vi.count++;
+        vi.supports.insert(gr.gid);
 		gx.set_vertex_info(i, vi);
 	}
 
@@ -313,7 +327,7 @@ int assembler::support(splice_graph &gr, splice_graph &gx)
 
 		if(s == 0) continue;
 		if(t == gx.num_vertices() - 1) continue;
-		if(gx.get_vertex_info(s).rpos == gx.get_vertex_info(t).lpos) continue;
+		//if(gx.get_vertex_info(s).rpos == gx.get_vertex_info(t).lpos) continue;
 
 		int kl = gr.locate_rbound(gx.get_vertex_info(s).rpos);
 		int kr = gr.locate_lbound(gx.get_vertex_info(t).lpos);
@@ -323,6 +337,7 @@ int assembler::support(splice_graph &gr, splice_graph &gx)
 
 		edge_info ei = gx.get_edge_info(e);
 		ei.count++;
+        ei.supports.insert(gr.gid);
 		gx.set_edge_info(e, ei);
 	}
 
@@ -343,6 +358,7 @@ int assembler::support(splice_graph &gr, splice_graph &gx)
 
 		edge_info ei = gx.get_edge_info(peb.first);
 		ei.count++;
+        ei.supports.insert(gr.gid);
 		gx.set_edge_info(peb.first, ei);
 	}
 
@@ -363,6 +379,7 @@ int assembler::support(splice_graph &gr, splice_graph &gx)
 
 		edge_info ei = gx.get_edge_info(peb.first);
 		ei.count++;
+        ei.supports.insert(gr.gid);
 		gx.set_edge_info(peb.first, ei);
 	}
 

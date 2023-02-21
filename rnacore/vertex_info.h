@@ -8,6 +8,9 @@ See LICENSE for licensing.
 #define __VERTEX_INFO__
 
 #include <stdint.h>
+#include <set>
+#include <string>
+using namespace std;
 
 class vertex_info
 {
@@ -30,6 +33,8 @@ public:
 	char lstrand;		// left side strand
 	char rstrand;		// right side strand	
 	bool regional;		// if the partial-exon is regional
+
+    set<string> supports;
 };
 
 #endif

@@ -14,6 +14,7 @@ edge_info::edge_info()
 	strand = 0;
 	weight = 0;
 	count = 0;
+    supports.clear();
 }
 
 edge_info::edge_info(int l)
@@ -24,6 +25,7 @@ edge_info::edge_info(int l)
 	count = 0;
 	weight = 0;
 	strand = 0;
+    supports.clear();
 }
 
 edge_info::edge_info(const edge_info &ei)
@@ -35,4 +37,5 @@ edge_info::edge_info(const edge_info &ei)
 	count = ei.count;
 	weight = ei.weight;
 	strand = ei.strand;
+    supports = ei.supports;
 }

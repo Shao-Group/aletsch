@@ -134,6 +134,7 @@ public:
 	int print_nontrivial_vertices();
 	int print_weights();
 	int print_supports();
+    int print_closed_st_stats();
 	int print();
 	int stat_strandness();
 };

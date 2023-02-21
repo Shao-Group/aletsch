@@ -1271,6 +1271,14 @@ int splice_graph::print_supports()
 	{
 		vertex_info vi = get_vertex_info(i);
 		printf("vertex %d, range = [%d, %d), length = %d, weight = %.2lf, count = %d\n", i, vi.lpos, vi.rpos, vi.rpos - vi.lpos, get_vertex_weight(i), vi.count);
+        if(vi.count > 0)
+        {
+            printf("vertex %d support set: ", i);
+            for (auto it = vi.supports.begin(); it !=vi.supports.end(); ++it)
+                printf("%s, ", it->c_str());
+            printf("\n");
+        }
+
 	}
 
 	edge_iterator it1, it2;
@@ -1283,12 +1291,272 @@ int splice_graph::print_supports()
 		int32_t p1 = get_vertex_info(s).rpos;
 		int32_t p2 = get_vertex_info(t).lpos;
 		double w1 = get_edge_weight(e);
-		double w2 = get_edge_info(e).weight;
-		int strand = get_edge_info(e).strand;
-		int c = get_edge_info(e).count;
-		printf("edge (%d, %d) pos = %d-%d length = %d weight = (%.2lf, %.2lf) strand = %d count = %d\n", s, t, p1, p2, p2 - p1 + 1, w1, w2, strand, c);
+
+        edge_info ei = get_edge_info(e);
+		double w2 = ei.weight;
+		printf("edge (%d, %d) pos = %d-%d length = %d weight = (%.2lf, %.2lf) strand = %d count = %d\n", s, t, p1, p2, p2 - p1 + 1, w1, w2, ei.strand, ei.count);
+        if(ei.count > 0)
+        {
+            printf("edge (%d, %d) support set: ", s, t);
+            for (auto it = ei.supports.begin(); it !=ei.supports.end(); ++it)
+                printf("%s, ", it->c_str());
+            printf("\n");
+        }
 	}
 	return 0;
+}
+
+int splice_graph::print_closed_st_stats()
+{
+    //test7
+    vector<int> extended_v;
+
+    //test8
+    string file = "start.end.stats.csv";
+    FILE * fout = fopen(file.c_str(), "a+");
+    if(!fout)
+    {
+        printf("open file %s error.\n", file.c_str());
+        return 0;
+    }
+
+    //stats of starting vertices&edges
+    PEEI pei = edges();
+    edge_iterator it;
+    int max_junction_support = 0;
+    double max_junction_weight = 0;
+    int max_start_support = 0;
+    double max_start_weight = 0;
+    int max_end_support = 0;
+    double max_end_weight = 0;
+    for(it = pei.first; it != pei.second; it++)
+    {
+        edge_descriptor e = *it;
+        int s = e->source();
+        int t = e->target();
+        /*if(s == 0 || t == (num_vertices()-1)) continue;*/
+        int c = get_edge_info(e).count;
+        double w = get_edge_info(e).weight;
+        max_junction_support = max(max_junction_support, c);
+        max_junction_weight = max(max_junction_weight, w);
+        if(s == 0) 
+        {
+            max_start_support = max(max_start_support, c);
+            max_start_weight = max(max_start_weight, w);
+        }
+        if(t == num_vertices()-1) 
+        {
+            max_end_support = max(max_end_support, c);
+            max_end_weight = max(max_end_weight, w);
+        }
+    }
+   // printf("\nMax junction support: %d\n", max_junction_support);
+
+    pei = out_edges(0);
+    for(it = pei.first; it != pei.second; it++)
+    {
+        bool toAssemble = true;
+        edge_descriptor e = (*it);
+        int s = e->source();
+        int v = e->target();
+        assert(s == 0);
+
+        //check closed vertex
+        vertex_info vi = get_vertex_info(v);
+        int32_t p = locate_lbound(vi.rpos);
+        if(p == -1 || p == (num_vertices()-1)) continue;
+        vertex_info pvi = get_vertex_info(p);
+        edge_info einf = get_edge_info(e);
+
+        //test7:simple threshold to remove unreliable starting vertex
+        //if((out_degree(v)==1) && (in_degree(p)>1) && (ei.count < 0.3*max_junction_support)) extended_v.push_back(v);
+
+         //test11: max_start&end_support
+         //if((out_degree(v)==1) && (in_degree(p)>1) && (ei.weight < 0.5*max_start_weight)) extended_v.push_back(v);
+         //if((out_degree(v)==1) && (in_degree(p)>1) && (ei.weight < 0.5*max_start_weight && ei.count < 0.5*max_start_support)) extended_v.push_back(v);
+
+        //vertex stats
+        printf("\n----- Starting vertex %d stats -----\n", v);
+        printf("range = [%d, %d), length = %d, weight = %.2lf, count = %d, in-degree = %d, out-degree = %d\n", vi.lpos, vi.rpos, vi.rpos - vi.lpos, get_vertex_weight(v), vi.count, in_degree(v), out_degree(v));
+        if(vi.count > 0)
+        {
+            printf("support set: ");
+            for (auto itv = vi.supports.begin(); itv !=vi.supports.end(); ++itv)
+                printf("%s ", itv->c_str());
+            printf("\n\n");
+        }
+        printf("Closed vertex %d: range = [%d, %d), length = %d, weight = %.2lf, count = %d, in-degree = %d, out-degree = %d\n\n", p, pvi.lpos, pvi.rpos, pvi.rpos - pvi.lpos, get_vertex_weight(p), pvi.count, in_degree(p), out_degree(p));
+
+        //in-edges stats
+        PEEI pi = in_edges(v);
+        edge_iterator it1, it2;
+        edge_info ei;
+        for(it1 = pi.first, it2 = pi.second; it1 != it2; it1++)
+        {
+            edge_descriptor ein = (*it1);
+            int eins = ein->source();
+            int eint = ein->target();
+
+            ei = get_edge_info(ein);
+            int32_t p1 = get_vertex_info(eins).rpos;
+            int32_t p2 = get_vertex_info(eint).lpos;
+            double w1 = get_edge_weight(ein);
+            double w2 = ei.weight;
+            printf("In-edge (%d, %d) pos = %d-%d length = %d weight = (%.2lf, %.2lf) strand = %d count = %d\n", eins, eint, p1, p2, p2 - p1 + 1, w1, w2, ei.strand, ei.count);
+            if(ei.count > 0)
+            {
+                printf("support set: ");
+                for (auto its = ei.supports.begin(); its !=ei.supports.end(); ++its)
+                    printf("%s ", its->c_str());
+                printf("\n");
+            }
+        }
+        printf("\n");
+
+        //out-edges stats
+        pi = out_edges(v);
+        bool out_to_nontrivial = true;
+        for(it1 = pi.first, it2 = pi.second; it1 != it2; it1++)
+        {
+            edge_descriptor eout = (*it1);
+            int eouts = eout->source();
+            int eoutt = eout->target();
+
+            if(in_degree(eoutt)<=1) out_to_nontrivial = false;
+
+            ei = get_edge_info(eout);
+            int32_t p1 = get_vertex_info(eouts).rpos;
+            int32_t p2 = get_vertex_info(eoutt).lpos;
+            double w1 = get_edge_weight(eout);
+            double w2 = ei.weight;
+            printf("Out-edge (%d, %d) pos = %d-%d length = %d weight = (%.2lf, %.2lf) strand = %d count = %d\n", eouts, eoutt, p1, p2, p2 - p1 + 1, w1, w2, ei.strand, ei.count);
+            if(ei.count > 0)
+            {
+                printf("support set: ");
+                for (auto its = ei.supports.begin(); its !=ei.supports.end(); ++its)
+                    printf("%s ", its->c_str());
+                printf("\n");
+            }
+        }
+
+        if(out_to_nontrivial && (einf.weight < 0.5*max_start_weight || einf.count < 0.5*max_start_support))
+        {
+            extended_v.push_back(v);
+            toAssemble = false;
+        }
+
+        //test8: printf csv for vertices
+        fprintf(fout, "%s\t%d\t%d\t%d\t%d\t%d\t%.2lf\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%.2lf\t%d\t%d\t%d\t(%d,%d)\t%.2lf\t%.2lf\t%.2lf\t%d\t%d\t%d\t%d\t%d\n", gid.c_str(), v, 0, vi.lpos, vi.rpos, vi.rpos-vi.lpos, get_vertex_weight(v), vi.count, in_degree(v), out_degree(v), p, pvi.lpos, pvi.rpos, pvi.rpos-pvi.lpos, get_vertex_weight(p), pvi.count, in_degree(p), out_degree(p), s, v, get_edge_weight(e),max_start_weight, max_end_weight, einf.count, max_start_support, max_end_support, max_junction_support, toAssemble);
+
+    }
+
+    //stats of endinging vertices&edges
+    pei = in_edges(num_vertices() - 1);
+    for(it = pei.first; it != pei.second; it++)
+    {
+        bool toAssemble = true;
+        edge_descriptor e = (*it);
+        int v = e->source();
+        int t = e->target();
+        assert(t == num_vertices() - 1);
+
+        //check closed vertex
+        vertex_info vi = get_vertex_info(v);
+        int32_t p = locate_rbound(vi.lpos);
+        if(p == -1 || p == 0) continue;
+        vertex_info pvi = get_vertex_info(p);
+        edge_info einf = get_edge_info(e);
+
+        //test7:simple threshold to remove unreliable ending vertex
+        //if((in_degree(v)==1) && (out_degree(p)>1) && (ei.count < 0.3*max_junction_support)) extended_v.push_back(v); 
+
+        //test11: max_start&end_support
+         //if((in_degree(v)==1) && (out_degree(p)>1) && (ei.weight < 0.5*max_end_weight)) extended_v.push_back(v);
+         //if((in_degree(v)==1) && (out_degree(p)>1) && (ei.weight < 0.5*max_end_weight && ei.count < 0.5*max_end_support)) extended_v.push_back(v);
+
+        //vertex stat
+        printf("\n----- Ending vertex %d stats -----\n", v);        
+        printf("range = [%d, %d), length = %d, weight = %.2lf, count = %d, in-degree = %d, out-degree = %d\n", vi.lpos, vi.rpos, vi.rpos - vi.lpos, get_vertex_weight(v), vi.count, in_degree(v), out_degree(v));
+        if(vi.count > 0)
+        {
+            printf("support set: ");
+            for (auto itv = vi.supports.begin(); itv !=vi.supports.end(); ++itv)
+                printf("%s ", itv->c_str());
+            printf("\n");
+        }
+        printf("Closed vertex %d: range = [%d, %d), length = %d, weight = %.2lf, count = %d, in-degree = %d, out-degree = %d\n\n", p, pvi.lpos, pvi.rpos, pvi.rpos - pvi.lpos, get_vertex_weight(p), pvi.count, in_degree(p), out_degree(p));
+
+        //in-edges stats
+        PEEI pi = in_edges(v);
+        edge_iterator it1, it2;
+        edge_info ei;
+        bool in_from_nontrivial = true;
+        for(it1 = pi.first, it2 = pi.second; it1 != it2; it1++)
+        {
+            edge_descriptor ein = (*it1);
+            int eins = ein->source();
+            int eint = ein->target();
+
+            if(out_degree(eins)<=1) in_from_nontrivial = false;
+
+            ei = get_edge_info(ein);
+            int32_t p1 = get_vertex_info(eins).rpos;
+            int32_t p2 = get_vertex_info(eint).lpos;
+            double w1 = get_edge_weight(ein);
+            double w2 = ei.weight;
+            printf("In-edge (%d, %d) pos = %d-%d length = %d weight = (%.2lf, %.2lf) strand = %d count = %d\n", eins, eint, p1, p2, p2 - p1 + 1, w1, w2, ei.strand, ei.count);
+            if(ei.count > 0)
+            {
+                printf("support set: ");
+                for (auto its = ei.supports.begin(); its !=ei.supports.end(); ++its)
+                    printf("%s ", its->c_str());
+                printf("\n");
+            }
+        }
+        printf("\n");
+
+        //out-edges stats
+        pi = out_edges(v);
+        for(it1 = pi.first, it2 = pi.second; it1 != it2; it1++)
+        {
+            edge_descriptor eout = (*it1);
+            int eouts = eout->source();
+            int eoutt = eout->target();
+
+            ei = get_edge_info(eout);
+            int32_t p1 = get_vertex_info(eouts).rpos;
+            int32_t p2 = get_vertex_info(eoutt).lpos;
+            double w1 = get_edge_weight(eout);
+            double w2 = ei.weight;
+            printf("Out-edge (%d, %d) pos = %d-%d length = %d weight = (%.2lf, %.2lf) strand = %d count = %d\n", eouts, eoutt, p1, p2, p2 - p1 + 1, w1, w2, ei.strand, ei.count);
+            if(ei.count > 0)
+            {
+                printf("support set: ");
+                for (auto its = ei.supports.begin(); its !=ei.supports.end(); ++its)
+                    printf("%s ", its->c_str());
+                printf("\n");
+            }
+        }
+
+        if(in_from_nontrivial && (einf.weight < 0.5*max_end_weight || einf.count < 0.5*max_end_support)) 
+        {
+            extended_v.push_back(v);
+            toAssemble = false;
+        }
+
+        //test8: printf csv for vertices
+        fprintf(fout, "%s\t%d\t%d\t%d\t%d\t%d\t%.2lf\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%.2lf\t%d\t%d\t%d\t(%d,%d)\t%.2lf\t%.2lf\t%.2lf\t%d\t%d\t%d\t%d\t%d\n", gid.c_str(), v, 1, vi.lpos, vi.rpos, vi.rpos-vi.lpos, get_vertex_weight(v), vi.count, in_degree(v), out_degree(v), p, pvi.lpos, pvi.rpos, pvi.rpos-pvi.lpos, get_vertex_weight(p), pvi.count, in_degree(p), out_degree(p), v, t, get_edge_weight(e),max_start_weight, max_end_weight, einf.count, max_start_support, max_end_support, max_junction_support, toAssemble);
+    }
+
+    fclose(fout);
+    
+    for(auto ite = extended_v.begin(); ite != extended_v.end(); ite++)
+    {
+        printf("Possible wrong ends: %d\n", *ite);
+        clear_vertex(*ite);
+    }
+
+    return 0;
 }
 
 int32_t splice_graph::get_total_length_of_vertices(const vector<int>& v) const
