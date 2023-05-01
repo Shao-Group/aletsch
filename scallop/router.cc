@@ -954,12 +954,59 @@ int router::print()
 
 	for(int i = 0; i < eqns.size(); i++) eqns[i].print(i);
 
-	for(MPID::const_iterator it = pe2w.begin(); it != pe2w.end(); it++)
+	/*for(MPID::const_iterator it = pe2w.begin(); it != pe2w.end(); it++)
 	{
 		printf("decompose: (%d, %d), w = %.2lf\n", it->first.first, it->first.second, it->second);
-	}
+
+        gr.print_supports_e(i2e[it->first.first]);
+        gr.print_supports_e(i2e[it->first.second]);
+
+	}*/
+
+    for(int i = 0; i < gr.in_degree(root); i++)
+        for(int j = gr.in_degree(root); j < gr.degree(root); j++) 
+        {
+            choice_stats(i2e[u2e[i]], i2e[u2e[j]]);
+        }
 
 	return 0;
+}
+
+int router::choice_stats(edge_descriptor e1, edge_descriptor e2)
+{
+    bool selected = false;
+    double selectedw = 0.0;
+    if(pe2w.find(PI(e2i[e1], e2i[e2])) != pe2w.end())
+    {
+        selected = true;
+        selectedw = pe2w[PI(e2i[e1], e2i[e2])];
+    }
+
+    edge_info ei1 = gr.get_edge_info(e1), ei2 = gr.get_edge_info(e2);
+    printf("\nIn-edge %d(%d, %d): weight = %.1lf, count = %d, cntsam = %d\n", e2i[e1], e1->source(), e1->target(), gr.get_edge_weight(e1), ei1.count, ei1.cntsam);
+    printf("Samples:\n");
+    for(auto it = ei1.samples.begin(); it != ei1.samples.end(); it++)
+        printf("%d, ", *it);
+    printf("\n");
+
+    printf("Out-edge %d(%d, %d): weight = %.1lf, count = %d, cntsam = %d\n", e2i[e2], e2->source(), e2->target(), gr.get_edge_weight(e2), ei2.count, ei2.cntsam);
+
+    printf("Samples:\n");
+    for(auto it = ei2.samples.begin(); it != ei2.samples.end(); it++)
+        printf("%d, ", *it);
+    printf("\n");
+
+    printf("In-Out(%d -> %d): ", e2i[e1], e2i[e2]);
+    vector<int> common;
+    set_intersection(ei1.samples.begin(), ei1.samples.end(), ei2.samples.begin(), ei2.samples.end(), back_inserter(common));
+    
+    bool phasing = false;
+    if(find(routes.begin(), routes.end(), PI(e2i[e1], e2i[e2])) != routes.end()) phasing = true;
+
+    printf("#common_samples = %ld, pe2w = (%d, %d, %.1lf)\n", common.size(), selected, phasing, selectedw);
+
+
+    return 0;
 }
 
 int router::stats()

@@ -1269,7 +1269,8 @@ int splice_graph::print_supports()
 {
 	for(int i = 0; i < num_vertices(); i++)
 	{
-		vertex_info vi = get_vertex_info(i);
+		if(degree(i) == 0) continue;
+        vertex_info vi = get_vertex_info(i);
 		printf("vertex %d, range = [%d, %d), length = %d, weight = %.2lf, count = %d\n", i, vi.lpos, vi.rpos, vi.rpos - vi.lpos, get_vertex_weight(i), vi.count);
         if(vi.count > 0)
         {
@@ -1306,10 +1307,58 @@ int splice_graph::print_supports()
 	return 0;
 }
 
+int splice_graph::print_supports_e(edge_descriptor e)
+{
+	int s = e->source();
+    int t = e->target();
+    int32_t p1 = get_vertex_info(s).rpos;
+	int32_t p2 = get_vertex_info(t).lpos;
+    double w1 = get_edge_weight(e);
+
+    edge_info ei = get_edge_info(e);
+    double w2 = ei.weight;
+	printf("edge (%d, %d) pos = %d-%d length = %d weight = (%.2lf, %.2lf) strand = %d count = %d\n", s, t, p1, p2, p2 - p1 + 1, w1, w2, ei.strand, ei.count);
+    if(ei.count > 0)
+    {
+        printf("edge (%d, %d) support set: ", s, t);
+        for (auto it = ei.supports.begin(); it !=ei.supports.end(); ++it)
+            printf("%s, ", it->c_str());
+        printf("\n");
+    }
+
+    if(s > 0)
+    {
+        vertex_info si = get_vertex_info(s);
+		printf("vertex %d, range = [%d, %d), length = %d, weight = %.2lf, count = %d\n", s, si.lpos, si.rpos, si.rpos - si.lpos, get_vertex_weight(s), si.count);
+        if(si.count > 0)
+        {
+            printf("vertex %d support set: ", s);
+            for (auto it = si.supports.begin(); it !=si.supports.end(); ++it)
+                printf("%s, ", it->c_str());
+            printf("\n");
+        }
+    }
+
+    if(t < num_vertices()-1)
+    {
+        vertex_info ti = get_vertex_info(t);
+		printf("vertex %d, range = [%d, %d), length = %d, weight = %.2lf, count = %d\n", t, ti.lpos, ti.rpos, ti.rpos - ti.lpos, get_vertex_weight(t), ti.count);
+        if(ti.count > 0)
+        {
+            printf("vertex %d support set: ", t);
+            for (auto it = ti.supports.begin(); it !=ti.supports.end(); ++it)
+                printf("%s, ", it->c_str());
+            printf("\n");
+        }
+    }
+   
+    return 0;
+}
+
 int splice_graph::print_closed_st_stats()
 {
     //test7
-    vector<int> extended_v;
+    vector<edge_descriptor> wrongST;
 
     //test8
     string file = "start.end.stats.csv";
@@ -1334,21 +1383,23 @@ int splice_graph::print_closed_st_stats()
         edge_descriptor e = *it;
         int s = e->source();
         int t = e->target();
-        /*if(s == 0 || t == (num_vertices()-1)) continue;*/
         int c = get_edge_info(e).count;
         double w = get_edge_info(e).weight;
-        max_junction_support = max(max_junction_support, c);
-        max_junction_weight = max(max_junction_weight, w);
         if(s == 0) 
         {
             max_start_support = max(max_start_support, c);
             max_start_weight = max(max_start_weight, w);
+            continue;
         }
         if(t == num_vertices()-1) 
         {
             max_end_support = max(max_end_support, c);
             max_end_weight = max(max_end_weight, w);
+            continue;
         }
+
+        max_junction_support = max(max_junction_support, c);
+        max_junction_weight = max(max_junction_weight, w);
     }
    // printf("\nMax junction support: %d\n", max_junction_support);
 
@@ -1415,14 +1466,12 @@ int splice_graph::print_closed_st_stats()
 
         //out-edges stats
         pi = out_edges(v);
-        bool out_to_nontrivial = true;
         for(it1 = pi.first, it2 = pi.second; it1 != it2; it1++)
         {
             edge_descriptor eout = (*it1);
             int eouts = eout->source();
             int eoutt = eout->target();
 
-            if(in_degree(eoutt)<=1) out_to_nontrivial = false;
 
             ei = get_edge_info(eout);
             int32_t p1 = get_vertex_info(eouts).rpos;
@@ -1439,9 +1488,10 @@ int splice_graph::print_closed_st_stats()
             }
         }
 
-        if(out_to_nontrivial && (einf.weight < 0.5*max_start_weight || einf.count < 0.5*max_start_support))
+        if(get_edge_weight(e) < 0.2*max_start_weight && einf.count < 0.1*max_start_support+2)
+        //if(einf.count < 0.7*max_start_support)
         {
-            extended_v.push_back(v);
+            wrongST.push_back(e);
             toAssemble = false;
         }
 
@@ -1490,14 +1540,11 @@ int splice_graph::print_closed_st_stats()
         PEEI pi = in_edges(v);
         edge_iterator it1, it2;
         edge_info ei;
-        bool in_from_nontrivial = true;
         for(it1 = pi.first, it2 = pi.second; it1 != it2; it1++)
         {
             edge_descriptor ein = (*it1);
             int eins = ein->source();
             int eint = ein->target();
-
-            if(out_degree(eins)<=1) in_from_nontrivial = false;
 
             ei = get_edge_info(ein);
             int32_t p1 = get_vertex_info(eins).rpos;
@@ -1538,9 +1585,11 @@ int splice_graph::print_closed_st_stats()
             }
         }
 
-        if(in_from_nontrivial && (einf.weight < 0.5*max_end_weight || einf.count < 0.5*max_end_support)) 
+        if(get_edge_weight(e) < 0.2*max_end_weight && einf.count < 0.1*max_end_support+2)
+        //if(einf.count < 0.7*max_end_support)
+
         {
-            extended_v.push_back(v);
+            wrongST.push_back(e);
             toAssemble = false;
         }
 
@@ -1550,10 +1599,11 @@ int splice_graph::print_closed_st_stats()
 
     fclose(fout);
     
-    for(auto ite = extended_v.begin(); ite != extended_v.end(); ite++)
+    for(auto ite = wrongST.begin(); ite != wrongST.end(); ite++)
     {
-        printf("Possible wrong ends: %d\n", *ite);
-        clear_vertex(*ite);
+        edge_descriptor ew = *ite;
+        printf("Possible wrong ends: (%d, %d)\n", ew->source(), ew->target());
+        remove_edge(ew);
     }
 
     return 0;
@@ -1570,6 +1620,87 @@ int32_t splice_graph::get_total_length_of_vertices(const vector<int>& v) const
 		flen += x.rpos - x.lpos;
 	}
 	return flen;
+}
+
+int splice_graph::clear_intron_retention()
+{
+    set<int> intron;
+    for(int v = 1; v < num_vertices()-1; v++)
+    {
+        int p1 = v+1;
+        if(p1 >= num_vertices()-1) continue;
+        if(!edge(v, p1).second) continue;
+        if(get_vertex_info(v).rpos != get_vertex_info(p1).lpos) continue;
+
+        for(int p2 = p1+1; p2 < num_vertices()-1; p2++)
+        {
+            p1 = p2-1;
+            if(!edge(p1, p2).second || get_vertex_info(p1).rpos != get_vertex_info(p2).lpos)
+            {
+                break;//invalid for ir
+            }
+
+            if(get_vertex_info(p1).count < 1+0.2*get_vertex_info(v).count && get_vertex_info(p1).count < 10)
+            {
+                intron.insert(p1);
+            }
+            
+            PEB peb = edge(v, p2);
+            if(!peb.second) continue;//continue to check next vertex
+            int juncnt = get_edge_info(peb.first).count;
+            if(juncnt <= 0.1*get_vertex_info(v).count || juncnt <= 0.1*get_vertex_info(p2).count) continue;
+
+            //find ir between v and p2
+            printf("\nClear intron retention:\n");
+            for(auto it = intron.begin(); it != intron.end(); it++)
+            {
+                int p3 = *it;
+                printf("Possible intron retention: %d; count = %d\n", p3, get_vertex_info(p3).count);
+                clear_vertex(p3);
+
+            }
+            intron.clear();
+            /*int p3 = p2;
+            p3--;
+            while(p3 != v)
+            {
+                printf("Possible intron retention: %d\n", p3);
+                clear_vertex(p3);
+                p3--;
+            }*/
+            //break;
+        }
+    }
+    return 0;
+}
+
+int splice_graph::get_max_out_count(int v)
+{
+	edge_iterator it1, it2;
+	PEEI pei;
+	int cc = 0;
+	for(pei = out_edges(v), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	{
+        int c = get_edge_info(*it1).count;
+		if(c < cc) continue;
+		cc = c;
+	}
+	return cc;
+}
+
+int splice_graph::get_max_in_count(int v)
+{
+	edge_iterator it1, it2;
+	PEEI pei;
+	int cc = 0;
+	for(pei = in_edges(v), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	{
+        int c = get_edge_info(*it1).count;
+		if(c < cc) continue;
+		cc = c;
+	}
+	return cc;
+
 }
 
 int splice_graph::extend_strands()

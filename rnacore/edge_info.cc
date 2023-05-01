@@ -14,7 +14,9 @@ edge_info::edge_info()
 	strand = 0;
 	weight = 0;
 	count = 0;
+    cntsam = 0;
     supports.clear();
+    samples.clear();
 }
 
 edge_info::edge_info(int l)
@@ -23,9 +25,11 @@ edge_info::edge_info(int l)
 	type = 0;
 	jid = -1;
 	count = 0;
+    cntsam = 0;
 	weight = 0;
 	strand = 0;
     supports.clear();
+    samples.clear();
 }
 
 edge_info::edge_info(const edge_info &ei)
@@ -35,7 +39,9 @@ edge_info::edge_info(const edge_info &ei)
 	type = ei.type;
 	jid = ei.jid;
 	count = ei.count;
+    cntsam = ei.cntsam;
 	weight = ei.weight;
 	strand = ei.strand;
     supports = ei.supports;
+    samples = ei.samples;
 }

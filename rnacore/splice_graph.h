@@ -67,8 +67,12 @@ public:
 	double get_out_weights(int v);
 	double get_max_in_weight(int v);
 	double get_max_out_weight(int v);
+    int get_max_in_count(int v);
+    int get_max_out_count(int v);
 
 	int count_junctions();
+
+    int clear_intron_retention();
 
 	// modify the splice_graph
 	int clear();
@@ -134,6 +138,7 @@ public:
 	int print_nontrivial_vertices();
 	int print_weights();
 	int print_supports();
+    int print_supports_e(edge_descriptor e);
     int print_closed_st_stats();
 	int print();
 	int stat_strandness();

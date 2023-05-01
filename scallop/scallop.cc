@@ -150,13 +150,16 @@ int scallop::assemble()
 		break;
 	}
 
+    //printf("\nSupports of paths:\n");
+    //gr.print_supports();
 	collect_existing_st_paths();
 
 	greedy_decompose();
 
 	build_transcripts();
 
-	if(cfg.verbose >= 2) 
+	//if(cfg.verbose >= 2) 
+    if(true)
 	{
 		for(int i = 0; i < paths.size(); i++) paths[i].print(i);
 		printf("finish assemble bundle %s\n\n", gr.gid.c_str());
@@ -199,7 +202,6 @@ bool scallop::resolve_broken_vertex()
 		ve.push_back(e2i[e]);
 	}
 
-    if(ve.size() == 0) printf("\nBug: %s, vertex %d\n", gr.gid.c_str(), x);
 	assert(ve.size() >= 1);
 	for(int k = 0; k < ve.size(); k++)
 	{
@@ -981,7 +983,7 @@ bool scallop::resolve_unsplittable_vertex(int type, int degree, double max_ratio
 		if(rt.degree > degree) continue;
 
 		rt.build();
-		//rt.print();
+		rt.print();
 
 		if(rt.ratio < 0.01)
 		{
@@ -2140,7 +2142,19 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
 	int lxy = lx1 + ly1 + lxt;
 
 	gr.set_edge_weight(p, wx0 * 0.5 + wy0 * 0.5);
-	gr.set_edge_info(p, edge_info(lxy));
+	//gr.set_edge_info(p, edge_info(lxy));
+
+    edge_info ei, ei1, ei2;
+    set<int> s;
+    ei1 = gr.get_edge_info(xx);
+    ei2 = gr.get_edge_info(yy);
+    ei.length = lxy;
+    set_union(ei1.supports.begin(), ei1.supports.end(), ei2.supports.begin(), ei2.supports.end(), inserter(ei.supports, ei.supports.begin()));
+    ei.count = ei.supports.size();
+    set_union(ei1.samples.begin(), ei1.samples.end(), ei2.samples.begin(), ei2.samples.end(), inserter(ei.samples, ei.samples.begin()));
+    ei.cntsam = ei.samples.size();
+
+    gr.set_edge_info(p, ei);
 
 	borrow_edge_strand(n, x);
 	borrow_edge_strand(n, y);
@@ -2614,6 +2628,9 @@ int scallop::collect_path(int e)
 		//p.abd = med[i2e[e]] / mi;
 		//p.reads = gr.get_edge_weight(i2e[e]);
 		p.v = v;
+
+        p.count = gr.get_edge_info(i2e[e]).count;
+        p.supports = gr.get_edge_info(i2e[e]).supports;
 
 		if(gr.get_edge_info(i2e[e]).strand == 1) p.strand = '+';
 		if(gr.get_edge_info(i2e[e]).strand == 2) p.strand = '-';

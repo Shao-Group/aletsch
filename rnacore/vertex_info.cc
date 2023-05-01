@@ -18,10 +18,12 @@ vertex_info::vertex_info()
 	rpos = 0;
 	pos = 0;
 	count = 0;
+    cntsam = 0;
 	lstrand = '.';
 	rstrand = '.';
 	regional = false;
     supports.clear();
+    samples.clear();
 }
 
 vertex_info::vertex_info(int l)
@@ -36,10 +38,12 @@ vertex_info::vertex_info(int l)
 	rpos = 0;
 	pos = 0;
 	count = 0;
+    cntsam = 0;
 	lstrand = '.';
 	rstrand = '.';
 	regional = false;
     supports.clear();
+    samples.clear();
 }
 
 vertex_info::vertex_info(const vertex_info &vi)
@@ -54,8 +58,10 @@ vertex_info::vertex_info(const vertex_info &vi)
 	rpos = vi.rpos;
 	pos = vi.pos;
 	count = vi.count;
+    cntsam = vi.cntsam;
 	lstrand = vi.lstrand;
 	rstrand = vi.rstrand;
 	regional = vi.regional;
     supports = vi.supports;
+    samples = vi.samples;
 }

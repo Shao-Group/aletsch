@@ -8,6 +8,8 @@ See LICENSE for licensing.
 #define __PATH_H__
 
 #include <vector>
+#include <set>
+#include <string>
 
 using namespace std;
 
@@ -23,6 +25,9 @@ public:
 	double abd;
 	double reads;
 	char strand;
+    int count;
+
+    set<string> supports;
 
 public:
 	int clear();

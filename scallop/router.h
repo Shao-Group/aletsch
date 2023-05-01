@@ -81,6 +81,7 @@ public:
 	// print and stats
 	int print();
 	int stats();
+    int choice_stats(edge_descriptor e1, edge_descriptor e2);
 };
 
 bool compare_edge_weight(const PED &x, const PED &y);

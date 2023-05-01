@@ -43,7 +43,7 @@ public:
 	int transform(bundle &cb, splice_graph &gr, bool revising);
 	int fix_missing_edges(splice_graph &gr, splice_graph &gx);
 	int bridge(vector<bundle*> gv);
-	int support(splice_graph &gr, splice_graph &gx);
+	int support(int sample_id, splice_graph &gr, splice_graph &gx);
 };
 
 #endif

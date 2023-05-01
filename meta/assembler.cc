@@ -154,7 +154,7 @@ int assembler::assemble(vector<bundle*> gv)
         //gr.print_supports();
 
 		//fix_missing_edges(gr, gx);
-		support(gr, gx);
+		support(bd.sp.sample_id, gr, gx);
 
 		//printf("print combined graph %s with %lu graphs after %d graph\n", gx.gid.c_str(), gv.size(), k);
 		//gx.print_supports();
@@ -179,6 +179,8 @@ int assembler::assemble(vector<bundle*> gv)
 	printf("\n");
 
     gx.print_closed_st_stats();
+    gx.clear_intron_retention();
+    refine_splice_graph(gx);
 
 	assemble(gx, px, -1);
 	return 0;
@@ -289,7 +291,7 @@ int assembler::fix_missing_edges(splice_graph &gr, splice_graph &gx)
 	return 0;
 }
 
-int assembler::support(splice_graph &gr, splice_graph &gx)
+int assembler::support(int sample_id, splice_graph &gr, splice_graph &gx)
 {
 	// calculate the support of vertices
 	for(int i = 1; i < gx.num_vertices() - 1; i++)
@@ -311,8 +313,11 @@ int assembler::support(splice_graph &gr, splice_graph &gx)
 
 		if(cont == false) continue;
 
-		vi.count++;
+		//vi.count++;
         vi.supports.insert(gr.gid);
+        vi.samples.insert(sample_id);
+        vi.count = vi.supports.size();
+        vi.cntsam = vi.samples.size();
 		gx.set_vertex_info(i, vi);
 	}
 
@@ -336,10 +341,24 @@ int assembler::support(splice_graph &gr, splice_graph &gx)
 		if(gr.edge(kl, kr).second == false) continue;
 
 		edge_info ei = gx.get_edge_info(e);
-		ei.count++;
+		//ei.count++;
         ei.supports.insert(gr.gid);
+        ei.samples.insert(sample_id);
+        ei.count = ei.supports.size();
+        ei.cntsam = ei.samples.size();
 		gx.set_edge_info(e, ei);
 	}
+
+
+    //print old start cnt in gx
+    /*printf("\nBefore\n");
+    pei = gx.out_edges(0);
+    for(it = pei.first; it != pei.second; it++)
+    {
+        if(gx.get_edge_info(*it).count == 0)continue;
+        printf("(%d, %d) support = %d\n", (*it)->source(), (*it)->target(), gx.get_edge_info(*it).count);
+    }
+    gr.print();*/
 
 	// calculate the support of starting vertices
 	pei = gr.out_edges(0);
@@ -350,17 +369,101 @@ int assembler::support(splice_graph &gr, splice_graph &gx)
 		int t = e->target();
 		assert(s == 0);
 
+        if(gr.edge(t, gr.num_vertices()-1).second) continue;
+
 		int32_t p = gr.get_vertex_info(t).lpos;
 		int k = gx.locate_vertex(p);
 		if(k < 0) continue;
+        int kori = k;
+
 		PEB peb = gx.edge(0, k);
-		if(peb.second == false) continue;
+        //if(peb.second && p - gx.get_vertex_info(k).lpos > 200) continue;
+        
+        //test50: add start&ends in gr
+        /*if(!peb.second)
+        {
+            //double ws = gr.get_edge_weight(e);
+            double ws = 1.0;
+            //double ws = gx.get_vertex_weight(k);
+            edge_descriptor es = gx.add_edge(0, k);
+            gx.set_edge_weight(es,ws);
+            edge_info esi = edge_info();
+            esi.weight = ws;
+            gx.set_edge_info(es, esi);
+            gx.ewrt.insert(PED(es, ws));
+            gx.einf.insert(PEIF(es, esi));
+        }*/
+
+        bool cont = true;
+        PEB peb2;
+        while(!peb.second)
+        {
+            k--;
+            if(k == 0) 
+            {
+                cont = false;
+                break;
+            }
+            //if(kori-k >= 3) cont = false;
+            //if(gx.get_vertex_info(kori).lpos-gx.get_vertex_info(k).rpos > 200) cont = false
+            if(p - gx.get_vertex_info(k).lpos > 200) cont = false;
+
+            if(gx.get_vertex_info(k+1).lpos != gx.get_vertex_info(k).rpos) cont = false;
+            peb2 = gx.edge(k, k+1);
+            if(!peb2.second) cont = false;
+            else 
+            {
+                edge_descriptor ep = peb2.first;
+                if(gx.get_edge_weight(ep)< gx.get_max_in_weight(k+1)*0.2)
+                    cont = false;
+            }
+            peb = gx.edge(0, k);
+            if(!cont) 
+            {
+                double ws = 1.0;
+                edge_descriptor es = gx.add_edge(0, k);
+                gx.set_edge_weight(es,ws);
+                edge_info esi = edge_info();            
+                esi.weight = ws;            
+                gx.set_edge_info(es, esi);            
+                gx.ewrt.insert(PED(es, ws));         
+                gx.einf.insert(PEIF(es, esi));
+            
+                break;
+
+            }
+        }
+        if(!cont) continue;
+
+		//if(peb.second == false) continue;
 
 		edge_info ei = gx.get_edge_info(peb.first);
-		ei.count++;
+		//ei.count++;
         ei.supports.insert(gr.gid);
+        ei.samples.insert(sample_id);
+        ei.count = ei.supports.size();
+        ei.cntsam = ei.samples.size();
 		gx.set_edge_info(peb.first, ei);
+        printf("%s supports (%d, %d <- %d(%d))\n", gr.gid.c_str(), 0, k, kori, t);
 	}
+
+    /*printf("\nAfter %s:\n", gr.gid.c_str());
+    //print new start cnt in gx
+    pei = gx.out_edges(0);
+    for(it = pei.first; it != pei.second; it++)
+    {
+        if(gx.get_edge_info(*it).count == 0)continue;
+        printf("(%d, %d) support = %d\n", (*it)->source(), (*it)->target(), gx.get_edge_info(*it).count);
+    }*/
+
+    //print old end cnt in gx
+    /*printf("\nBefore\n");
+    pei = gx.in_edges(gx.num_vertices() - 1);
+    for(it = pei.first; it != pei.second; it++)
+    {
+        if(gx.get_edge_info(*it).count == 0)continue;
+        printf("(%d, %d) support = %d\n", (*it)->source(), (*it)->target(), gx.get_edge_info(*it).count);
+    }*/
 
 	// calculate the support of ending vertices
 	pei = gr.in_edges(gr.num_vertices() - 1);
@@ -371,17 +474,92 @@ int assembler::support(splice_graph &gr, splice_graph &gx)
 		int t = e->target();
 		assert(t == gr.num_vertices() - 1);
 
+        if(gr.edge(0, s).second) continue;
+
 		int32_t p = gr.get_vertex_info(s).rpos;
 		int k = gx.locate_vertex(p - 1);
 		if(k < 0) continue;
+        int kori = k;
+
 		PEB peb = gx.edge(k, gx.num_vertices() - 1);
-		if(peb.second == false) continue;
+        //if(peb.second && gx.get_vertex_info(k).rpos - p > 200) continue;
+
+        //test50: add start&ends in gr
+        /*if(!peb.second)
+        {
+            //double ws = gr.get_edge_weight(e);
+            double ws = 1.0;
+            //double ws = gx.get_vertex_weight(k);
+            edge_descriptor es = gx.add_edge(k, gx.num_vertices()-1);
+            gx.set_edge_weight(es,ws);
+            edge_info esi = edge_info();
+            esi.weight = ws;
+            gx.set_edge_info(es, esi);
+            gx.ewrt.insert(PED(es, ws));
+            gx.einf.insert(PEIF(es, esi));
+        }*/
+
+        bool cont = true;
+        PEB peb2;
+        while(!peb.second)
+        {
+            k++;
+            if(k == gx.num_vertices() - 1) 
+            {
+                cont = false;
+                break;
+            }
+
+            //if(k-kori >= 3) cont = false;
+            //if(gx.get_vertex_info(k).lpos-gx.get_vertex_info(kori).rpos > 200) cont = false;
+            if(gx.get_vertex_info(k).rpos - p > 200) cont = false;
+
+            if(gx.get_vertex_info(k-1).rpos != gx.get_vertex_info(k).lpos) cont = false;
+            peb2 = gx.edge(k-1, k);
+            if(!peb2.second) cont = false;
+            else 
+            {
+                edge_descriptor ep = peb2.first;
+                if(gx.get_edge_weight(ep)< 0.2*gx.get_max_out_weight(k-1))
+                    cont = false;
+            }
+            
+            peb = gx.edge(k, gx.num_vertices()-1);
+            if(!cont)
+            {
+                double ws = 1.0;
+                edge_descriptor es = gx.add_edge(k, gx.num_vertices()-1);
+                gx.set_edge_weight(es,ws);
+                edge_info esi = edge_info();
+                esi.weight = ws;
+                gx.set_edge_info(es, esi);
+                gx.ewrt.insert(PED(es, ws));
+                gx.einf.insert(PEIF(es, esi));  
+                break;
+            }
+        }
+        if(!cont) continue;
+
+		//if(peb.second == false) continue;
 
 		edge_info ei = gx.get_edge_info(peb.first);
-		ei.count++;
+		//ei.count++;
         ei.supports.insert(gr.gid);
+        ei.samples.insert(sample_id);
+        ei.count = ei.supports.size();
+        ei.cntsam = ei.samples.size();
 		gx.set_edge_info(peb.first, ei);
+        printf("%s supports (%d(%d) -> %d, %ld)\n", gr.gid.c_str(), kori, s, k, gx.num_vertices()-1);
 	}
+
+    /*printf("\nAfter %s:\n", gr.gid.c_str());
+    //print new end cnt in gx
+    pei = gx.in_edges(gx.num_vertices() - 1);
+    for(it = pei.first; it != pei.second; it++)
+    {
+       if(gx.get_edge_info(*it).count == 0)continue; 
+       printf("(%d, %d) support = %d\n", (*it)->source(), (*it)->target(), gx.get_edge_info(*it).count);
+    }*/
 
 	return 0;
 }

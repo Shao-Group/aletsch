@@ -29,12 +29,14 @@ public:
 	int sdist;			// shortest distance to s
 	int tdist;			// shortest distance to t
 	int type;			// for various usage
-	int count;			// #samples supporting
+	int count;			// #subgraph supporting
+    int cntsam;         //#sample supporting
 	char lstrand;		// left side strand
 	char rstrand;		// right side strand	
 	bool regional;		// if the partial-exon is regional
 
     set<string> supports;
+    set<int> samples;
 };
 
 #endif

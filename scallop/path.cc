@@ -16,6 +16,8 @@ path::path()
 	reads = 0;
 	length = 0;
 	strand = '.';
+    count = 0;
+    supports.clear();
 }
 
 path::~path()
@@ -28,18 +30,28 @@ int path::clear()
 	reads = 0;
 	length = 0;
 	strand = '.';
+    count = 0;
+    supports.clear();
 	return 0;
 }
 
 int path::print(int index) const
 {
-	if(v.size() == 0) return 0;
+	if(v.size() <= 3) return 0;
 	printf("path %d: abundance = %.2lf, length = %d, ave-reads = %.2lf, strand = %c, vertices = ", index, abd, length, reads / length, strand);
 	for(int i = 0; i < v.size() - 1; i++)
 	{
 		printf("%d, ", v[i]);
 	}
 	printf("%d\n", v[v.size() - 1]);
+
+    printf("path %d count = %d\n", index, count);
+    if(count > 0)
+    {
+        for(auto it = supports.begin(); it != supports.end(); it++)
+            printf("%s, ", it->c_str());
+        printf("\n");
+    }
 	return 0;
 }
 

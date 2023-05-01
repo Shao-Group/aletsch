@@ -23,11 +23,13 @@ public:
 	int length;
 	int type;
 	int jid;		// junction id
-	int count;		// #supporting samples
+	int count;		// #supporting subgraphs
+    int cntsam;     // #supporting sampels
 	double weight;	// new weight from hyper-edges
 	int strand;		// strandness ./+/- => 0,1,2
 
     set<string> supports;
+    set<int> samples;
 };
 
 #endif
