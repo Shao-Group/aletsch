@@ -984,14 +984,14 @@ int router::choice_stats(edge_descriptor e1, edge_descriptor e2)
 
     edge_info ei1 = gr.get_edge_info(e1), ei2 = gr.get_edge_info(e2);
     printf("\nIn-edge %d(%d, %d): weight = %.1lf, count = %d, cntsam = %d\n", e2i[e1], e1->source(), e1->target(), gr.get_edge_weight(e1), ei1.count, ei1.cntsam);
-    printf("Samples:\n");
+    printf("Samples:");
     for(auto it = ei1.samples.begin(); it != ei1.samples.end(); it++)
         printf("%d, ", *it);
     printf("\n");
 
     printf("Out-edge %d(%d, %d): weight = %.1lf, count = %d, cntsam = %d\n", e2i[e2], e2->source(), e2->target(), gr.get_edge_weight(e2), ei2.count, ei2.cntsam);
 
-    printf("Samples:\n");
+    printf("Samples:");
     for(auto it = ei2.samples.begin(); it != ei2.samples.end(); it++)
         printf("%d, ", *it);
     printf("\n");
