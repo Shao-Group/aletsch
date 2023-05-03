@@ -417,11 +417,10 @@ int assembler::support(int sample_id, splice_graph &gr, splice_graph &gx)
                 if(gx.get_edge_weight(ep)< gx.get_max_in_weight(k+1)*0.2)
                     cont = false;
             }
-            peb = gx.edge(0, k);
             if(!cont) 
             {
                 double ws = 1.0;
-                edge_descriptor es = gx.add_edge(0, k);
+                edge_descriptor es = gx.add_edge(0, k+1);
                 gx.set_edge_weight(es,ws);
                 edge_info esi = edge_info();            
                 esi.weight = ws;            
@@ -430,8 +429,8 @@ int assembler::support(int sample_id, splice_graph &gr, splice_graph &gx)
                 gx.einf.insert(PEIF(es, esi));
             
                 break;
-
             }
+            peb = gx.edge(0, k);
         }
         if(!cont) continue;
 
@@ -524,11 +523,10 @@ int assembler::support(int sample_id, splice_graph &gr, splice_graph &gx)
                     cont = false;
             }
             
-            peb = gx.edge(k, gx.num_vertices()-1);
             if(!cont)
             {
                 double ws = 1.0;
-                edge_descriptor es = gx.add_edge(k, gx.num_vertices()-1);
+                edge_descriptor es = gx.add_edge(k-1, gx.num_vertices()-1);
                 gx.set_edge_weight(es,ws);
                 edge_info esi = edge_info();
                 esi.weight = ws;
@@ -537,6 +535,7 @@ int assembler::support(int sample_id, splice_graph &gr, splice_graph &gx)
                 gx.einf.insert(PEIF(es, esi));  
                 break;
             }
+            peb = gx.edge(k, gx.num_vertices()-1);
         }
         if(!cont) continue;
 
