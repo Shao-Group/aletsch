@@ -19,6 +19,7 @@ public:
 
 public:
 	vector<int> v;
+	int type;
 	int length;
 	double abd;
 	double reads;

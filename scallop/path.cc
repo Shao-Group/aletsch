@@ -12,6 +12,7 @@ See LICENSE for licensing.
 path::path()
 {
 	v.clear();
+	type = 1;
 	abd = 0;
 	reads = 0;
 	length = 0;
@@ -24,6 +25,7 @@ path::~path()
 int path::clear()
 {
 	v.clear();
+	type = 1;
 	abd = 0;
 	reads = 0;
 	length = 0;
@@ -34,7 +36,7 @@ int path::clear()
 int path::print(int index) const
 {
 	if(v.size() == 0) return 0;
-	printf("path %d: abundance = %.2lf, length = %d, ave-reads = %.2lf, strand = %c, vertices = ", index, abd, length, reads / length, strand);
+	printf("path %d: type = %d, abundance = %.2lf, length = %d, ave-reads = %.2lf, strand = %c, vertices = ", index, type, abd, length, reads / length, strand);
 	for(int i = 0; i < v.size() - 1; i++)
 	{
 		printf("%d, ", v[i]);
