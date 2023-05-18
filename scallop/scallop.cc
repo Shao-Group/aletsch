@@ -2934,7 +2934,7 @@ int scallop::build_transcripts()
 		string tid = gr.gid + "." + tostring(i);
 		transcript trst;
 		path &p = paths[i];
-		build_transcript(gr, trst, p.v, p.strand, p.abd * p.type, tid);
+		build_transcript(gr, trst, p.v, p.strand, p.abd, tid, p.type);
 		trsts.push_back(trst);
 	}
 	return 0;

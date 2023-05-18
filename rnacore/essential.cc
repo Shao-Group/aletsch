@@ -716,13 +716,14 @@ int build_phase_set_from_unpaired_reads(phase_set &ps, splice_graph &gr, const v
 }
 */
 
-int build_transcript(splice_graph &gr, transcript &trst, const vector<int> &v, char strand, double abd, const string &tid)
+int build_transcript(splice_graph &gr, transcript &trst, const vector<int> &v, char strand, double abd, const string &tid, int type)
 {
 	trst.seqname = gr.chrm;
 	trst.source = "aletsch";
 	trst.gene_id = gr.gid;
 	trst.transcript_id = tid;
 	trst.coverage = log(1.0 + abd);
+	if(type == -1) trst.coverage = 0 - trst.coverage;
 	trst.strand = strand;
 
 	join_interval_map jmap;
@@ -751,6 +752,6 @@ bool build_single_exon_transcript(splice_graph &gr, transcript &trst)
 	char strand = gr.strand;
 	vector<int> v;
 	v.push_back(1);
-	build_transcript(gr, trst, v, strand, abd, tid);
+	build_transcript(gr, trst, v, strand, abd, tid, 1);
 	return true;
 }
