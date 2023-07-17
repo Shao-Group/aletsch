@@ -185,7 +185,7 @@ int previewer::infer_insertsize()
 			bb2.strand = '-';
 		}
 
-		if(cnt >= 200000) break;
+		if(cnt >= cfg.max_preview_reads) break;
 
 		// add hit
 		if(cfg.uniquely_mapped_only == true && ht.nh != 1) continue;
@@ -209,7 +209,7 @@ int previewer::infer_insertsize()
 		total += it->second;
 	}
 
-	if(total < 10000)
+	if(total < cfg.min_preview_spliced_reads)
 	{
 		printf("not enough paired-end reads to create the profile (%d collected)\n", total);
 		return 0;

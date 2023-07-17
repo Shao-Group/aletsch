@@ -62,7 +62,7 @@ parameters::parameters()
 	// for preview
 	max_preview_reads = 2000000;
 	max_preview_spliced_reads = 50000;
-	min_preview_spliced_reads = 5000;
+	min_preview_spliced_reads = 50;
 	preview_infer_ratio = 0.8;
 	
 	// for identifying subgraphs
