@@ -41,8 +41,8 @@ int region::build_join_interval_map()
 
 	if(lit == mmap->end() || rit == mmap->end()) return 0;
 
-	int32_t maxc = compute_max_overlap(mmap, lit, rit);
-	double minc = log10(maxc + 1) + log10(rpos - lpos + 1) - 2.5;
+	int32_t maxc = compute_max_overlap(*mmap, lit, rit);
+	double minc = log10(maxc + 1) + log10(rpos - lpos + 1) - 2.0;
 
 	SIMI it = lit;
 	while(true)
