@@ -23,8 +23,8 @@ region::region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype, const split
 	:lpos(_lpos), rpos(_rpos), mmap(_mmap), imap(_imap), ltype(_ltype), rtype(_rtype), cfg(c), sp(s)
 {
 	build_join_interval_map();
-	split_large_region();
 	if(ltype == RIGHT_SPLICE && rtype == LEFT_SPLICE) smooth_join_interval_map();
+	split_large_region();
 	build_partial_exons();
 	//calculate_significance();
 } 
@@ -93,7 +93,7 @@ int region::split_large_region()
 
 	//if(rpos - lpos <= 100) return 0;
 
-	printf("large-region %d-%d, len = %d, minc/maxc = %d/%d, min = %d-%d, max = %d-%d\n", lpos, rpos, rpos - lpos, minc, maxc, mins, mint, maxs, maxt);
+	printf("large-region %d-%d, len = %d, #intervals = %lu, minc/maxc = %d/%d, min = %d-%d, max = %d-%d\n", lpos, rpos, rpos - lpos, jmap.size(), minc, maxc, mins, mint, maxs, maxt);
 	return 0;
 }
 
