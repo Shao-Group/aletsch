@@ -61,6 +61,8 @@ int region::build_join_interval_map()
 int region::split_large_region()
 {
 	if(boost::distance(jmap.begin(), jmap.end()) != 1) return 0;
+	if(ltype == START_BOUNDARY) return 0; 
+	if(rtype == END_BOUNDARY) return 0; 
 
 	PSIMI pei = locate_boundary_iterators(*mmap, lpos, rpos);
 	SIMI lit = pei.first, rit = pei.second;
