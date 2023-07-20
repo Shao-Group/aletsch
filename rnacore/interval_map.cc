@@ -125,6 +125,65 @@ int32_t compute_max_overlap(const split_interval_map &imap, SIMI &p, SIMI &q)
 	return s;
 }
 
+int32_t compute_percentile_overlap(const split_interval_map &imap, SIMI &p, SIMI &q, double per)
+{
+	if(p == imap.end()) return 0;
+
+	vector<pair<int32_t, int32_t>> vv;
+
+	int32_t t = 0;
+	for(SIMI it = p; it != q; it++)
+	{
+		int l = lower(it->first);
+		int u = upper(it->first);
+		assert(u > l);
+
+		t += u - l;
+		vv.push_back(make_pair(it->second, u - l));
+	}
+	if(q != imap.end())
+	{
+		int l = lower(q->first);
+		int u = upper(q->first);
+		t += u - l;
+		vv.push_back(make_pair(q->second, u - l));
+	}
+
+	sort(vv.begin(), vv.end());
+
+	int32_t mm = -1;
+	int32_t qq = 0;
+	for(int k = 0; k < vv.size(); k++)
+	{
+		qq += vv[k].second;
+		if(1.0 * qq >= per * t)
+		{
+			mm = vv[k].first;
+			break;
+		}
+	}
+
+	assert(mm != -1);
+
+	int32_t s = 0;
+	for(SIMI it = p; it != q; it++)
+	{
+		int l = lower(it->first);
+		int u = upper(it->first);
+		assert(u > l);
+
+		s += (u - l) * (it->second > mm ? mm : it->second);
+	}
+	if(q != imap.end())
+	{
+		int l = lower(q->first);
+		int u = upper(q->first);
+		s += (u - l) * (q->second > mm ? mm : q->second);
+	}
+
+	return s;
+}
+
 int32_t compute_sum_overlap(const split_interval_map &imap, SIMI &p, SIMI &q)
 {
 	if(p == imap.end()) return 0;
@@ -163,7 +222,7 @@ int32_t compute_coverage(const split_interval_map &imap, SIMI &p, SIMI &q)
 	return s;
 }
 
-int evaluate_rectangle(const split_interval_map &imap, int ll, int rr, double &ave, double &dev, double &max)
+int evaluate_rectangle(const split_interval_map &imap, int ll, int rr, double &ave, double &dev, double &max, double &pve, double per)
 {
 	ave = 0;
 	dev = 1;
@@ -177,6 +236,7 @@ int evaluate_rectangle(const split_interval_map &imap, int ll, int rr, double &a
 
 	max = 1.0 * compute_max_overlap(imap, lit, rit);
 	ave = 1.0 * compute_sum_overlap(imap, lit, rit) / (rr - ll);
+	pve = 1.0 * compute_percentile_overlap(imap, lit, rit, per) / (rr - ll);
 	//printf("compute average %d-%d = %.2lf\n", ll, rr, ave);
 
 	double var = 0;

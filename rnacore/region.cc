@@ -178,7 +178,8 @@ int region::build_partial_exons()
 	if(jmap.size() >= 1 && lower(jmap.begin()->first) == lpos && upper(jmap.begin()->first) == rpos)
 	{
 		partial_exon pe(lpos, rpos, ltype, rtype);
-		evaluate_rectangle(*mmap, pe.lpos, pe.rpos, pe.ave, pe.dev, pe.max);
+		double ave;
+		evaluate_rectangle(*mmap, pe.lpos, pe.rpos, ave, pe.dev, pe.max, pe.ave, 0.5);
 		pexons.push_back(pe);
 		return 0;
 	}
@@ -206,7 +207,8 @@ int region::build_partial_exons()
 		int rt = (p2 == rpos) ? rtype : END_BOUNDARY;
 
 		partial_exon pe(p1, p2, lt, rt);
-		evaluate_rectangle(*mmap, pe.lpos, pe.rpos, pe.ave, pe.dev, pe.max);
+		double ave;
+		evaluate_rectangle(*mmap, pe.lpos, pe.rpos, ave, pe.dev, pe.max, pe.ave, 0.5);
 		pexons.push_back(pe);
 	}
 

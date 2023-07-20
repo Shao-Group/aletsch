@@ -74,7 +74,8 @@ int32_t get_overlapped_length(const join_interval_map &m1, const join_interval_m
 int32_t get_total_length(const join_interval_map &m);
 
 // evaluate a region
-int evaluate_rectangle(const split_interval_map &imap, int ll, int rr, double &ave, double &dev, double &max);
+//int evaluate_rectangle(const split_interval_map &imap, int ll, int rr, double &ave, double &dev, double &max);
+int evaluate_rectangle(const split_interval_map &imap, int ll, int rr, double &ave, double &dev, double &max, double &pve, double per);
 int evaluate_triangle(const split_interval_map &imap, int ll, int rr, double &ave, double &dev);
 
 // print
