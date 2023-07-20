@@ -41,11 +41,14 @@ int region::build_join_interval_map()
 
 	if(lit == mmap->end() || rit == mmap->end()) return 0;
 
+	int32_t maxc = compute_max_overlap(mmap, lit, rit);
+	double minc = log10(maxc + 1) + log10(rpos - lpos + 1) - 2.5;
+
 	SIMI it = lit;
 	while(true)
 	{
 		//if(it->second >= 2) 
-		jmap += make_pair(it->first, 1);
+		if(it->second >= minc) jmap += make_pair(it->first, 1);
 		if(it == rit) break;
 		it++;
 	}
@@ -91,7 +94,7 @@ int region::split_large_region()
 			mint = upper(it->first);
 		}
 
-		printf(" subregion %d-%d, len = %d, cov = %d\n", lower(it->first), upper(it->first), upper(it->first) - lower(it->first), it->second);
+		//printf(" subregion %d-%d, len = %d, cov = %d\n", lower(it->first), upper(it->first), upper(it->first) - lower(it->first), it->second);
 
 		if(it == rit) break;
 		it++;
