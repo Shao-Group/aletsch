@@ -91,7 +91,7 @@ int region::split_large_region()
 		it++;
 	}
 
-	if(rpos - lpos <= 1000) return 0;
+	//if(rpos - lpos <= 100) return 0;
 
 	printf("large-region %d-%d, len = %d, minc/maxc = %d/%d, min = %d-%d, max = %d-%d\n", lpos, rpos, rpos - lpos, minc, maxc, mins, mint, maxs, maxt);
 	return 0;
