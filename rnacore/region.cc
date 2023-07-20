@@ -91,6 +91,8 @@ int region::split_large_region()
 			mint = upper(it->first);
 		}
 
+		printf(" subregion %d-%d, len = %d, cov = %d\n", lower(it->first), upper(it->first), upper(it->first) - lower(it->first), it->second);
+
 		if(it == rit) break;
 		it++;
 	}
