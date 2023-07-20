@@ -43,6 +43,7 @@ public:
 private:
 	bool empty_subregion(int32_t p1, int32_t p2);
 	int build_join_interval_map();
+	int split_large_region();
 	int smooth_join_interval_map();
 	int build_partial_exons();
 	int calculate_significance();

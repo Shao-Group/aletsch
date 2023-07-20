@@ -23,6 +23,7 @@ region::region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype, const split
 	:lpos(_lpos), rpos(_rpos), mmap(_mmap), imap(_imap), ltype(_ltype), rtype(_rtype), cfg(c), sp(s)
 {
 	build_join_interval_map();
+	split_large_region();
 	if(ltype == RIGHT_SPLICE && rtype == LEFT_SPLICE) smooth_join_interval_map();
 	build_partial_exons();
 	//calculate_significance();
@@ -54,6 +55,45 @@ int region::build_join_interval_map()
 		assert(it->second == 1);
 	}
 
+	return 0;
+}
+
+int region::split_large_region()
+{
+	PSIMI pei = locate_boundary_iterators(*mmap, lpos, rpos);
+	SIMI lit = pei.first, rit = pei.second;
+
+	if(lit == mmap->end() || rit == mmap->end()) return 0;
+
+	SIMI it = lit;
+	int32_t minc = INT32_MAX;
+	int32_t maxc = -1;
+	int32_t mins = 0;
+	int32_t mint = 0;
+	int32_t maxs = 0;
+	int32_t maxt = 0;
+	while(true)
+	{
+		if(it->second > maxc)
+		{
+			maxc = it->second;
+			maxs = lower(it->first);
+			maxt = upper(it->first);
+		}
+		if(it->second < minc)
+		{
+			minc = it->second;
+			mins = lower(it->first);
+			mint = upper(it->first);
+		}
+
+		if(it == rit) break;
+		it++;
+	}
+
+	if(rpos - lpos <= 1000) return 0;
+
+	printf("large-region %d-%d, len = %d, minc/maxc = %d/%d, min = %d-%d, max = %d-%d\n", lpos, rpos, rpos - lpos, minc, maxc, mins, mint, maxs, maxt);
 	return 0;
 }
 
