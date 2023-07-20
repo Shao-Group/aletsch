@@ -97,7 +97,8 @@ int region::split_large_region()
 
 	//if(rpos - lpos <= 100) return 0;
 
-	printf("large-region %d-%d, len = %d, #intervals = %lu/%lu, minc/maxc = %d/%d, min = %d-%d, max = %d-%d\n", lpos, rpos, rpos - lpos, jmap.size(), boost::distance(jmap.begin(), jmap.end()), minc, maxc, mins, mint, maxs, maxt);
+	printf("large-region %d-%d, len = %d, types = %d/%d, minc/maxc = %d/%d, min = %d-%d, max = %d-%d\n", 
+			lpos, rpos, rpos - lpos, ltype, rtype, minc, maxc, mins, mint, maxs, maxt);
 	return 0;
 }
 
