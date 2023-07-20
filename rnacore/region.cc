@@ -44,11 +44,14 @@ int region::build_join_interval_map()
 	int32_t maxc = compute_max_overlap(*mmap, lit, rit);
 	double minc = log10(maxc + 1) + log10(rpos - lpos + 1) - 2.0;
 
+	printf("region %d-%d, len = %d, types = %d/%d, maxc = %d, min = %.2lf\n", lpos, rpos, rpos - lpos, ltype, rtype, maxc, minc);
+
 	SIMI it = lit;
 	while(true)
 	{
 		//if(it->second >= 2) 
 		if(it->second >= minc) jmap += make_pair(it->first, 1);
+		else printf("skip %d-%d, len = %d, cov = %d\n", lower(it->first), upper(it->first), upper(it->first) - lower(it->first), it->second);
 		if(it == rit) break;
 		it++;
 	}
