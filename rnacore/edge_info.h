@@ -7,6 +7,9 @@ See LICENSE for licensing.
 #ifndef __EDGE_INFO__
 #define __EDGE_INFO__
 
+#include <set>
+using namespace std;
+
 class edge_info
 {
 public:
@@ -22,6 +25,8 @@ public:
 	int count;		// #supporting samples
 	double weight;	// new weight from hyper-edges
 	int strand;		// strandness ./+/- => 0,1,2
+
+    set<int> samples;
 };
 
 #endif

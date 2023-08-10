@@ -128,6 +128,30 @@ int assembler::assemble(vector<bundle*> gv)
 	// combined phase set 
 	phase_set px;
 
+    map< pair<int32_t, int32_t>, set<int> > junc2sup;
+    for(int k = 0; k < gv.size(); k++)
+    {
+        bundle &bd = *(gv[k]);
+		splice_graph gr;
+		transform(bd, gr, true);
+
+        edge_iterator it;
+        PEEI pei = gr.edges();
+        for(it = pei.first; it != pei.second; it++)
+        {
+		    edge_descriptor e = (*it);
+		    int s = e->source();
+		    int t = e->target();
+
+		    if(s == 0) continue;
+		    if(t == gx.num_vertices() - 1) continue;
+		    if(gr.get_vertex_info(s).rpos == gr.get_vertex_info(t).lpos) continue;//ignore non-splicing junctions
+
+            pair<int32_t, int32_t>p = make_pair(gr.get_vertex_info(s).rpos,gr.get_vertex_info(t).lpos);
+            junc2sup[p].insert(bd.sp.sample_id);
+        }
+    }
+
 	// assemble individual bundle
 	for(int k = 0; k < gv.size(); k++)
 	{
@@ -137,21 +161,92 @@ int assembler::assemble(vector<bundle*> gv)
 		splice_graph gr;
 		transform(bd, gr, true);
 
-		fix_missing_edges(gr, gx);
+        fix_missing_edges(gr, gx);
+
+        //calculate junction supports based on other samples
+        junction_support(gr, junc2sup);
+        /*for(int j = 0; j < gv.size(); j++)
+        {
+            bundle &bd1 = *(gv[j]);
+            splice_graph gr1;
+            transform(bd1, gr1, true);
+            junction_support(bd1.sp.sample_id, gr1, gr);
+        }*/
+
+		printf("print %d/%lu individual graph %s, sample_id=%d\n", k+1, gv.size(), gr.gid.c_str(), bd.sp.sample_id);
+        gr.print_junction_supports();
 
 		phase_set ps;
 		bd.build_phase_set(ps, gr);
 		px.combine(ps);
 
 		assemble(gr, ps, bd.sp.sample_id);
-		bd.clear();
+		//bd.clear();
 	}
+
+    for(int k = 0; k < gv.size(); k++)
+        gv[k]->clear();
 
 	bx.clear();
 	// assemble combined instance
 	//assemble(gx, px, ts, -1);
 	return 0;
 }
+
+//calculate how junctions in grs supports gx
+int assembler::junction_support(splice_graph &gr, map< pair<int32_t, int32_t>, set<int> > &junc2sup)
+{
+    edge_iterator it;
+    PEEI pei = gr.edges();
+    for(it = pei.first; it != pei.second; it++)
+    {
+		edge_descriptor e = (*it);
+		int s = e->source();
+		int t = e->target();
+
+		if(s == 0) continue;
+		if(t == gr.num_vertices() - 1) continue;
+		if(gr.get_vertex_info(s).rpos == gr.get_vertex_info(t).lpos) continue;//ignore non-splicing junctions
+
+        pair<int32_t, int32_t>p = make_pair(gr.get_vertex_info(s).rpos,gr.get_vertex_info(t).lpos);
+        if(junc2sup.find(p) != junc2sup.end())
+        {
+            edge_info ei = gr.get_edge_info(e);
+            ei.samples = junc2sup[p];
+            ei.count = ei.samples.size();
+            gr.set_edge_info(e, ei);
+        }
+    }
+    return 0;
+}
+
+/*int assembler::junction_support(int sample_id, splice_graph &gr, splice_graph &gx)
+{
+	edge_iterator it;
+	PEEI pei = gx.edges();
+	for(it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = (*it);
+		int s = e->source();
+		int t = e->target();
+
+		if(s == 0) continue;
+		if(t == gx.num_vertices() - 1) continue;
+		if(gx.get_vertex_info(s).rpos == gx.get_vertex_info(t).lpos) continue;//ignore non-splicing junctions
+
+		int kl = gr.locate_rbound(gx.get_vertex_info(s).rpos);
+		int kr = gr.locate_lbound(gx.get_vertex_info(t).lpos);
+		if(kl == -1 || kr == -1) continue;
+
+		if(gr.edge(kl, kr).second == false) continue;
+
+		edge_info ei = gx.get_edge_info(e);
+        ei.samples.insert(sample_id);
+        ei.count = ei.samples.size();
+        gx.set_edge_info(e, ei);
+    }
+    return 0;
+}*/
 
 int assembler::transform(bundle &cb, splice_graph &gr, bool revising)
 {

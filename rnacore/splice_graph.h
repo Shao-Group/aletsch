@@ -135,6 +135,7 @@ public:
 	int print_weights();
 	int print();
 	int stat_strandness();
+    int print_junction_supports();
 };
 
 #endif
