@@ -75,6 +75,8 @@ public:
 	int thread_isolate1(int k, vector<double> &vw);
 	int thread_isolate2(int k, vector<double> &vw);
 	int thread_isolate_all(const vector<int> &v1, const vector<int> &v2, vector<double> &vw);
+    int thread_left_isolate(vector<int> &left_iso, vector<int> &right_all);
+    int thread_right_isolate(vector<int> &right_iso, vector<int> &left_all);
 	bool thread_leaf(vector<double> &vw);
 	bool thread_turn(vector<double> &vw);
 

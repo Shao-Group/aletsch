@@ -922,7 +922,7 @@ bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 		if(rt.degree > degree) continue;
 
 		rt.build();
-
+        rt.print();
 
 		assert(rt.eqns.size() == 2);
 
@@ -980,7 +980,7 @@ bool scallop::resolve_unsplittable_vertex(int type, int degree, double max_ratio
 		if(rt.degree > degree) continue;
 
 		rt.build();
-		//rt.print();
+		rt.print();
 
 		if(rt.ratio < 0.01)
 		{
@@ -2139,7 +2139,51 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
 	int lxy = lx1 + ly1 + lxt;
 
 	gr.set_edge_weight(p, wx0 * 0.5 + wy0 * 0.5);
-	gr.set_edge_info(p, edge_info(lxy));
+	//gr.set_edge_info(p, edge_info(lxy));
+
+    edge_info ei, ei1, ei2;
+    set<int> s;
+    ei1 = gr.get_edge_info(xx);
+    ei2 = gr.get_edge_info(yy);
+    ei.length = lxy;
+
+    //set_union(ei1.samples.begin(), ei1.samples.end(), ei2.samples.begin(), ei2.samples.end(), inserter(ei.samples, ei.samples.begin()));
+    if(!ei1.count)
+    {
+        ei.samples = ei2.samples;
+        ei.spAbd = ei2.spAbd;
+    }
+    else if(!ei2.count)
+    {
+        ei.samples = ei1.samples;
+        ei.spAbd = ei1.spAbd;
+    }
+    else
+        set_intersection(ei1.samples.begin(), ei1.samples.end(), ei2.samples.begin(), ei2.samples.end(), inserter(ei.samples, ei.samples.begin()));
+
+    ei.count = ei.samples.size();
+    if(ei1.count > 0 && ei2.count > 0)//take average
+    {
+        for(auto sp : ei.samples)
+        {
+            if(ei1.spAbd.find(sp) == ei1.spAbd.end()) ei.spAbd.insert(make_pair(sp, ei2.spAbd[sp]*0.5));
+            else if(ei2.spAbd.find(sp) == ei2.spAbd.end()) ei.spAbd.insert(make_pair(sp, ei1.spAbd[sp]*0.5));
+            else ei.spAbd.insert(make_pair(sp, ei1.spAbd[sp]*0.5+ei2.spAbd[sp]*0.5));
+        }
+    }
+    gr.set_edge_info(p, ei);
+
+    printf("Merge adjacent equal edges:\n");
+    for(int& prev : mev[xx]) printf("%d ", prev);
+    printf("+ %d + ", xt);
+    for(int& post : mev[yy]) printf("%d ", post);
+    printf("\nedge1 (%d, %d), count = %d, supported by: ", xs, xt, ei1.count);
+    for(auto sp : ei1.samples) printf("%d(%.2lf) ", sp, ei1.spAbd[sp]);
+    printf("\nedge2 (%d, %d), count = %d, supported by: ", ys, yt, ei2.count);
+    for(auto sp : ei2.samples) printf("%d(%.2lf) ", sp, ei2.spAbd[sp]);
+    printf("\nmerged edge (%d, %d), count = %d, supported by: ", xs, yt, ei.count);
+    for(auto sp : ei.samples) printf("%d(%.2lf) ", sp, ei.spAbd[sp]);
+    printf("\n");
 
 	borrow_edge_strand(n, x);
 	borrow_edge_strand(n, y);
@@ -2613,6 +2657,7 @@ int scallop::collect_path(int e)
 		//p.abd = med[i2e[e]] / mi;
 		//p.reads = gr.get_edge_weight(i2e[e]);
 		p.v = v;
+        p.count = gr.get_edge_info(i2e[e]).count;
 
 		if(gr.get_edge_info(i2e[e]).strand == 1) p.strand = '+';
 		if(gr.get_edge_info(i2e[e]).strand == 2) p.strand = '-';

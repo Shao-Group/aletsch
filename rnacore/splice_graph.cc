@@ -1285,8 +1285,8 @@ int splice_graph::print_junction_supports()
         {
             printf("edge (%d, %d) pos = %d-%d length = %d weight = (%.2lf, %.2lf) strand = %d count = %d\n", s, t, p1, p2, p2 - p1 + 1, w1, w2, ei.strand, ei.count);
             printf("support set: ");
-            for (auto it = ei.samples.begin(); it !=ei.samples.end(); ++it)
-                printf("%d, ", *it);
+            for (auto sp : ei.samples)
+                printf("%d(%.2lf), ", sp, ei.spAbd[sp]);
             printf("\n");
         }
     }

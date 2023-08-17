@@ -8,6 +8,7 @@ See LICENSE for licensing.
 #define __EDGE_INFO__
 
 #include <set>
+#include <map>
 using namespace std;
 
 class edge_info
@@ -27,6 +28,7 @@ public:
 	int strand;		// strandness ./+/- => 0,1,2
 
     set<int> samples;
+    map<int, double> spAbd; //map sample_id to abd
 };
 
 #endif

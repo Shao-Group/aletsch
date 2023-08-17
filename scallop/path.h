@@ -23,6 +23,7 @@ public:
 	double abd;
 	double reads;
 	char strand;
+    int count;
 
 public:
 	int clear();

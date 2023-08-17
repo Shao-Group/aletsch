@@ -129,6 +129,7 @@ int assembler::assemble(vector<bundle*> gv)
 	phase_set px;
 
     map< pair<int32_t, int32_t>, set<int> > junc2sup;
+    map< pair< pair<int32_t, int32_t>, int>, double> sup2abd;
     for(int k = 0; k < gv.size(); k++)
     {
         bundle &bd = *(gv[k]);
@@ -144,11 +145,17 @@ int assembler::assemble(vector<bundle*> gv)
 		    int t = e->target();
 
 		    if(s == 0) continue;
-		    if(t == gx.num_vertices() - 1) continue;
-		    if(gr.get_vertex_info(s).rpos == gr.get_vertex_info(t).lpos) continue;//ignore non-splicing junctions
+		    if(t == gr.num_vertices() - 1) continue;
+		    //if(gr.get_vertex_info(s).rpos == gr.get_vertex_info(t).lpos) continue;//ignore non-splicing junctions
 
             pair<int32_t, int32_t>p = make_pair(gr.get_vertex_info(s).rpos,gr.get_vertex_info(t).lpos);
             junc2sup[p].insert(bd.sp.sample_id);
+            
+            pair< pair<int32_t, int32_t>, int> psp = make_pair(p, bd.sp.sample_id);
+            /*if(sup2abd.find(psp) != sup2abd.end())
+                sup2abd[psp] = gr.get_edge_weight(e);
+            else*/
+            sup2abd[psp] += gr.get_edge_weight(e);
         }
     }
 
@@ -164,7 +171,7 @@ int assembler::assemble(vector<bundle*> gv)
         fix_missing_edges(gr, gx);
 
         //calculate junction supports based on other samples
-        junction_support(gr, junc2sup);
+        junction_support(gr, junc2sup, sup2abd);
         /*for(int j = 0; j < gv.size(); j++)
         {
             bundle &bd1 = *(gv[j]);
@@ -193,8 +200,7 @@ int assembler::assemble(vector<bundle*> gv)
 	return 0;
 }
 
-//calculate how junctions in grs supports gx
-int assembler::junction_support(splice_graph &gr, map< pair<int32_t, int32_t>, set<int> > &junc2sup)
+int assembler::junction_support(splice_graph &gr, map< pair<int32_t, int32_t>, set<int> > &junc2sup, map< pair< pair<int32_t, int32_t>, int>, double> &sup2abd)
 {
     edge_iterator it;
     PEEI pei = gr.edges();
@@ -206,7 +212,7 @@ int assembler::junction_support(splice_graph &gr, map< pair<int32_t, int32_t>, s
 
 		if(s == 0) continue;
 		if(t == gr.num_vertices() - 1) continue;
-		if(gr.get_vertex_info(s).rpos == gr.get_vertex_info(t).lpos) continue;//ignore non-splicing junctions
+		//if(gr.get_vertex_info(s).rpos == gr.get_vertex_info(t).lpos) continue;//ignore non-splicing junctions
 
         pair<int32_t, int32_t>p = make_pair(gr.get_vertex_info(s).rpos,gr.get_vertex_info(t).lpos);
         if(junc2sup.find(p) != junc2sup.end())
@@ -214,6 +220,11 @@ int assembler::junction_support(splice_graph &gr, map< pair<int32_t, int32_t>, s
             edge_info ei = gr.get_edge_info(e);
             ei.samples = junc2sup[p];
             ei.count = ei.samples.size();
+            for(auto sp : ei.samples)
+            {
+                pair< pair<int32_t, int32_t>, int> psp = make_pair(p, sp);
+                if(sup2abd.find(psp) != sup2abd.end()) ei.spAbd[sp] = sup2abd[psp];
+            }
             gr.set_edge_info(e, ei);
         }
     }

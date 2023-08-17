@@ -15,6 +15,7 @@ edge_info::edge_info()
 	weight = 0;
 	count = 0;
     samples.clear();
+    spAbd.clear();
 }
 
 edge_info::edge_info(int l)
@@ -26,6 +27,7 @@ edge_info::edge_info(int l)
 	weight = 0;
 	strand = 0;
     samples.clear();
+    spAbd.clear();
 }
 
 edge_info::edge_info(const edge_info &ei)
@@ -38,4 +40,5 @@ edge_info::edge_info(const edge_info &ei)
 	weight = ei.weight;
 	strand = ei.strand;
     samples = ei.samples;
+    spAbd = ei.spAbd;
 }

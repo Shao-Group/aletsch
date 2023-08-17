@@ -723,6 +723,7 @@ int build_transcript(splice_graph &gr, transcript &trst, const vector<int> &v, c
 	trst.gene_id = gr.gid;
 	trst.transcript_id = tid;
 	trst.coverage = log(1.0 + abd);
+    //trst.coverage = abd;
 	trst.strand = strand;
 
 	join_interval_map jmap;

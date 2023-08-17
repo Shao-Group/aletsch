@@ -236,6 +236,43 @@ int router::build_bipartite_graph()
 		double w = counts[i];
 		u2w.insert(PED(e, w));
 	}
+
+    printf("-----bipartite graph(original)-----");
+    ug.print();
+    //resolve isolated vertices by sample info
+    vector<int> v1;
+	vector<int> v2;
+    vector<int> left;
+    vector<int> right;
+	int l = gr.in_degree(root);
+	int n = gr.degree(root);
+	for(int i = 0; i < u2e.size(); i++)
+    {
+		if(i < l) 
+        {
+            left.push_back(i);
+            edge_descriptor le = i2e[u2e[i]];
+            //printf("Left side: (%d -> %d)\n", le->source(), le->target());
+        }
+        else 
+        {
+            right.push_back(i);
+            edge_descriptor re = i2e[u2e[i]];
+            //printf("Right side: (%d -> %d)\n", re->source(), re->target());
+        }
+        if(ug.degree(i) == 0 && i < l) v1.push_back(i);//left isolated
+	}
+
+    thread_left_isolate(v1, right);
+
+    for(int i = 0; i < u2e.size(); i++)
+    {
+        if(ug.degree(i) == 0 && i >= l) v2.push_back(i);//right isolated
+	}
+    thread_right_isolate(v2, left);
+
+    printf("-----bipartite graph(resolve isolated)-----");
+    ug.print();
 	return 0;
 }
 
@@ -669,7 +706,7 @@ int router::thread()
 	for(int k = 0; k < vw.size(); k++) weight_sum += vw[k];
 
 	// print
-	/*
+	
 	printf("left vertices: ");
 	for(int i = 0; i < gr.in_degree(root); i++)
 	{
@@ -690,7 +727,7 @@ int router::thread()
 		if(s < t) md.insert(make_pair(PI(s, t), x.second));
 		else md.insert(make_pair(PI(t, s), x.second));
 	}
-	*/
+	
 	// end print
 
 	bool b;
@@ -705,8 +742,8 @@ int router::thread()
 
 	assert(ug.num_edges() == 0);
 
-	for(int i = 0; i < v1.size(); i++) thread_isolate1(v1[i], vw);
-	for(int i = 0; i < v2.size(); i++) thread_isolate2(v2[i], vw);
+	//for(int i = 0; i < v1.size(); i++) thread_isolate1(v1[i], vw);
+	//for(int i = 0; i < v2.size(); i++) thread_isolate2(v2[i], vw);
 
 	/*
 	assert(v1.size() == 0 || v2.size() == 0);
@@ -739,7 +776,6 @@ int router::thread()
 	ratio = weight_remain / weight_sum;
 
 	// print
-	/*
 	printf("pe2w: ");
 	for(auto &x : pe2w)
 	{
@@ -751,7 +787,7 @@ int router::thread()
 		printf("%d-%d/%.2lf/%.0lf, ", s, t, x.second, w);
 	}
 	printf("\n");
-	*/
+	
 	// end print
 
 	return 0;
@@ -907,6 +943,78 @@ int router::thread_isolate2(int k, vector<double> &vw)
 	PPID pw(PI(u2e[x], u2e[k]), w);
 	pe2w.insert(pw);
 	return 0;
+}
+
+int router::thread_left_isolate(vector<int> &left_iso, vector<int> &right_all)
+{
+    for(auto v : left_iso)
+    {
+        printf("Left isolated vertex: %d\n", v);
+        int partner  = -1;
+        double max_abd = 0.0;
+        int common_sp = 0;
+        for(auto r : right_all)
+        {
+            edge_descriptor le = i2e[u2e[v]];
+            edge_descriptor re = i2e[u2e[r]];
+
+            edge_info le_info = gr.get_edge_info(le);
+            edge_info re_info = gr.get_edge_info(re);
+
+            set<int> common;
+            set_intersection(le_info.samples.begin(), le_info.samples.end(), re_info.samples.begin(), re_info.samples.end(), inserter(common, common.begin()));
+            double common_abd = 0.0;
+            for(auto sp : common) common_abd += le_info.spAbd[sp]*0.5+re_info.spAbd[sp]*0.5;
+            if(common_abd > max_abd)
+            {
+                max_abd = common_abd;
+                partner = r;
+                common_sp = common.size();
+            }
+            printf("Candidate right partner: %d, abd = %.2lf, #common_samples= %d\n", r, common_abd, common_sp);
+        }
+        printf("Add routes (%d, %d), weight %d\n", v, partner, common_sp);
+        edge_descriptor e = ug.add_edge(v, partner);
+		//u2w.insert(PED(e, 1.0*common_sp));
+        //PPID pw(PI(u2e[v], u2e[partner]), max_abd);
+        //pe2w.insert(pw);
+    }
+    return 0;
+}
+
+int router::thread_right_isolate(vector<int> &right_iso, vector<int> &left_all)
+{
+    for(auto v : right_iso)
+    {
+        printf("Right isolated vertex: %d\n", v);
+        int partner  = -1;
+        double max_abd = 0;
+        int common_sp = 0;
+        for(auto l : left_all)
+        {
+            edge_descriptor re = i2e[u2e[v]];
+            edge_descriptor le = i2e[u2e[l]];
+
+            edge_info le_info = gr.get_edge_info(le);
+            edge_info re_info = gr.get_edge_info(re);
+
+            set<int> common;
+            set_intersection(le_info.samples.begin(), le_info.samples.end(), re_info.samples.begin(), re_info.samples.end(), inserter(common, common.begin()));
+            double common_abd = 0;
+            for(auto sp : common) common_abd += le_info.spAbd[sp]*0.5+re_info.spAbd[sp]*0.5;
+            if(common_abd > max_abd)
+            {
+                max_abd = common_abd;
+                partner = l;
+                common_sp = common.size();
+            }
+            printf("Candidate left partner: %d, abd = %.2lf, #common_samples= %d\n", l, common_abd, common_sp);
+        }
+        printf("Add routes (%d, %d), weight %d\n", partner, v, common_sp);
+        edge_descriptor e = ug.add_edge(partner, v);
+		//u2w.insert(PED(e, 1.0*common_sp));
+    }
+    return 0;
 }
 
 vector<double> router::compute_balanced_weights()
