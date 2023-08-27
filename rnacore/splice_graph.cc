@@ -1281,7 +1281,7 @@ int splice_graph::print_junction_supports()
 
         edge_info ei = get_edge_info(e);
         double w2 = ei.weight;
-        if(ei.count > 0)
+        if(ei.count >= 0)
         {
             printf("edge (%d, %d) pos = %d-%d length = %d weight = (%.2lf, %.2lf) strand = %d count = %d\n", s, t, p1, p2, p2 - p1 + 1, w1, w2, ei.strand, ei.count);
             printf("support set: ");

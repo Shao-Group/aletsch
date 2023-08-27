@@ -38,7 +38,7 @@ scallop::~scallop()
 int scallop::assemble()
 {
 	int c = classify();
-	if(cfg.verbose >= 0) printf("process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
+	if(cfg.verbose >= 0) printf("\n-----process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
 
 	//resolve_negligible_edges(false, cfg.max_decompose_error_ratio[NEGLIGIBLE_EDGE]);
 
@@ -88,14 +88,14 @@ int scallop::assemble()
 		b = resolve_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
 		if(b == true) continue;
 
-		b = thread_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 1);
+		/*b = thread_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 1);
 		if(b == true) continue;
 
 		b = thread_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 2);
 		if(b == true) continue;
 
 		b = thread_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE], 3);
-		if(b == true) continue;
+		if(b == true) continue;*/
 
 		b = resolve_splittable_vertex(SPLITTABLE_PURE, INT_MAX, cfg.max_decompose_error_ratio[SPLITTABLE_PURE]);
 		if(b == true) continue;
@@ -156,7 +156,7 @@ int scallop::assemble()
 
 	build_transcripts();
 
-	if(cfg.verbose >= 2) 
+	if(cfg.verbose >= 0) 
 	{
 		for(int i = 0; i < paths.size(); i++) paths[i].print(i);
 		printf("finish assemble bundle %s\n\n", gr.gid.c_str());
@@ -1823,7 +1823,28 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			e2i.insert(PEI(p, z));
 
 			gr.set_edge_weight(p, w);
-			gr.set_edge_info(p, edge_info());
+
+            edge_info ei;
+            edge_info ei1 = gr.get_edge_info(i2e[e1]);
+            edge_info ei2 = gr.get_edge_info(i2e[e2]);
+
+            if(!ei1.count)
+            {
+                ei.samples = ei2.samples;
+                ei.spAbd = ei2.spAbd;
+            }
+            else if(!ei2.count)
+            {
+                ei.samples = ei1.samples;
+                ei.spAbd = ei1.spAbd;
+            }
+            else
+                set_intersection(ei1.samples.begin(), ei1.samples.end(), ei2.samples.begin(), ei2.samples.end(), inserter(ei.samples, ei.samples.begin()));
+
+
+            ei.count = ei.samples.size();
+            gr.set_edge_info(p, ei);
+			//gr.set_edge_info(p, edge_info());
 
 			vector<int> v0;
 			v0.push_back(root);
@@ -2159,7 +2180,17 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
         ei.spAbd = ei1.spAbd;
     }
     else
-        set_intersection(ei1.samples.begin(), ei1.samples.end(), ei2.samples.begin(), ei2.samples.end(), inserter(ei.samples, ei.samples.begin()));
+    set_intersection(ei1.samples.begin(), ei1.samples.end(), ei2.samples.begin(), ei2.samples.end(), inserter(ei.samples, ei.samples.begin()));
+
+    if(ei1.count > 0 && ei2.count > 0)//take average
+    {
+        for(auto sp : ei.samples)
+        {
+            if(ei1.spAbd.find(sp) == ei1.spAbd.end()) ei.spAbd.insert(make_pair(sp, ei2.spAbd[sp]*0.5));
+            else if(ei2.spAbd.find(sp) == ei2.spAbd.end()) ei.spAbd.insert(make_pair(sp, ei1.spAbd[sp]*0.5));
+            else ei.spAbd.insert(make_pair(sp, ei1.spAbd[sp]*0.5+ei2.spAbd[sp]*0.5));
+        }
+    }
 
     ei.count = ei.samples.size();
     if(ei1.count > 0 && ei2.count > 0)//take average
@@ -2177,11 +2208,11 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
     for(int& prev : mev[xx]) printf("%d ", prev);
     printf("+ %d + ", xt);
     for(int& post : mev[yy]) printf("%d ", post);
-    printf("\nedge1 (%d, %d), count = %d, supported by: ", xs, xt, ei1.count);
+    printf("\nedge1 %d(%d, %d), count = %d, supported by: ", x, xs, xt, ei1.count);
     for(auto sp : ei1.samples) printf("%d(%.2lf) ", sp, ei1.spAbd[sp]);
-    printf("\nedge2 (%d, %d), count = %d, supported by: ", ys, yt, ei2.count);
+    printf("\nedge2 %d(%d, %d), count = %d, supported by: ", y, ys, yt, ei2.count);
     for(auto sp : ei2.samples) printf("%d(%.2lf) ", sp, ei2.spAbd[sp]);
-    printf("\nmerged edge (%d, %d), count = %d, supported by: ", xs, yt, ei.count);
+    printf("\nmerged edge %d(%d, %d), count = %d, supported by: ", e2i[p], xs, yt, ei.count);
     for(auto sp : ei.samples) printf("%d(%.2lf) ", sp, ei.spAbd[sp]);
     printf("\n");
 

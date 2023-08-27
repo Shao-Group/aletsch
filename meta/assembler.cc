@@ -103,6 +103,30 @@ int assembler::assemble(bundle &bd)
 	splice_graph gr;
 	transform(bd, gr, true);
 
+    edge_iterator it;
+    PEEI pei = gr.edges();
+    for(it = pei.first; it != pei.second; it++)
+    {
+		edge_descriptor e = (*it);
+		int s = e->source();
+		int t = e->target();
+
+		//if(s == 0) continue;
+		//if(t == gr.num_vertices() - 1) continue;
+		//if(gr.get_vertex_info(s).rpos == gr.get_vertex_info(t).lpos) continue;//ignore non-splicing junctions
+        
+        edge_info ei = gr.get_edge_info(e);
+        assert(ei.count == 0);
+        assert(ei.samples.size() == 0);
+        assert(ei.spAbd.size() == 0);
+        ei.samples.insert(bd.sp.sample_id);
+        ei.spAbd.insert(make_pair(bd.sp.sample_id, gr.get_edge_weight(e)));
+        ei.count = 1;
+        gr.set_edge_info(e, ei);
+    }
+    printf("print individual graph %s, sample_id=%d\n", gr.gid.c_str(), bd.sp.sample_id);
+    gr.print_junction_supports();
+
 	phase_set ps;
 	bd.build_phase_set(ps, gr);
 	assemble(gr, ps, bd.sp.sample_id);
@@ -170,17 +194,18 @@ int assembler::assemble(vector<bundle*> gv)
 
         fix_missing_edges(gr, gx);
 
+        printf("print %d/%lu individual graph %s, sample_id=%d\n", k+1, gv.size(), gr.gid.c_str(), bd.sp.sample_id);
+
         //calculate junction supports based on other samples
         junction_support(gr, junc2sup, sup2abd);
-        /*for(int j = 0; j < gv.size(); j++)
+
+        for(int j = 0; j < gv.size(); j++)
         {
             bundle &bd1 = *(gv[j]);
             splice_graph gr1;
             transform(bd1, gr1, true);
-            junction_support(bd1.sp.sample_id, gr1, gr);
-        }*/
-
-		printf("print %d/%lu individual graph %s, sample_id=%d\n", k+1, gv.size(), gr.gid.c_str(), bd.sp.sample_id);
+            start_end_support(bd1.sp.sample_id, gr1, gr);
+        }
         gr.print_junction_supports();
 
 		phase_set ps;
@@ -228,6 +253,106 @@ int assembler::junction_support(splice_graph &gr, map< pair<int32_t, int32_t>, s
             gr.set_edge_info(e, ei);
         }
     }
+    return 0;
+}
+
+int assembler::start_end_support(int sample_id, splice_graph &gr, splice_graph &gx)
+{
+    // calculate the support of starting vertices
+    edge_iterator it;
+	PEEI pei = gr.out_edges(0);
+	for(it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = (*it);
+		int s = e->source();
+		int t = e->target();
+		assert(s == 0);
+
+        //if(gr.edge(t, gr.num_vertices()-1).second) continue;
+
+		int32_t p = gr.get_vertex_info(t).rpos;
+		int k = gx.locate_vertex(p - 1);
+		if(k < 0) continue;
+        int kori = k;
+
+		PEB peb = gx.edge(0, k);
+        
+        bool cont = true;
+        PEB peb2;
+        while(!peb.second)
+        {
+            k--;
+            if(k == 0)
+            {
+                cont = false;
+                break;
+            }
+            if(p - gx.get_vertex_info(k).rpos > 200) cont = false;
+
+            if(gx.get_vertex_info(k+1).lpos != gx.get_vertex_info(k).rpos) cont = false;
+            peb2 = gx.edge(k, k+1);
+            if(!peb2.second) cont = false;
+            if(!cont) break;
+            peb = gx.edge(0, k);
+        }
+        if(!cont) continue;
+
+		edge_info ei = gx.get_edge_info(peb.first);
+        ei.samples.insert(sample_id);
+        ei.count = ei.samples.size();
+        ei.spAbd[sample_id] += gr.get_edge_weight(e);
+		gx.set_edge_info(peb.first, ei);
+        printf("Sample %d supports (%d, %d <- %d(%d))\n", sample_id, 0, k, kori, t);
+	}
+
+    // calculate the support of ending vertices
+	pei = gr.in_edges(gr.num_vertices() - 1);
+	for(it = pei.first; it != pei.second; it++)
+	{
+		edge_descriptor e = (*it);
+		int s = e->source();
+		int t = e->target();
+		assert(t == gr.num_vertices() - 1);
+
+        //if(gr.edge(0, s).second) continue;
+
+		int32_t p = gr.get_vertex_info(s).lpos;
+		//int k = gx.locate_vertex(p - 1)
+        int k = gx.locate_vertex(p);
+		if(k < 0) continue;
+        int kori = k;
+
+		PEB peb = gx.edge(k, gx.num_vertices() - 1);
+
+        bool cont = true;
+        PEB peb2;
+        while(!peb.second)
+        {
+            k++;
+            if(k == gx.num_vertices() - 1)
+            {
+                cont = false;
+                break;
+            }
+
+            if(gx.get_vertex_info(k).lpos - p > 200) cont = false;
+
+            if(gx.get_vertex_info(k-1).rpos != gx.get_vertex_info(k).lpos) cont = false;
+            peb2 = gx.edge(k-1, k);
+            if(!peb2.second) cont = false;
+            if(!cont) break;
+            peb = gx.edge(k, gx.num_vertices()-1);
+        }
+        if(!cont) continue;
+
+		edge_info ei = gx.get_edge_info(peb.first);
+        ei.samples.insert(sample_id);
+        ei.count = ei.samples.size();
+        ei.spAbd[sample_id] += gr.get_edge_weight(e);
+		gx.set_edge_info(peb.first, ei);
+        printf("Sample %d supports (%d(%d) -> %d, %ld)\n", sample_id, kori, s, k, gx.num_vertices()-1);
+	}
+
     return 0;
 }
 
