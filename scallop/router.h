@@ -63,6 +63,7 @@ public:
 	int build_bipartite_graph();								// build bipartite graph
 	int build_strand_graph();
 	vector<double> compute_balanced_weights();					// balanced weights
+	vector<double> compute_balanced_weights_components();		// balanced weights
 	bool one_side_connected(undirected_graph &xg);
 
 	// decompose splitable vertex

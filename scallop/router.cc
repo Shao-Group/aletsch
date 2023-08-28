@@ -67,7 +67,12 @@ int router::classify()
 
 	build_indices();
 
-	if(gr.mixed_strand_vertex(root)) classify_mixed_vertex();
+	if(gr.mixed_strand_vertex(root)) 
+	{
+		// TODO: exclude mixed vertices
+		assert(false);
+		classify_mixed_vertex();
+	}
 	else classify_plain_vertex();
 
     printf("Classify type = %d\n", type);
@@ -118,13 +123,20 @@ int router::classify_plain_vertex()
 		return 0;
 	}
 
+	for(int i = 0; i < ug.num_vertices(); i++)
+	{
+		assert(ug.degree(i) >= 1);
+	}
+
 	//if(routes.size() == 0)
+	/*
     if(ug.num_edges() == 0)
 	{
 		type = SPLITTABLE_SIMPLE;
 		degree = (gr.degree(root) + 1) / 2 - 1;
 		return 0;
 	}
+	*/
 
 	vector< set<int> > vv = ug.compute_connected_components();
 
@@ -137,6 +149,7 @@ int router::classify_plain_vertex()
 
 	if(one_side_connected(ug) == true)
 	{
+		assert(false);
 		type = UNSPLITTABLE_MULTIPLE;
 		degree = ug.num_edges() - ug.num_vertices() + vv.size() + vv.size();
 		return 0;
@@ -146,7 +159,7 @@ int router::classify_plain_vertex()
 	type = SPLITTABLE_PURE;
 	for(int i = 0; i < vv.size(); i++)
 	{
-		if(vv[i].size() == 1) type = SPLITTABLE_HYPER;
+		//if(vv[i].size() == 1) type = SPLITTABLE_HYPER;
 		if(vv[i].size() == 1) a++;
 		if(vv[i].size() >= 2) b++;
 	}
@@ -178,13 +191,19 @@ bool router::one_side_connected(undirected_graph &xg)
 
 int router::build()
 {
-	if(type == SPLITTABLE_SIMPLE || type == SPLITTABLE_HYPER || type == SPLITTABLE_PURE) 
+	/*
+	if(type == SPLITTABLE_SIMPLE || type == SPLITTABLE_PURE) 
 	{
 		split_plain_vertex();
 	}
-	if(type == UNSPLITTABLE_SINGLE || type == UNSPLITTABLE_MULTIPLE) 
+	*/
+	if(type == UNSPLITTABLE_SINGLE || type == SPLITTABLE_PURE) 
 	{
 		thread();
+	}
+	else
+	{
+		assert(false);
 	}
 
 	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
@@ -716,7 +735,9 @@ int router::thread()
 		if(ug.degree(k) == 0 && k >= a) v2.push_back(k);
 	}
 
-	vector<double> vw = compute_balanced_weights();
+	// TODO: balance weights for each 
+	// individual connected components
+	vector<double> vw = compute_balanced_weights_components();
 	double weight_sum = 0;
 	for(int k = 0; k < vw.size(); k++) weight_sum += vw[k];
 
