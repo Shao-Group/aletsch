@@ -744,8 +744,8 @@ int router::thread()
 
 	// TODO: balance weights for each 
 	// individual connected components
-	//vector<double> vw = compute_balanced_weights_components();   
-    vector<double> vw = compute_balanced_weights();
+	vector<double> vw = compute_balanced_weights_components();   
+    //vector<double> vw = compute_balanced_weights();
 
 	double weight_sum = 0;
 	for(int k = 0; k < vw.size(); k++) weight_sum += vw[k];
@@ -1094,22 +1094,30 @@ vector<double> router::compute_balanced_weights()
 
 vector<double> router::compute_balanced_weights_components()
 {
-	vector<double> vw;
-	double sum1 = 0, sum2 = 0;
-	for(int i = 0; i < u2e.size(); i++)
-	{
-		edge_descriptor e = i2e[u2e[i]];
-		assert(e != null_edge);
-		double w = gr.get_edge_weight(e);
-		if(i < gr.in_degree(root)) sum1 += w;
-		else sum2 += w;
-		vw.push_back(w);
-	}
-	double r1 = sqrt(sum2 / sum1);
-	double r2 = sqrt(sum1 / sum2);
-	for(int i = 0; i < gr.in_degree(root); i++) vw[i] *= r1;
-	for(int i = gr.in_degree(root); i < gr.degree(root); i++) vw[i] *= r2;
-	
+	vector<set<int>> vv = ug.compute_connected_components();
+    vector<double> vw(u2e.size(), 0.0);
+    for(auto cc : vv)
+    {
+        double sum1 = 0, sum2 = 0;
+        for(auto i : cc)
+        {
+            edge_descriptor e = i2e[u2e[i]];
+            assert(e != null_edge);
+            double w = gr.get_edge_weight(e);
+            if(i < gr.in_degree(root)) sum1 += w;
+            else sum2 += w;
+            assert(vw[i] < 0.001);
+            vw[i] = w;
+        }
+
+        double r1 = sqrt(sum2 / sum1);
+        double r2 = sqrt(sum1 / sum2);
+        for(auto i : cc)
+        {
+            if(i < gr.in_degree(root)) vw[i] *= r1;
+            else vw[i] *= r2;
+        }
+    }
 	return vw;
 }
 
