@@ -1800,7 +1800,9 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			int v1 = p1->source();
 			int v2 = p2->target();
 			gr.move_edge(p1, v1, v2);
+			hs.replace(e1, e2, e1);
             remove_edge(e2);
+			hs.replace(e2, e1);
 
 			mev[p1].push_back(root);
 
