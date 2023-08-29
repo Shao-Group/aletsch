@@ -1645,7 +1645,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 	PEEI pei;
 	edge_iterator it1, it2;
 
-	/*
+	
 	// print 
 	printf(" in-weights: ");
 	for(pei = gr.in_edges(root), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
@@ -1669,7 +1669,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		printf("%d:%d:%.2lf, ", it->first.first, it->first.second, it->second);
 	}
 	printf("\n");
-	*/
+	
 	// end print
 
 	// compute degree of each edge
@@ -1742,9 +1742,12 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		nonzeroset.insert(i);
 		v2v.push_back(-1);
 	}
-	v2v[n] = v2v[m];
-	gr.set_vertex_info(n, gr.get_vertex_info(m));
-	exchange_sink(m, n);
+    if(m != n)
+    {
+        v2v[n] = v2v[m];
+        gr.set_vertex_info(n, gr.get_vertex_info(m));
+        exchange_sink(m, n);
+    }
 
 	// set vertex info for new vertices
 	// detach edge from root to new vertex
@@ -1786,7 +1789,28 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		double w = it->second;
 		assert(w >= cfg.min_guaranteed_edge_weight - SMIN);
 
-		if(mdegree[e1] == 1)
+        if(mdegree[e1] == 1 && mdegree[e2] == 1)//SPLITTABLE_PURE
+        {
+			assert(ev1.find(e1) == ev1.end());
+			assert(ev2.find(e2) == ev2.end());
+			edge_descriptor p1 = i2e[e1];
+            edge_descriptor p2 = i2e[e2];
+
+			borrow_edge_strand(e1, e2);
+			int v1 = p1->source();
+			int v2 = p2->target();
+			gr.move_edge(p1, v1, v2);
+            remove_edge(e2);
+
+			mev[p1].push_back(root);
+
+			assert(med.find(p1) != med.end());
+			assert(mei.find(p1) != mei.end());
+			med[p1] += mweight[e1];
+			mei[p1] += root_info.rpos - root_info.lpos;
+
+        }
+        else if(mdegree[e1] == 1)
 		{
 			assert(mdegree[e2] >= 2);
 			assert(ev1.find(e1) == ev1.end());

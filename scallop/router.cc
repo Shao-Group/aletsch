@@ -206,6 +206,13 @@ int router::build()
 		assert(false);
 	}
 
+    /*if(type == SPLITTABLE_PURE)
+        split_plain_vertex();
+    else if(type == UNSPLITTABLE_SINGLE) 
+        thread();
+    else
+        assert(false);*/
+
 	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
 	{
 		if(it->second < cfg.min_guaranteed_edge_weight) it->second = cfg.min_guaranteed_edge_weight;
@@ -269,7 +276,7 @@ int router::build_bipartite_graph()
             else right.push_back(i);
         }
 	}
-
+    print();
     //add and print edges info
 	for(int i = 0; i < routes.size(); i++)
 	{
@@ -292,7 +299,7 @@ int router::build_bipartite_graph()
 	vector<int> v2;
     for(auto i : left)
     {
-        if(ug.degree(l) == 0) v1.push_back(i);//left isolated
+        if(ug.degree(i) == 0) v1.push_back(i);//left isolated
     }
 
     //resolve isolated vertices by sample info
@@ -737,7 +744,9 @@ int router::thread()
 
 	// TODO: balance weights for each 
 	// individual connected components
-	vector<double> vw = compute_balanced_weights_components();
+	//vector<double> vw = compute_balanced_weights_components();   
+    vector<double> vw = compute_balanced_weights();
+
 	double weight_sum = 0;
 	for(int k = 0; k < vw.size(); k++) weight_sum += vw[k];
 
@@ -1063,6 +1072,27 @@ int router::thread_right_isolate(vector<int> &right_iso, vector<int> &left_all)
 }
 
 vector<double> router::compute_balanced_weights()
+{
+	vector<double> vw;
+	double sum1 = 0, sum2 = 0;
+	for(int i = 0; i < u2e.size(); i++)
+	{
+		edge_descriptor e = i2e[u2e[i]];
+		assert(e != null_edge);
+		double w = gr.get_edge_weight(e);
+		if(i < gr.in_degree(root)) sum1 += w;
+		else sum2 += w;
+		vw.push_back(w);
+	}
+	double r1 = sqrt(sum2 / sum1);
+	double r2 = sqrt(sum1 / sum2);
+	for(int i = 0; i < gr.in_degree(root); i++) vw[i] *= r1;
+	for(int i = gr.in_degree(root); i < gr.degree(root); i++) vw[i] *= r2;
+	
+	return vw;
+}
+
+vector<double> router::compute_balanced_weights_components()
 {
 	vector<double> vw;
 	double sum1 = 0, sum2 = 0;
