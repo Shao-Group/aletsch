@@ -124,8 +124,11 @@ int assembler::assemble(bundle &bd)
         ei.count = 1;
         gr.set_edge_info(e, ei);
     }
-    printf("print individual graph %s, sample_id=%d\n", gr.gid.c_str(), bd.sp.sample_id);
-    gr.print_junction_supports();
+    if(cfg.verbose >= 2)
+    {
+        printf("print individual graph %s, sample_id=%d\n", gr.gid.c_str(), bd.sp.sample_id);
+        gr.print_junction_supports();
+    }
 
 	phase_set ps;
 	bd.build_phase_set(ps, gr);
@@ -194,10 +197,13 @@ int assembler::assemble(vector<bundle*> gv)
 
         fix_missing_edges(gr, gx);
 
-        printf("print %d/%lu individual graph %s, sample_id=%d\n", k+1, gv.size(), gr.gid.c_str(), bd.sp.sample_id);
-
         //calculate junction supports based on other samples
         junction_support(gr, junc2sup, sup2abd);
+        if(cfg.verbose >= 2) 
+        {
+            printf("print %d/%lu individual graph %s, sample_id=%d\n", k+1, gv.size(), gr.gid.c_str(), bd.sp.sample_id);
+            gr.print_junction_supports();
+        }
 
         for(int j = 0; j < gv.size(); j++)
         {
@@ -206,7 +212,6 @@ int assembler::assemble(vector<bundle*> gv)
             transform(bd1, gr1, true);
             start_end_support(bd1.sp.sample_id, gr1, gr);
         }
-        gr.print_junction_supports();
 
 		phase_set ps;
 		bd.build_phase_set(ps, gr);
@@ -302,7 +307,7 @@ int assembler::start_end_support(int sample_id, splice_graph &gr, splice_graph &
         ei.count = ei.samples.size();
         ei.spAbd[sample_id] += gr.get_edge_weight(e);
 		gx.set_edge_info(peb.first, ei);
-        printf("Sample %d supports (%d, %d <- %d(%d))\n", sample_id, 0, k, kori, t);
+        if(cfg.verbose >= 2) printf("Sample %d supports (%d, %d <- %d(%d))\n", sample_id, 0, k, kori, t);
 	}
 
     // calculate the support of ending vertices
@@ -350,7 +355,7 @@ int assembler::start_end_support(int sample_id, splice_graph &gr, splice_graph &
         ei.count = ei.samples.size();
         ei.spAbd[sample_id] += gr.get_edge_weight(e);
 		gx.set_edge_info(peb.first, ei);
-        printf("Sample %d supports (%d(%d) -> %d, %ld)\n", sample_id, kori, s, k, gx.num_vertices()-1);
+        if(cfg.verbose >= 2) printf("Sample %d supports (%d(%d) -> %d, %ld)\n", sample_id, kori, s, k, gx.num_vertices()-1);
 	}
 
     return 0;

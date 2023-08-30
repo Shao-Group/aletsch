@@ -38,7 +38,7 @@ scallop::~scallop()
 int scallop::assemble()
 {
 	int c = classify();
-	if(cfg.verbose >= 0) printf("\n-----process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
+	if(cfg.verbose >= 2) printf("\n-----process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
 
 	//resolve_negligible_edges(false, cfg.max_decompose_error_ratio[NEGLIGIBLE_EDGE]);
 
@@ -172,7 +172,7 @@ int scallop::assemble()
 
 	build_transcripts();
 
-	if(cfg.verbose >= 0) 
+	if(cfg.verbose >= 2) 
 	{
 		for(int i = 0; i < paths.size(); i++) paths[i].print(i);
 		printf("finish assemble bundle %s\n\n", gr.gid.c_str());
@@ -938,7 +938,7 @@ bool scallop::resolve_splittable_vertex(int type, int degree, double max_ratio)
 		if(rt.degree > degree) continue;
 
 		rt.build();
-        rt.print();
+        //rt.print();
 
 		assert(rt.eqns.size() == 2);
 
@@ -996,7 +996,7 @@ bool scallop::resolve_unsplittable_vertex(int type, int degree, double max_ratio
 		if(rt.degree > degree) continue;
 
 		rt.build();
-		rt.print();
+		//rt.print();
 
 		if(rt.ratio < 0.01)
 		{
@@ -1647,29 +1647,31 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 
 	
 	// print 
-	printf(" in-weights: ");
-	for(pei = gr.in_edges(root), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
-	{
-		edge_descriptor e = (*it1);
-		double w = gr.get_edge_weight(e);
-		printf("%d:%.2lf, ", e2i[e], w);
-	}
-	printf("\n");
-	printf(" out-weights: ");
-	for(pei = gr.out_edges(root), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
-	{
-		edge_descriptor e = (*it1);
-		double w = gr.get_edge_weight(e);
-		printf("%d:%.2lf, ", e2i[e], w);
-	}
-	printf("\n");
-	printf(" decompose weights: ");
-	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
-	{
-		printf("%d:%d:%.2lf, ", it->first.first, it->first.second, it->second);
-	}
-	printf("\n");
-	
+    if(cfg.verbose >= 2) 
+    {
+        printf(" in-weights: ");
+        for(pei = gr.in_edges(root), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+        {
+            edge_descriptor e = (*it1);
+            double w = gr.get_edge_weight(e);
+            printf("%d:%.2lf, ", e2i[e], w);
+        }
+        printf("\n");
+        printf(" out-weights: ");
+        for(pei = gr.out_edges(root), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+        {
+		    edge_descriptor e = (*it1);
+		    double w = gr.get_edge_weight(e);
+		    printf("%d:%.2lf, ", e2i[e], w);
+	    }
+	    printf("\n");
+	    printf(" decompose weights: ");
+	    for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
+    	{
+            printf("%d:%d:%.2lf, ", it->first.first, it->first.second, it->second);
+	    }
+	    printf("\n");
+    }
 	// end print
 
 	// compute degree of each edge
@@ -2246,17 +2248,20 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
     }
     gr.set_edge_info(p, ei);
 
-    printf("Merge adjacent equal edges:\n");
-    for(int& prev : mev[xx]) printf("%d ", prev);
-    printf("+ %d + ", xt);
-    for(int& post : mev[yy]) printf("%d ", post);
-    printf("\nedge1 %d(%d, %d), count = %d, supported by: ", x, xs, xt, ei1.count);
-    for(auto sp : ei1.samples) printf("%d(%.2lf) ", sp, ei1.spAbd[sp]);
-    printf("\nedge2 %d(%d, %d), count = %d, supported by: ", y, ys, yt, ei2.count);
-    for(auto sp : ei2.samples) printf("%d(%.2lf) ", sp, ei2.spAbd[sp]);
-    printf("\nmerged edge %d(%d, %d), count = %d, supported by: ", e2i[p], xs, yt, ei.count);
-    for(auto sp : ei.samples) printf("%d(%.2lf) ", sp, ei.spAbd[sp]);
-    printf("\n");
+    if(cfg.verbose >= 2)
+    {
+        printf("Merge adjacent equal edges:\n");
+        for(int& prev : mev[xx]) printf("%d ", prev);
+        printf("+ %d + ", xt);
+        for(int& post : mev[yy]) printf("%d ", post);
+        printf("\nedge1 %d(%d, %d), count = %d, supported by: ", x, xs, xt, ei1.count);
+        for(auto sp : ei1.samples) printf("%d(%.2lf) ", sp, ei1.spAbd[sp]);
+        printf("\nedge2 %d(%d, %d), count = %d, supported by: ", y, ys, yt, ei2.count);
+        for(auto sp : ei2.samples) printf("%d(%.2lf) ", sp, ei2.spAbd[sp]);
+        printf("\nmerged edge %d(%d, %d), count = %d, supported by: ", e2i[p], xs, yt, ei.count);
+        for(auto sp : ei.samples) printf("%d(%.2lf) ", sp, ei.spAbd[sp]);
+        printf("\n");
+    }
 
 	borrow_edge_strand(n, x);
 	borrow_edge_strand(n, y);
