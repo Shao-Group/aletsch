@@ -126,7 +126,7 @@ int assembler::assemble(bundle &bd)
     }
     if(cfg.verbose >= 2)
     {
-        printf("print individual graph %s, sample_id=%d\n", gr.gid.c_str(), bd.sp.sample_id);
+        printf("\nprint individual graph %s, sample_id=%d\n", gr.gid.c_str(), bd.sp.sample_id);
         gr.print_junction_supports();
     }
 

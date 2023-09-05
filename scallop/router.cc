@@ -75,7 +75,7 @@ int router::classify()
 	}
 	else classify_plain_vertex();
 
-    if(cfg.verbose >= 2) printf("Classify type = %d\n", type);
+    if(cfg.verbose >= 3) printf("Classify type = %d\n", type);
 	return 0;
 }
 
@@ -254,7 +254,7 @@ int router::build_bipartite_graph()
     //add and print vertices info
     for(int i = 0; i < u2e.size(); i++) ug.add_vertex();
 
-    if(cfg.verbose >= 2) printf("\n-----bipartite graph(original)-----%s\n", gr.gid.c_str());
+    if(cfg.verbose >= 3) printf("\n-----bipartite graph(original)-----%s\n", gr.gid.c_str());
     vector<int> left;
     vector<int> right;
 	int l = gr.in_degree(root);
@@ -264,19 +264,19 @@ int router::build_bipartite_graph()
 		if(i < l)
         {
             edge_descriptor le = i2e[u2e[i]];
-            if(cfg.verbose >= 2) printf("vertex %d(edge %d(%d->%d))\n", i, u2e[i], le->source(), le->target());
+            if(cfg.verbose >= 3) printf("vertex %d(edge %d(%d->%d))\n", i, u2e[i], le->source(), le->target());
             if(gr.get_edge_info(le).count == 0) printf("Warning!(count = 0)\n");
             else left.push_back(i);
         }
         else 
         {
             edge_descriptor re = i2e[u2e[i]];
-            if(cfg.verbose >= 2) printf("vertex %d(edge %d(%d->%d))\n", i, u2e[i], re->source(), re->target());
+            if(cfg.verbose >= 3) printf("vertex %d(edge %d(%d->%d))\n", i, u2e[i], re->source(), re->target());
             if(gr.get_edge_info(re).count == 0) printf("Warning!(count = 0)\n");
             else right.push_back(i);
         }
 	}
-    //print();
+    if(cfg.verbose >=  3) print();
 
     //add and print edges info
 	for(int i = 0; i < routes.size(); i++)
@@ -293,7 +293,7 @@ int router::build_bipartite_graph()
 		double w = counts[i];
 		u2w.insert(PED(e, w));
 
-        if(cfg.verbose >= 2) printf("edge (%d, %d), weight = %.2lf\n", s, t, w);
+        if(cfg.verbose >= 3) printf("edge (%d, %d), weight = %.2lf\n", s, t, w);
 	}
 
     vector<int> v1;
@@ -312,7 +312,7 @@ int router::build_bipartite_graph()
 	}
     thread_right_isolate(v2, left);
 
-    if(cfg.verbose >= 2)
+    if(cfg.verbose >= 3)
     {
         printf("-----bipartite graph(resolve isolated)-----");
         ug.print();
@@ -755,27 +755,31 @@ int router::thread()
 	for(int k = 0; k < vw.size(); k++) weight_sum += vw[k];
 
 	// print
-	
-	/*printf("left vertices: ");
-	for(int i = 0; i < gr.in_degree(root); i++)
-	{
-		printf("%d/%.2lf, ", i, vw[i]);
-	}
-	printf("\n");
-	printf("right vertices: ");
-	for(int i = gr.in_degree(root); i < gr.degree(root); i++)
-	{
-		printf("%d/%.2lf, ", i, vw[i]);
-	}
-	printf("\n");
-	MPID md;		/// for printing purpose
-	for(auto &x : u2w)
-	{
-		int s = x.first->source();
-		int t = x.first->target();
-		if(s < t) md.insert(make_pair(PI(s, t), x.second));
-		else md.insert(make_pair(PI(t, s), x.second));
-	}*/
+    
+
+    if(cfg.verbose >= 3)
+    {
+            printf("left vertices: ");
+            for(int i = 0; i < gr.in_degree(root); i++)
+            {
+                printf("%d/%.2lf, ", i, vw[i]);
+            }
+            printf("\n");
+            printf("right vertices: ");
+            for(int i = gr.in_degree(root); i < gr.degree(root); i++)
+            {
+                printf("%d/%.2lf, ", i, vw[i]);
+            }
+            printf("\n");
+            MPID md;		/// for printing purpose
+            for(auto &x : u2w)
+            {
+                int s = x.first->source();
+                int t = x.first->target();
+                if(s < t) md.insert(make_pair(PI(s, t), x.second));
+                else md.insert(make_pair(PI(t, s), x.second));
+            }
+    }
 	
 	// end print
 
@@ -1001,7 +1005,7 @@ int router::thread_left_isolate(vector<int> &left_iso, vector<int> &right_all)
         edge_descriptor le = i2e[u2e[v]];
         edge_info le_info = gr.get_edge_info(le);
 
-        if(cfg.verbose >= 2)
+        if(cfg.verbose >= 3)
         {
             printf("Left isolated vertex: %d(%d, %d->%d), samples = { ", v, u2e[v], le->source(), le->target());
             for(auto sp : le_info.samples) printf("%d ", sp);
@@ -1026,7 +1030,7 @@ int router::thread_left_isolate(vector<int> &left_iso, vector<int> &right_all)
                 partner = r;
                 common_sp = common.size();
             }
-            if(cfg.verbose >= 2)
+            if(cfg.verbose >= 3)
             {
                 printf("Candidate right partner: %d(%d, %d->%d), abd = %.2lf, #common_samples= %ld, samples = { ", r, u2e[r], re->source(), re->target(), common_abd, common.size());
                 for(auto sp : re_info.samples) printf("%d ", sp);
@@ -1034,7 +1038,7 @@ int router::thread_left_isolate(vector<int> &left_iso, vector<int> &right_all)
             }
 
         }
-        if(cfg.verbose >= 2) printf("Add routes (%d, %d), weight = %.2lf\n", v, partner, max_abd);
+        if(cfg.verbose >= 3) printf("Add routes (%d, %d), weight = %.2lf\n", v, partner, max_abd);
         edge_descriptor e = ug.add_edge(v, partner);
 		u2w.insert(PED(e, max_abd));
     }
@@ -1048,7 +1052,7 @@ int router::thread_right_isolate(vector<int> &right_iso, vector<int> &left_all)
         edge_descriptor re = i2e[u2e[v]];
         edge_info re_info = gr.get_edge_info(re);
 
-        if(cfg.verbose >= 2)
+        if(cfg.verbose >= 3)
         {
             printf("Right isolated vertex: %d(%d, %d->%d), samples = { ", v, u2e[v], re->source(), re->target());
             for(auto sp : re_info.samples) printf("%d ", sp);
@@ -1074,14 +1078,14 @@ int router::thread_right_isolate(vector<int> &right_iso, vector<int> &left_all)
                 common_sp = common.size();
             }
 
-            if(cfg.verbose >= 2)
+            if(cfg.verbose >= 3)
             {
                 printf("Candidate left partner: %d(%d, %d->%d), abd = %.2lf, #common_samples= %ld, samples = { ", l, u2e[l], le->source(), le->target(), common_abd, common.size());
                 for(auto sp : le_info.samples) printf("%d ", sp);
                 printf(" }\n");
             }
         }
-        if(cfg.verbose >= 2) printf("Add routes (%d, %d), weight = %.2lf\n", partner, v, max_abd);
+        if(cfg.verbose >= 3) printf("Add routes (%d, %d), weight = %.2lf\n", partner, v, max_abd);
         edge_descriptor e = ug.add_edge(partner, v);
 		u2w.insert(PED(e, max_abd));
     }
