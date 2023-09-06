@@ -1679,9 +1679,9 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
 	{
 		PI p = it->first;
-		if(mdegree.find(p.first) == mdegree.end()) mdegree.insert(PI(p.first, 1));
+		if(mdegree.find(p.first) == mdegree.end()) mdegree.insert(PI(p.first, 2));
 		else mdegree[p.first]++;
-		if(mdegree.find(p.second) == mdegree.end()) mdegree.insert(PI(p.second, 1));
+		if(mdegree.find(p.second) == mdegree.end()) mdegree.insert(PI(p.second, 2));
 		else mdegree[p.second]++;
 	}
 
@@ -1698,6 +1698,10 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		else mweight[p.first] += w;
 		if(mweight.find(p.second) == mweight.end()) mweight.insert(PI(p.second, w));
 		else mweight[p.second] += w;
+        /*if(mdegree.find(p.first) == mdegree.end()) mdegree.insert(PI(p.first, w));
+		else mdegree[p.first] += w;
+		if(mdegree.find(p.second) == mdegree.end()) mdegree.insert(PI(p.second, w));
+		else mdegree[p.second] += w;*/
 	}
 
 	// distribute
