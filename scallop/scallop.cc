@@ -1679,9 +1679,9 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
 	{
 		PI p = it->first;
-		if(mdegree.find(p.first) == mdegree.end()) mdegree.insert(PI(p.first, 2));
+		if(mdegree.find(p.first) == mdegree.end()) mdegree.insert(PI(p.first, 1));
 		else mdegree[p.first]++;
-		if(mdegree.find(p.second) == mdegree.end()) mdegree.insert(PI(p.second, 2));
+		if(mdegree.find(p.second) == mdegree.end()) mdegree.insert(PI(p.second, 1));
 		else mdegree[p.second]++;
 	}
 
@@ -1698,10 +1698,6 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		else mweight[p.first] += w;
 		if(mweight.find(p.second) == mweight.end()) mweight.insert(PI(p.second, w));
 		else mweight[p.second] += w;
-        /*if(mdegree.find(p.first) == mdegree.end()) mdegree.insert(PI(p.first, w));
-		else mdegree[p.first] += w;
-		if(mdegree.find(p.second) == mdegree.end()) mdegree.insert(PI(p.second, w));
-		else mdegree[p.second] += w;*/
 	}
 
 	// distribute
@@ -1729,8 +1725,8 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		assert(mdegree.find(ei) != mdegree.end());
 		if(mdegree[ei] >= 2) 
         {
-                if(cfg.verbose >= 3) printf("Add new verdex %d for edge %d\n", n, ei); 
-                ev1.insert(PI(ei, n++));
+            if(cfg.verbose >= 3) printf("Add new verdex %d for edge %d\n", n, ei); 
+            ev1.insert(PI(ei, n++));
         }
 	}
 	for(pei = gr.out_edges(root), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
@@ -1743,10 +1739,23 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		assert(mdegree.find(ei) != mdegree.end());
 		if(mdegree[ei] >= 2) 
         {
-                if(cfg.verbose >= 3) printf("Add new verdex %d for edge %d\n", n, ei);
-                ev2.insert(PI(ei, n++));
+            if(cfg.verbose >= 3) printf("Add new verdex %d for edge %d\n", n, ei);
+            ev2.insert(PI(ei, n++));
         }
 	}
+
+    for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
+	{
+		int e1 = it->first.first;
+		int e2 = it->first.second;
+        if(mdegree[e1] == 1 && mdegree[e2] == 1)//SPLITTABLE_PURE
+        {
+            edge_descriptor e = i2e[e1];
+            assert(e->target() == root);
+            if(cfg.verbose >= 3) printf("Add new verdex %d for edge %d\n", n, e1); 
+            ev1.insert(PI(e1, n++));
+        }
+    }
 
 	// add vertices and exchange sink
 	for(int i = m; i < n; i++) 
@@ -1775,7 +1784,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		vi.lpos = gr.get_vertex_info(e->source()).rpos;
 		vi.rpos = gr.get_vertex_info(e->source()).rpos;
 
-        if(cfg.verbose >= 3) printf("Moving edge %d from (%d, %d) to (%d, %d)\n", it->first, e->source(), e->target(), e->source(), k);
+        if(cfg.verbose >= 3) printf("Moving edge %d from (%d, %d) to (%d, %d), weight=%.2lf\n", it->first, e->source(), e->target(), e->source(), k, gr.get_edge_weight(e));
 		gr.move_edge(e, e->source(), k);
 		gr.set_vertex_info(k, vi);
 		gr.set_vertex_weight(k, 0);
@@ -1790,7 +1799,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		vi.lpos = gr.get_vertex_info(e->target()).lpos;
 		vi.rpos = gr.get_vertex_info(e->target()).lpos;
 
-        if(cfg.verbose >= 3) printf("Moving edge %d from (%d, %d) to (%d, %d)\n", it->first, e->source(), e->target(), k, e->target());
+        if(cfg.verbose >= 3) printf("Moving edge %d from (%d, %d) to (%d, %d), weight=%.2lf\n", it->first, e->source(), e->target(), k, e->target(), gr.get_edge_weight(e));
 		gr.move_edge(e, k, e->target());
 		gr.set_vertex_info(k, vi);
 		gr.set_vertex_weight(k, 0);
@@ -1806,9 +1815,9 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		double w = it->second;
 		assert(w >= cfg.min_guaranteed_edge_weight - SMIN);
 
-        if(mdegree[e1] == 1 && mdegree[e2] == 1)//SPLITTABLE_PURE
+        /*if(mdegree[e1] == 1 && mdegree[e2] == 1)//SPLITTABLE_PURE
         {
-			assert(ev1.find(e1) == ev1.end());
+            assert(ev1.find(e1) == ev1.end());
 			assert(ev2.find(e2) == ev2.end());
 			edge_descriptor p1 = i2e[e1];
             edge_descriptor p2 = i2e[e2];
@@ -1817,7 +1826,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			int v1 = p1->source();
 			int v2 = p2->target();
 
-            if(cfg.verbose >= 3) printf("Moving edge %d from (%d, %d) to (%d, %d)\n", e1, v1, p1->target(), v1, v2);
+            if(cfg.verbose >= 3) printf("Moving edge %d from (%d, %d) to (%d, %d), weight=%.2lf\n", e1, v1, p1->target(), v1, v2, gr.get_edge_weight(p1));
 			gr.move_edge(p1, v1, v2);
 			hs.replace(e1, e2, e1);
 
@@ -1833,9 +1842,9 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			mei[p1] += root_info.rpos - root_info.lpos;
 
         }
-        else if(mdegree[e1] == 1)
+        else */if(mdegree[e1] == 1 && mdegree[e2]>=2)
 		{
-			assert(mdegree[e2] >= 2);
+			//assert(mdegree[e2] >= 2);
 			assert(ev1.find(e1) == ev1.end());
 			assert(ev2.find(e2) != ev2.end());
 			edge_descriptor p = i2e[e1];
@@ -1843,7 +1852,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			int v1 = p->source();
 			int v2 = ev2[e2];
 
-            if(cfg.verbose >= 3) printf("Moving edge %d from (%d, %d) to (%d, %d)\n", e1, v1, p->target(), v1, v2);
+            if(cfg.verbose >= 3) printf("Moving edge %d from (%d, %d) to (%d, %d), weight=%.2lf\n", e1, v1, p->target(), v1, v2, gr.get_edge_weight(p));
 			gr.move_edge(p, v1, v2);
 
 			mev[p].push_back(root);
@@ -1855,14 +1864,14 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		}
 		else if(mdegree[e2] == 1)
 		{
-			assert(mdegree[e1] >= 2);
+			//assert(mdegree[e1] >= 2);
 			assert(ev1.find(e1) != ev1.end());
 			assert(ev2.find(e2) == ev2.end());
 			edge_descriptor p = i2e[e2];
 			borrow_edge_strand(e2, e1);
 			int v1 = ev1[e1];
 			int v2 = p->target();
-            if(cfg.verbose >= 3) printf("Moving edge %d from (%d, %d) to (%d, %d)\n", e2, p->source(), v2, v1, v2);
+            if(cfg.verbose >= 3) printf("Moving edge %d from (%d, %d) to (%d, %d), weight=%.2lf\n", e2, p->source(), v2, v1, v2, gr.get_edge_weight(p));
 			gr.move_edge(p, v1, v2);
 
 			mev[p].insert(mev[p].begin(), root);
@@ -1887,9 +1896,9 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			int z = i2e.size();
 			i2e.push_back(p);
 			e2i.insert(PEI(p, z));
-            if(cfg.verbose >= 3) printf("Adding edge %d(%d, %d)\n", e2i[p], v1, v2);
 
 			gr.set_edge_weight(p, w);
+            if(cfg.verbose >= 3) printf("Adding edge %d(%d, %d), weight=%.2lf\n", e2i[p], v1, v2, gr.get_edge_weight(p));
 
             edge_info ei;
             edge_info ei1 = gr.get_edge_info(i2e[e1]);
@@ -2279,11 +2288,11 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
         for(int& prev : mev[xx]) printf("%d ", prev);
         printf("+ %d + ", xt);
         for(int& post : mev[yy]) printf("%d ", post);
-        printf("\nedge1 %d(%d, %d), count = %d, supported by: ", x, xs, xt, ei1.count);
+        printf("\nedge1 %d(%d, %d), weight = %.2lf, count = %d, supported by: ", x, xs, xt, gr.get_edge_weight(xx), ei1.count);
         for(auto sp : ei1.samples) printf("%d(%.2lf) ", sp, ei1.spAbd[sp]);
-        printf("\nedge2 %d(%d, %d), count = %d, supported by: ", y, ys, yt, ei2.count);
+        printf("\nedge2 %d(%d, %d), weight = %.2lf, count = %d, supported by: ", y, ys, yt, gr.get_edge_weight(yy), ei2.count);
         for(auto sp : ei2.samples) printf("%d(%.2lf) ", sp, ei2.spAbd[sp]);
-        printf("\nmerged edge %d(%d, %d), count = %d, supported by: ", e2i[p], xs, yt, ei.count);
+        printf("\nmerged edge %d(%d, %d), weight = %.2lf, count = %d, supported by: ", e2i[p], xs, yt, gr.get_edge_weight(p), ei.count);
         for(auto sp : ei.samples) printf("%d(%.2lf) ", sp, ei.spAbd[sp]);
         printf("\n");
     }
