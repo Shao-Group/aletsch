@@ -70,6 +70,9 @@ int scallop::assemble()
 		b = resolve_trivial_vertex(1, true, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 		if(b == true) continue;
 
+        b = resolve_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
+		if(b == true) continue;
+
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, 1, 0.01);
 		if(b == true) continue;
 
@@ -853,8 +856,14 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 
 		double r;
 		int e = compute_smallest_edge(i, r);
+        int e2 = compute_smallest_edge_sample_abundance(i);
 
-		if(e == -1) continue;
+        if(e == -1) continue;
+        if(e != e2)
+        {
+            //printf("Smallest weight:%d, Smallest abundance:%d\n", e, e2);
+            continue;
+        }
 
 		int s = i2e[e]->source();
 		int t = i2e[e]->target();
@@ -879,9 +888,15 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 
 		if(r < 0.01)
 		{
-			if(cfg.verbose >= 2) printf("resolve small edge, edge = %d, weight = %.2lf, ratio = %.2lf, vertex = (%d, %d), degree = (%d, %d)\n", 
-					e, w, r, s, t, gr.out_degree(s), gr.in_degree(t));
-
+			if(cfg.verbose >= 2) 
+            {
+                edge_info ei = gr.get_edge_info(i2e[e]);             
+                printf("resolve small edge, edge = %d, weight = %.2lf, ratio = %.2lf, vertex = (%d, %d), degree = (%d, %d), count = %ld, supported by: ", 
+					e, w, r, s, t, gr.out_degree(s), gr.in_degree(t), ei.samples.size());
+                for(auto sp : ei.samples) printf("%d(%.2lf) ", sp, ei.spAbd[sp]);
+                printf("\n");
+            }
+            
 			remove_edge(e);
 			hs.remove(e);
 			flag = true;
@@ -903,8 +918,14 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 	double sw = gr.get_edge_weight(i2e[se]);
 	int s = i2e[se]->source();
 	int t = i2e[se]->target();
-	if(cfg.verbose >= 2) printf("resolve small edge, edge = %d, weight = %.2lf, ratio = %.2lf, vertex = (%d, %d), degree = (%d, %d)\n", 
-			se, sw, ratio, s, t, gr.out_degree(s), gr.in_degree(t));
+	if(cfg.verbose >= 2) 
+    {
+        edge_info ei = gr.get_edge_info(i2e[se]);
+        printf("resolve smallest edge, edge = %d, weight = %.2lf, ratio = %.2lf, vertex = (%d, %d), degree = (%d, %d), count = %ld, supported by: ", 
+			se, sw, ratio, s, t, gr.out_degree(s), gr.in_degree(t), ei.samples.size());
+        for(auto sp : ei.samples) printf("%d(%.2lf) ", sp, ei.spAbd[sp]);
+        printf("\n");
+    }
 
 	remove_edge(se);
 	hs.remove(se);
@@ -1922,10 +1943,9 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
             {
                 for(auto sp : ei.samples)
                 {
-                    /*if(ei1.spAbd.find(sp) == ei1.spAbd.end()) ei.spAbd.insert(make_pair(sp, ei2.spAbd[sp]*0.5));
-                    else if(ei2.spAbd.find(sp) == ei2.spAbd.end()) ei.spAbd.insert(make_pair(sp, ei1.spAbd[sp]*0.5));
-                    else*/
-                    ei.spAbd.insert(make_pair(sp, ei1.spAbd[sp]*0.5+ei2.spAbd[sp]*0.5));
+                    //ei.spAbd.insert(make_pair(sp, ei1.spAbd[sp]*0.5+ei2.spAbd[sp]*0.5));
+                    ei.spAbd.insert(make_pair(sp, min(ei1.spAbd[sp], ei2.spAbd[sp])));
+
                 }
             }
             gr.set_edge_info(p, ei);
@@ -2274,10 +2294,8 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
     {
         for(auto sp : ei.samples)
         {
-            /*if(ei1.spAbd.find(sp) == ei1.spAbd.end()) ei.spAbd.insert(make_pair(sp, ei2.spAbd[sp]*0.5));
-            else if(ei2.spAbd.find(sp) == ei2.spAbd.end()) ei.spAbd.insert(make_pair(sp, ei1.spAbd[sp]*0.5));
-            else */
-            ei.spAbd.insert(make_pair(sp, ei1.spAbd[sp]*0.5+ei2.spAbd[sp]*0.5));
+            //ei.spAbd.insert(make_pair(sp, ei1.spAbd[sp]*0.5+ei2.spAbd[sp]*0.5));
+            ei.spAbd.insert(make_pair(sp, min(ei1.spAbd[sp], ei2.spAbd[sp])));
         }
     }
     gr.set_edge_info(p, ei);
@@ -2980,6 +2998,53 @@ int scallop::compute_smallest_edge(int x, double &ratio)
 		ratio = r2;
 		return e2;
 	}
+}
+
+int scallop::compute_smallest_edge_sample_abundance(int x)
+{
+    int e1 = -1;
+    double sum1 = 0;
+    double minAbd1 = DBL_MAX;
+    edge_iterator it1, it2;
+	PEEI pei;
+	for(pei = gr.in_edges(x), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	{
+		edge_info ei = gr.get_edge_info(*it1);
+        double sum = 0;
+        for(auto sp : ei.samples)
+        {
+            sum += ei.spAbd[sp];
+        }
+        sum1 += sum;
+        if(sum < minAbd1)
+        {
+            minAbd1 = sum;
+            e1 = e2i[*it1];
+        }
+        //printf("In-edge %d(%d, %d) has accumulate abundance: %.2f; weight = %.2f\n", e2i[*it1], (*it1)->source(), (*it1)->target(), sum, gr.get_edge_weight(*it1));
+	}
+
+    int e2 = -1;
+    double sum2 = 0;
+    double minAbd2 = DBL_MAX;
+    for(pei = gr.out_edges(x), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
+	{
+		edge_info ei = gr.get_edge_info(*it1);
+        double sum = 0;
+        for(auto sp : ei.samples)
+        {
+            sum += ei.spAbd[sp];
+        }
+        sum2 += sum;
+        if(sum < minAbd2)
+        {
+            minAbd2 = sum;
+            e2 = e2i[*it1];
+        }
+        //printf("Out-edge %d(%d, %d) has accumulate abundance: %.2f; weight = %.2f\n", e2i[*it1], (*it1)->source(), (*it1)->target(), sum, gr.get_edge_weight(*it1));
+	}
+    return (minAbd1/sum1 > minAbd2/sum2) ? e2 : e1;
+
 }
 
 int scallop::print()
