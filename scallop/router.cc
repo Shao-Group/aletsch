@@ -1007,8 +1007,8 @@ int router::thread_left_isolate(vector<int> &left_iso, vector<int> &right_all)
 
         if(cfg.verbose >= 3)
         {
-            printf("Left isolated vertex: %d(%d, %d->%d), samples = { ", v, u2e[v], le->source(), le->target());
-            for(auto sp : le_info.samples) printf("%d ", sp);
+            printf("Left isolated vertex: %d(%d, %d->%d), weight = %.2f, samples = { ", v, u2e[v], le->source(), le->target(), gr.get_edge_weight(le));
+            for(auto sp : le_info.samples) printf("%d(%.2f) ", sp, le_info.spAbd[sp]);
             printf(" }\n");
         }
 
@@ -1023,7 +1023,9 @@ int router::thread_left_isolate(vector<int> &left_iso, vector<int> &right_all)
             set<int> common;
             set_intersection(le_info.samples.begin(), le_info.samples.end(), re_info.samples.begin(), re_info.samples.end(), inserter(common, common.begin()));
             double common_abd = 0.0;
-            for(auto sp : common) common_abd += le_info.spAbd[sp]*0.5+re_info.spAbd[sp]*0.5;
+            //for(auto sp : common) common_abd += le_info.spAbd[sp]*0.5+re_info.spAbd[sp]*0.5;
+            for(auto sp : common) common_abd += 0.99*min(le_info.spAbd[sp], re_info.spAbd[sp]) + 0.01*max(le_info.spAbd[sp], re_info.spAbd[sp]) ;
+
             if(common_abd > max_abd)
             {
                 max_abd = common_abd;
@@ -1032,8 +1034,8 @@ int router::thread_left_isolate(vector<int> &left_iso, vector<int> &right_all)
             }
             if(cfg.verbose >= 3)
             {
-                printf("Candidate right partner: %d(%d, %d->%d), abd = %.2lf, #common_samples= %ld, samples = { ", r, u2e[r], re->source(), re->target(), common_abd, common.size());
-                for(auto sp : re_info.samples) printf("%d ", sp);
+                printf("Candidate right partner: %d(%d, %d->%d), weight = %.2f, abd = %.2lf, #common_samples= %ld, samples = { ", r, u2e[r], re->source(), re->target(), gr.get_edge_weight(re), common_abd, common.size());
+                for(auto sp : re_info.samples) printf("%d(%.2f) ", sp, re_info.spAbd[sp]);
                 printf("}\n");
             }
 
@@ -1054,8 +1056,8 @@ int router::thread_right_isolate(vector<int> &right_iso, vector<int> &left_all)
 
         if(cfg.verbose >= 3)
         {
-            printf("Right isolated vertex: %d(%d, %d->%d), samples = { ", v, u2e[v], re->source(), re->target());
-            for(auto sp : re_info.samples) printf("%d ", sp);
+            printf("Right isolated vertex: %d(%d, %d->%d), weight = %.2f, samples = { ", v, u2e[v], re->source(), re->target(), gr.get_edge_weight(re));
+            for(auto sp : re_info.samples) printf("%d(%.2f) ", sp, re_info.spAbd[sp]);
             printf("}\n");
         }
 
@@ -1070,7 +1072,8 @@ int router::thread_right_isolate(vector<int> &right_iso, vector<int> &left_all)
             set<int> common;
             set_intersection(le_info.samples.begin(), le_info.samples.end(), re_info.samples.begin(), re_info.samples.end(), inserter(common, common.begin()));
             double common_abd = 0;
-            for(auto sp : common) common_abd += le_info.spAbd[sp]*0.5+re_info.spAbd[sp]*0.5;
+            //for(auto sp : common) common_abd += le_info.spAbd[sp]*0.5+re_info.spAbd[sp]*0.5;
+            for(auto sp : common) common_abd += 0.99*min(le_info.spAbd[sp], re_info.spAbd[sp]) + 0.01*max(le_info.spAbd[sp], re_info.spAbd[sp]) ;
             if(common_abd > max_abd)
             {
                 max_abd = common_abd;
@@ -1080,8 +1083,8 @@ int router::thread_right_isolate(vector<int> &right_iso, vector<int> &left_all)
 
             if(cfg.verbose >= 3)
             {
-                printf("Candidate left partner: %d(%d, %d->%d), abd = %.2lf, #common_samples= %ld, samples = { ", l, u2e[l], le->source(), le->target(), common_abd, common.size());
-                for(auto sp : le_info.samples) printf("%d ", sp);
+                printf("Candidate left partner: %d(%d, %d->%d), weight = %.2f, abd = %.2lf, #common_samples= %ld, samples = { ", l, u2e[l], le->source(), le->target(), gr.get_edge_weight(le), common_abd, common.size());
+                for(auto sp : le_info.samples) printf("%d(%.2f) ", sp, le_info.spAbd[sp]);
                 printf(" }\n");
             }
         }
