@@ -856,12 +856,16 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 
 		double r;
 		int e = compute_smallest_edge(i, r);
-        int e2 = compute_smallest_edge_sample_abundance(i);
-
         if(e == -1) continue;
-        if(e != e2)
+
+        int e2 = compute_smallest_edge_sample_abundance(i);
+        if(cfg.verbose >= 2)
         {
-            //printf("Smallest weight:%d, Smallest abundance:%d\n", e, e2);
+            printf("Smallest weight:%d, continuous = %d\n", e, continuous_vertices(i2e[e]));
+            printf("Smallest abundance:%d, continuous = %d\n", e2, continuous_vertices(i2e[e2]));
+        }
+        if(!random_ordering && e != e2)
+        {
             continue;
         }
 
@@ -2306,9 +2310,9 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
         for(int& prev : mev[xx]) printf("%d ", prev);
         printf("+ %d + ", xt);
         for(int& post : mev[yy]) printf("%d ", post);
-        printf("\nedge1 %d(%d, %d), weight = %.2lf, count = %d, supported by: ", x, xs, xt, gr.get_edge_weight(xx), ei1.count);
+        printf("\nedge1 %d(%d, %d), weight = %.2lf, count = %d, continuous = %d, supported by: ", x, xs, xt, gr.get_edge_weight(xx), ei1.count, continuous_vertices(xx));
         for(auto sp : ei1.samples) printf("%d(%.2lf) ", sp, ei1.spAbd[sp]);
-        printf("\nedge2 %d(%d, %d), weight = %.2lf, count = %d, supported by: ", y, ys, yt, gr.get_edge_weight(yy), ei2.count);
+        printf("\nedge2 %d(%d, %d), weight = %.2lf, count = %d, continuous = %d, supported by: ", y, ys, yt, gr.get_edge_weight(yy), ei2.count, continuous_vertices(yy));
         for(auto sp : ei2.samples) printf("%d(%.2lf) ", sp, ei2.spAbd[sp]);
         printf("\nmerged edge %d(%d, %d), weight = %.2lf, count = %d, supported by: ", e2i[p], xs, yt, gr.get_edge_weight(p), ei.count);
         for(auto sp : ei.samples) printf("%d(%.2lf) ", sp, ei.spAbd[sp]);
@@ -3021,7 +3025,7 @@ int scallop::compute_smallest_edge_sample_abundance(int x)
             minAbd1 = sum;
             e1 = e2i[*it1];
         }
-        //printf("In-edge %d(%d, %d) has accumulate abundance: %.2f; weight = %.2f\n", e2i[*it1], (*it1)->source(), (*it1)->target(), sum, gr.get_edge_weight(*it1));
+        if(cfg.verbose >= 2) printf("In-edge %d(%d, %d) has accumulate abundance: %.2f; weight = %.2f\n", e2i[*it1], (*it1)->source(), (*it1)->target(), sum, gr.get_edge_weight(*it1));
 	}
 
     int e2 = -1;
@@ -3041,10 +3045,40 @@ int scallop::compute_smallest_edge_sample_abundance(int x)
             minAbd2 = sum;
             e2 = e2i[*it1];
         }
-        //printf("Out-edge %d(%d, %d) has accumulate abundance: %.2f; weight = %.2f\n", e2i[*it1], (*it1)->source(), (*it1)->target(), sum, gr.get_edge_weight(*it1));
+        if(cfg.verbose >= 2) printf("Out-edge %d(%d, %d) has accumulate abundance: %.2f; weight = %.2f\n", e2i[*it1], (*it1)->source(), (*it1)->target(), sum, gr.get_edge_weight(*it1));
 	}
     return (minAbd1/sum1 > minAbd2/sum2) ? e2 : e1;
 
+}
+
+bool scallop::continuous_vertices(edge_descriptor e)
+{
+    int s = e->source();
+    int t = e->target();
+
+    int prev = s;
+    int32_t rpos = gr.get_vertex_info(s).rpos;
+    for(int& v : mev[e])
+    {
+        rpos = gr.get_vertex_info(v).rpos;
+        if(prev == 0) 
+        {
+            prev = v;
+            continue;
+        }
+        //printf("%d rpos=%d, %d lpos=%d\n", prev, gr.get_vertex_info(prev).rpos, v, gr.get_vertex_info(v).lpos);
+        if(gr.get_vertex_info(prev).rpos != gr.get_vertex_info(v).lpos)
+        {
+            return false;
+        }
+        prev = v;
+    }
+
+    if(s == 0) return true;
+    if(t == gr.num_vertices()-1) return true;
+    if(rpos == gr.get_vertex_info(t).lpos) return true;
+
+    return false;
 }
 
 int scallop::print()

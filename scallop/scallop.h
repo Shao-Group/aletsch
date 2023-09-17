@@ -97,6 +97,7 @@ private:
 	int compute_second_smallest_in_edge(int x, double &ratio);
 	int compute_second_smallest_out_edge(int x, double &ratio);
     int compute_smallest_edge_sample_abundance(int x);
+    bool continuous_vertices(edge_descriptor e);
 	int decompose_trivial_vertex(int v);
 	int decompose_vertex_extend(int v, MPID &pe2w);
 	int decompose_vertex_replace(int v, MPID &pe2w);
