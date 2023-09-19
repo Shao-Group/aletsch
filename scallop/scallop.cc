@@ -840,7 +840,8 @@ bool scallop::remove_single_smallest_edge(int i, double max_ratio, double &ratio
 
 bool scallop::resolve_smallest_edges(double max_ratio)
 {
-	int se = -1;
+	if(!random_ordering) return false;
+    int se = -1;
 	int root = -1;
 	double ratio = max_ratio;
 	bool flag = false;
@@ -858,7 +859,7 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 		int e = compute_smallest_edge(i, r);
         if(e == -1) continue;
 
-        int e2 = compute_smallest_edge_sample_abundance(i);
+        /*int e2 = compute_smallest_edge_sample_abundance(i);
         if(cfg.verbose >= 2)
         {
             printf("Smallest weight:%d, continuous = %d\n", e, continuous_vertices(i2e[e]));
@@ -867,7 +868,7 @@ bool scallop::resolve_smallest_edges(double max_ratio)
         if(!random_ordering && e != e2)
         {
             continue;
-        }
+        }*/
 
 		int s = i2e[e]->source();
 		int t = i2e[e]->target();
