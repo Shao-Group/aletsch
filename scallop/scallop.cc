@@ -840,7 +840,8 @@ bool scallop::remove_single_smallest_edge(int i, double max_ratio, double &ratio
 
 bool scallop::resolve_smallest_edges(double max_ratio)
 {
-	if(!random_ordering) return false;
+	//return false;
+    if(!random_ordering) return false;
     int se = -1;
 	int root = -1;
 	double ratio = max_ratio;
@@ -858,6 +859,9 @@ bool scallop::resolve_smallest_edges(double max_ratio)
 		double r;
 		int e = compute_smallest_edge(i, r);
         if(e == -1) continue;
+
+        //check closed vertex
+        //if(!closed_vertex(i2e[e], i)) continue;
 
         /*int e2 = compute_smallest_edge_sample_abundance(i);
         if(cfg.verbose >= 2)
@@ -2311,9 +2315,9 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
         for(int& prev : mev[xx]) printf("%d ", prev);
         printf("+ %d + ", xt);
         for(int& post : mev[yy]) printf("%d ", post);
-        printf("\nedge1 %d(%d, %d), weight = %.2lf, count = %d, continuous = %d, supported by: ", x, xs, xt, gr.get_edge_weight(xx), ei1.count, continuous_vertices(xx));
+        printf("\nedge1 %d(%d, %d), weight = %.2lf, count = %d, supported by: ", x, xs, xt, gr.get_edge_weight(xx), ei1.count);
         for(auto sp : ei1.samples) printf("%d(%.2lf) ", sp, ei1.spAbd[sp]);
-        printf("\nedge2 %d(%d, %d), weight = %.2lf, count = %d, continuous = %d, supported by: ", y, ys, yt, gr.get_edge_weight(yy), ei2.count, continuous_vertices(yy));
+        printf("\nedge2 %d(%d, %d), weight = %.2lf, count = %d, supported by: ", y, ys, yt, gr.get_edge_weight(yy), ei2.count);
         for(auto sp : ei2.samples) printf("%d(%.2lf) ", sp, ei2.spAbd[sp]);
         printf("\nmerged edge %d(%d, %d), weight = %.2lf, count = %d, supported by: ", e2i[p], xs, yt, gr.get_edge_weight(p), ei.count);
         for(auto sp : ei.samples) printf("%d(%.2lf) ", sp, ei.spAbd[sp]);
@@ -3080,6 +3084,29 @@ bool scallop::continuous_vertices(edge_descriptor e)
     if(rpos == gr.get_vertex_info(t).lpos) return true;
 
     return false;
+}
+
+bool scallop::closed_vertex(edge_descriptor e, int root)
+{
+    int s = e->source();
+    int t = e->target();
+    if(s == root)
+    {
+        int v = t;
+        if(!mev[e].empty()) v = mev[e].front();
+        if(gr.get_vertex_info(s).rpos != gr.get_vertex_info(v).lpos)
+            return false;
+    }
+    else if(t == root)
+    {
+        int v = s;
+        if(!mev[e].empty()) v = mev[e].back();
+        if(gr.get_vertex_info(v).rpos != gr.get_vertex_info(t).lpos)
+            return false;
+    }
+    else
+        assert(false);
+    return true;
 }
 
 int scallop::print()

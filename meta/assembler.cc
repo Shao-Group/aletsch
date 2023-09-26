@@ -155,8 +155,30 @@ int assembler::assemble(vector<bundle*> gv)
 	// combined phase set 
 	phase_set px;
 
+    //junction supports and supported sample abundance
     map< pair<int32_t, int32_t>, set<int> > junc2sup;
     map< pair< pair<int32_t, int32_t>, int>, double> sup2abd;
+
+    // combined support
+    edge_iterator itx;
+    PEEI peix = gx.edges();
+    for(itx = peix.first; itx != peix.second; itx++)
+    {
+        edge_descriptor e = (*itx);
+        int s = e->source();
+        int t = e->target();
+
+        if(s == 0) continue;
+        if(t == gx.num_vertices() - 1) continue;
+
+        pair<int32_t, int32_t>p = make_pair(gx.get_vertex_info(s).rpos,gx.get_vertex_info(t).lpos);
+        junc2sup[p].insert(-1);
+        
+        pair< pair<int32_t, int32_t>, int> psp = make_pair(p, -1);
+        sup2abd[psp] += gx.get_edge_weight(e);
+    }
+
+    // individual junction supports
     for(int k = 0; k < gv.size(); k++)
     {
         bundle &bd = *(gv[k]);
@@ -179,12 +201,12 @@ int assembler::assemble(vector<bundle*> gv)
             junc2sup[p].insert(bd.sp.sample_id);
             
             pair< pair<int32_t, int32_t>, int> psp = make_pair(p, bd.sp.sample_id);
-            /*if(sup2abd.find(psp) != sup2abd.end())
-                sup2abd[psp] = gr.get_edge_weight(e);
-            else*/
             sup2abd[psp] += gr.get_edge_weight(e);
         }
     }
+
+    //calculate junction supports for combined graph
+    junction_support(gx, junc2sup, sup2abd);
 
 	// assemble individual bundle
 	for(int k = 0; k < gv.size(); k++)
@@ -199,12 +221,6 @@ int assembler::assemble(vector<bundle*> gv)
 
         //calculate junction supports based on other samples
         junction_support(gr, junc2sup, sup2abd);
-        if(cfg.verbose >= 2) 
-        {
-            printf("print %d/%lu individual graph %s, sample_id=%d\n", k+1, gv.size(), gr.gid.c_str(), bd.sp.sample_id);
-            gr.print_junction_supports();
-        }
-
         for(int j = 0; j < gv.size(); j++)
         {
             bundle &bd1 = *(gv[j]);
@@ -213,20 +229,38 @@ int assembler::assemble(vector<bundle*> gv)
             start_end_support(bd1.sp.sample_id, gr1, gr);
         }
 
+        if(cfg.verbose >= 2) 
+        {
+            printf("print %d/%lu individual graph %s, sample_id=%d\n", k+1, gv.size(), gr.gid.c_str(), bd.sp.sample_id);
+            gr.print_junction_supports();
+        }
 		phase_set ps;
 		bd.build_phase_set(ps, gr);
 		px.combine(ps);
 
 		assemble(gr, ps, bd.sp.sample_id);
 		//bd.clear();
+        
+        //calculate start&end suppots for combined graph
+        start_end_support(bd.sp.sample_id, gr, gx);
 	}
+
+    start_end_support(-1, gx, gx);
+
+    if(cfg.verbose >= 2) 
+    {
+        printf("print combined graph %s\n", gx.gid.c_str());
+        gx.print_junction_supports();
+    }
+
 
     for(int k = 0; k < gv.size(); k++)
         gv[k]->clear();
 
 	bx.clear();
+
 	// assemble combined instance
-	//assemble(gx, px, ts, -1);
+	assemble(gx, px, -1);
 	return 0;
 }
 

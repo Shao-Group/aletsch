@@ -305,12 +305,14 @@ int router::build_bipartite_graph()
 
     //resolve isolated vertices by sample info
     thread_left_isolate(v1, right);
+    //thread_left_isolate_all(v1, right);
 
     for(auto i : right)
     {
         if(ug.degree(i) == 0) v2.push_back(i);//right isolated
 	}
     thread_right_isolate(v2, left);
+    //thread_right_isolate_all(v2, left);
 
     if(cfg.verbose >= 3)
     {
@@ -1091,6 +1093,102 @@ int router::thread_right_isolate(vector<int> &right_iso, vector<int> &left_all)
         if(cfg.verbose >= 3) printf("Add routes (%d, %d), weight = %.2lf\n", partner, v, max_abd);
         edge_descriptor e = ug.add_edge(partner, v);
 		u2w.insert(PED(e, max_abd));
+    }
+    return 0;
+}
+
+int router::thread_left_isolate_all(vector<int> &left_iso, vector<int> &right_all)
+{
+    for(auto v : left_iso)
+    { 
+        edge_descriptor le = i2e[u2e[v]];
+        edge_info le_info = gr.get_edge_info(le);
+
+        if(cfg.verbose >= 3)
+        {
+            printf("Left isolated vertex: %d(%d, %d->%d), weight = %.2f, samples = { ", v, u2e[v], le->source(), le->target(), gr.get_edge_weight(le));
+            for(auto sp : le_info.samples) printf("%d(%.2f) ", sp, le_info.spAbd[sp]);
+            printf(" }\n");
+        }
+
+        map<int, double> sum_abd;
+        for(auto r : right_all)
+        {
+            edge_descriptor re = i2e[u2e[r]];
+            edge_info re_info = gr.get_edge_info(re);
+            for(auto sp : re_info.samples) sum_abd[sp] += re_info.spAbd[sp];
+        }
+
+        for(auto r : right_all)
+        {
+            edge_descriptor re = i2e[u2e[r]];
+            edge_info re_info = gr.get_edge_info(re);
+
+            set<int> common;
+            set_intersection(le_info.samples.begin(), le_info.samples.end(), re_info.samples.begin(), re_info.samples.end(), inserter(common, common.begin()));
+            double common_abd = 0.0;
+            for(auto sp : common) common_abd += le_info.spAbd[sp]*re_info.spAbd[sp]/sum_abd[sp];
+
+            if(cfg.verbose >= 3)
+            {
+                printf("Candidate right partner: %d(%d, %d->%d), weight = %.2f, abd = %.2lf, #common_samples= %ld, samples = { ", r, u2e[r], re->source(), re->target(), gr.get_edge_weight(re), common_abd, common.size());
+                for(auto sp : re_info.samples) printf("%d(%.2f) ", sp, re_info.spAbd[sp]);
+                printf("}\n");
+            }
+
+            if(cfg.verbose >= 3) printf("Add routes (%d, %d), weight = %.2lf\n", v, r, common_abd);
+
+            edge_descriptor e = ug.add_edge(v, r);
+            u2w.insert(PED(e, common_abd));
+        }
+    }
+    return 0;
+}
+
+int router::thread_right_isolate_all(vector<int> &right_iso, vector<int> &left_all)
+{
+    for(auto v : right_iso)
+    {
+        edge_descriptor re = i2e[u2e[v]];
+        edge_info re_info = gr.get_edge_info(re);
+
+        if(cfg.verbose >= 3)
+        {
+            printf("Right isolated vertex: %d(%d, %d->%d), weight = %.2f, samples = { ", v, u2e[v], re->source(), re->target(), gr.get_edge_weight(re));
+            for(auto sp : re_info.samples) printf("%d(%.2f) ", sp, re_info.spAbd[sp]);
+            printf("}\n");
+        }
+
+        map<int, double> sum_abd;
+        for(auto l : left_all)
+        {
+            edge_descriptor le = i2e[u2e[l]];
+            edge_info le_info = gr.get_edge_info(le);
+            for(auto sp : le_info.samples) sum_abd[sp] += le_info.spAbd[sp];
+        }
+
+        for(auto l : left_all)
+        {
+            edge_descriptor le = i2e[u2e[l]];
+            edge_info le_info = gr.get_edge_info(le);
+
+            set<int> common;
+            set_intersection(le_info.samples.begin(), le_info.samples.end(), re_info.samples.begin(), re_info.samples.end(), inserter(common, common.begin()));
+            double common_abd = 0;
+            for(auto sp : common) common_abd += re_info.spAbd[sp]*le_info.spAbd[sp]/sum_abd[sp];
+
+            if(cfg.verbose >= 3)
+            {
+                printf("Candidate left partner: %d(%d, %d->%d), weight = %.2f, abd = %.2lf, #common_samples= %ld, samples = { ", l, u2e[l], le->source(), le->target(), gr.get_edge_weight(le), common_abd, common.size());
+                for(auto sp : le_info.samples) printf("%d(%.2f) ", sp, le_info.spAbd[sp]);
+                printf(" }\n");
+            }
+
+            if(cfg.verbose >= 3) printf("Add routes (%d, %d), weight = %.2lf\n", l, v, common_abd);
+
+            edge_descriptor e = ug.add_edge(l, v);
+            u2w.insert(PED(e, common_abd));
+        }
     }
     return 0;
 }
