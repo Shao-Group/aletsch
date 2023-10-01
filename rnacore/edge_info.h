@@ -26,9 +26,11 @@ public:
 	int count;		// #supporting samples
 	double weight;	// new weight from hyper-edges
 	int strand;		// strandness ./+/- => 0,1,2
+    double confidence; //log of reliability of every choice
 
     set<int> samples;
     map<int, double> spAbd; //map sample_id to abd
+    double abd;
 };
 
 #endif

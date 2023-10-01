@@ -219,7 +219,7 @@ int assembler::assemble(vector<bundle*> gv)
 
         fix_missing_edges(gr, gx);
 
-		if(cfg.verbose >= 1) printf("\n-----preprocess splice graph %s, vertices = %lu, edges = %lu\n", gr.gid.c_str(), gr.num_vertices(), gr.num_edges());
+		if(cfg.verbose >= 2) printf("\n-----preprocess splice graph %s, vertices = %lu, edges = %lu\n", gr.gid.c_str(), gr.num_vertices(), gr.num_edges());
         gr.print();
         //calculate junction supports based on other samples
         junction_support(gr, junc2sup, sup2abd);
@@ -232,7 +232,7 @@ int assembler::assemble(vector<bundle*> gv)
             non_splicing_support(bd1.sp.sample_id, gr1, gr);
         }
 
-        if(cfg.verbose >= 1) 
+        if(cfg.verbose >= 2) 
         {
             printf("print %d/%lu individual graph %s, sample_id=%d\n", k+1, gv.size(), gr.gid.c_str(), bd.sp.sample_id);
             gr.print_junction_supports();
@@ -251,7 +251,7 @@ int assembler::assemble(vector<bundle*> gv)
 
     start_end_support(-1, gx, gx);
 
-    if(cfg.verbose >= 1) 
+    if(cfg.verbose >= 2) 
     {
         printf("print combined graph %s\n", gx.gid.c_str());
         gx.print_junction_supports();
@@ -326,7 +326,7 @@ int assembler::non_splicing_support(int sample_id, splice_graph &gr, splice_grap
                ei.count = ei.samples.size();
                ei.spAbd[sample_id] += gr.get_vertex_weight(k1);
                gx.set_edge_info(e, ei);
-               if(cfg.verbose >= 1) printf("Non-splicing edge(%d, %d) supported by vertex %d, sample_id=%d, weight=%.2f\n", s, t, k1, sample_id, gr.get_vertex_weight(k1));
+               if(cfg.verbose >= 3) printf("Non-splicing edge(%d, %d) supported by vertex %d, sample_id=%d, weight=%.2f\n", s, t, k1, sample_id, gr.get_vertex_weight(k1));
            }
            else if(gr.get_vertex_info(k1).rpos==gr.get_vertex_info(k2).lpos && gr.edge(k1, k2).second)
            {
@@ -334,7 +334,7 @@ int assembler::non_splicing_support(int sample_id, splice_graph &gr, splice_grap
                ei.count = ei.samples.size();
                ei.spAbd[sample_id] += gr.get_edge_weight(gr.edge(k1, k2).first);
                gx.set_edge_info(e, ei);
-               if(cfg.verbose >= 1) printf("Non-splicing edge(%d, %d) supported by edge(%d, %d), sample_id=%d, weight=%.2f\n", s, t, k1, k2, sample_id, gr.get_edge_weight(gr.edge(k1, k2).first));
+               if(cfg.verbose >= 3) printf("Non-splicing edge(%d, %d) supported by edge(%d, %d), sample_id=%d, weight=%.2f\n", s, t, k1, k2, sample_id, gr.get_edge_weight(gr.edge(k1, k2).first));
            }
 
         }

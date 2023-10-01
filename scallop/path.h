@@ -21,6 +21,8 @@ public:
 	vector<int> v;
 	int length;
 	double abd;
+    double weight;
+    double conf;
 	double reads;
 	char strand;
     int count;

@@ -1845,34 +1845,7 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 		double w = it->second;
 		assert(w >= cfg.min_guaranteed_edge_weight - SMIN);
 
-        /*if(mdegree[e1] == 1 && mdegree[e2] == 1)//SPLITTABLE_PURE
-        {
-            assert(ev1.find(e1) == ev1.end());
-			assert(ev2.find(e2) == ev2.end());
-			edge_descriptor p1 = i2e[e1];
-            edge_descriptor p2 = i2e[e2];
-
-			borrow_edge_strand(e1, e2);
-			int v1 = p1->source();
-			int v2 = p2->target();
-
-            if(cfg.verbose >= 3) printf("Moving edge %d from (%d, %d) to (%d, %d), weight=%.2lf\n", e1, v1, p1->target(), v1, v2, gr.get_edge_weight(p1));
-			gr.move_edge(p1, v1, v2);
-			hs.replace(e1, e2, e1);
-
-            if(cfg.verbose >= 3) printf("Removing edge %d (%d, %d)\n", e2, p2->source(), p2->target());
-            remove_edge(e2);
-			hs.replace(e2, e1);
-
-			mev[p1].push_back(root);
-
-			assert(med.find(p1) != med.end());
-			assert(mei.find(p1) != mei.end());
-			med[p1] += mweight[e1];
-			mei[p1] += root_info.rpos - root_info.lpos;
-
-        }
-        else */if(mdegree[e1] == 1 && mdegree[e2]>=2)
+        if(mdegree[e1] == 1 && mdegree[e2]>=2)
 		{
 			//assert(mdegree[e2] >= 2);
 			assert(ev1.find(e1) == ev1.end());
@@ -1948,13 +1921,16 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 
             ei.count = ei.samples.size();
             assert(ei.count > 0);
+            ei.abd = 0;
+            ei.spAbd.clear();
             if(ei1.count > 0 && ei2.count > 0)//take average
             {
                 for(auto sp : ei.samples)
                 {
                     //ei.spAbd.insert(make_pair(sp, ei1.spAbd[sp]*0.5+ei2.spAbd[sp]*0.5));
-                    ei.spAbd.insert(make_pair(sp, min(ei1.spAbd[sp], ei2.spAbd[sp])));
-
+                    double common = min(ei1.spAbd[sp], ei2.spAbd[sp]);
+                    ei.spAbd.insert(make_pair(sp, common));
+                    ei.abd += common;
                 }
             }
             gr.set_edge_info(p, ei);
@@ -2075,6 +2051,14 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 	}
 
 	// decompose
+    bool update_conf = false;
+    int update_v = -1;
+    if(gr.out_degree(root) > 1)
+    {
+        update_conf = true;
+        assert(gr.in_degree(root) == 1);
+        update_v = (*(gr.in_edges(root).first))->source();
+    }
 	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
 	{
 		int e1 = it->first.first;
@@ -2089,6 +2073,10 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 		if(m[e1] == 1) hs.replace(e1, e);
 		if(m[e2] == 1) hs.replace(e2, e);
 	}
+    if(update_conf) 
+    {
+        update_log_confidence(update_v);
+    }
 
 	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
 	{
@@ -2299,14 +2287,19 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
     ei.count = ei.samples.size();
     assert(ei1.count > 0);
 
+    ei.abd = 0;
+    ei.spAbd.clear();
     if(ei1.count > 0 && ei2.count > 0)//take average
     {
         for(auto sp : ei.samples)
         {
             //ei.spAbd.insert(make_pair(sp, ei1.spAbd[sp]*0.5+ei2.spAbd[sp]*0.5));
-            ei.spAbd.insert(make_pair(sp, min(ei1.spAbd[sp], ei2.spAbd[sp])));
+            double common = min(ei1.spAbd[sp], ei2.spAbd[sp]);
+            ei.spAbd.insert(make_pair(sp, common));
+            ei.abd += common;
         }
     }
+    ei.confidence = ei1.confidence + ei2.confidence;
     gr.set_edge_info(p, ei);
 
     if(cfg.verbose >= 3)
@@ -2315,11 +2308,11 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
         for(int& prev : mev[xx]) printf("%d ", prev);
         printf("+ %d + ", xt);
         for(int& post : mev[yy]) printf("%d ", post);
-        printf("\nedge1 %d(%d, %d), weight = %.2lf, count = %d, supported by: ", x, xs, xt, gr.get_edge_weight(xx), ei1.count);
+        printf("\nedge1 %d(%d, %d), weight = %.2lf, confidence = %.2lf, count = %d, abd = %.2lf, supported by: ", x, xs, xt, gr.get_edge_weight(xx), ei1.confidence, ei1.count, ei1.abd);
         for(auto sp : ei1.samples) printf("%d(%.2lf) ", sp, ei1.spAbd[sp]);
-        printf("\nedge2 %d(%d, %d), weight = %.2lf, count = %d, supported by: ", y, ys, yt, gr.get_edge_weight(yy), ei2.count);
+        printf("\nedge2 %d(%d, %d), weight = %.2lf, confidence = %.2lf, count = %d, abd = %.2lf, supported by: ", y, ys, yt, gr.get_edge_weight(yy), ei2.confidence, ei2.count, ei2.abd);
         for(auto sp : ei2.samples) printf("%d(%.2lf) ", sp, ei2.spAbd[sp]);
-        printf("\nmerged edge %d(%d, %d), weight = %.2lf, count = %d, supported by: ", e2i[p], xs, yt, gr.get_edge_weight(p), ei.count);
+        printf("\nmerged edge %d(%d, %d), weight = %.2lf, confidence = %.2lf, count = %d, abd = %.2lf, supported by: ", e2i[p], xs, yt, gr.get_edge_weight(p), ei.confidence, ei.count, ei.abd);
         for(auto sp : ei.samples) printf("%d(%.2lf) ", sp, ei.spAbd[sp]);
         printf("\n");
     }
@@ -2792,13 +2785,16 @@ int scallop::collect_path(int e)
 	if(empty == false)
 	{
 		path p;
+        edge_info ei = gr.get_edge_info(i2e[e]);
 		p.length = mi;
-		p.abd = gr.get_edge_weight(i2e[e]);
+		p.weight = gr.get_edge_weight(i2e[e]);
+        p.abd = ei.abd;
+        p.conf = exp(ei.confidence/(v.size()-1));
 		p.reads = med[i2e[e]];
 		//p.abd = med[i2e[e]] / mi;
 		//p.reads = gr.get_edge_weight(i2e[e]);
 		p.v = v;
-        p.count = gr.get_edge_info(i2e[e]).count;
+        p.count = ei.count;
 
 		if(gr.get_edge_info(i2e[e]).strand == 1) p.strand = '+';
 		if(gr.get_edge_info(i2e[e]).strand == 2) p.strand = '-';
@@ -3019,18 +3015,14 @@ int scallop::compute_smallest_edge_sample_abundance(int x)
 	for(pei = gr.in_edges(x), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
 	{
 		edge_info ei = gr.get_edge_info(*it1);
-        double sum = 0;
-        for(auto sp : ei.samples)
-        {
-            sum += ei.spAbd[sp];
-        }
+        double sum = ei.abd;
         sum1 += sum;
         if(sum < minAbd1)
         {
             minAbd1 = sum;
             e1 = e2i[*it1];
         }
-        if(cfg.verbose >= 2) printf("In-edge %d(%d, %d) has accumulate abundance: %.2f; weight = %.2f\n", e2i[*it1], (*it1)->source(), (*it1)->target(), sum, gr.get_edge_weight(*it1));
+        if(cfg.verbose >= 3) printf("In-edge %d(%d, %d) has accumulate abundance: %.2f; weight = %.2f\n", e2i[*it1], (*it1)->source(), (*it1)->target(), sum, gr.get_edge_weight(*it1));
 	}
 
     int e2 = -1;
@@ -3039,18 +3031,14 @@ int scallop::compute_smallest_edge_sample_abundance(int x)
     for(pei = gr.out_edges(x), it1 = pei.first, it2 = pei.second; it1 != it2; it1++)
 	{
 		edge_info ei = gr.get_edge_info(*it1);
-        double sum = 0;
-        for(auto sp : ei.samples)
-        {
-            sum += ei.spAbd[sp];
-        }
+        double sum = ei.abd;
         sum2 += sum;
         if(sum < minAbd2)
         {
             minAbd2 = sum;
             e2 = e2i[*it1];
         }
-        if(cfg.verbose >= 2) printf("Out-edge %d(%d, %d) has accumulate abundance: %.2f; weight = %.2f\n", e2i[*it1], (*it1)->source(), (*it1)->target(), sum, gr.get_edge_weight(*it1));
+        if(cfg.verbose >= 3) printf("Out-edge %d(%d, %d) has accumulate abundance: %.2f; weight = %.2f\n", e2i[*it1], (*it1)->source(), (*it1)->target(), sum, gr.get_edge_weight(*it1));
 	}
     return (minAbd1/sum1 > minAbd2/sum2) ? e2 : e1;
 
@@ -3107,6 +3095,25 @@ bool scallop::closed_vertex(edge_descriptor e, int root)
     else
         assert(false);
     return true;
+}
+
+int scallop::update_log_confidence(int root)
+{
+    assert(gr.out_degree(root) > 1);
+    PEEI pei = gr.out_edges(root);
+    double sum = 0;
+    for(edge_iterator it = pei.first; it != pei.second; it++)
+    {
+        sum += gr.get_edge_info(*it).abd;
+    }
+    for(edge_iterator it = pei.first; it != pei.second; it++)
+    {
+        edge_info ei = gr.get_edge_info(*it);
+        ei.confidence += log(ei.abd/sum);
+        gr.set_edge_info(*it, ei);
+        if(cfg.verbose >= 3) printf("Updating confidence of edge(%d, %d), %.2lf/%.2lf, to %.2lf\n", (*it)->source(), (*it)->target(), ei.abd, sum, ei.confidence);
+    }
+    return 0;
 }
 
 int scallop::print()
@@ -3221,10 +3228,10 @@ int scallop::build_transcripts()
 	trsts.clear();
 	for(int i = 0; i < paths.size(); i++)
 	{
-		string tid = gr.gid + "." + tostring(i);
+		string tid = "chrm" + gr.chrm + "." + gr.gid + "." + tostring(i);
 		transcript trst;
 		path &p = paths[i];
-		build_transcript(gr, trst, p.v, p.strand, p.abd, tid);
+		build_transcript(gr, trst, p.v, p.strand, p.weight, tid);
 		trsts.push_back(trst);
 	}
 	return 0;

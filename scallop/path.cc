@@ -13,6 +13,8 @@ path::path()
 {
 	v.clear();
 	abd = 0;
+    weight = 0;
+    conf = 0;
 	reads = 0;
 	length = 0;
 	strand = '.';
@@ -26,6 +28,8 @@ int path::clear()
 {
 	v.clear();
 	abd = 0;
+    weight = 0;
+    conf = 0;
 	reads = 0;
 	length = 0;
 	strand = '.';
@@ -36,7 +40,7 @@ int path::clear()
 int path::print(int index) const
 {
 	if(v.size() == 0) return 0;
-	printf("path %d: abundance = %.2lf, count = %d, length = %d, ave-reads = %.2lf, strand = %c, vertices = ", index, abd, count, length, reads / length, strand);
+	printf("path %d: weight = %.2lf, abundance = %.2lf, confidence = %.2lf, count = %d, length = %d, ave-reads = %.2lf, strand = %c, vertices = ", index, weight, abd, conf, count, length, reads / length, strand);
 	for(int i = 0; i < v.size() - 1; i++)
 	{
 		printf("%d, ", v[i]);
