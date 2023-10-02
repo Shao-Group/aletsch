@@ -34,7 +34,8 @@ int trans_item::merge(const trans_item &ti, int mode)
 		for(auto &x : ti.samples)
 		{
 			if(samples.find(x.first) == samples.end()) samples.insert(x);
-			else if(samples[x.first] < x.second) samples[x.first] = x.second;
+			else if(samples[x.first].coverage < x.second.coverage) samples[x.first].coverage = x.second.coverage;
+			// we use the max of coverage of transcript
 		}
 		//samples.insert(ti.samples.begin(), ti.samples.end());
 	}

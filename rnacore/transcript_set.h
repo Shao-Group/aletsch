@@ -25,7 +25,7 @@ public:
 public:
 	transcript trst;
 	int count;
-	map<int, double> samples;
+	map<int, transcript> samples;
 
 public:
 	int merge(const trans_item &ti, int mode);

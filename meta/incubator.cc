@@ -443,9 +443,9 @@ int incubator::postprocess()
 
 	pool1.join();
 
-	vector<int> ct;
-	vector<transcript> vt;
-	vector<vector<pair<int, double>>> vv(samples.size());
+	//vector<int> ct;
+	//vector<transcript> vt;
+	vector<vector<transcript>> vv(samples.size());
 
 	for(auto &z: tts)
 	{
@@ -484,15 +484,20 @@ int incubator::postprocess()
 				if(verify_exon_length(t, params[DEFAULT]) == false) continue;
 
 				t.write(ss, -1, v[k].samples.size());
-				vt.push_back(t);
-				ct.push_back(v[k].samples.size());
 
+				//vt.push_back(t);
+				//ct.push_back(v[k].samples.size());
 				for(auto &p : v[k].samples)
 				{
 					int j = p.first;
-					double w = p.second;
 					if(j < 0 || j >= vv.size()) continue;
-					vv[j].push_back(make_pair(vt.size() - 1, w));
+					// TODO: assign p.second.coverage
+					// to a feature cov2 in transcript
+					// p.second.cov2 = p.second.coverage;
+					// TODO: assign v[k].samples.size()
+					// to another feature ct in transcript
+					p.second.coverage = t.coverage;
+					vv[j].push_back(p.second);
 				}
 			}
 		}
@@ -515,20 +520,22 @@ int incubator::postprocess()
 	return 0;
 }
 
-int incubator::write_individual_gtf(int id, const vector<transcript> &vt, const vector<int> &ct, const vector<pair<int, double>> &v)
+int incubator::write_individual_gtf(int id, const vector<transcript> &v)
 {
 	assert(id >= 0 && id < samples.size());
 
 	stringstream ss;
 	for(int i = 0; i < v.size(); i++)
 	{
-		int k = v[i].first;
-		const transcript &t = vt[k];
-		double cov2 = v[i].second;
+		const transcript &t = v[i];
 
+		// TODO: fetch cov2 from v[i]
+		double cov2 = v[i].coverage;
 		if(t.exons.size() == 1 && cov2 < params[DEFAULT].min_single_exon_individual_coverage) continue;
 
-		t.write(ss, cov2, ct[k]);
+		// TODO fetch ct from v[i]
+		int ct = 1;
+		t.write(ss, cov2, ct);
 	}
 
 	const string &s = ss.str();

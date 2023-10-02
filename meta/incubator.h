@@ -65,7 +65,7 @@ private:
 	int generate_merge_assemble(string chrm, int rid);
 	int generate(int sid, int tid, int rid, string chrm, mutex &sample_lock);
 	int assemble(bundle_group &g, int rid, int gid, mutex &mtx);
-	int write_individual_gtf(int id, const vector<transcript> &vt, const vector<int> &ct, const vector<pair<int, double>> &v);
+	int write_individual_gtf(int id, const vector<transcript> &t);
 	int print_groups(const vector<bundle_group> &grps);
 	//int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);
 	//int save_transcript_set(const transcript_set &ts, mutex &mylock);
