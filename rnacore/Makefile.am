@@ -9,6 +9,7 @@ librnacore_a_CPPFLAGS = -std=c++11 -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE) -I$(GTF_
 librnacore_a_SOURCES = splice_graph.h splice_graph.cc \
 					   vertex_info.h vertex_info.cc \
 					   edge_info.h edge_info.cc \
+					   path.h path.cc \
 					   interval_map.h interval_map.cc \
 					   binomial.h binomial.cc \
 					   hit.h hit.cc \
