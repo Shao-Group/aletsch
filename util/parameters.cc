@@ -26,7 +26,7 @@ parameters::parameters()
 	chrm_list_string = "";
 	chrm_list_file = "";
 	profile_dir = "";
-	verbose = 3;
+	verbose = 1;
 	algo = "aletsch";
 	version = "1.0.3";
 	max_threads = 10;
@@ -38,7 +38,7 @@ parameters::parameters()
 	min_grouping_similarity = 0.20;
 	max_grouping_similarity = 0.90;
 	max_num_junctions_to_combine = 500;
-	assembly_repeats = 1;
+	assembly_repeats = 3;
 	region_partition_length = 1000000;
 
 	// for bridging paired-end reads

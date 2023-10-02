@@ -40,6 +40,7 @@ int scallop::assemble()
 	int c = classify();
 	if(cfg.verbose >= 2) printf("\n-----process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
 
+    update_log_confidence(0);
 	//resolve_negligible_edges(false, cfg.max_decompose_error_ratio[NEGLIGIBLE_EDGE]);
 
 	while(true)
@@ -2800,6 +2801,16 @@ int scallop::collect_path(int e)
 		if(gr.get_edge_info(i2e[e]).strand == 2) p.strand = '-';
 		if(p.strand == '.') p.strand = gr.strand;
 		paths.push_back(p);
+
+        //output path features
+        ofstream stat_file;
+        stat_file.open("pathFeature.csv", fstream::app);
+        stat_file.setf(ios::fixed, ios::floatfield);
+        stat_file.precision(2);
+        string tid = "chrm" + gr.chrm + "." + gr.gid + "." + tostring(paths.size()-1);
+        stat_file << tid << '\t' << "chrm"+gr.chrm+"."+gr.gid << '\t' << p.weight << '\t' << p.abd << '\t' << p.conf << '\t' << p.count << '\t' << p.reads << '\t' << p.length << '\t' << p.v.size() << endl;
+        stat_file.close();
+
 	}
 
 	gr.remove_edge(i2e[e]);
@@ -3099,7 +3110,7 @@ bool scallop::closed_vertex(edge_descriptor e, int root)
 
 int scallop::update_log_confidence(int root)
 {
-    assert(gr.out_degree(root) > 1);
+    if(gr.out_degree(root) == 1) return 0;
     PEEI pei = gr.out_edges(root);
     double sum = 0;
     for(edge_iterator it = pei.first; it != pei.second; it++)

@@ -121,6 +121,7 @@ int assembler::assemble(bundle &bd)
         assert(ei.spAbd.size() == 0);
         ei.samples.insert(bd.sp.sample_id);
         ei.spAbd.insert(make_pair(bd.sp.sample_id, gr.get_edge_weight(e)));
+        ei.abd += gr.get_edge_weight(e);
         ei.count = 1;
         gr.set_edge_info(e, ei);
     }
@@ -291,7 +292,12 @@ int assembler::junction_support(splice_graph &gr, map< pair<int32_t, int32_t>, s
             for(auto sp : ei.samples)
             {
                 pair< pair<int32_t, int32_t>, int> psp = make_pair(p, sp);
-                if(sup2abd.find(psp) != sup2abd.end()) ei.spAbd[sp] = sup2abd[psp];
+                if(sup2abd.find(psp) != sup2abd.end()) 
+                {
+                    assert(ei.spAbd[sp] < SMIN);
+                    ei.spAbd[sp] = sup2abd[psp];
+                    ei.abd += ei.spAbd[sp]; 
+                }
             }
             gr.set_edge_info(e, ei);
         }
@@ -325,6 +331,7 @@ int assembler::non_splicing_support(int sample_id, splice_graph &gr, splice_grap
                ei.samples.insert(sample_id);
                ei.count = ei.samples.size();
                ei.spAbd[sample_id] += gr.get_vertex_weight(k1);
+               ei.abd += gr.get_vertex_weight(k1);
                gx.set_edge_info(e, ei);
                if(cfg.verbose >= 3) printf("Non-splicing edge(%d, %d) supported by vertex %d, sample_id=%d, weight=%.2f\n", s, t, k1, sample_id, gr.get_vertex_weight(k1));
            }
@@ -333,6 +340,7 @@ int assembler::non_splicing_support(int sample_id, splice_graph &gr, splice_grap
                ei.samples.insert(sample_id);
                ei.count = ei.samples.size();
                ei.spAbd[sample_id] += gr.get_edge_weight(gr.edge(k1, k2).first);
+               ei.abd += gr.get_edge_weight(gr.edge(k1, k2).first);
                gx.set_edge_info(e, ei);
                if(cfg.verbose >= 3) printf("Non-splicing edge(%d, %d) supported by edge(%d, %d), sample_id=%d, weight=%.2f\n", s, t, k1, k2, sample_id, gr.get_edge_weight(gr.edge(k1, k2).first));
            }
@@ -388,8 +396,9 @@ int assembler::start_end_support(int sample_id, splice_graph &gr, splice_graph &
         ei.samples.insert(sample_id);
         ei.count = ei.samples.size();
         ei.spAbd[sample_id] += gr.get_edge_weight(e);
+        ei.abd += gr.get_edge_weight(e);
 		gx.set_edge_info(peb.first, ei);
-        if(cfg.verbose >= 1) printf("Sample %d supports (%d, %d <- %d(%d))\n", sample_id, 0, k, kori, t);
+        if(cfg.verbose >= 3) printf("Sample %d supports (%d, %d <- %d(%d))\n", sample_id, 0, k, kori, t);
 	}
 
     // calculate support of ending vertices
@@ -436,8 +445,9 @@ int assembler::start_end_support(int sample_id, splice_graph &gr, splice_graph &
         ei.samples.insert(sample_id);
         ei.count = ei.samples.size();
         ei.spAbd[sample_id] += gr.get_edge_weight(e);
+        ei.abd += gr.get_edge_weight(e);
 		gx.set_edge_info(peb.first, ei);
-        if(cfg.verbose >= 1) printf("Sample %d supports (%d(%d) -> %d, %ld)\n", sample_id, kori, s, k, gx.num_vertices()-1);
+        if(cfg.verbose >= 3) printf("Sample %d supports (%d(%d) -> %d, %ld)\n", sample_id, kori, s, k, gx.num_vertices()-1);
 	}
 
     return 0;
