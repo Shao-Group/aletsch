@@ -716,21 +716,26 @@ int build_phase_set_from_unpaired_reads(phase_set &ps, splice_graph &gr, const v
 }
 */
 
-int build_transcript(splice_graph &gr, transcript &trst, const vector<int> &v, char strand, double abd, const string &tid)
+int build_transcript(splice_graph &gr, transcript &trst, const path &p,  const string &tid)
 {
 	trst.seqname = gr.chrm;
 	trst.source = "aletsch";
 	trst.gene_id = gr.gid;
 	trst.transcript_id = tid;
-	trst.coverage = log(1.0 + abd);
-    //trst.coverage = abd;
-	trst.strand = strand;
+	trst.coverage = log(1.0 + p.weight);
+	trst.strand = p.strand;
+
+    trst.cov2 = trst.coverage;
+    trst.conf = p.conf;
+    trst.abd = p.abd;
+    trst.count1 = p.count;
+    trst.count2 = 1;
 
 	join_interval_map jmap;
-	for(int k = 1; k < v.size() - 1; k++)
+	for(int k = 1; k < p.v.size() - 1; k++)
 	{
-		int32_t p1 = gr.get_vertex_info(v[k]).lpos;
-		int32_t p2 = gr.get_vertex_info(v[k]).rpos;
+		int32_t p1 = gr.get_vertex_info(p.v[k]).lpos;
+		int32_t p2 = gr.get_vertex_info(p.v[k]).rpos;
 		jmap += make_pair(ROI(p1, p2), 1);
 	}
 
@@ -748,10 +753,11 @@ bool build_single_exon_transcript(splice_graph &gr, transcript &trst)
 	if(gr.edge(1, 2).second != true) return false;
 
 	string tid = gr.gid + ".0";
-	double abd = gr.get_vertex_weight(1);
-	char strand = gr.strand;
-	vector<int> v;
-	v.push_back(1);
-	build_transcript(gr, trst, v, strand, abd, tid);
+
+    path p;
+	p.abd = gr.get_vertex_weight(1);
+	p.strand = gr.strand;
+	p.v.push_back(1);
+	build_transcript(gr, trst, p, tid);
 	return true;
 }

@@ -49,6 +49,14 @@ public:
 	double FPKM;
 	double TPM;
 
+    //other features
+    double cov2;//coverge in individual sample
+    double conf;//confidence in individual sample
+    double abd;//overall abundance inferred from individuals
+    int count1;// inferred count of samples supporting the trst
+    int count2;// actual count of trst in output
+
+
 	vector<PI32> exons;
 
 public:
@@ -71,6 +79,7 @@ public:
 	int extend_bounds(const transcript &t);
 	string label() const;
 	int write(ostream &fout, double cov2 = -1, int count = -1) const;
+    int write_features(int sample_id) const;
 };
 
 #endif

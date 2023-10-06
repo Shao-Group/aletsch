@@ -2808,7 +2808,7 @@ int scallop::collect_path(int e)
         stat_file.setf(ios::fixed, ios::floatfield);
         stat_file.precision(2);
         string tid = "chrm" + gr.chrm + "." + gr.gid + "." + tostring(paths.size()-1);
-        stat_file << tid << '\t' << "chrm"+gr.chrm+"."+gr.gid << '\t' << p.weight << '\t' << p.abd << '\t' << p.conf << '\t' << p.count << '\t' << p.reads << '\t' << p.length << '\t' << p.v.size() << endl;
+        stat_file << tid << '\t' << p.weight << '\t' << p.abd << '\t' << p.conf << '\t' << p.count << endl;
         stat_file.close();
 
 	}
@@ -3242,7 +3242,7 @@ int scallop::build_transcripts()
 		string tid = "chrm" + gr.chrm + "." + gr.gid + "." + tostring(i);
 		transcript trst;
 		path &p = paths[i];
-		build_transcript(gr, trst, p.v, p.strand, p.weight, tid);
+		build_transcript(gr, trst, p, tid);
 		trsts.push_back(trst);
 	}
 	return 0;

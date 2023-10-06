@@ -461,7 +461,6 @@ int incubator::postprocess()
 			{
 				transcript &t = v[k].trst;
 			//t.write(cout);
-
 				if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
 				if(verify_exon_length(t, params[DEFAULT]) == false) continue;
 				count ++;
@@ -483,20 +482,25 @@ int incubator::postprocess()
 				if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
 				if(verify_exon_length(t, params[DEFAULT]) == false) continue;
 
+                printf("sample size: %ld; count2 = %d\n", v[k].samples.size(), t.count2);
+                assert(v[k].samples.size() == t.count2);
 				t.write(ss, -1, v[k].samples.size());
+                if(t.exons.size() > 1) t.write_features(-1);
 
 				//vt.push_back(t);
 				//ct.push_back(v[k].samples.size());
 				for(auto &p : v[k].samples)
 				{
-					int j = p.first;
+                    int j = p.first;
 					if(j < 0 || j >= vv.size()) continue;
 					// TODO: assign p.second.coverage
 					// to a feature cov2 in transcript
-					// p.second.cov2 = p.second.coverage;
+					//p.second.cov2 = p.second.coverage;
 					// TODO: assign v[k].samples.size()
 					// to another feature ct in transcript
-					p.second.coverage = t.coverage;
+                    printf("id=%d, meta count2: %d; individual count2 = %d\n", j, t.count2, p.second.count2);
+                    assert(p.second.count2 == t.count2);
+					assert(abs(p.second.coverage - t.coverage)<SMIN);
 					vv[j].push_back(p.second);
 				}
 			}
@@ -510,10 +514,8 @@ int incubator::postprocess()
 		boost::asio::thread_pool pool(params[DEFAULT].max_threads);
 		for(int i = 0; i < vv.size(); i++)
 		{
-			const vector<int> &c = ct;
-			const vector<transcript> &z = vt;
-			const vector<pair<int, double>> &v = vv[i];
-			boost::asio::post(pool, [this, i, &z, &c, &v]{ this->write_individual_gtf(i, z, c, v); });
+			const vector<transcript> &v = vv[i];
+			boost::asio::post(pool, [this, i, &v]{ this->write_individual_gtf(i, v); });
 		}
 		pool.join();
 	}
@@ -530,12 +532,13 @@ int incubator::write_individual_gtf(int id, const vector<transcript> &v)
 		const transcript &t = v[i];
 
 		// TODO: fetch cov2 from v[i]
-		double cov2 = v[i].coverage;
+		double cov2 = v[i].cov2;
 		if(t.exons.size() == 1 && cov2 < params[DEFAULT].min_single_exon_individual_coverage) continue;
 
 		// TODO fetch ct from v[i]
-		int ct = 1;
+		int ct = v[i].count2;
 		t.write(ss, cov2, ct);
+        if(t.exons.size() > 1) t.write_features(id);
 	}
 
 	const string &s = ss.str();

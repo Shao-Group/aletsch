@@ -80,6 +80,12 @@ int transcript::clear()
 	score = 0;
 	RPKM = 0;
 	TPM = 0;
+    cov2 = 0;
+    conf = 0;
+    abd = 0;
+    count1 = 0;
+    count2 = 0;
+
 	return 0;
 }
 
@@ -352,3 +358,19 @@ int transcript::write(ostream &fout, double cov2, int count) const
 	}
 	return 0;
 }
+
+int transcript::write_features(int sample_id) const
+{
+    ofstream stat_file;
+    string filename;
+    if(sample_id < 0) filename = "meta.trstFeature.csv";
+    else filename = "gtf/"+ to_string(sample_id) + ".trstFeature.csv";
+
+    stat_file.open(filename, fstream::app);
+    stat_file.setf(ios::fixed, ios::floatfield);
+    stat_file.precision(2);
+    stat_file << transcript_id << '\t' << coverage << '\t' << cov2 <<'\t' << abd << '\t' << conf << '\t' << count1 << '\t' << count2  << '\t' << exons.size() << endl;
+    stat_file.close();
+    return 0;
+}
+

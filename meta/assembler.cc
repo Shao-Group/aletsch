@@ -220,8 +220,11 @@ int assembler::assemble(vector<bundle*> gv)
 
         fix_missing_edges(gr, gx);
 
-		if(cfg.verbose >= 2) printf("\n-----preprocess splice graph %s, vertices = %lu, edges = %lu\n", gr.gid.c_str(), gr.num_vertices(), gr.num_edges());
-        gr.print();
+		if(cfg.verbose >= 2) 
+        {
+            printf("\n-----preprocess splice graph %s, vertices = %lu, edges = %lu\n", gr.gid.c_str(), gr.num_vertices(), gr.num_edges());
+            gr.print();
+        }
         //calculate junction supports based on other samples
         junction_support(gr, junc2sup, sup2abd);
         for(int j = 0; j < gv.size(); j++)

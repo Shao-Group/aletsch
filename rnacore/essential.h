@@ -14,6 +14,7 @@ See LICENSE for licensing.
 #include "pereads_cluster.h"
 #include "phase_set.h"
 #include "interval_map.h"
+#include "path.h"
 
 using namespace std;
 
@@ -60,7 +61,7 @@ int write_unbridged_pereads_cluster(BGZF *fout, const pereads_cluster &pc);
 int write_unpaired_reads(BGZF *fout, const vector<hit> &hits, const vector<bool> &paired);
 
 // build transcript(s)
-int build_transcript(splice_graph &gr, transcript &trst, const vector<int> &v, char strand, double abd, const string &tid);
+int build_transcript(splice_graph &gr, transcript &trst, const path &p, const string &tid);
 bool build_single_exon_transcript(splice_graph &gr, transcript &trst);
 
 #endif

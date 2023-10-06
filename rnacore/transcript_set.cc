@@ -17,8 +17,19 @@ trans_item::trans_item(const transcript &t, int c, int s)
 {
 	trst = t;
 	count = c;
-	if(samples.find(s) == samples.end()) samples.insert(make_pair(s, t.coverage));
-	else if(samples[s] < t.coverage) samples[s] = t.coverage;
+	if(samples.find(s) == samples.end()) 
+    {
+        samples.insert(make_pair(s,t));
+        for(auto &x : samples) x.second.count2 = samples.size();
+    }
+    else 
+    {
+        samples[s].coverage = max(samples[s].coverage, t.coverage);
+        samples[s].cov2 = max(samples[s].cov2, t.cov2);
+        samples[s].conf = max(samples[s].conf, t.conf);
+        samples[s].abd = max(samples[s].abd, t.abd);
+        samples[s].count1 = max(samples[s].count1, t.count1);
+    }
 }
 
 int trans_item::merge(const trans_item &ti, int mode)
@@ -28,16 +39,34 @@ int trans_item::merge(const trans_item &ti, int mode)
 		if(trst.exons.size() >= 2) trst.coverage += ti.trst.coverage;
 		else if(trst.coverage < ti.trst.coverage) trst.coverage = ti.trst.coverage;
 
-		trst.extend_bounds(ti.trst);
+        trst.extend_bounds(ti.trst);
 		count += ti.count;
+
+        trst.cov2 = max(trst.cov2, ti.trst.cov2);
+        trst.conf = max(trst.conf, ti.trst.conf);
+        trst.abd = max(trst.abd, ti.trst.abd);
+        trst.count1 = max(trst.count1, ti.trst.count1);
 
 		for(auto &x : ti.samples)
 		{
 			if(samples.find(x.first) == samples.end()) samples.insert(x);
-			else if(samples[x.first].coverage < x.second.coverage) samples[x.first].coverage = x.second.coverage;
+			else 
+            {
+                //printf("Warning: weird trst. %s, #exons=%ld\n", trst.transcript_id.c_str(), trst.exons.size());
+                samples[x.first].cov2 = max(samples[x.first].cov2, x.second.cov2);
+                samples[x.first].conf = max(samples[x.first].conf, x.second.conf);
+                samples[x.first].abd = max(samples[x.first].abd, x.second.abd);
+                samples[x.first].count1 = max(samples[x.first].count1, x.second.count1);
+            }
 			// we use the max of coverage of transcript
 		}
-		//samples.insert(ti.samples.begin(), ti.samples.end());
+
+        trst.count2 = samples.size();
+        for(auto &x : samples) 
+        {
+            x.second.coverage = trst.coverage;
+            x.second.count2 = samples.size();
+        }
 	}
 	else if(mode == TRANSCRIPT_COUNT_ADD_COVERAGE_NUL) 
 	{
