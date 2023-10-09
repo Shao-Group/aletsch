@@ -369,7 +369,24 @@ int transcript::write_features(int sample_id) const
     stat_file.open(filename, fstream::app);
     stat_file.setf(ios::fixed, ios::floatfield);
     stat_file.precision(2);
-    stat_file << transcript_id << '\t' << coverage << '\t' << cov2 <<'\t' << abd << '\t' << conf << '\t' << count1 << '\t' << count2  << '\t' << exons.size() << endl;
+    stat_file << transcript_id << '\t'       // Transcript ID
+        << meta_tid << '\t'         //Transcript ID in meta.gtf
+        << coverage << '\t'        // Meta coverage
+        << cov2 << '\t'            // Individual coverage 2 
+        << abd << '\t'             // Abundance
+        << conf << '\t'            // Confidence
+        << count1 << '\t'          // Actual count of meta trst       
+        << count2 << '\t'          // Inferred count by individual trst
+        << exons.size() << '\t'   // Number of exons
+        << features.gr_vertices << '\t'
+        << features.gr_edges << '\t'
+        << features.num_vertices << '\t'
+        << features.num_edges << "\t"
+        << features.ratio_junc << "\t"
+        << features.max_junc_length << "\t"
+        << features.junc_c_cont << "\t"
+        << features.junc_c_sep << "\t"
+        << features.junc_nc << endl;
     stat_file.close();
     return 0;
 }

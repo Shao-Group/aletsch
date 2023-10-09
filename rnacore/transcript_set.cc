@@ -17,6 +17,7 @@ trans_item::trans_item(const transcript &t, int c, int s)
 {
 	trst = t;
 	count = c;
+    trst.meta_tid = trst.transcript_id;
 	if(samples.find(s) == samples.end()) 
     {
         samples.insert(make_pair(s,t));
@@ -52,13 +53,11 @@ int trans_item::merge(const trans_item &ti, int mode)
 			if(samples.find(x.first) == samples.end()) samples.insert(x);
 			else 
             {
-                //printf("Warning: weird trst. %s, #exons=%ld\n", trst.transcript_id.c_str(), trst.exons.size());
                 samples[x.first].cov2 = max(samples[x.first].cov2, x.second.cov2);
                 samples[x.first].conf = max(samples[x.first].conf, x.second.conf);
                 samples[x.first].abd = max(samples[x.first].abd, x.second.abd);
                 samples[x.first].count1 = max(samples[x.first].count1, x.second.count1);
             }
-			// we use the max of coverage of transcript
 		}
 
         trst.count2 = samples.size();
@@ -66,6 +65,7 @@ int trans_item::merge(const trans_item &ti, int mode)
         {
             x.second.coverage = trst.coverage;
             x.second.count2 = samples.size();
+            x.second.meta_tid = trst.transcript_id;
         }
 	}
 	else if(mode == TRANSCRIPT_COUNT_ADD_COVERAGE_NUL) 

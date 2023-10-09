@@ -140,7 +140,9 @@ private:
 	// collect paths and build transcripts
 	int collect_phasing_paths();
 	int collect_phasing_path(int e, int s, int t);
-	int build_transcripts();
+	int build_transcripts(splice_graph &gr);
+    int update_trst_features(splice_graph &gr, transcript &trst, int i, vector<path> &paths);
+    int check_junc_relation(const vector<pair<int,int>>& junc1, const vector<pair<int,int>>& junc2);
 };
 
 #endif

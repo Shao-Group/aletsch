@@ -254,6 +254,7 @@ int assembler::assemble(vector<bundle*> gv)
 	}
 
     start_end_support(-1, gx, gx);
+    non_splicing_support(-1, gx, gx);
 
     if(cfg.verbose >= 2) 
     {
@@ -268,7 +269,7 @@ int assembler::assemble(vector<bundle*> gv)
 	bx.clear();
 
 	// assemble combined instance
-	//assemble(gx, px, -1);
+	assemble(gx, px, -1);
     return 0;
 }
 

@@ -12,6 +12,7 @@ See LICENSE for licensing.
 path::path()
 {
 	v.clear();
+    junc.clear();
 	abd = 0;
     weight = 0;
     conf = 0;
@@ -27,6 +28,7 @@ path::~path()
 int path::clear()
 {
 	v.clear();
+    junc.clear();
 	abd = 0;
     weight = 0;
     conf = 0;
@@ -45,7 +47,13 @@ int path::print(int index) const
 	{
 		printf("%d, ", v[i]);
 	}
-	printf("%d\n", v[v.size() - 1]);
+	printf("%d, junction = ", v[v.size() - 1]);
+
+    for(int i = 0; i < junc.size(); i++)
+    {
+        printf("(%d,%d), ", junc[i].first, junc[i].second);
+    }
+    printf("\n");
 	return 0;
 }
 

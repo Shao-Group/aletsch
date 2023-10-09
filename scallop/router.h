@@ -51,6 +51,7 @@ public:
 	double ratio;				// worst ratio
 	vector<equation> eqns;		// split results
 	MPID pe2w;					// decompose results (for pairs of edges)
+    map<edge_descriptor, double> econf;
 
 public:
 	int classify();												// high-level classify

@@ -730,6 +730,7 @@ int build_transcript(splice_graph &gr, transcript &trst, const path &p,  const s
     trst.abd = p.abd;
     trst.count1 = p.count;
     trst.count2 = 1;
+    trst.meta_tid = tid;
 
 	join_interval_map jmap;
 	for(int k = 1; k < p.v.size() - 1; k++)
@@ -761,3 +762,4 @@ bool build_single_exon_transcript(splice_graph &gr, transcript &trst)
 	build_transcript(gr, trst, p, tid);
 	return true;
 }
+

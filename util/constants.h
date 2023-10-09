@@ -78,6 +78,11 @@ using namespace std;
 #define PACBIO_SUB 4
 #define ONT 5
 
+//junction relations
+#define NOT_CONTAINED 0
+#define CONTINUOUS_SUBVECTOR 1
+#define NON_CONTINUOUS_SUBVECTOR 2
+
 const static string position_names[] = {"identical", "fall-right", "fall-left", "contained", "containing", "extend_right", "extend_left", "nested", "nesting", "conflicting"};
 
 typedef pair<int, int> PI;

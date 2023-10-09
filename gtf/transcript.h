@@ -50,12 +50,27 @@ public:
 	double TPM;
 
     //other features
+    string meta_tid;
     double cov2;//coverge in individual sample
     double conf;//confidence in individual sample
     double abd;//overall abundance inferred from individuals
     int count1;// inferred count of samples supporting the trst
     int count2;// actual count of trst in output
 
+    // Store the features for individual trst
+    struct TrstFeatures {
+    int gr_vertices;     // Number of vertices in the graph
+    int gr_edges;        // Number of edges in the graph
+    int num_vertices;       // Number of vertices in the path
+    int num_edges;      //Number of edges in the path
+    double ratio_junc;       //Ratio of junctions(length>1) in the path
+    int max_junc_length;  // Maximum junction length
+    bool junc_c_cont;       // Junctions of path are continuously contained in another path
+    bool junc_c_sep;        // Junctions of path are contained in another path but not continuously
+    bool junc_nc;       //Junctions of path are not contained in another path
+    };
+
+    TrstFeatures features;
 
 	vector<PI32> exons;
 

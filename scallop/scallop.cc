@@ -39,8 +39,10 @@ int scallop::assemble()
 {
 	int c = classify();
 	if(cfg.verbose >= 2) printf("\n-----process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
+    gr.nV = gr.num_vertices();
+    gr.nE = gr.num_edges();
 
-    update_log_confidence(0);
+    //update_log_confidence(0);
 	//resolve_negligible_edges(false, cfg.max_decompose_error_ratio[NEGLIGIBLE_EDGE]);
 
 	while(true)
@@ -174,7 +176,7 @@ int scallop::assemble()
 
 	greedy_decompose();
 
-	build_transcripts();
+	build_transcripts(gr);
 
 	if(cfg.verbose >= 2) 
 	{
@@ -2052,14 +2054,14 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 	}
 
 	// decompose
-    bool update_conf = false;
+    /*bool update_conf = false;
     int update_v = -1;
     if(gr.out_degree(root) > 1)
     {
         update_conf = true;
         assert(gr.in_degree(root) == 1);
         update_v = (*(gr.in_edges(root).first))->source();
-    }
+    }*/
 	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
 	{
 		int e1 = it->first.first;
@@ -2074,10 +2076,10 @@ int scallop::decompose_vertex_replace(int root, MPID &pe2w)
 		if(m[e1] == 1) hs.replace(e1, e);
 		if(m[e2] == 1) hs.replace(e2, e);
 	}
-    if(update_conf) 
+    /*if(update_conf) 
     {
         update_log_confidence(update_v);
-    }
+    }*/
 
 	for(MPID::iterator it = pe2w.begin(); it != pe2w.end(); it++)
 	{
@@ -2790,13 +2792,22 @@ int scallop::collect_path(int e)
 		p.length = mi;
 		p.weight = gr.get_edge_weight(i2e[e]);
         p.abd = ei.abd;
-        p.conf = exp(ei.confidence/(v.size()-1));
+        p.conf = exp(ei.confidence);
 		p.reads = med[i2e[e]];
 		//p.abd = med[i2e[e]] / mi;
 		//p.reads = gr.get_edge_weight(i2e[e]);
 		p.v = v;
         p.count = ei.count;
 
+        p.junc.clear();
+        for(int i = 2; i < v.size()-1; i++)
+        {
+            printf("%d rpos=%d; %d lpos = %d\n", v[i-1], gr.get_vertex_info(v[i-1]).rpos, v[i], gr.get_vertex_info(v[i]).lpos);
+            if(gr.get_vertex_info(v[i]).lpos != gr.get_vertex_info(v[i-1]).rpos)
+            {
+                p.junc.push_back(make_pair(v[i-1], v[i]));
+            }
+        }
 		if(gr.get_edge_info(i2e[e]).strand == 1) p.strand = '+';
 		if(gr.get_edge_info(i2e[e]).strand == 2) p.strand = '-';
 		if(p.strand == '.') p.strand = gr.strand;
@@ -3108,7 +3119,7 @@ bool scallop::closed_vertex(edge_descriptor e, int root)
     return true;
 }
 
-int scallop::update_log_confidence(int root)
+/*int scallop::update_log_confidence(int root)
 {
     if(gr.out_degree(root) == 1) return 0;
     PEEI pei = gr.out_edges(root);
@@ -3125,7 +3136,7 @@ int scallop::update_log_confidence(int root)
         if(cfg.verbose >= 3) printf("Updating confidence of edge(%d, %d), %.2lf/%.2lf, to %.2lf\n", (*it)->source(), (*it)->target(), ei.abd, sum, ei.confidence);
     }
     return 0;
-}
+}*/
 
 int scallop::print()
 {
@@ -3234,16 +3245,99 @@ int scallop::draw_splice_graph(const string &file)
 	return 0;
 }
 
-int scallop::build_transcripts()
+int scallop::build_transcripts(splice_graph &gr)
 {
 	trsts.clear();
 	for(int i = 0; i < paths.size(); i++)
 	{
 		string tid = "chrm" + gr.chrm + "." + gr.gid + "." + tostring(i);
 		transcript trst;
+        trst.features.gr_vertices = gr.nV;
+        trst.features.gr_edges = gr.nE;
 		path &p = paths[i];
+        update_trst_features(gr, trst, i, paths);
 		build_transcript(gr, trst, p, tid);
 		trsts.push_back(trst);
 	}
 	return 0;
+}
+
+int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, vector<path> &paths)
+{
+    path &p = paths[pid];
+
+    int n = p.v.size();
+    //printf("Path size:%d\n", n);
+    assert(n >= 3);
+    trst.features.num_vertices = n-2;
+    trst.features.num_edges = n-3;
+    if(n == 3) return 0;
+
+    int junc = p.junc.size();
+    int max_junc_len = 0;
+    //printf("path%d, #junc=%d\n", pid, junc);
+    for(int i = 0; i < junc; i++)
+    {
+        int junc_len = gr.get_vertex_info(p.junc[i].second).lpos-gr.get_vertex_info(p.junc[i].first).rpos;
+        assert(junc_len > 0);
+        max_junc_len = max(max_junc_len, junc_len);
+    }
+    trst.features.ratio_junc = 1.0*junc/(n-3);
+    trst.features.max_junc_length = max_junc_len;
+    //printf("ratio=%2.lf, max_junc_length=%d\n", trst.features.ratio_junc, trst.features.max_junc_length);
+
+    trst.features.junc_c_cont = false;
+    trst.features.junc_c_sep = false;
+    trst.features.junc_nc = false;
+
+    if(junc == 0) return 0;
+    for(int i = 0; i < paths.size(); i++)
+    {
+        if(i == pid) continue;
+        int r = check_junc_relation(p.junc, paths[i].junc);
+        switch (r) {
+        case CONTINUOUS_SUBVECTOR:
+            trst.features.junc_c_cont = true;
+            break;
+        case NON_CONTINUOUS_SUBVECTOR:
+            trst.features.junc_c_sep = true;
+            break;
+        }
+    }
+    if(!trst.features.junc_c_cont && !trst.features.junc_c_sep)
+        trst.features.junc_nc = true;
+    //printf("Continuous:%d, not continuous:%d, not contained:%d\n", trst.features.junc_c_cont,trst.features.junc_c_sep, trst.features.junc_nc);
+    return 0;
+}
+
+int scallop::check_junc_relation(const vector<pair<int,int>>& junc1, const vector<pair<int,int>>& junc2)
+{
+    if(junc1.size() > junc2.size()) return NOT_CONTAINED;
+    assert(!junc1.empty());
+    assert(!junc2.empty());
+
+    map<pair<int, int>, int> map;
+    
+    for (int i = 0; i < junc2.size(); ++i) {
+        map[junc2[i]] = i;
+    }
+
+    if (map.find(junc1[0]) == map.end()) return NOT_CONTAINED;
+
+    int prevIndex = map[junc1[0]];
+    bool isContinuous = true;
+
+    for (int i = 1; i < junc1.size(); ++i) {
+        if (map.find(junc1[i]) == map.end()) return NOT_CONTAINED;
+
+        if (map[junc1[i]] != prevIndex + 1) {
+            isContinuous = false;
+        }
+
+        prevIndex = map[junc1[i]];
+    }
+
+    if (isContinuous) return CONTINUOUS_SUBVECTOR;
+
+    return NON_CONTINUOUS_SUBVECTOR;
 }

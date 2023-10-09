@@ -53,6 +53,7 @@ router& router::operator=(const router &rt)
 	ratio = rt.ratio;
 	eqns = rt.eqns;
 	pe2w = rt.pe2w;
+    econf = rt.econf;
 
 	return (*this);
 }
@@ -844,7 +845,14 @@ int router::thread()
         printf("\n");
     }
 	// end print
-
+    
+    for(auto it : econf)
+    {
+        edge_info ei = gr.get_edge_info(it.first);
+        ei.confidence += it.second;
+        gr.set_edge_info(it.first, ei);
+        if(cfg.verbose >= 3) printf("Edge %d, confidence %.2lf = %.2lf\n", e2i[it.first], it.second, ei.confidence);
+    }
 	return 0;
 }
 
@@ -1017,6 +1025,7 @@ int router::thread_left_isolate(vector<int> &left_iso, vector<int> &right_all)
         int partner  = -1;
         double max_abd = 0.0;
         int common_sp = 0;
+        double sum_abd = 0.0;
         for(auto r : right_all)
         {
             edge_descriptor re = i2e[u2e[r]];
@@ -1028,6 +1037,7 @@ int router::thread_left_isolate(vector<int> &left_iso, vector<int> &right_all)
             //for(auto sp : common) common_abd += le_info.spAbd[sp]*0.5+re_info.spAbd[sp]*0.5;
             for(auto sp : common) common_abd += 0.99*min(le_info.spAbd[sp], re_info.spAbd[sp]) + 0.01*max(le_info.spAbd[sp], re_info.spAbd[sp]) ;
 
+            sum_abd += common_abd;
             if(common_abd > max_abd)
             {
                 max_abd = common_abd;
@@ -1045,6 +1055,8 @@ int router::thread_left_isolate(vector<int> &left_iso, vector<int> &right_all)
         if(cfg.verbose >= 3) printf("Add routes (%d, %d), weight = %.2lf\n", v, partner, max_abd);
         edge_descriptor e = ug.add_edge(v, partner);
 		u2w.insert(PED(e, max_abd));
+
+        econf[le] = log(max_abd/sum_abd);
     }
     return 0;
 }
@@ -1066,6 +1078,7 @@ int router::thread_right_isolate(vector<int> &right_iso, vector<int> &left_all)
         int partner  = -1;
         double max_abd = 0;
         int common_sp = 0;
+        double sum_abd = 0.0;
         for(auto l : left_all)
         {
             edge_descriptor le = i2e[u2e[l]];
@@ -1076,6 +1089,7 @@ int router::thread_right_isolate(vector<int> &right_iso, vector<int> &left_all)
             double common_abd = 0;
             //for(auto sp : common) common_abd += le_info.spAbd[sp]*0.5+re_info.spAbd[sp]*0.5;
             for(auto sp : common) common_abd += 0.99*min(le_info.spAbd[sp], re_info.spAbd[sp]) + 0.01*max(le_info.spAbd[sp], re_info.spAbd[sp]) ;
+            sum_abd += common_abd;
             if(common_abd > max_abd)
             {
                 max_abd = common_abd;
@@ -1093,6 +1107,8 @@ int router::thread_right_isolate(vector<int> &right_iso, vector<int> &left_all)
         if(cfg.verbose >= 3) printf("Add routes (%d, %d), weight = %.2lf\n", partner, v, max_abd);
         edge_descriptor e = ug.add_edge(partner, v);
 		u2w.insert(PED(e, max_abd));
+
+        econf[re] = log(max_abd/sum_abd);
     }
     return 0;
 }

@@ -19,6 +19,7 @@ public:
 
 public:
 	vector<int> v;
+    vector<pair<int, int>> junc;
 	int length;
 	double abd;
     double weight;
