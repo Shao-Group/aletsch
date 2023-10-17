@@ -2802,7 +2802,7 @@ int scallop::collect_path(int e)
         p.junc.clear();
         for(int i = 2; i < v.size()-1; i++)
         {
-            printf("%d rpos=%d; %d lpos = %d\n", v[i-1], gr.get_vertex_info(v[i-1]).rpos, v[i], gr.get_vertex_info(v[i]).lpos);
+            //printf("%d rpos=%d; %d lpos = %d\n", v[i-1], gr.get_vertex_info(v[i-1]).rpos, v[i], gr.get_vertex_info(v[i]).lpos);
             if(gr.get_vertex_info(v[i]).lpos != gr.get_vertex_info(v[i-1]).rpos)
             {
                 p.junc.push_back(make_pair(v[i-1], v[i]));
@@ -3248,6 +3248,9 @@ int scallop::draw_splice_graph(const string &file)
 int scallop::build_transcripts(splice_graph &gr)
 {
 	trsts.clear();
+
+    //for(int i = 0; i < paths.size(); i++) paths[i].print(i);
+
 	for(int i = 0; i < paths.size(); i++)
 	{
 		string tid = "chrm" + gr.chrm + "." + gr.gid + "." + tostring(i);
@@ -3271,10 +3274,18 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
     assert(n >= 3);
     trst.features.num_vertices = n-2;
     trst.features.num_edges = n-3;
-    if(n == 3) return 0;
 
     int junc = p.junc.size();
     int max_junc_len = 0;
+    if(junc == 0) return 0;//ignore single exon
+
+    int start_splicing_v = p.junc.front().first;
+    int end_splicing_v = p.junc.back().second;
+    auto it_s = lower_bound(p.v.begin(), p.v.end(), start_splicing_v);
+    auto it_t = lower_bound(p.v.begin(), p.v.end(), end_splicing_v);
+    if(it_s == p.v.end() || *it_s != start_splicing_v || it_t == p.v.end() || *it_t != end_splicing_v) assert(false);
+    trst.features.junc_ratio = 1.0*junc/(it_t-it_s);
+
     //printf("path%d, #junc=%d\n", pid, junc);
     for(int i = 0; i < junc; i++)
     {
@@ -3282,19 +3293,30 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
         assert(junc_len > 0);
         max_junc_len = max(max_junc_len, junc_len);
     }
-    trst.features.ratio_junc = 1.0*junc/(n-3);
     trst.features.max_junc_length = max_junc_len;
     //printf("ratio=%2.lf, max_junc_length=%d\n", trst.features.ratio_junc, trst.features.max_junc_length);
 
-    trst.features.junc_c_cont = false;
-    trst.features.junc_c_sep = false;
-    trst.features.junc_nc = false;
-
+    //trst.features.junc_c_cont = false;
+    //trst.features.junc_c_sep = false;
+    //trst.features.junc_nc = false;
+    //
+    //p.print(pid);
+    int stail = start_tail(paths, pid); 
+    int etail = end_tail(paths, pid); 
+    trst.features.start_tail = gr.get_vertex_info(stail).lpos - gr.get_vertex_info(p.v[1]).lpos;
+    trst.features.end_tail = gr.get_vertex_info(p.v[n-2]).rpos - gr.get_vertex_info(etail).rpos;
+    trst.features.uni_junc = unique_junc(paths, pid);
+    trst.features.introns = 0;
+    trst.features.intron_ratio = 1.0;
     if(junc == 0) return 0;
     for(int i = 0; i < paths.size(); i++)
     {
         if(i == pid) continue;
-        int r = check_junc_relation(p.junc, paths[i].junc);
+        int intron_cnt = infer_introns(p.junc, paths[i].junc);
+        trst.features.introns = max(trst.features.introns, intron_cnt);
+        if(intron_cnt>0) trst.features.intron_ratio = min(trst.features.intron_ratio, p.weight/paths[i].weight);
+
+        /*int r = check_junc_relation(p.junc, paths[i].junc);
         switch (r) {
         case CONTINUOUS_SUBVECTOR:
             trst.features.junc_c_cont = true;
@@ -3302,11 +3324,13 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
         case NON_CONTINUOUS_SUBVECTOR:
             trst.features.junc_c_sep = true;
             break;
-        }
+        }*/
     }
-    if(!trst.features.junc_c_cont && !trst.features.junc_c_sep)
-        trst.features.junc_nc = true;
+    //if(!trst.features.junc_c_cont && !trst.features.junc_c_sep)
+        //trst.features.junc_nc = true;
     //printf("Continuous:%d, not continuous:%d, not contained:%d\n", trst.features.junc_c_cont,trst.features.junc_c_sep, trst.features.junc_nc);
+    //printf("Start tail: %d length=%d, end tail: %d length=%d, inferred #intron:%d, #unique junctions:%d\n", stail, trst.features.start_tail, etail, trst.features.end_tail, trst.features.introns, trst.features.uni_junc);
+
     return 0;
 }
 
@@ -3341,3 +3365,125 @@ int scallop::check_junc_relation(const vector<pair<int,int>>& junc1, const vecto
 
     return NON_CONTINUOUS_SUBVECTOR;
 }
+
+int scallop::infer_introns(const vector<pair<int, int>>& junc1, const vector<pair<int, int>>& junc2) 
+{
+    if(junc1.size()<2 || junc2.size()<3) return 0;
+
+    int sum = 0;
+    // Loop through junc1 and junc2 to detect the special structure
+    for (size_t i = 0; i < junc1.size() - 1; ++i) 
+    {
+        for (size_t j = 0; j < junc2.size() - 1; ++j) 
+        {
+            // If we found a match for junc1[i].second in junc2
+            if (junc1[i].second == junc2[j].second) 
+            {
+                size_t k = j + 1;
+                int tempSum = 0;
+                while (k < junc2.size() && junc1[i+1].first != junc2[k].first) 
+                {
+                    tempSum += (junc2[k].second - junc2[k].first - 1);
+                    k++;
+                }
+                if (k < junc2.size() && junc1[i+1].first == junc2[k].first) 
+                {
+                    // We found the match for junc1[i+1].first, so add the tempSum to the main sum
+                    sum += tempSum;
+                    break;
+                }
+                if (k == junc2.size()) 
+                {
+                    break; // Exit the inner for-loop if we did not find a match in junc2
+                }
+            }
+        }
+    }
+
+    return sum;
+}
+
+int scallop::unique_junc(const vector<path>& paths, int i) 
+{
+    map<pair<int, int>, int> juncUni;
+
+    for (size_t idx = 0; idx < paths.size(); ++idx) {
+        for (const auto& pair : paths[idx].junc) {
+            // If the pair is not in the map, add it
+            if (juncUni.find(pair) == juncUni.end()) {
+                juncUni[pair] = idx;
+            } else if (juncUni[pair] != idx && juncUni[pair] != -1) {
+                // If the pair is already in the map but from a different path, mark it as -1
+                juncUni[pair] = -1;
+            }
+        }
+    }
+
+    // Count the unique pairs from paths[i]
+    int uniqueCount = 0;
+    for (const auto& pair1 : paths[i].junc) {
+        if (juncUni.find(pair1) != juncUni.end() && juncUni[pair1] == i) {
+            uniqueCount++;
+        }
+    }
+
+    return uniqueCount;
+}
+
+int scallop::end_tail(const vector<path>& paths, int i) {
+    // Extract junc1 and get the second item of its last pair
+    const vector<pair<int, int>>& junc1 = paths[i].junc;
+    int t = junc1.back().second;
+
+    int maxValue = t;  // Initialize to t
+
+    // Loop over all other junc2 in paths
+    for (size_t idx = 0; idx < paths.size(); ++idx) {
+        if (idx == i) continue;  // Skip junc1
+        
+        const vector<pair<int, int>>& junc2 = paths[idx].junc;
+        if(junc2.size() < 2) continue;
+        for (size_t j = 0; j < junc2.size() - 1; ++j) {  // We don't check the last pair since there's no "next" pair after it
+            if (junc2[j].second == t) {
+                // Record the first item of the next pair
+                int value = junc2[j + 1].first;
+                if (value > maxValue) {
+                    maxValue = value;
+                }
+                break;  // Move on to the next junc2
+            }
+        }
+    }
+
+    return maxValue;
+}
+
+int scallop::start_tail(const vector<path>& paths, int i) {
+    // Extract junc1 and get the first item of its first pair
+    const vector<pair<int, int>>& junc1 = paths[i].junc;
+    int s = junc1.front().first;
+
+    int minValue = s;  // Initialize to s
+
+    // Loop over all other junc2 in paths
+    for (size_t idx = 0; idx < paths.size(); ++idx) {
+        if (idx == i) continue;  // Skip junc1
+
+        const vector<pair<int, int>>& junc2 = paths[idx].junc;
+        if(junc2.size() < 2) continue;
+
+        for (size_t j = 1; j < junc2.size(); ++j) {  // Starting from 1 because we need a preceding pair
+            if (junc2[j].first == s) {
+                // Record the second item of the preceding pair
+                int value = junc2[j - 1].second;
+                if (value < minValue) {
+                    minValue = value;
+                }
+                break;  // Move on to the next junc2
+            }
+        }
+    }
+
+    return minValue;
+}
+

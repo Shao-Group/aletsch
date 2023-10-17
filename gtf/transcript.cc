@@ -382,11 +382,13 @@ int transcript::write_features(int sample_id) const
         << features.gr_edges << '\t'
         << features.num_vertices << '\t'
         << features.num_edges << "\t"
-        << features.ratio_junc << "\t"
+        << features.junc_ratio << "\t"
         << features.max_junc_length << "\t"
-        << features.junc_c_cont << "\t"
-        << features.junc_c_sep << "\t"
-        << features.junc_nc << endl;
+        << features.start_tail<< "\t"
+        << features.end_tail<< "\t"
+        << features.introns << "\t"
+        << features.intron_ratio << "\t"
+        << features.uni_junc << endl;
     stat_file.close();
     return 0;
 }

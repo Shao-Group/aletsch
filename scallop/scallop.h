@@ -143,6 +143,10 @@ private:
 	int build_transcripts(splice_graph &gr);
     int update_trst_features(splice_graph &gr, transcript &trst, int i, vector<path> &paths);
     int check_junc_relation(const vector<pair<int,int>>& junc1, const vector<pair<int,int>>& junc2);
+    int infer_introns(const vector<pair<int, int>>& junc1, const vector<pair<int, int>>& junc2);
+    int unique_junc(const vector<path>& paths, int i);
+    int end_tail(const vector<path>& paths, int i);
+    int start_tail(const vector<path>& paths, int i);
 };
 
 #endif
