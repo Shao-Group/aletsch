@@ -381,15 +381,48 @@ int transcript::write_features(int sample_id) const
         << features.gr_vertices << '\t'
         << features.gr_edges << '\t'
         << features.num_vertices << '\t'
-        << features.num_edges << "\t"
-        << features.junc_ratio << "\t"
-        << features.max_junc_length << "\t"
-        << features.start_tail<< "\t"
-        << features.end_tail<< "\t"
-        << features.introns << "\t"
-        << features.intron_ratio << "\t"
-        << features.uni_junc << endl;
+        << features.num_edges << '\t'
+        << features.junc_ratio << '\t'
+        << features.max_junc_length << '\t'
+        << features.start_tail<< '\t'
+        << features.end_tail<< '\t'
+        << features.introns << '\t'
+        << features.intron_ratio << '\t'
+        << features.uni_junc << '\t';
+
+    write_seq_features(stat_file, features.seq_wt); 
+    write_seq_features(stat_file, features.seq_cnt); 
+    write_seq_features(stat_file, features.seq_abd);
+    write_seq_features(stat_file, features.seq_in_wt);
+    write_seq_features(stat_file, features.seq_out_wt);
+    //write_seq_features(stat_file, features.seq_in_dg);
+    //write_seq_features(stat_file, features.seq_out_dg);
+    //write_seq_features(stat_file, features.seq_e_len);
+    //write_seq_features(stat_file, features.seq_v_len);
+
+    stat_file << endl;
     stat_file.close();
     return 0;
 }
 
+void transcript::write_seq_features(ofstream & stat_file, const vector<int>& v) const
+{
+    stat_file << '[';
+    for(size_t i = 0; i < v.size(); i++)
+    {
+        stat_file << v[i];
+        if(i < v.size()-1) stat_file << ',';
+    }
+    stat_file << "]\t";
+}
+
+void transcript::write_seq_features(ofstream & stat_file, const vector<double>& v) const
+{
+    stat_file << '[';
+    for(size_t i = 0; i < v.size(); i++)
+    {
+        stat_file << v[i];
+        if(i < v.size()-1) stat_file << ',';
+    }
+    stat_file << "]\t";
+}

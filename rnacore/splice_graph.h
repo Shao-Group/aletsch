@@ -42,9 +42,6 @@ public:
 	map<int32_t, int> lindex;
 	map<int32_t, int> rindex;
 
-    int nV;     // Number of vertices
-    int nE;        // Number of edges
-
 public:
 	// get and set properties
 	double get_vertex_weight(int v) const;

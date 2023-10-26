@@ -39,8 +39,7 @@ int scallop::assemble()
 {
 	int c = classify();
 	if(cfg.verbose >= 2) printf("\n-----process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
-    gr.nV = gr.num_vertices();
-    gr.nE = gr.num_edges();
+    splice_graph gr_ori = splice_graph(gr);
 
     //update_log_confidence(0);
 	//resolve_negligible_edges(false, cfg.max_decompose_error_ratio[NEGLIGIBLE_EDGE]);
@@ -176,7 +175,7 @@ int scallop::assemble()
 
 	greedy_decompose();
 
-	build_transcripts(gr);
+	build_transcripts(gr_ori);
 
 	if(cfg.verbose >= 2) 
 	{
@@ -3255,8 +3254,6 @@ int scallop::build_transcripts(splice_graph &gr)
 	{
 		string tid = "chrm" + gr.chrm + "." + gr.gid + "." + tostring(i);
 		transcript trst;
-        trst.features.gr_vertices = gr.nV;
-        trst.features.gr_edges = gr.nE;
 		path &p = paths[i];
         update_trst_features(gr, trst, i, paths);
 		build_transcript(gr, trst, p, tid);
@@ -3274,6 +3271,8 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
     assert(n >= 3);
     trst.features.num_vertices = n-2;
     trst.features.num_edges = n-3;
+    trst.features.gr_vertices = gr.num_vertices();
+    trst.features.gr_edges = gr.num_edges();
 
     int junc = p.junc.size();
     int max_junc_len = 0;
@@ -3316,20 +3315,49 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
         trst.features.introns = max(trst.features.introns, intron_cnt);
         if(intron_cnt>0) trst.features.intron_ratio = min(trst.features.intron_ratio, p.weight/paths[i].weight);
 
-        /*int r = check_junc_relation(p.junc, paths[i].junc);
-        switch (r) {
-        case CONTINUOUS_SUBVECTOR:
-            trst.features.junc_c_cont = true;
-            break;
-        case NON_CONTINUOUS_SUBVECTOR:
-            trst.features.junc_c_sep = true;
-            break;
-        }*/
     }
-    //if(!trst.features.junc_c_cont && !trst.features.junc_c_sep)
-        //trst.features.junc_nc = true;
-    //printf("Continuous:%d, not continuous:%d, not contained:%d\n", trst.features.junc_c_cont,trst.features.junc_c_sep, trst.features.junc_nc);
-    //printf("Start tail: %d length=%d, end tail: %d length=%d, inferred #intron:%d, #unique junctions:%d\n", stail, trst.features.start_tail, etail, trst.features.end_tail, trst.features.introns, trst.features.uni_junc);
+
+    //update sequence features
+    trst.features.seq_wt.clear();
+    trst.features.seq_cnt.clear();
+    trst.features.seq_abd.clear();
+    trst.features.seq_in_wt.clear();
+    trst.features.seq_out_wt.clear();
+    trst.features.seq_in_dg.clear();
+    trst.features.seq_out_dg.clear();
+    trst.features.seq_e_len.clear();
+    trst.features.seq_v_len.clear();
+
+    //gr.print();
+    for(int i = 1; i < p.v.size(); i++)
+    {
+        int v1 = p.v[i-1];
+        int v2 = p.v[i];
+        assert(gr.edge(v1, v2).second);
+        edge_descriptor e = gr.edge(v1, v2).first;
+        edge_info ei = gr.get_edge_info(e);
+        vertex_info vi1 = gr.get_vertex_info(v1);
+        vertex_info vi2 = gr.get_vertex_info(v2);
+
+        trst.features.seq_wt.push_back(gr.get_edge_weight(e));
+        trst.features.seq_cnt.push_back(ei.count);
+        trst.features.seq_abd.push_back(ei.abd);
+        trst.features.seq_in_wt.push_back(gr.get_in_weights(v2));
+        trst.features.seq_out_wt.push_back(gr.get_out_weights(v1));
+        //trst.features.seq_in_dg.push_back(gr.in_degree(v2));
+        //trst.features.seq_out_dg.push_back(gr.out_degree(v1));
+        //trst.features.seq_e_len.push_back(vi2.lpos-vi1.rpos+1);
+        //trst.features.seq_v_len.push_back(vi2.rpos-vi2.lpos);
+
+    }
+
+    /*printf("\nPath weight: ");
+    for(auto i : trst.features.seq_wt) printf("%.2lf, ", i);
+    printf("\nPath in weight: ");
+    for(auto i : trst.features.seq_in_wt) printf("%.2lf, ", i);
+    printf("\nPath in degree: ");
+    for(auto i : trst.features.seq_in_dg) printf("%d, ", i);
+    printf("\n");*/
 
     return 0;
 }

@@ -73,6 +73,15 @@ public:
     int introns;
     double intron_ratio;
     int uni_junc;
+    vector<double> seq_wt;
+    vector<int> seq_cnt;
+    vector<int> seq_abd;
+    vector<double> seq_in_wt;
+    vector<double> seq_out_wt;
+    vector<int> seq_in_dg;
+    vector<int> seq_out_dg;
+    vector<int> seq_e_len;
+    vector<int> seq_v_len;
     };
 
     TrstFeatures features;
@@ -100,6 +109,9 @@ public:
 	string label() const;
 	int write(ostream &fout, double cov2 = -1, int count = -1) const;
     int write_features(int sample_id) const;
+    void write_seq_features(ofstream & stat_file, const vector<int>& v) const;
+    void write_seq_features(ofstream & stat_file, const vector<double>& v) const;
+
 };
 
 #endif
