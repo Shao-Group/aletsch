@@ -383,24 +383,23 @@ int transcript::write_features(int sample_id) const
         << features.num_vertices << '\t'
         << features.num_edges << '\t'
         << features.junc_ratio << '\t'
-        << features.max_junc_length << '\t'
-        << features.start_tail<< '\t'
-        << features.end_tail<< '\t'
+        << features.max_mid_exon_len << '\t'
+        << features.start_tail << '\t'
+        << features.end_tail << '\t'
+        << features.start_loss << '\t'
+        << features.end_loss << '\t'
+        << features.start_merged_loss << '\t'
+        << features.end_merged_loss << '\t'
+        << features.start_bridge_bonus << '\t'
+        << features.end_bridge_bonus << '\t'
         << features.introns << '\t'
         << features.intron_ratio << '\t'
-        << features.uni_junc << '\t';
+        << features.uni_junc << '\t'
+        << features.seq_min_wt << '\t'
+        << features.seq_min_cnt << '\t'
+        << features.seq_min_abd << '\t'
+        << features.seq_min_ratio << endl;
 
-    write_seq_features(stat_file, features.seq_wt); 
-    write_seq_features(stat_file, features.seq_cnt); 
-    write_seq_features(stat_file, features.seq_abd);
-    write_seq_features(stat_file, features.seq_in_wt);
-    write_seq_features(stat_file, features.seq_out_wt);
-    //write_seq_features(stat_file, features.seq_in_dg);
-    //write_seq_features(stat_file, features.seq_out_dg);
-    //write_seq_features(stat_file, features.seq_e_len);
-    //write_seq_features(stat_file, features.seq_v_len);
-
-    stat_file << endl;
     stat_file.close();
     return 0;
 }

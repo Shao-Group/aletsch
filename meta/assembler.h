@@ -49,6 +49,7 @@ public:
     int junction_support(splice_graph &gr, map< pair<int32_t, int32_t>, set<int> > &junc2sup, map< pair< pair<int32_t, int32_t>, int>, double> &sup2abd);
     int start_end_support(int sample_id, splice_graph &gr, splice_graph &gx);
     int non_splicing_support(int sample_id, splice_graph &gr, splice_graph &gx);
+    int boundary_extend_bridge(int sample_id, splice_graph &gr, splice_graph &gx);
 
 };
 

@@ -2811,16 +2811,6 @@ int scallop::collect_path(int e)
 		if(gr.get_edge_info(i2e[e]).strand == 2) p.strand = '-';
 		if(p.strand == '.') p.strand = gr.strand;
 		paths.push_back(p);
-
-        //output path features
-        ofstream stat_file;
-        stat_file.open("pathFeature.csv", fstream::app);
-        stat_file.setf(ios::fixed, ios::floatfield);
-        stat_file.precision(2);
-        string tid = "chrm" + gr.chrm + "." + gr.gid + "." + tostring(paths.size()-1);
-        stat_file << tid << '\t' << p.weight << '\t' << p.abd << '\t' << p.conf << '\t' << p.count << endl;
-        stat_file.close();
-
 	}
 
 	gr.remove_edge(i2e[e]);
@@ -3273,9 +3263,9 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
     trst.features.num_edges = n-3;
     trst.features.gr_vertices = gr.num_vertices();
     trst.features.gr_edges = gr.num_edges();
+    trst.features.max_mid_exon_len = 0;
 
     int junc = p.junc.size();
-    int max_junc_len = 0;
     if(junc == 0) return 0;//ignore single exon
 
     int start_splicing_v = p.junc.front().first;
@@ -3286,48 +3276,43 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
     trst.features.junc_ratio = 1.0*junc/(it_t-it_s);
 
     //printf("path%d, #junc=%d\n", pid, junc);
-    for(int i = 0; i < junc; i++)
+    for(int i = 1; i < junc; i++)
     {
-        int junc_len = gr.get_vertex_info(p.junc[i].second).lpos-gr.get_vertex_info(p.junc[i].first).rpos;
-        assert(junc_len > 0);
-        max_junc_len = max(max_junc_len, junc_len);
+        int exon_len = gr.get_vertex_info(p.junc[i].first).rpos-gr.get_vertex_info(p.junc[i-1].second).lpos;
+        trst.features.max_mid_exon_len = max(trst.features.max_mid_exon_len, exon_len);
     }
-    trst.features.max_junc_length = max_junc_len;
-    //printf("ratio=%2.lf, max_junc_length=%d\n", trst.features.ratio_junc, trst.features.max_junc_length);
-
-    //trst.features.junc_c_cont = false;
-    //trst.features.junc_c_sep = false;
-    //trst.features.junc_nc = false;
-    //
-    //p.print(pid);
+    
     int stail = start_tail(paths, pid); 
     int etail = end_tail(paths, pid); 
-    trst.features.start_tail = gr.get_vertex_info(stail).lpos - gr.get_vertex_info(p.v[1]).lpos;
-    trst.features.end_tail = gr.get_vertex_info(p.v[n-2]).rpos - gr.get_vertex_info(etail).rpos;
+    if(stail > 0) trst.features.start_tail = gr.get_vertex_info(stail).lpos - gr.get_vertex_info(p.v[1]).lpos;
+    else trst.features.start_tail = 0; 
+    if(etail > 0) trst.features.end_tail = gr.get_vertex_info(p.v[n-2]).rpos - gr.get_vertex_info(etail).rpos;
+    else trst.features.end_tail = 0;
+    trst.features.start_loss = gr.get_vertex_info(p.v[1]).boundary_loss;
+    trst.features.end_loss = gr.get_vertex_info(p.v[n-2]).boundary_loss;
+    trst.features.start_merged_loss = gr.get_vertex_info(p.v[1]).boundary_merged_loss;
+    trst.features.end_merged_loss = gr.get_vertex_info(p.v[n-2]).boundary_merged_loss;
+
+    trst.features.start_bridge_bonus = gr.get_vertex_info(p.v[1]).bridge_bonus;
+    trst.features.end_bridge_bonus = gr.get_vertex_info(p.v[n-2]).bridge_bonus;
+
     trst.features.uni_junc = unique_junc(paths, pid);
     trst.features.introns = 0;
-    trst.features.intron_ratio = 1.0;
+    trst.features.intron_ratio = 0.0;
     if(junc == 0) return 0;
     for(int i = 0; i < paths.size(); i++)
     {
         if(i == pid) continue;
         int intron_cnt = infer_introns(p.junc, paths[i].junc);
         trst.features.introns = max(trst.features.introns, intron_cnt);
-        if(intron_cnt>0) trst.features.intron_ratio = min(trst.features.intron_ratio, p.weight/paths[i].weight);
+        if(intron_cnt>0) trst.features.intron_ratio = max(trst.features.intron_ratio, paths[i].weight/p.weight);
 
     }
 
-    //update sequence features
-    trst.features.seq_wt.clear();
-    trst.features.seq_cnt.clear();
-    trst.features.seq_abd.clear();
-    trst.features.seq_in_wt.clear();
-    trst.features.seq_out_wt.clear();
-    trst.features.seq_in_dg.clear();
-    trst.features.seq_out_dg.clear();
-    trst.features.seq_e_len.clear();
-    trst.features.seq_v_len.clear();
-
+    trst.features.seq_min_wt = DBL_MAX;
+    trst.features.seq_min_cnt = INT_MAX;
+    trst.features.seq_min_abd = DBL_MAX;
+    trst.features.seq_min_ratio = 1.0;
     //gr.print();
     for(int i = 1; i < p.v.size(); i++)
     {
@@ -3339,59 +3324,13 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
         vertex_info vi1 = gr.get_vertex_info(v1);
         vertex_info vi2 = gr.get_vertex_info(v2);
 
-        trst.features.seq_wt.push_back(gr.get_edge_weight(e));
-        trst.features.seq_cnt.push_back(ei.count);
-        trst.features.seq_abd.push_back(ei.abd);
-        trst.features.seq_in_wt.push_back(gr.get_in_weights(v2));
-        trst.features.seq_out_wt.push_back(gr.get_out_weights(v1));
-        //trst.features.seq_in_dg.push_back(gr.in_degree(v2));
-        //trst.features.seq_out_dg.push_back(gr.out_degree(v1));
-        //trst.features.seq_e_len.push_back(vi2.lpos-vi1.rpos+1);
-        //trst.features.seq_v_len.push_back(vi2.rpos-vi2.lpos);
-
+        trst.features.seq_min_wt = min(trst.features.seq_min_wt, gr.get_edge_weight(e));
+        trst.features.seq_min_cnt = min(trst.features.seq_min_cnt, ei.count);
+        trst.features.seq_min_abd = min(trst.features.seq_min_abd, ei.abd);
+        trst.features.seq_min_ratio = min(trst.features.seq_min_ratio, gr.get_edge_weight(e)/max(gr.get_in_weights(v2), gr.get_out_weights(v1)));
     }
-
-    /*printf("\nPath weight: ");
-    for(auto i : trst.features.seq_wt) printf("%.2lf, ", i);
-    printf("\nPath in weight: ");
-    for(auto i : trst.features.seq_in_wt) printf("%.2lf, ", i);
-    printf("\nPath in degree: ");
-    for(auto i : trst.features.seq_in_dg) printf("%d, ", i);
-    printf("\n");*/
 
     return 0;
-}
-
-int scallop::check_junc_relation(const vector<pair<int,int>>& junc1, const vector<pair<int,int>>& junc2)
-{
-    if(junc1.size() > junc2.size()) return NOT_CONTAINED;
-    assert(!junc1.empty());
-    assert(!junc2.empty());
-
-    map<pair<int, int>, int> map;
-    
-    for (int i = 0; i < junc2.size(); ++i) {
-        map[junc2[i]] = i;
-    }
-
-    if (map.find(junc1[0]) == map.end()) return NOT_CONTAINED;
-
-    int prevIndex = map[junc1[0]];
-    bool isContinuous = true;
-
-    for (int i = 1; i < junc1.size(); ++i) {
-        if (map.find(junc1[i]) == map.end()) return NOT_CONTAINED;
-
-        if (map[junc1[i]] != prevIndex + 1) {
-            isContinuous = false;
-        }
-
-        prevIndex = map[junc1[i]];
-    }
-
-    if (isContinuous) return CONTINUOUS_SUBVECTOR;
-
-    return NON_CONTINUOUS_SUBVECTOR;
 }
 
 int scallop::infer_introns(const vector<pair<int, int>>& junc1, const vector<pair<int, int>>& junc2) 
@@ -3463,8 +3402,8 @@ int scallop::end_tail(const vector<path>& paths, int i) {
     const vector<pair<int, int>>& junc1 = paths[i].junc;
     int t = junc1.back().second;
 
-    int maxValue = t;  // Initialize to t
-
+    int maxValue = t; 
+    bool tail = false;
     // Loop over all other junc2 in paths
     for (size_t idx = 0; idx < paths.size(); ++idx) {
         if (idx == i) continue;  // Skip junc1
@@ -3473,6 +3412,7 @@ int scallop::end_tail(const vector<path>& paths, int i) {
         if(junc2.size() < 2) continue;
         for (size_t j = 0; j < junc2.size() - 1; ++j) {  // We don't check the last pair since there's no "next" pair after it
             if (junc2[j].second == t) {
+                tail = true;
                 // Record the first item of the next pair
                 int value = junc2[j + 1].first;
                 if (value > maxValue) {
@@ -3483,7 +3423,7 @@ int scallop::end_tail(const vector<path>& paths, int i) {
         }
     }
 
-    return maxValue;
+    return tail ? maxValue : -1;
 }
 
 int scallop::start_tail(const vector<path>& paths, int i) {
@@ -3492,7 +3432,7 @@ int scallop::start_tail(const vector<path>& paths, int i) {
     int s = junc1.front().first;
 
     int minValue = s;  // Initialize to s
-
+    bool tail = false;
     // Loop over all other junc2 in paths
     for (size_t idx = 0; idx < paths.size(); ++idx) {
         if (idx == i) continue;  // Skip junc1
@@ -3502,6 +3442,7 @@ int scallop::start_tail(const vector<path>& paths, int i) {
 
         for (size_t j = 1; j < junc2.size(); ++j) {  // Starting from 1 because we need a preceding pair
             if (junc2[j].first == s) {
+                tail = true;
                 // Record the second item of the preceding pair
                 int value = junc2[j - 1].second;
                 if (value < minValue) {
@@ -3512,6 +3453,6 @@ int scallop::start_tail(const vector<path>& paths, int i) {
         }
     }
 
-    return minValue;
+    return tail ? minValue : -1;
 }
 

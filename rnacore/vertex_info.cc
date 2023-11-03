@@ -21,6 +21,9 @@ vertex_info::vertex_info()
 	lstrand = '.';
 	rstrand = '.';
 	regional = false;
+    boundary_loss = 0;
+    boundary_merged_loss = 0;
+    bridge_bonus = 0;
 }
 
 vertex_info::vertex_info(int l)
@@ -38,6 +41,10 @@ vertex_info::vertex_info(int l)
 	lstrand = '.';
 	rstrand = '.';
 	regional = false;
+    boundary_loss = 0;
+    boundary_merged_loss = 0;
+    bridge_bonus = 0;
+
 }
 
 vertex_info::vertex_info(const vertex_info &vi)
@@ -55,4 +62,8 @@ vertex_info::vertex_info(const vertex_info &vi)
 	lstrand = vi.lstrand;
 	rstrand = vi.rstrand;
 	regional = vi.regional;
+    boundary_loss = vi.boundary_loss;
+    boundary_merged_loss = vi.boundary_merged_loss;
+    bridge_bonus = vi.bridge_bonus;
+
 }

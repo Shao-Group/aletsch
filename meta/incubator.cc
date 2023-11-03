@@ -482,23 +482,18 @@ int incubator::postprocess()
 				if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
 				if(verify_exon_length(t, params[DEFAULT]) == false) continue;
 
-                printf("sample size: %ld; count2 = %d\n", v[k].samples.size(), t.count2);
                 assert(v[k].samples.size() == t.count2);
 				t.write(ss, -1, v[k].samples.size());
-                if(t.exons.size() > 1) t.write_features(-1);
+                //if(t.exons.size() > 1) t.write_features(-1);
+                //Only output novel transcripts in merged graph
+                if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) 
+                    t.write_features(-1);
 
-				//vt.push_back(t);
-				//ct.push_back(v[k].samples.size());
+
 				for(auto &p : v[k].samples)
 				{
                     int j = p.first;
 					if(j < 0 || j >= vv.size()) continue;
-					// TODO: assign p.second.coverage
-					// to a feature cov2 in transcript
-					//p.second.cov2 = p.second.coverage;
-					// TODO: assign v[k].samples.size()
-					// to another feature ct in transcript
-                    printf("id=%d, meta count2: %d; individual count2 = %d\n", j, t.count2, p.second.count2);
                     assert(p.second.count2 == t.count2);
 					assert(abs(p.second.coverage - t.coverage)<SMIN);
 					vv[j].push_back(p.second);

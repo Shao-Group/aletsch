@@ -30,6 +30,10 @@ public:
 	char lstrand;		// left side strand
 	char rstrand;		// right side strand	
 	bool regional;		// if the partial-exon is regional
+
+    double boundary_loss;
+    double boundary_merged_loss;
+    double bridge_bonus;
 };
 
 #endif

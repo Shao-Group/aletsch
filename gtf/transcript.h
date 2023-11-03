@@ -64,24 +64,22 @@ public:
     int num_vertices;       // Number of vertices in the path
     int num_edges;      //Number of edges in the path
     double junc_ratio;       //Ratio of junctions(length>1) in the path, except starting and ending
-    int max_junc_length;  // Maximum junction length
-    //bool junc_c_cont;       // Junctions of path are continuously contained in another path
-    //bool junc_c_sep;        // Junctions of path are contained in another path but not continuously
-    //bool junc_nc;       //Junctions of path are not contained in another path
+    int max_mid_exon_len;
     int start_tail;
     int end_tail;
+    double start_loss;
+    double end_loss;
+    double start_merged_loss;
+    double end_merged_loss;
+    double start_bridge_bonus;
+    double end_bridge_bonus;
     int introns;
     double intron_ratio;
     int uni_junc;
-    vector<double> seq_wt;
-    vector<int> seq_cnt;
-    vector<int> seq_abd;
-    vector<double> seq_in_wt;
-    vector<double> seq_out_wt;
-    vector<int> seq_in_dg;
-    vector<int> seq_out_dg;
-    vector<int> seq_e_len;
-    vector<int> seq_v_len;
+    double seq_min_wt;
+    int seq_min_cnt;
+    double seq_min_abd;
+    double seq_min_ratio;
     };
 
     TrstFeatures features;
