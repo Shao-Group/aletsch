@@ -234,7 +234,9 @@ int assembler::assemble(vector<bundle*> gv)
             transform(bd1, gr1, true);
             start_end_support(bd1.sp.sample_id, gr1, gr);
             non_splicing_support(bd1.sp.sample_id, gr1, gr);
-            boundary_extend_bridge(bd1.sp.sample_id, gr, gr1);
+            boundary_extend(bd1.sp.sample_id, gr, gr1, 1);
+            boundary_extend(bd1.sp.sample_id, gr, gr1, 2);
+            boundary_extend(bd1.sp.sample_id, gr, gr1, 3);
         }
 
         if(cfg.verbose >= 2) 
@@ -249,7 +251,7 @@ int assembler::assemble(vector<bundle*> gv)
         //calculate start&end&non-splicing suppots for combined graph
         start_end_support(bd.sp.sample_id, gr, gx);
         non_splicing_support(bd.sp.sample_id, gr, gx);
-        boundary_extend_bridge(-1, gr, gx);
+        boundary_extend(-1, gr, gx, 1);
 
 		assemble(gr, ps, bd.sp.sample_id);
 		//bd.clear();
@@ -460,7 +462,7 @@ int assembler::start_end_support(int sample_id, splice_graph &gr, splice_graph &
 }
 
 //record broken boundaries features of gr, inferred from gx
-int assembler::boundary_extend_bridge(int sample_id, splice_graph &gr, splice_graph &gx)
+int assembler::boundary_extend(int sample_id, splice_graph &gr, splice_graph &gx, int pos_type)
 {
     //loss of start 
     edge_iterator it;
@@ -473,9 +475,12 @@ int assembler::boundary_extend_bridge(int sample_id, splice_graph &gr, splice_gr
         assert(s == 0);
 
         vertex_info vi = gr.get_vertex_info(t);
-        int k = gx.locate_vertex(vi.lpos);
-        if(k < 0) k = gx.locate_vertex(vi.rpos-1);
-        if(k < 0 && gr.edge(t, t+1).second && (gr.get_vertex_info(t).rpos==gr.get_vertex_info(t+1).lpos) && (t+1 < gr.num_vertices()-1))
+        int k = -1;
+        if(pos_type == 1)
+            k = gx.locate_vertex(vi.lpos);
+        else if (pos_type == 2)
+            k = gx.locate_vertex(vi.rpos-1);
+        else if(pos_type == 3 && gr.edge(t, t+1).second && (gr.get_vertex_info(t).rpos==gr.get_vertex_info(t+1).lpos) && (t+1 < gr.num_vertices()-1))
         {
             k = gx.locate_vertex(vi.rpos);
         }
@@ -490,10 +495,17 @@ int assembler::boundary_extend_bridge(int sample_id, splice_graph &gr, splice_gr
             new_loss = gx.get_in_weights(k);
         }
         if(cfg.verbose >= 2) printf("Start vertex %d(gx=%d, vertex=%d) boundary_loss = %.2lf\n", t, sample_id, k, new_loss);
-        if(sample_id == -1)
+        if(sample_id == -1 && pos_type == 1)
             vi.boundary_merged_loss += new_loss; 
         else
-            vi.boundary_loss += new_loss; 
+        {
+            if(pos_type == 1)
+                vi.boundary_loss1 += new_loss; 
+            else if(pos_type == 2)
+                vi.boundary_loss2 += new_loss; 
+            else if(pos_type == 3)
+                vi.boundary_loss3 += new_loss; 
+        }
         gr.set_vertex_info(t, vi);
     }
 
@@ -507,13 +519,15 @@ int assembler::boundary_extend_bridge(int sample_id, splice_graph &gr, splice_gr
         assert(t = gr.num_vertices()-1);
 
         vertex_info vi = gr.get_vertex_info(s);
-        int k = gx.locate_vertex(vi.rpos -1);
-        if(k < 0) k = gx.locate_vertex(vi.lpos);
-        if(k < 0 && s>1 && gr.edge(s-1, s).second && (gr.get_vertex_info(s-1).rpos==gr.get_vertex_info(s).lpos))
+        int k = -1;
+        if(pos_type == 1)
+            k = gx.locate_vertex(vi.rpos -1);
+        else if(pos_type == 2)
+            k = gx.locate_vertex(vi.lpos);
+        else if(pos_type == 3 && s>1 && gr.edge(s-1, s).second && (gr.get_vertex_info(s-1).rpos==gr.get_vertex_info(s).lpos))
         {
             k = gx.locate_vertex(vi.lpos-1);
         }
-
         if(k < 0 || k == gx.num_vertices()-1 || gx.edge(k, gx.num_vertices()-1).second) continue;
         double new_loss = 0;
         if(gx.edge(k, k+1).second && (gx.get_vertex_info(k).rpos == gx.get_vertex_info(k+1).lpos))
@@ -525,17 +539,23 @@ int assembler::boundary_extend_bridge(int sample_id, splice_graph &gr, splice_gr
             new_loss = gx.get_out_weights(k);
         }
         if(cfg.verbose >= 2) printf("End vertex %d(gx=%d, vertex=%d) boundary_loss = %.2lf\n", s, sample_id, k, new_loss);
-        if(sample_id == -1)
+        if(sample_id == -1 && pos_type == 1)
             vi.boundary_merged_loss += new_loss; 
         else
-            vi.boundary_loss += new_loss; 
- 
+        {
+            if(pos_type == 1)
+                vi.boundary_loss1 += new_loss; 
+            else if(pos_type == 2)
+                vi.boundary_loss2 += new_loss; 
+            else if(pos_type == 3)
+                vi.boundary_loss3 += new_loss; 
+        }
         gr.set_vertex_info(s, vi);
 
     }
 
     //bridge bonus
-    pei = gr.out_edges(0);
+    /*pei = gr.out_edges(0);
     for(it = pei.first; it != pei.second; it++)
     {
         edge_descriptor e = *it;
@@ -559,7 +579,7 @@ int assembler::boundary_extend_bridge(int sample_id, splice_graph &gr, splice_gr
             if(cfg.verbose >= 2) printf("Bridge %d-%d(gx:%d) bonus = %.2lf, %.2lf\n", t-1, t, k1, vi1.bridge_bonus, vi2.bridge_bonus);
 
         }
-    }
+    }*/
 
     return 0;
 }

@@ -3282,19 +3282,16 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
         trst.features.max_mid_exon_len = max(trst.features.max_mid_exon_len, exon_len);
     }
     
-    int stail = start_tail(paths, pid); 
-    int etail = end_tail(paths, pid); 
-    if(stail > 0) trst.features.start_tail = gr.get_vertex_info(stail).lpos - gr.get_vertex_info(p.v[1]).lpos;
-    else trst.features.start_tail = 0; 
-    if(etail > 0) trst.features.end_tail = gr.get_vertex_info(p.v[n-2]).rpos - gr.get_vertex_info(etail).rpos;
-    else trst.features.end_tail = 0;
-    trst.features.start_loss = gr.get_vertex_info(p.v[1]).boundary_loss;
-    trst.features.end_loss = gr.get_vertex_info(p.v[n-2]).boundary_loss;
+    trst.features.start_path_loss = start_path_loss(paths, pid); 
+    trst.features.end_path_loss = end_path_loss(paths, pid); 
+    trst.features.start_loss1 = gr.get_vertex_info(p.v[1]).boundary_loss1;
+    trst.features.start_loss2 = gr.get_vertex_info(p.v[1]).boundary_loss2;
+    trst.features.start_loss3 = gr.get_vertex_info(p.v[1]).boundary_loss3;
+    trst.features.end_loss1 = gr.get_vertex_info(p.v[n-2]).boundary_loss1;
+    trst.features.end_loss2 = gr.get_vertex_info(p.v[n-2]).boundary_loss2;
+    trst.features.end_loss3 = gr.get_vertex_info(p.v[n-2]).boundary_loss3;
     trst.features.start_merged_loss = gr.get_vertex_info(p.v[1]).boundary_merged_loss;
     trst.features.end_merged_loss = gr.get_vertex_info(p.v[n-2]).boundary_merged_loss;
-
-    trst.features.start_bridge_bonus = gr.get_vertex_info(p.v[1]).bridge_bonus;
-    trst.features.end_bridge_bonus = gr.get_vertex_info(p.v[n-2]).bridge_bonus;
 
     trst.features.uni_junc = unique_junc(paths, pid);
     trst.features.introns = 0;
@@ -3397,62 +3394,49 @@ int scallop::unique_junc(const vector<path>& paths, int i)
     return uniqueCount;
 }
 
-int scallop::end_tail(const vector<path>& paths, int i) {
+int scallop::end_path_loss(const vector<path>& paths, int i) {
     // Extract junc1 and get the second item of its last pair
     const vector<pair<int, int>>& junc1 = paths[i].junc;
     int t = junc1.back().second;
 
-    int maxValue = t; 
-    bool tail = false;
-    // Loop over all other junc2 in paths
+    double path_loss = 0;
     for (size_t idx = 0; idx < paths.size(); ++idx) {
         if (idx == i) continue;  // Skip junc1
         
         const vector<pair<int, int>>& junc2 = paths[idx].junc;
         if(junc2.size() < 2) continue;
-        for (size_t j = 0; j < junc2.size() - 1; ++j) {  // We don't check the last pair since there's no "next" pair after it
+
+        for (size_t j = 0; j < junc2.size() - 1; ++j) {  
             if (junc2[j].second == t) {
-                tail = true;
-                // Record the first item of the next pair
-                int value = junc2[j + 1].first;
-                if (value > maxValue) {
-                    maxValue = value;
-                }
-                break;  // Move on to the next junc2
+                path_loss = max(path_loss, paths[idx].weight);
+                break;              
             }
         }
     }
 
-    return tail ? maxValue : -1;
+    return path_loss;
 }
 
-int scallop::start_tail(const vector<path>& paths, int i) {
+int scallop::start_path_loss(const vector<path>& paths, int i) {
     // Extract junc1 and get the first item of its first pair
     const vector<pair<int, int>>& junc1 = paths[i].junc;
     int s = junc1.front().first;
 
-    int minValue = s;  // Initialize to s
-    bool tail = false;
-    // Loop over all other junc2 in paths
+    double path_loss = 0;  
     for (size_t idx = 0; idx < paths.size(); ++idx) {
         if (idx == i) continue;  // Skip junc1
 
         const vector<pair<int, int>>& junc2 = paths[idx].junc;
         if(junc2.size() < 2) continue;
 
-        for (size_t j = 1; j < junc2.size(); ++j) {  // Starting from 1 because we need a preceding pair
+        for (size_t j = 1; j < junc2.size(); ++j) {  
             if (junc2[j].first == s) {
-                tail = true;
-                // Record the second item of the preceding pair
-                int value = junc2[j - 1].second;
-                if (value < minValue) {
-                    minValue = value;
-                }
-                break;  // Move on to the next junc2
+                path_loss = max(path_loss, paths[idx].weight);
+                break;  
             }
         }
     }
 
-    return tail ? minValue : -1;
+    return path_loss;
 }
 
