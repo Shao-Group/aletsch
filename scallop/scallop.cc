@@ -3300,10 +3300,35 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
     for(int i = 0; i < paths.size(); i++)
     {
         if(i == pid) continue;
-        int intron_cnt = infer_introns(p.junc, paths[i].junc);
-        trst.features.introns = max(trst.features.introns, intron_cnt);
-        if(intron_cnt>0) trst.features.intron_ratio = max(trst.features.intron_ratio, paths[i].weight/p.weight);
 
+        vector<pair<int, int>>& junc1 = p.junc, junc2 = paths[i].junc;
+        if(junc1.size()<2 || junc2.size()<1) continue;
+        int intron_cnt = 0;
+        double intron_ratio = 0;
+        for (size_t i = 1; i < junc1.size(); ++i) 
+        {
+            for (size_t j = 0; j < junc2.size(); ++j) 
+            {
+                if(junc2[j].second <= junc1[i].first && junc2[j].first >= junc1[i-1].second)
+                {
+                    //intron_cnt += junc2[j].second - junc2[j].first - 1;
+                    intron_cnt++;
+
+                    int v1 = junc2[j].first;
+                    int v2 = junc2[j].second;
+                    assert(gr.edge(v1, v2).second);
+                    edge_descriptor e = gr.edge(v1, v2).first;
+                    assert(gr.edge(v1, v1+1).second);
+                    assert(gr.edge(v2-1, v2).second);
+                    edge_descriptor e1 = gr.edge(v1, v1+1).first;
+                    edge_descriptor e2 = gr.edge(v2-1, v2).first;
+                    intron_ratio = max(intron_ratio, gr.get_edge_weight(e)/min(gr.get_edge_weight(e1), gr.get_edge_weight(e2)));
+                }
+
+            }
+        }
+        trst.features.introns = max(trst.features.introns, intron_cnt);
+        trst.features.intron_ratio = max(trst.features.intron_ratio, intron_ratio);
     }
 
     trst.features.seq_min_wt = DBL_MAX;
@@ -3332,38 +3357,20 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
 
 int scallop::infer_introns(const vector<pair<int, int>>& junc1, const vector<pair<int, int>>& junc2) 
 {
-    if(junc1.size()<2 || junc2.size()<3) return 0;
+    if(junc1.size()<2 || junc2.size()<1) return 0;
 
     int sum = 0;
-    // Loop through junc1 and junc2 to detect the special structure
-    for (size_t i = 0; i < junc1.size() - 1; ++i) 
+    for (size_t i = 1; i < junc1.size(); ++i) 
     {
-        for (size_t j = 0; j < junc2.size() - 1; ++j) 
+        for (size_t j = 0; j < junc2.size(); ++j) 
         {
-            // If we found a match for junc1[i].second in junc2
-            if (junc1[i].second == junc2[j].second) 
+            if(junc2[j].second <= junc1[i].first && junc2[j].first >= junc1[i-1].second)
             {
-                size_t k = j + 1;
-                int tempSum = 0;
-                while (k < junc2.size() && junc1[i+1].first != junc2[k].first) 
-                {
-                    tempSum += (junc2[k].second - junc2[k].first - 1);
-                    k++;
-                }
-                if (k < junc2.size() && junc1[i+1].first == junc2[k].first) 
-                {
-                    // We found the match for junc1[i+1].first, so add the tempSum to the main sum
-                    sum += tempSum;
-                    break;
-                }
-                if (k == junc2.size()) 
-                {
-                    break; // Exit the inner for-loop if we did not find a match in junc2
-                }
+                sum += junc2[j].second - junc2[j].first - 1;
             }
+
         }
     }
-
     return sum;
 }
 
