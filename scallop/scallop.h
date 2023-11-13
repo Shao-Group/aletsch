@@ -145,8 +145,6 @@ private:
     int check_junc_relation(const vector<pair<int,int>>& junc1, const vector<pair<int,int>>& junc2);
     int infer_introns(const vector<pair<int, int>>& junc1, const vector<pair<int, int>>& junc2);
     int unique_junc(const vector<path>& paths, int i);
-    int start_path_loss(const vector<path>& paths, int i);
-    int end_path_loss(const vector<path>& paths, int i);
 };
 
 #endif

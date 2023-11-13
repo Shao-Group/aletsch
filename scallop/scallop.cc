@@ -3282,8 +3282,6 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
         trst.features.max_mid_exon_len = max(trst.features.max_mid_exon_len, exon_len);
     }
     
-    trst.features.start_path_loss = start_path_loss(paths, pid); 
-    trst.features.end_path_loss = end_path_loss(paths, pid); 
     trst.features.start_loss1 = gr.get_vertex_info(p.v[1]).boundary_loss1;
     trst.features.start_loss2 = gr.get_vertex_info(p.v[1]).boundary_loss2;
     trst.features.start_loss3 = gr.get_vertex_info(p.v[1]).boundary_loss3;
@@ -3295,7 +3293,11 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
 
     trst.features.uni_junc = unique_junc(paths, pid);
     trst.features.introns = 0;
+    trst.features.start_introns = 0;
+    trst.features.end_introns = 0;
     trst.features.intron_ratio = 0.0;
+    trst.features.start_intron_ratio = 0.0;
+    trst.features.end_intron_ratio = 0.0;
     if(junc == 0) return 0;
     for(int i = 0; i < paths.size(); i++)
     {
@@ -3304,12 +3306,29 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
         vector<pair<int, int>>& junc1 = p.junc, junc2 = paths[i].junc;
         if(junc1.size()<2 || junc2.size()<1) continue;
         int intron_cnt = 0;
-        double intron_ratio = 0;
-        for (size_t i = 1; i < junc1.size(); ++i) 
+        int start_intron = 0;
+        int end_intron = 0;
+        for (size_t i = 0; i < junc1.size(); ++i) 
         {
             for (size_t j = 0; j < junc2.size(); ++j) 
             {
-                if(junc2[j].second <= junc1[i].first && junc2[j].first >= junc1[i-1].second)
+                if(i == 0)
+                {
+                    if(junc2[j].first >= p.v[1] && junc2[j].second <= junc1[0].first)
+                    {
+                        start_intron++;
+                        int v1 = junc2[j].first;
+                        int v2 = junc2[j].second;
+                        assert(gr.edge(v1, v2).second);
+                        edge_descriptor e = gr.edge(v1, v2).first;
+                        assert(gr.edge(v1, v1+1).second);
+                        assert(gr.edge(v2-1, v2).second);
+                        edge_descriptor e1 = gr.edge(v1, v1+1).first;
+                        edge_descriptor e2 = gr.edge(v2-1, v2).first;
+                        trst.features.start_intron_ratio = max(trst.features.start_intron_ratio,gr.get_edge_weight(e)/min(gr.get_edge_weight(e1), gr.get_edge_weight(e2)));
+                    }
+                }
+                else if(junc2[j].second <= junc1[i].first && junc2[j].first >= junc1[i-1].second)
                 {
                     //intron_cnt += junc2[j].second - junc2[j].first - 1;
                     intron_cnt++;
@@ -3322,13 +3341,33 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
                     assert(gr.edge(v2-1, v2).second);
                     edge_descriptor e1 = gr.edge(v1, v1+1).first;
                     edge_descriptor e2 = gr.edge(v2-1, v2).first;
-                    intron_ratio = max(intron_ratio, gr.get_edge_weight(e)/min(gr.get_edge_weight(e1), gr.get_edge_weight(e2)));
+                    trst.features.intron_ratio = max(trst.features.intron_ratio, gr.get_edge_weight(e)/min(gr.get_edge_weight(e1), gr.get_edge_weight(e2)));
+                }
+
+                if(i == junc1.size()-1)
+                {
+                    if(junc2[j].first >= junc1[i].second && junc2[j].second <= p.v[n-2])
+                    {
+                        end_intron++;
+                        int v1 = junc2[j].first;
+                        int v2 = junc2[j].second;
+                        assert(gr.edge(v1, v2).second);
+                        edge_descriptor e = gr.edge(v1, v2).first;
+                        assert(gr.edge(v1, v1+1).second);
+                        assert(gr.edge(v2-1, v2).second);
+                        edge_descriptor e1 = gr.edge(v1, v1+1).first;
+                        edge_descriptor e2 = gr.edge(v2-1, v2).first;
+                        trst.features.end_intron_ratio = max(trst.features.end_intron_ratio,gr.get_edge_weight(e)/min(gr.get_edge_weight(e1), gr.get_edge_weight(e2)));
+                    }
                 }
 
             }
         }
         trst.features.introns = max(trst.features.introns, intron_cnt);
-        trst.features.intron_ratio = max(trst.features.intron_ratio, intron_ratio);
+        trst.features.start_introns = max(trst.features.start_introns, start_intron);
+        trst.features.end_introns = max(trst.features.end_introns, end_intron);
+
+
     }
 
     trst.features.seq_min_wt = DBL_MAX;
@@ -3399,51 +3438,5 @@ int scallop::unique_junc(const vector<path>& paths, int i)
     }
 
     return uniqueCount;
-}
-
-int scallop::end_path_loss(const vector<path>& paths, int i) {
-    // Extract junc1 and get the second item of its last pair
-    const vector<pair<int, int>>& junc1 = paths[i].junc;
-    int t = junc1.back().second;
-
-    double path_loss = 0;
-    for (size_t idx = 0; idx < paths.size(); ++idx) {
-        if (idx == i) continue;  // Skip junc1
-        
-        const vector<pair<int, int>>& junc2 = paths[idx].junc;
-        if(junc2.size() < 2) continue;
-
-        for (size_t j = 0; j < junc2.size() - 1; ++j) {  
-            if (junc2[j].second == t) {
-                path_loss = max(path_loss, paths[idx].weight);
-                break;              
-            }
-        }
-    }
-
-    return path_loss;
-}
-
-int scallop::start_path_loss(const vector<path>& paths, int i) {
-    // Extract junc1 and get the first item of its first pair
-    const vector<pair<int, int>>& junc1 = paths[i].junc;
-    int s = junc1.front().first;
-
-    double path_loss = 0;  
-    for (size_t idx = 0; idx < paths.size(); ++idx) {
-        if (idx == i) continue;  // Skip junc1
-
-        const vector<pair<int, int>>& junc2 = paths[idx].junc;
-        if(junc2.size() < 2) continue;
-
-        for (size_t j = 1; j < junc2.size(); ++j) {  
-            if (junc2[j].first == s) {
-                path_loss = max(path_loss, paths[idx].weight);
-                break;  
-            }
-        }
-    }
-
-    return path_loss;
 }
 

@@ -65,8 +65,6 @@ public:
     int num_edges;      //Number of edges in the path
     double junc_ratio;       //Ratio of junctions(length>1) in the path, except starting and ending
     int max_mid_exon_len;
-    int start_path_loss;
-    int end_path_loss;
     double start_loss1;
     double start_loss2;
     double start_loss3;
@@ -76,7 +74,11 @@ public:
     double start_merged_loss;
     double end_merged_loss;
     int introns;
-    double intron_ratio;
+    int start_introns;
+    int end_introns;
+    double intron_ratio; 
+    double start_intron_ratio;
+    double end_intron_ratio;
     int uni_junc;
     double seq_min_wt;
     int seq_min_cnt;
