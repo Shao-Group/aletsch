@@ -1305,13 +1305,13 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 
 		//printf("%s: u1 = %d, %d-%d, u2 = %d, %d-%d, h1.rpos = %d, h2.lpos = %d\n", h1.qname.c_str(), u1, v1.lpos, v1.rpos, u2, v2.lpos, v2.rpos, h1.rpos, h2.pos);
 
-		if(gr.get_vertex_info(u1).rpos == h1.rpos)
+		//if(gr.get_vertex_info(u1).rpos == h1.rpos)
 		{
 			if(fb1.find(u1) != fb1.end()) fb1[u1]++;
 			else fb1.insert(make_pair(u1, 1));
 		}
 
-		if(gr.get_vertex_info(u2).lpos == h2.pos)
+		//if(gr.get_vertex_info(u2).lpos == h2.pos)
 		{
 			if(fb2.find(u2) != fb2.end()) fb2[u2]++;
 			else fb2.insert(make_pair(u2, 1));
@@ -1322,30 +1322,44 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 	{
 		PEB p = gr.edge(x.first, gr.num_vertices() - 1);
 		vertex_info vi = gr.get_vertex_info(x.first);
-		if(p.second == false) continue;
+
+		//if(p.second == false) continue;
+
 		double w = gr.get_vertex_weight(x.first);
 		double z = log(1 + w) / log(1 + x.second);
 		double s = log(1 + w) - log(1 + x.second);
 		if(cfg.verbose >= 2) printf("detect false end boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.rpos, x.second, x.first, w, vi.type, z, s); 
-		if(s > 1) continue;
+
 		//vi.type = EMPTY_VERTEX;
 		//gr.set_vertex_info(x.first, vi);
+		/*
+		if(s > 1) continue;
 		gr.remove_edge(p.first);
+		*/
+		vi.unbridge_leaving_count = x.second;
+		vi.unbridge_leaving_ratio = s;
 	}
 
 	for(auto &x : fb2)
 	{
 		PEB p = gr.edge(0, x.first);
 		vertex_info vi = gr.get_vertex_info(x.first);
-		if(p.second == false) continue;
+
+		//if(p.second == false) continue;
+
 		double w = gr.get_vertex_weight(x.first);
 		double z = log(1 + w) / log(1 + x.second);
 		double s = log(1 + w) - log(1 + x.second);
 		if(cfg.verbose >= 2) printf("detect false start boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.lpos, x.second, x.first, w, vi.type, z, s); 
-		if(s > 1) continue;
 		//vi.type = EMPTY_VERTEX;
 		//gr.set_vertex_info(x.first, vi);
+		/*
+		if(s > 1) continue;
 		gr.remove_edge(p.first);
+		*/
+
+		vi.unbridge_coming_count = x.second;
+		vi.unbridge_coming_ratio = s;
 	}
 	return 0;
 }
