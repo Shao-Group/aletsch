@@ -47,7 +47,8 @@ public:
 	double get_vertex_weight(int v) const;
 	double get_edge_weight(edge_base *e) const;
 	vertex_info get_vertex_info(int v) const;
-	edge_info get_edge_info(edge_base *e) const;
+	const edge_info & get_edge_info(edge_base *e) const;
+	edge_info & get_editable_edge_info(edge_base *e);
 
 	int set_vertex_weight(int v, double w);
 	int set_vertex_info(int v, const vertex_info &vi);

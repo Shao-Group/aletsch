@@ -97,7 +97,14 @@ double splice_graph::get_edge_weight(edge_base *e) const
 	return it->second;
 }
 
-edge_info splice_graph::get_edge_info(edge_base *e) const
+edge_info & splice_graph::get_editable_edge_info(edge_base *e)
+{
+	MEIF::iterator it = einf.find(e);
+	assert(it != einf.end());
+	return it->second;
+}
+
+const edge_info & splice_graph::get_edge_info(edge_base *e) const
 {
 	MEIF::const_iterator it = einf.find(e);
 	assert(it != einf.end());
