@@ -945,7 +945,7 @@ int group_start_boundaries(splice_graph &gr, map<int32_t, int32_t> &smap, int32_
 		PEB pb = gr.edge(0, v[i]);
 		assert(pb.second == true);
 		double wb = gr.get_edge_weight(pb.first);
-		edge_info eb = gr.get_edge_info(pb.first);
+		const edge_info & eb = gr.get_edge_info(pb.first);
 
 		bool b = check_continuous_vertices(gr, k2, v[i]);
 
