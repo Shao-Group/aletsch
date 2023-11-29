@@ -3263,6 +3263,7 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
     trst.features.num_edges = n-3;
     trst.features.gr_vertices = gr.num_vertices();
     trst.features.gr_edges = gr.num_edges();
+    trst.features.gr_reads = gr.reads;
     trst.features.max_mid_exon_len = 0;
 
     int junc = p.junc.size();
@@ -3374,6 +3375,11 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
     trst.features.seq_min_cnt = INT_MAX;
     trst.features.seq_min_abd = DBL_MAX;
     trst.features.seq_min_ratio = 1.0;
+    trst.features.unbridge_max_leaving_count = 0;
+    trst.features.unbridge_min_leaving_ratio = INT_MAX;
+    trst.features.unbridge_max_coming_count = 0;
+    trst.features.unbridge_min_coming_ratio = INT_MAX;
+
     //gr.print();
     for(int i = 1; i < p.v.size(); i++)
     {
@@ -3389,6 +3395,11 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
         trst.features.seq_min_cnt = min(trst.features.seq_min_cnt, ei.count);
         trst.features.seq_min_abd = min(trst.features.seq_min_abd, ei.abd);
         trst.features.seq_min_ratio = min(trst.features.seq_min_ratio, gr.get_edge_weight(e)/max(gr.get_in_weights(v2), gr.get_out_weights(v1)));
+
+        trst.features.unbridge_max_leaving_count = max(trst.features.unbridge_max_leaving_count, vi2.unbridge_leaving_count);
+        trst.features.unbridge_min_leaving_ratio = min(trst.features.unbridge_min_leaving_ratio, vi2.unbridge_leaving_ratio);
+        trst.features.unbridge_max_coming_count = max(trst.features.unbridge_max_coming_count, vi2.unbridge_coming_count);
+        trst.features.unbridge_min_coming_ratio = min(trst.features.unbridge_min_coming_ratio, vi2.unbridge_coming_ratio);
     }
 
     return 0;

@@ -152,6 +152,7 @@ int assembler::assemble(vector<bundle*> gv)
 	// combined graph
 	splice_graph gx;
 	transform(bx, gx, false);	// TODO
+    gx.reads = bx.frgs.size();
 
 	// combined phase set 
 	phase_set px;
@@ -179,12 +180,20 @@ int assembler::assemble(vector<bundle*> gv)
         sup2abd[psp] += gx.get_edge_weight(e);
     }
 
+    //transform individual bundle to individual graph
+    vector<splice_graph*> grv;
+
     // individual junction supports
     for(int k = 0; k < gv.size(); k++)
     {
         bundle &bd = *(gv[k]);
-		splice_graph gr;
-		transform(bd, gr, true);
+        bd.set_gid(rid, gid, instance, subindex++);
+
+		splice_graph* grp = new splice_graph();
+        grv.push_back(grp);
+        splice_graph& gr = *grp; 
+        transform(bd, gr, true);
+        gr.reads = bd.frgs.size();
 
         edge_iterator it;
         PEEI pei = gr.edges();
@@ -213,10 +222,11 @@ int assembler::assemble(vector<bundle*> gv)
 	for(int k = 0; k < gv.size(); k++)
 	{
         bundle &bd = *(gv[k]);
-		bd.set_gid(rid, gid, instance, subindex++);
+		//bd.set_gid(rid, gid, instance, subindex++);
+        //splice_graph gr;
+		//transform(bd, gr, true);
+        splice_graph &gr = *(grv[k]);
 
-		splice_graph gr;
-		transform(bd, gr, true);
 
         fix_missing_edges(gr, gx);
 
@@ -230,8 +240,10 @@ int assembler::assemble(vector<bundle*> gv)
         for(int j = 0; j < gv.size(); j++)
         {
             bundle &bd1 = *(gv[j]);
-            splice_graph gr1;
-            transform(bd1, gr1, true);
+            //splice_graph gr1;
+            //transform(bd1, gr1, true);
+            splice_graph &gr1 = *(grv[j]);
+
             start_end_support(bd1.sp.sample_id, gr1, gr);
             non_splicing_support(bd1.sp.sample_id, gr1, gr);
             boundary_extend(bd1.sp.sample_id, gr, gr1, 1);
@@ -268,7 +280,10 @@ int assembler::assemble(vector<bundle*> gv)
 
 
     for(int k = 0; k < gv.size(); k++)
+    {
         gv[k]->clear();
+        delete grv[k];
+    }
 
 	bx.clear();
 

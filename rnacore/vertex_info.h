@@ -34,8 +34,12 @@ public:
     double boundary_loss1;
     double boundary_loss2;
     double boundary_loss3;
-
     double boundary_merged_loss;
+    int unbridge_leaving_count;
+    double unbridge_leaving_ratio;
+    int unbridge_coming_count;
+    double unbridge_coming_ratio;
+
 };
 
 #endif

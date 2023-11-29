@@ -61,6 +61,7 @@ public:
     struct TrstFeatures {
     int gr_vertices;     // Number of vertices in the graph
     int gr_edges;        // Number of edges in the graph
+    int gr_reads;
     int num_vertices;       // Number of vertices in the path
     int num_edges;      //Number of edges in the path
     double junc_ratio;       //Ratio of junctions(length>1) in the path, except starting and ending
@@ -84,6 +85,10 @@ public:
     int seq_min_cnt;
     double seq_min_abd;
     double seq_min_ratio;
+    int unbridge_max_leaving_count;
+    double unbridge_min_leaving_ratio;
+    int unbridge_max_coming_count;
+    double unbridge_min_coming_ratio;
     };
 
     TrstFeatures features;

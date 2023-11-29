@@ -25,6 +25,7 @@ splice_graph::splice_graph(const splice_graph &gr)
 	chrm = gr.chrm;
 	gid = gr.gid;
 	strand = gr.strand;
+    reads = gr.reads;
 	lindex = gr.lindex;
 	rindex = gr.rindex;
 

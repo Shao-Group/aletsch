@@ -380,6 +380,7 @@ int transcript::write_features(int sample_id) const
         << exons.size() << '\t'   // Number of exons
         << features.gr_vertices << '\t'
         << features.gr_edges << '\t'
+        << features.gr_reads << '\t'
         << features.num_vertices << '\t'
         << features.num_edges << '\t'
         << features.junc_ratio << '\t'
@@ -402,7 +403,11 @@ int transcript::write_features(int sample_id) const
         << features.seq_min_wt << '\t'
         << features.seq_min_cnt << '\t'
         << features.seq_min_abd << '\t'
-        << features.seq_min_ratio << endl;
+        << features.seq_min_ratio << '\t'
+        << features.unbridge_max_leaving_count << '\t'
+        << features.unbridge_min_leaving_ratio << '\t'
+        << features.unbridge_max_coming_count << '\t'
+        << features.unbridge_min_coming_ratio << endl;
 
     stat_file.close();
     return 0;

@@ -33,6 +33,7 @@ public:
 	string chrm;
 	string gid;
 	char strand;
+    int reads;
 
 	vector<double> vwrt;
 	vector<vertex_info> vinf;
