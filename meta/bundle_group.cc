@@ -29,8 +29,8 @@ int bundle_group::resolve()
 	build_splices();
 	build_splice_index();
 
-	build_join_interval_maps();
-	build_join_interval_map_index();
+	//build_join_interval_maps();
+	//build_join_interval_map_index();
 
 	//test_overlap_similarity();
 
@@ -68,6 +68,8 @@ int bundle_group::resolve()
 		k++;
 	}
 
+	// do not use interval-overlap for clustering
+	/*
 	vector<mutex> jx(jindex.size());
 	k = 0;
 	for(auto &z: jindex)
@@ -77,9 +79,10 @@ int bundle_group::resolve()
 		boost::asio::post(this->tpool, [this, &s, &ds, &jx, &gmutex, k]{ this->process_subset2(s, ds, 2, jx[k], gmutex); });
 		k++;
 	}
+	*/
 
 	for(auto &z: sx) z.lock();
-	for(auto &z: jx) z.lock();
+	//for(auto &z: jx) z.lock();
 
 	build_groups(ds);
 
@@ -87,7 +90,7 @@ int bundle_group::resolve()
 	if(cfg.verbose >= 2) print();
 
 	sindex.clear();
-	jindex.clear();
+	//jindex.clear();
 	return 0;
 }
 
