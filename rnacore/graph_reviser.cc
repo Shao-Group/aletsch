@@ -1331,6 +1331,9 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
         if(cfg.verbose >= 2) 
             printf("detect false end boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.rpos, x.second, x.first, w, vi.type, z, s); 
 
+		// how about this: default s = 0, and
+		// double s = log(1 + x.second + w) - log(1 + w);
+
 		//vi.type = EMPTY_VERTEX;
 		//gr.set_vertex_info(x.first, vi);
 		/*
