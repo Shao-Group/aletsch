@@ -85,7 +85,13 @@ double splice_graph::get_vertex_weight(int v) const
 	return vwrt[v];
 }
 
-vertex_info splice_graph::get_vertex_info(int v) const
+vertex_info & splice_graph::get_editable_vertex_info(int v)
+{
+	assert(v >= 0 && v < vinf.size());
+	return vinf[v];
+}
+
+const vertex_info & splice_graph::get_vertex_info(int v) const
 {
 	assert(v >= 0 && v < vinf.size());
 	return vinf[v];

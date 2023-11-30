@@ -5,7 +5,7 @@ See LICENSE for licensing.
 */
 
 #include "vertex_info.h"
-#include <climits>
+#include <cfloat>
 
 vertex_info::vertex_info()
 {
@@ -27,9 +27,9 @@ vertex_info::vertex_info()
     boundary_loss3 = 0;
     boundary_merged_loss = 0;
     unbridge_leaving_count = 0;
-    unbridge_leaving_ratio = INT_MAX;
+    unbridge_leaving_ratio = 0;
     unbridge_coming_count = 0;
-    unbridge_coming_ratio = INT_MAX;
+    unbridge_coming_ratio = 0;
 }
 
 vertex_info::vertex_info(int l)
@@ -52,9 +52,9 @@ vertex_info::vertex_info(int l)
     boundary_loss3 = 0;
     boundary_merged_loss = 0;
     unbridge_leaving_count = 0;
-    unbridge_leaving_ratio = INT_MAX;
+    unbridge_leaving_ratio = 0;
     unbridge_coming_count = 0;
-    unbridge_coming_ratio = INT_MAX;
+    unbridge_coming_ratio = 0;
 
 
 }

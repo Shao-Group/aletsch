@@ -86,9 +86,17 @@ public:
     double seq_min_abd;
     double seq_min_ratio;
     int unbridge_max_leaving_count;
-    double unbridge_min_leaving_ratio;
+    double unbridge_max_leaving_ratio;
     int unbridge_max_coming_count;
-    double unbridge_min_coming_ratio;
+    double unbridge_max_coming_ratio;
+    int unbridge_start_leaving_count;
+    double unbridge_start_leaving_ratio;
+    int unbridge_start_coming_count;
+    double unbridge_start_coming_ratio;
+    int unbridge_end_leaving_count;
+    double unbridge_end_leaving_ratio;
+    int unbridge_end_coming_count;
+    double unbridge_end_coming_ratio;
     };
 
     TrstFeatures features;

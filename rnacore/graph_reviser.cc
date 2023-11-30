@@ -1327,7 +1327,9 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 
 		double w = gr.get_vertex_weight(x.first);
 		double z = log(1 + w) / log(1 + x.second);
-		double s = log(1 + w) - log(1 + x.second);
+		//double s = log(1 + w) - log(1 + x.second);
+        double s = log(1+x.second+w) - log(1+w);
+
         if(cfg.verbose >= 2) 
             printf("detect false end boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.rpos, x.second, x.first, w, vi.type, z, s); 
 
@@ -1354,7 +1356,9 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 
 		double w = gr.get_vertex_weight(x.first);
 		double z = log(1 + w) / log(1 + x.second);
-		double s = log(1 + w) - log(1 + x.second);
+		//double s = log(1 + w) - log(1 + x.second);
+        double s = log(1+x.second+w) - log(1+w);
+
 		if(cfg.verbose >= 2) 
             printf("detect false start boundary %d with %d reads, vertex = %d, w = %.2lf, type = %d, z = %.2lf, s = %.2lf\n", vi.lpos, x.second, x.first, w, vi.type, z, s); 
 

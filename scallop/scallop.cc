@@ -3376,12 +3376,20 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
     trst.features.seq_min_abd = DBL_MAX;
     trst.features.seq_min_ratio = 1.0;
     trst.features.unbridge_max_leaving_count = 0;
-    trst.features.unbridge_min_leaving_ratio = INT_MAX;
+    trst.features.unbridge_max_leaving_ratio = 0;
     trst.features.unbridge_max_coming_count = 0;
-    trst.features.unbridge_min_coming_ratio = INT_MAX;
+    trst.features.unbridge_max_coming_ratio = 0;
+    trst.features.unbridge_start_leaving_count = 0;
+    trst.features.unbridge_start_leaving_ratio = 0;
+    trst.features.unbridge_start_coming_count = 0;
+    trst.features.unbridge_start_coming_ratio = 0;
+    trst.features.unbridge_end_leaving_count = 0;
+    trst.features.unbridge_end_leaving_ratio = 0;
+    trst.features.unbridge_end_coming_count = 0;
+    trst.features.unbridge_end_coming_ratio = 0;
 
     //gr.print();
-    for(int i = 1; i < p.v.size(); i++)
+    for(int i = 1; i < n; i++)
     {
         int v1 = p.v[i-1];
         int v2 = p.v[i];
@@ -3396,10 +3404,29 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
         trst.features.seq_min_abd = min(trst.features.seq_min_abd, ei.abd);
         trst.features.seq_min_ratio = min(trst.features.seq_min_ratio, gr.get_edge_weight(e)/max(gr.get_in_weights(v2), gr.get_out_weights(v1)));
 
-        trst.features.unbridge_max_leaving_count = max(trst.features.unbridge_max_leaving_count, vi2.unbridge_leaving_count);
-        trst.features.unbridge_min_leaving_ratio = min(trst.features.unbridge_min_leaving_ratio, vi2.unbridge_leaving_ratio);
-        trst.features.unbridge_max_coming_count = max(trst.features.unbridge_max_coming_count, vi2.unbridge_coming_count);
-        trst.features.unbridge_min_coming_ratio = min(trst.features.unbridge_min_coming_ratio, vi2.unbridge_coming_ratio);
+        if(i == 1)
+        {
+            trst.features.unbridge_start_leaving_count = vi2.unbridge_leaving_count;
+            trst.features.unbridge_start_leaving_ratio = vi2.unbridge_leaving_ratio;
+            trst.features.unbridge_start_coming_count = vi2.unbridge_coming_count;
+            trst.features.unbridge_start_coming_ratio = vi2.unbridge_coming_ratio;
+
+        }
+        else if(i == n-2)
+        {
+            trst.features.unbridge_end_leaving_count = vi2.unbridge_leaving_count;
+            trst.features.unbridge_end_leaving_ratio = vi2.unbridge_leaving_ratio;
+            trst.features.unbridge_end_coming_count = vi2.unbridge_coming_count;
+            trst.features.unbridge_end_coming_ratio = vi2.unbridge_coming_ratio;
+
+        }
+        else if(i > 1 && i < n-2)
+        {
+            trst.features.unbridge_max_leaving_count = max(trst.features.unbridge_max_leaving_count, vi2.unbridge_leaving_count);
+            trst.features.unbridge_max_leaving_ratio = max(trst.features.unbridge_max_leaving_ratio, vi2.unbridge_leaving_ratio);
+            trst.features.unbridge_max_coming_count = max(trst.features.unbridge_max_coming_count, vi2.unbridge_coming_count);
+            trst.features.unbridge_max_coming_ratio = max(trst.features.unbridge_max_coming_ratio, vi2.unbridge_coming_ratio);
+        }
     }
 
     return 0;
