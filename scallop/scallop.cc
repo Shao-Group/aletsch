@@ -1035,7 +1035,7 @@ bool scallop::resolve_unsplittable_vertex(int type, int degree, double max_ratio
 			if(cfg.verbose >= 2) printf("resolve unsplittable vertex, type = %d, degree = %d, vertex = %d, %d-%d, ratio = %.3lf, degree = (%d, %d)\n",
 					type, degree, i, gr.get_vertex_info(i).lpos, gr.get_vertex_info(i).rpos, rt.ratio, gr.in_degree(i), gr.out_degree(i));
 
-			decompose_vertex_extend(i, rt.pe2w);
+			decompose_vertex_extend(i, rt.pe2w, type, degree);
 			flag = true;
 			continue;
 		}
@@ -1055,7 +1055,7 @@ bool scallop::resolve_unsplittable_vertex(int type, int degree, double max_ratio
 	if(cfg.verbose >= 2) printf("resolve unsplittable vertex, type = %d, degree = %d, vertex = %d, %d-%d, ratio = %.3lf, degree = (%d, %d)\n",
 			type, degree, root, gr.get_vertex_info(root).lpos, gr.get_vertex_info(root).rpos, ratio, gr.in_degree(root), gr.out_degree(root));
 
-	decompose_vertex_extend(root, pe2w);
+	decompose_vertex_extend(root, pe2w, type, degree);
 	return true;
 }
 
@@ -1672,7 +1672,7 @@ int scallop::init_nonzeroset()
 	return 0;
 }
 
-int scallop::decompose_vertex_extend(int root, MPID &pe2w)
+int scallop::decompose_vertex_extend(int root, MPID &pe2w, int type, int degree)
 {
 	PEEI pei;
 	edge_iterator it1, it2;
@@ -1866,6 +1866,10 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			assert(mei.find(p) != mei.end());
 			med[p] += mweight[e1];
 			mei[p] += root_info.rpos - root_info.lpos;
+
+			edge_info & ei = get_editable_edge_info(p);
+			string s = "UN" + to_string(type) + "|" + to_string(degree);
+			ei.feature.append(s);
 		}
 		else if(mdegree[e2] == 1)
 		{
@@ -1885,6 +1889,10 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			assert(mei.find(p) != mei.end());
 			med[p] += mweight[e2];
 			mei[p] += root_info.rpos - root_info.lpos;
+
+			edge_info & ei = get_editable_edge_info(p);
+			string s = "UN" + to_string(type) + "|" + to_string(degree);
+			ei.feature.append(s);
 		}
 		else
 		{
@@ -1920,6 +1928,9 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
             else*/
             assert(ei1.count > 0 && ei2.count > 0);
             set_intersection(ei1.samples.begin(), ei1.samples.end(), ei2.samples.begin(), ei2.samples.end(), inserter(ei.samples, ei.samples.begin()));
+
+			string s = "UN" + to_string(type) + "|" + to_string(degree);
+			ei.feature.append(s);
 
             ei.count = ei.samples.size();
             assert(ei.count > 0);
@@ -2271,6 +2282,8 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
     ei1 = gr.get_edge_info(xx);
     ei2 = gr.get_edge_info(yy);
     ei.length = lxy;
+
+	ei.feature = ei1.feature.append(ei2.feature);
 
     //set_union(ei1.samples.begin(), ei1.samples.end(), ei2.samples.begin(), ei2.samples.end(), inserter(ei.samples, ei.samples.begin()));
     /*if(!ei1.count)
