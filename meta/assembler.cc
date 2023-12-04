@@ -34,6 +34,7 @@ int assembler::resolve(vector<bundle*> gv)
 {
 	int subindex = 0;
 
+	// FEATURE: gv.size()
 	if(gv.size() == 1)
 	{
 		bundle &bd = *(gv[0]);
@@ -152,7 +153,9 @@ int assembler::assemble(vector<bundle*> gv)
 	// combined graph
 	splice_graph gx;
 	transform(bx, gx, false);	// TODO
+
     gx.reads = bx.frgs.size();
+	printf("#reads: hits = %lu, frgs = %lu, gx.reads = %d\n", bx.hits.size(), bx.frgs.size(), gx.reads);
 
 	// combined phase set 
 	phase_set px;
