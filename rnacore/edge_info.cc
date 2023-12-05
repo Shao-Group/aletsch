@@ -47,5 +47,5 @@ edge_info::edge_info(const edge_info &ei)
     abd = ei.abd;
     samples = ei.samples;
     spAbd = ei.spAbd;
-	feature = ei.feature;
+	//feature = ei.feature;
 }

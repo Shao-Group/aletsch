@@ -1867,15 +1867,9 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			med[p] += mweight[e1];
 			mei[p] += root_info.rpos - root_info.lpos;
 
-<<<<<<< HEAD
 			//edge_info & ei = get_editable_edge_info(p);
 			//string s = "UN" + to_string(type) + "|" + to_string(degree);
 			//ei.feature.append(s);
-=======
-			edge_info & ei = gr.get_editable_edge_info(p);
-			string s = "UN" + to_string(type) + "|" + to_string(degree);
-			ei.feature.append(s);
->>>>>>> 2ac0df22580b1f608896f6d4bb9cf19ef70a7c74
 		}
 		else if(mdegree[e2] == 1)
 		{
@@ -1896,15 +1890,9 @@ int scallop::decompose_vertex_extend(int root, MPID &pe2w)
 			med[p] += mweight[e2];
 			mei[p] += root_info.rpos - root_info.lpos;
 
-<<<<<<< HEAD
 			//edge_info & ei = get_editable_edge_info(p);
 			//string s = "UN" + to_string(type) + "|" + to_string(degree);
 			//ei.feature.append(s);
-=======
-			edge_info & ei = gr.get_editable_edge_info(p);
-			string s = "UN" + to_string(type) + "|" + to_string(degree);
-			ei.feature.append(s);
->>>>>>> 2ac0df22580b1f608896f6d4bb9cf19ef70a7c74
 		}
 		else
 		{
