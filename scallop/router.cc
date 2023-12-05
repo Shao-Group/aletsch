@@ -848,9 +848,9 @@ int router::thread()
     
     for(auto it : econf)
     {
-        edge_info ei = gr.get_edge_info(it.first);
+        edge_info &ei = gr.get_editable_edge_info(it.first);
         ei.confidence += it.second;
-        gr.set_edge_info(it.first, ei);
+        //gr.set_edge_info(it.first, ei);
         if(cfg.verbose >= 3) printf("Edge %d, confidence %.2lf = %.2lf\n", e2i[it.first], it.second, ei.confidence);
     }
 	return 0;
@@ -1013,12 +1013,16 @@ int router::thread_left_isolate(vector<int> &left_iso, vector<int> &right_all)
     for(auto v : left_iso)
     { 
         edge_descriptor le = i2e[u2e[v]];
-        edge_info le_info = gr.get_edge_info(le);
+        const edge_info &le_info = gr.get_edge_info(le);
 
         if(cfg.verbose >= 3)
         {
             printf("Left isolated vertex: %d(%d, %d->%d), weight = %.2f, samples = { ", v, u2e[v], le->source(), le->target(), gr.get_edge_weight(le));
-            for(auto sp : le_info.samples) printf("%d(%.2f) ", sp, le_info.spAbd[sp]);
+            for(auto sp : le_info.samples) 
+            {
+                auto it = le_info.spAbd.find(sp);
+                if (it != le_info.spAbd.end()) printf("%d(%.2f) ", sp, it->second);
+            }
             printf(" }\n");
         }
 
@@ -1029,13 +1033,13 @@ int router::thread_left_isolate(vector<int> &left_iso, vector<int> &right_all)
         for(auto r : right_all)
         {
             edge_descriptor re = i2e[u2e[r]];
-            edge_info re_info = gr.get_edge_info(re);
+            const edge_info& re_info = gr.get_edge_info(re);
 
             set<int> common;
             set_intersection(le_info.samples.begin(), le_info.samples.end(), re_info.samples.begin(), re_info.samples.end(), inserter(common, common.begin()));
             double common_abd = 0.0;
             //for(auto sp : common) common_abd += le_info.spAbd[sp]*0.5+re_info.spAbd[sp]*0.5;
-            for(auto sp : common) common_abd += 0.99*min(le_info.spAbd[sp], re_info.spAbd[sp]) + 0.01*max(le_info.spAbd[sp], re_info.spAbd[sp]) ;
+            for(auto sp : common) common_abd += 0.99*min(le_info.spAbd.at(sp), re_info.spAbd.at(sp)) + 0.01*max(le_info.spAbd.at(sp), re_info.spAbd.at(sp)) ;
 
             sum_abd += common_abd;
             if(common_abd > max_abd)
@@ -1047,7 +1051,11 @@ int router::thread_left_isolate(vector<int> &left_iso, vector<int> &right_all)
             if(cfg.verbose >= 3)
             {
                 printf("Candidate right partner: %d(%d, %d->%d), weight = %.2f, abd = %.2lf, #common_samples= %ld, samples = { ", r, u2e[r], re->source(), re->target(), gr.get_edge_weight(re), common_abd, common.size());
-                for(auto sp : re_info.samples) printf("%d(%.2f) ", sp, re_info.spAbd[sp]);
+                for(auto sp : re_info.samples) 
+                {
+                    auto it = re_info.spAbd.find(sp);
+                    if (it != re_info.spAbd.end()) printf("%d(%.2f) ", sp, it->second);
+                }
                 printf("}\n");
             }
 
@@ -1066,12 +1074,16 @@ int router::thread_right_isolate(vector<int> &right_iso, vector<int> &left_all)
     for(auto v : right_iso)
     {
         edge_descriptor re = i2e[u2e[v]];
-        edge_info re_info = gr.get_edge_info(re);
+        const edge_info &re_info = gr.get_edge_info(re);
 
         if(cfg.verbose >= 3)
         {
             printf("Right isolated vertex: %d(%d, %d->%d), weight = %.2f, samples = { ", v, u2e[v], re->source(), re->target(), gr.get_edge_weight(re));
-            for(auto sp : re_info.samples) printf("%d(%.2f) ", sp, re_info.spAbd[sp]);
+            for(auto sp : re_info.samples) 
+            {
+                auto it = re_info.spAbd.find(sp);
+                if (it != re_info.spAbd.end()) printf("%d(%.2f) ", sp, it->second);
+            }
             printf("}\n");
         }
 
@@ -1082,13 +1094,13 @@ int router::thread_right_isolate(vector<int> &right_iso, vector<int> &left_all)
         for(auto l : left_all)
         {
             edge_descriptor le = i2e[u2e[l]];
-            edge_info le_info = gr.get_edge_info(le);
+            const edge_info &le_info = gr.get_edge_info(le);
 
             set<int> common;
             set_intersection(le_info.samples.begin(), le_info.samples.end(), re_info.samples.begin(), re_info.samples.end(), inserter(common, common.begin()));
             double common_abd = 0;
             //for(auto sp : common) common_abd += le_info.spAbd[sp]*0.5+re_info.spAbd[sp]*0.5;
-            for(auto sp : common) common_abd += 0.99*min(le_info.spAbd[sp], re_info.spAbd[sp]) + 0.01*max(le_info.spAbd[sp], re_info.spAbd[sp]) ;
+            for(auto sp : common) common_abd += 0.99*min(le_info.spAbd.at(sp), re_info.spAbd.at(sp)) + 0.01*max(le_info.spAbd.at(sp), re_info.spAbd.at(sp)) ;
             sum_abd += common_abd;
             if(common_abd > max_abd)
             {
@@ -1100,7 +1112,11 @@ int router::thread_right_isolate(vector<int> &right_iso, vector<int> &left_all)
             if(cfg.verbose >= 3)
             {
                 printf("Candidate left partner: %d(%d, %d->%d), weight = %.2f, abd = %.2lf, #common_samples= %ld, samples = { ", l, u2e[l], le->source(), le->target(), gr.get_edge_weight(le), common_abd, common.size());
-                for(auto sp : le_info.samples) printf("%d(%.2f) ", sp, le_info.spAbd[sp]);
+                for(auto sp : le_info.samples) 
+                {
+                    auto it = le_info.spAbd.find(sp);
+                    if (it != le_info.spAbd.end()) printf("%d(%.2f) ", sp, it->second);
+                }
                 printf(" }\n");
             }
         }

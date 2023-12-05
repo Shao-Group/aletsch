@@ -155,7 +155,7 @@ int assembler::assemble(vector<bundle*> gv)
 	transform(bx, gx, false);	// TODO
 
     gx.reads = bx.frgs.size();
-	printf("#reads: hits = %lu, frgs = %lu, gx.reads = %d\n", bx.hits.size(), bx.frgs.size(), gx.reads);
+	printf("Merged #reads: hits = %lu, frgs = %lu, gx.reads = %d\n", bx.hits.size(), bx.frgs.size(), gx.reads);
 
 	// combined phase set 
 	phase_set px;
@@ -197,6 +197,8 @@ int assembler::assemble(vector<bundle*> gv)
         splice_graph& gr = *grp; 
         transform(bd, gr, true);
         gr.reads = bd.frgs.size();
+        printf("Graph %d, #reads: hits = %lu, frgs = %lu, gx.reads = %d\n", k+1, bd.hits.size(), bd.frgs.size(), gr.reads);
+
 
         edge_iterator it;
         PEEI pei = gr.edges();
