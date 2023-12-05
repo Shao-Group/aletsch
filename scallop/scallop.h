@@ -101,7 +101,7 @@ private:
     bool closed_vertex(edge_descriptor e, int root);
     int update_log_confidence(int root);
 	int decompose_trivial_vertex(int v);
-	int decompose_vertex_extend(int v, MPID &pe2w);
+	int decompose_vertex_extend(int v, MPID &pe2w, int type, int degree);
 	int decompose_vertex_replace(int v, MPID &pe2w);
 	int classify_trivial_vertex(int v, bool fast);
 	int exchange_sink(int old_sink, int new_sink);
