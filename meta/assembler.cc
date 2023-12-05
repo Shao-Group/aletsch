@@ -197,6 +197,7 @@ int assembler::assemble(vector<bundle*> gv)
         splice_graph& gr = *grp; 
         transform(bd, gr, true);
         gr.reads = bd.frgs.size();
+		printf("##reads: hits = %lu, frgs = %lu, gr.reads = %d\n", bd.hits.size(), bd.frgs.size(), gr.reads);
 
         edge_iterator it;
         PEEI pei = gr.edges();
