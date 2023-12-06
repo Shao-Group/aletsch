@@ -26,7 +26,8 @@ trans_item::trans_item(const transcript &t, int c, int s)
     else 
     {
         samples[s].coverage = max(samples[s].coverage, t.coverage);
-        samples[s].cov2 = max(samples[s].cov2, t.cov2);
+		samples[s].alt_cov2 = t.cov2;
+        //samples[s].cov2 = max(samples[s].cov2, t.cov2);
         samples[s].conf = max(samples[s].conf, t.conf);
         samples[s].abd = max(samples[s].abd, t.abd);
         samples[s].count1 = max(samples[s].count1, t.count1);
