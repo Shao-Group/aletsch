@@ -81,6 +81,7 @@ int transcript::clear()
 	RPKM = 0;
 	TPM = 0;
     cov2 = 0;
+    alt_cov2 = 0;
     conf = 0;
     abd = 0;
     count1 = 0;
@@ -373,6 +374,7 @@ int transcript::write_features(int sample_id) const
         << meta_tid << '\t'         //Transcript ID in meta.gtf
         << coverage << '\t'        // Meta coverage
         << cov2 << '\t'            // Individual coverage 2 
+        << alt_cov2 << '\t'
         << abd << '\t'             // Abundance
         << conf << '\t'            // Confidence
         << count1 << '\t'          // Actual count of meta trst       
@@ -404,19 +406,11 @@ int transcript::write_features(int sample_id) const
         << features.seq_min_cnt << '\t'
         << features.seq_min_abd << '\t'
         << features.seq_min_ratio << '\t'
-        << features.unbridge_max_leaving_count << '\t'
-        << features.unbridge_max_leaving_ratio << '\t'
-        << features.unbridge_max_coming_count << '\t'
-        << features.unbridge_max_coming_ratio << '\t'
-        << features.unbridge_start_leaving_count << '\t'
-        << features.unbridge_start_leaving_ratio << '\t'
         << features.unbridge_start_coming_count << '\t'
         << features.unbridge_start_coming_ratio << '\t'
         << features.unbridge_end_leaving_count << '\t'
-        << features.unbridge_end_leaving_ratio << '\t'
-        << features.unbridge_end_coming_count << '\t'
-        << features.unbridge_end_coming_ratio << endl;
-
+        << features.unbridge_end_leaving_ratio << endl;
+        
     stat_file.close();
     return 0;
 }

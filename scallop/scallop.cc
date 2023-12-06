@@ -3388,19 +3388,11 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
     trst.features.seq_min_cnt = INT_MAX;
     trst.features.seq_min_abd = DBL_MAX;
     trst.features.seq_min_ratio = 1.0;
-    trst.features.unbridge_max_leaving_count = 0;
-    trst.features.unbridge_max_leaving_ratio = 0;
-    trst.features.unbridge_max_coming_count = 0;
-    trst.features.unbridge_max_coming_ratio = 0;
-    trst.features.unbridge_start_leaving_count = 0;
-    trst.features.unbridge_start_leaving_ratio = 0;
     trst.features.unbridge_start_coming_count = 0;
     trst.features.unbridge_start_coming_ratio = 0;
     trst.features.unbridge_end_leaving_count = 0;
     trst.features.unbridge_end_leaving_ratio = 0;
-    trst.features.unbridge_end_coming_count = 0;
-    trst.features.unbridge_end_coming_ratio = 0;
-
+    
     //gr.print();
     for(int i = 1; i < n; i++)
     {
@@ -3419,8 +3411,6 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
 
         if(i == 1)
         {
-            trst.features.unbridge_start_leaving_count = vi2.unbridge_leaving_count;
-            trst.features.unbridge_start_leaving_ratio = vi2.unbridge_leaving_ratio;
             trst.features.unbridge_start_coming_count = vi2.unbridge_coming_count;
             trst.features.unbridge_start_coming_ratio = vi2.unbridge_coming_ratio;
 
@@ -3429,16 +3419,6 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
         {
             trst.features.unbridge_end_leaving_count = vi2.unbridge_leaving_count;
             trst.features.unbridge_end_leaving_ratio = vi2.unbridge_leaving_ratio;
-            trst.features.unbridge_end_coming_count = vi2.unbridge_coming_count;
-            trst.features.unbridge_end_coming_ratio = vi2.unbridge_coming_ratio;
-
-        }
-        else if(i > 1 && i < n-2)
-        {
-            trst.features.unbridge_max_leaving_count = max(trst.features.unbridge_max_leaving_count, vi2.unbridge_leaving_count);
-            trst.features.unbridge_max_leaving_ratio = max(trst.features.unbridge_max_leaving_ratio, vi2.unbridge_leaving_ratio);
-            trst.features.unbridge_max_coming_count = max(trst.features.unbridge_max_coming_count, vi2.unbridge_coming_count);
-            trst.features.unbridge_max_coming_ratio = max(trst.features.unbridge_max_coming_ratio, vi2.unbridge_coming_ratio);
         }
     }
 

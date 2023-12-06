@@ -1321,9 +1321,9 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 	for(auto &x : fb1)
 	{
 		PEB p = gr.edge(x.first, gr.num_vertices() - 1);
-		vertex_info vi = gr.get_vertex_info(x.first);
+		vertex_info vi = gr.get_editable_vertex_info(x.first);
 
-		//if(p.second == false) continue;
+		if(p.second == false) continue;
 
 		double w = gr.get_vertex_weight(x.first);
 		double z = log(1 + w) / log(1 + x.second);
@@ -1344,15 +1344,15 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 		*/
 		vi.unbridge_leaving_count = x.second;
 		vi.unbridge_leaving_ratio = s;
-        gr.set_vertex_info(x.first, vi);
+        //gr.set_vertex_info(x.first, vi);
 	}
 
 	for(auto &x : fb2)
 	{
 		PEB p = gr.edge(0, x.first);
-		vertex_info vi = gr.get_vertex_info(x.first);
+		vertex_info vi = gr.get_editable_vertex_info(x.first);
 
-		//if(p.second == false) continue;
+		if(p.second == false) continue;
 
 		double w = gr.get_vertex_weight(x.first);
 		double z = log(1 + w) / log(1 + x.second);
@@ -1371,7 +1371,7 @@ int remove_false_boundaries(splice_graph &gr, bundle_base &bb, const parameters 
 
 		vi.unbridge_coming_count = x.second;
 		vi.unbridge_coming_ratio = s;
-        gr.set_vertex_info(x.first, vi);
+        //gr.set_vertex_info(x.first, vi);
 	}
 	return 0;
 }
