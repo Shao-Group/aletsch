@@ -60,8 +60,8 @@ int bridge_solver::build_bridging_vertices()
 		int v1 = gr.locate_vertex(pc.bounds[1] - 1);
 		int v2 = gr.locate_vertex(pc.bounds[2] - 0);
 
-		//if(check_left_relaxing(pc, v1)) v1--;
-		//if(check_right_relaxing(pc, v2)) v2++;
+		if(check_left_relaxing(pc, v1)) v1--;
+		if(check_right_relaxing(pc, v2)) v2++;
 
 		vpairs.push_back(PI(v1, v2));
 	}

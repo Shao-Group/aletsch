@@ -42,7 +42,7 @@ parameters::parameters()
 	region_partition_length = 1000000;
 
 	// for bridging paired-end reads
-	bridge_end_relaxing = 5;
+	bridge_end_relaxing = 10;
 	bridge_dp_solution_size = 10;
 	bridge_dp_stack_size = 5;
 	min_bridging_score = 1.5;
