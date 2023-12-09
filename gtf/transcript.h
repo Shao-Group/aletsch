@@ -63,6 +63,7 @@ public:
     int gr_vertices;     // Number of vertices in the graph
     int gr_edges;        // Number of edges in the graph
     int gr_reads;
+    int gr_subgraph;
     int num_vertices;       // Number of vertices in the path
     int num_edges;      //Number of edges in the path
     double junc_ratio;       //Ratio of junctions(length>1) in the path, except starting and ending

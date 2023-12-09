@@ -34,6 +34,7 @@ public:
 	string gid;
 	char strand;
     int reads;
+    int subgraph;
 
 	vector<double> vwrt;
 	vector<vertex_info> vinf;

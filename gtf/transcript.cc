@@ -383,6 +383,7 @@ int transcript::write_features(int sample_id) const
         << features.gr_vertices << '\t'
         << features.gr_edges << '\t'
         << features.gr_reads << '\t'
+        << features.gr_subgraph << '\t'
         << features.num_vertices << '\t'
         << features.num_edges << '\t'
         << features.junc_ratio << '\t'

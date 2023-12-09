@@ -155,7 +155,8 @@ int assembler::assemble(vector<bundle*> gv)
 	transform(bx, gx, false);	// TODO
 
     gx.reads = bx.frgs.size();
-	printf("Merged #reads: hits = %lu, frgs = %lu, gx.reads = %d\n", bx.hits.size(), bx.frgs.size(), gx.reads);
+    gx.subgraph = gv.size();
+	//printf("Merged #reads: hits = %lu, frgs = %lu, gx.reads = %d\n", bx.hits.size(), bx.frgs.size(), gx.reads);
 
 	// combined phase set 
 	phase_set px;
@@ -197,7 +198,8 @@ int assembler::assemble(vector<bundle*> gv)
         splice_graph& gr = *grp; 
         transform(bd, gr, true);
         gr.reads = bd.frgs.size();
-        printf("Graph %d, #reads: hits = %lu, frgs = %lu, gx.reads = %d\n", k+1, bd.hits.size(), bd.frgs.size(), gr.reads);
+        gr.subgraph = gv.size();
+        //printf("Graph %d, #reads: hits = %lu, frgs = %lu, gx.reads = %d\n", k+1, bd.hits.size(), bd.frgs.size(), gr.reads);
 
         edge_iterator it;
         PEEI pei = gr.edges();
@@ -752,34 +754,34 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 	{
 		boost::asio::post(pool, [gx, hx, k, sid, pa, &mt, &tsp, &tm] {
 
-			splice_graph gr(gx);
-			hyper_set hs(hx);
+        splice_graph gr(gx);
+        hyper_set hs(hx);
 
-			transcript_set ts(gr.chrm, tm.rid, pa.min_single_exon_clustering_overlap);
+        transcript_set ts(gr.chrm, tm.rid, pa.min_single_exon_clustering_overlap);
 
-			//printf("A: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
+        //printf("A: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
 
-			gr.gid = gx.gid + "." + tostring(k);
-			scallop sx(gr, hs, pa, k == 0 ? false : true);
-			sx.assemble();
+        gr.gid = gx.gid + "." + tostring(k);
+        scallop sx(gr, hs, pa, k == 0 ? false : true);
+        sx.assemble();
 
-			int z = 0;
-			for(int i = 0; i < sx.trsts.size(); i++)
-			{
-				transcript &t = sx.trsts[i];
-				z++;
-				t.RPKM = 0;
-				ts.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-			}
+        int z = 0;
+        for(int i = 0; i < sx.trsts.size(); i++)
+        {
+            transcript &t = sx.trsts[i];
+            z++;
+            t.RPKM = 0;
+            ts.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+        }
 
-			if(pa.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges\n", gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges());
-			if(gr.num_vertices() >= 1000) printf("assemble %s: %d transcripts, large graph with %lu vertices and %lu edges\n", gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges());
+        if(pa.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges\n", gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges());
+        if(gr.num_vertices() >= 1000) printf("assemble %s: %d transcripts, large graph with %lu vertices and %lu edges\n", gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges());
 
-			mt.lock();
-			//tsp.tsets.push_back(ts);
-			//printf("B: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
-			tm.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-			mt.unlock();
+        mt.lock();
+        //tsp.tsets.push_back(ts);
+        //printf("B: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
+        tm.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+        mt.unlock();
 		});
 	}
 

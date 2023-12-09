@@ -3277,6 +3277,7 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
     trst.features.gr_vertices = gr.num_vertices();
     trst.features.gr_edges = gr.num_edges();
     trst.features.gr_reads = gr.reads;
+    trst.features.gr_subgraph = gr.subgraph;
     trst.features.max_mid_exon_len = 0;
 
     int junc = p.junc.size();
