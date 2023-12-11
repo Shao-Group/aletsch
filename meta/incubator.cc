@@ -461,8 +461,8 @@ int incubator::postprocess()
 			{
 				transcript &t = v[k].trst;
 			//t.write(cout);
-				if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
-				if(verify_exon_length(t, params[DEFAULT]) == false) continue;
+				//if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
+				//if(verify_exon_length(t, params[DEFAULT]) == false) continue;
 				count ++;
 			}
 		}
@@ -479,8 +479,8 @@ int incubator::postprocess()
 				transcript &t = v[k].trst;
 				//t.write(cout);
 
-				if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
-				if(verify_exon_length(t, params[DEFAULT]) == false) continue;
+				//if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
+				//if(verify_exon_length(t, params[DEFAULT]) == false) continue;
 
                 assert(v[k].samples.size() == t.count2);
 				t.write(ss, -1, v[k].samples.size());

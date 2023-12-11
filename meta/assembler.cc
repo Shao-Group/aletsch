@@ -104,6 +104,10 @@ int assembler::assemble(bundle &bd)
 	splice_graph gr;
 	transform(bd, gr, true);
 
+    gr.reads = bd.frgs.size();
+    gr.subgraph = 1;
+
+
     edge_iterator it;
     PEEI pei = gr.edges();
     for(it = pei.first; it != pei.second; it++)
