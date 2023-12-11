@@ -131,6 +131,9 @@ int previewer::infer_library_type()
 	vv.push_back("first");
 	vv.push_back("second");
 
+	sp.num_xs = num_xs;
+	sp.spn = spn;
+
 	int s1 = UNSTRANDED;
 	if(spn >= cfg.min_preview_spliced_reads && first > cfg.preview_infer_ratio * 2.0 * spn) s1 = FR_FIRST;
 	if(spn >= cfg.min_preview_spliced_reads && second > cfg.preview_infer_ratio * 2.0 * spn) s1 = FR_SECOND;
@@ -208,6 +211,8 @@ int previewer::infer_insertsize()
 	{
 		total += it->second;
 	}
+
+	sp.insert_total = total;
 
     if(total < cfg.min_preview_spliced_reads)
 	{

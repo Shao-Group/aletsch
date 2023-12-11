@@ -31,8 +31,11 @@ public:
 	static mutex bam_lock;
 	static mutex gtf_lock;
 	int data_type;
+	int spn;
+	int num_xs;
 	int library_type;
 	int bam_with_xs;
+	int insert_total;
 	int insertsize_low;
 	int insertsize_high;
 	int insertsize_median;

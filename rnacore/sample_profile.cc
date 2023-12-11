@@ -26,6 +26,9 @@ sample_profile::sample_profile(int id, int32_t p)
 	region_partition_length = p;
 	library_type = UNSTRANDED;
 	bam_with_xs = 0;
+	num_xs = 0;
+	spn = 0;
+	insert_total = 0;
 }
 
 int sample_profile::load_profile(const string &dir)

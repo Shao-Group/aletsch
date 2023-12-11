@@ -107,6 +107,8 @@ int incubator::read_bam_list()
 
 int incubator::init_samples()
 {
+	if(samples.size() <= 0) return 0;
+
 	boost::asio::thread_pool pool(params[DEFAULT].max_threads);
 	for(int i = 0; i < samples.size(); i++)
 	{
@@ -120,7 +122,7 @@ int incubator::init_samples()
 				previewer pre(cfg, sp);
 				pre.infer_library_type();
 				if(sp.data_type == PAIRED_END) pre.infer_insertsize();
-				if(cfg.profile_dir != "") sp.save_profile(cfg.profile_dir);
+				//if(cfg.profile_dir != "") sp.save_profile(cfg.profile_dir);
 				return;
 			}
 
@@ -141,6 +143,49 @@ int incubator::init_samples()
 		});
 	}
 	pool.join();
+
+	// post process previewed profile, to allow
+	// for samples with fewer reads to borrow 
+	// profiles from samples with more reads
+
+	const parameters &cfg = this->params[DEFAULT];
+
+	// profiles are given
+	if(cfg.profile_only == false && cfg.profile_dir != "") return 0;
+
+	int b = 0;
+	for(int i = 1; i < samples.size(); i++)
+	{
+		if(samples[i].spn > samples[b].spn)
+		{
+			b = i;
+		}
+		else if(samples[i].spn == samples[b].spn && samples[i].insert_total > samples[b].insert_total) 
+		{
+			b = i;
+		}
+	}
+
+	for(int i = 0; i < samples.size(); i++)
+	{
+		// copy profile from 
+		if(samples[i].insert_total < cfg.min_preview_spliced_reads)
+		{
+			samples[i].insertsize_ave = samples[b].insertsize_ave; 
+			samples[i].insertsize_std = samples[b].insertsize_std; 
+			samples[i].insertsize_low = samples[b].insertsize_low; 
+			samples[i].insertsize_high = samples[b].insertsize_high; 
+		}
+
+		if(samples[i].spn < cfg.min_preview_spliced_reads)
+		{
+			samples[i].library_type = samples[b].library_type; 
+			samples[i].bam_with_xs = samples[b].bam_with_xs; 
+		}
+				
+		if(cfg.profile_dir != "") samples[i].save_profile(cfg.profile_dir);
+	}
+
 	return 0;
 }
 
