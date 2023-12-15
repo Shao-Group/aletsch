@@ -383,6 +383,89 @@ int assembler::non_splicing_support(int sample_id, splice_graph &gr, splice_grap
     return 0;
 }
 
+int assembler::start_support(vector<splice_graph*> &grv, const vector<int> &idv)
+{
+	// build interval_set_map
+	interval_set_pair_map ism;
+	int32_t gap = 200;
+	for(int k = 0; k < grv.size(); k++)
+	{
+		splice_graph &gr = *(grv[k]);
+		set<PI> se;
+
+		edge_iterator it;
+		PEEI pei = gr.out_edges(0);
+		for(it = pei.first; it != pei.second; it++)
+		{
+			edge_descriptor e = (*it);
+			int s = e->source();
+			int t = e->target();
+			assert(s == 0);
+			se.insert(PI(k, t));
+
+			int32_t p1 = gr.get_vertex_info(t).lpos;
+			int32_t p2 = gr.get_vertex_info(t).rpos;
+
+			while(p2 - p1 < gap)
+			{
+				if(t + 1 >= gr.num_vertices() - 1) break;	
+				PEB peb = gr.edge(t, t + 1);
+				if(peb.second == false) break;
+				if(gr.get_vertex_info(t + 1).lpos != gr.get_vertex_info(t).rpos) break;
+				p2 = gr.get_vertex_info(t + 1).rpos;
+				t++;
+			}
+
+			if(p2 > p1 + gap) p2 = p1 + gap;
+			ism += make_pair(interval32(p1, p2), se);
+		}
+	}
+
+	for(ISPMI it = ism.begin(); it != ism.end(); it++)
+	{
+		interval32 iv = it->first;
+		set<PI> se = it->second;
+		vector<PI> v(se.begin(), se.end());
+		if(v.size() <= 1) continue;
+
+		// mutual support
+		for(int i = 0; i < v.size(); i++)
+		{
+			int si = idv[v[i].first];
+			int ti = v[i].second;
+			splice_graph &gi = *(grv[v[i].first]);
+			PEB pi = gi.edge(0, ti);
+			assert(pi.second == true);
+			edge_info &ei = gi.get_editable_edge_info(pi.first);
+
+			for(int j = i + 1; j < v.size(); j++)
+			{
+				int sj = idv[v[j].first];
+				if(si == sj) continue;
+
+				int tj = v[j].second;
+				splice_graph &gj = *(grv[v[j].first]);
+				PEB pj = gj.edge(0, tj);
+				assert(pj.second == true);
+				edge_info &ej = gj.get_editable_edge_info(pj.first);
+
+				ei.samples.insert(sj);
+				ej.samples.insert(si);
+
+				ei.count = ei.samples.size();
+				ej.count = ej.samples.size();
+
+				ei.spAbd[sj] += gj.get_edge_weight(pj.first);
+				ej.spAbd[si] += gi.get_edge_weight(pi.first);
+
+				ei.abd += gj.get_edge_weight(pj.first);
+				ej.abd += gi.get_edge_weight(pi.first);
+			}
+		}
+	}
+
+    return 0;
+}
 
 int assembler::start_end_support(int sample_id, splice_graph &gr, splice_graph &gx)
 {

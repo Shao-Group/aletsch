@@ -16,8 +16,10 @@ See LICENSE for licensing.
 using namespace boost;
 using namespace std;
 
-typedef icl::right_open_interval<int32_t> ROI;
+typedef pair<int, int> PI;
 typedef std::set<int> SI;
+typedef std::set<PI> SPI;
+typedef icl::right_open_interval<int32_t> ROI;
 typedef icl::interval<int32_t>::type interval32;
 
 // join interval map
@@ -38,6 +40,9 @@ typedef pair<SIMD, SIMD> PSIMD;
 // join interval map with associated sets
 typedef icl::interval_map<int32_t, SI> interval_set_map;
 typedef interval_set_map::const_iterator ISMI;
+typedef icl::interval_map<int32_t, SPI> interval_set_pair_map;
+typedef interval_set_pair_map::const_iterator ISPMI;
+
 typedef pair<ISMI, ISMI> PISMI;
 
 // if p is inside an interval, split this interval into 2
