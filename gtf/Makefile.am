@@ -2,7 +2,7 @@ noinst_LIBRARIES = libgtf.a
 
 UTILDIR = $(top_srcdir)/util
 
-libgtf_a_CPPFLAGS = -I$(UTILDIR) -std=c++11
+libgtf_a_CPPFLAGS = -pg -I$(UTILDIR) -std=c++11
 
 libgtf_a_SOURCES = item.h item.cc \
 				   transcript.h transcript.cc \
