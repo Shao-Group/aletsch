@@ -843,7 +843,7 @@ bool scallop::remove_single_smallest_edge(int i, double max_ratio, double &ratio
 bool scallop::resolve_smallest_edges(double max_ratio)
 {
 	//return false;
-    if(!random_ordering) return false;
+    if(random_ordering) return false;
     int se = -1;
 	int root = -1;
 	double ratio = max_ratio;
@@ -3274,8 +3274,8 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
     assert(n >= 3);
     trst.features.num_vertices = n-2;
     trst.features.num_edges = n-3;
-    trst.features.gr_vertices = gr.num_vertices();
-    trst.features.gr_edges = gr.num_edges();
+    trst.features.gr_vertices = gr.num_vertices()-2;
+    trst.features.gr_edges = gr.num_edges()-gr.out_degree(0)-gr.in_degree(gr.num_vertices()-1);
     trst.features.gr_reads = gr.reads;
     trst.features.gr_subgraph = gr.subgraph;
     trst.features.max_mid_exon_len = 0;

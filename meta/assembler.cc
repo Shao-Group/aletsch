@@ -190,6 +190,7 @@ int assembler::assemble(vector<bundle*> gv)
 
     //transform individual bundle to individual graph
     vector<splice_graph*> grv;
+    size_t max_v_num = 0;
 
     // individual junction supports
     for(int k = 0; k < gv.size(); k++)
@@ -203,6 +204,7 @@ int assembler::assemble(vector<bundle*> gv)
         transform(bd, gr, true);
         gr.reads = bd.frgs.size();
         gr.subgraph = gv.size();
+        max_v_num = max(max_v_num, gr.num_vertices());
         //printf("Graph %d, #reads: hits = %lu, frgs = %lu, gx.reads = %d\n", k+1, bd.hits.size(), bd.frgs.size(), gr.reads);
 
         edge_iterator it;
@@ -224,6 +226,10 @@ int assembler::assemble(vector<bundle*> gv)
             sup2abd[psp] += gr.get_edge_weight(e);
         }
     }
+
+    //assemble merged graph when the largest graph in the bundle has <=150 vertices
+    bool assemble_merged = false;
+    if(max_v_num <= 150) assemble_merged = true;
 
     //calculate junction supports for combined graph
     junction_support(gx, junc2sup, sup2abd);
@@ -271,23 +277,16 @@ int assembler::assemble(vector<bundle*> gv)
 		px.combine(ps);
 
         //calculate start&end&non-splicing suppots for combined graph
-        start_end_support(bd.sp.sample_id, gr, gx);
-        non_splicing_support(bd.sp.sample_id, gr, gx);
-        boundary_extend(-1, gr, gx, 1);
+        if(assemble_merged)
+        {
+            start_end_support(bd.sp.sample_id, gr, gx);
+            non_splicing_support(bd.sp.sample_id, gr, gx);
+            boundary_extend(-1, gr, gx, 1);
+        }
 
 		assemble(gr, ps, bd.sp.sample_id);
 		//bd.clear();
 	}
-
-    start_end_support(-1, gx, gx);
-    non_splicing_support(-1, gx, gx);
-
-    if(cfg.verbose >= 2) 
-    {
-        printf("print combined graph %s\n", gx.gid.c_str());
-        gx.print_junction_supports();
-    }
-
 
     for(int k = 0; k < gv.size(); k++)
     {
@@ -297,8 +296,20 @@ int assembler::assemble(vector<bundle*> gv)
 
 	bx.clear();
 
-	// assemble combined instance
-	assemble(gx, px, -1);
+    if(assemble_merged)
+    {
+        start_end_support(-1, gx, gx);
+        non_splicing_support(-1, gx, gx);
+
+        if(cfg.verbose >= 2) 
+        {
+            printf("print combined graph %s\n", gx.gid.c_str());
+            gx.print_junction_supports();
+        }
+
+        // assemble combined instance
+        assemble(gx, px, -1);
+    }
     return 0;
 }
 
