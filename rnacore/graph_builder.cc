@@ -355,7 +355,7 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 		ei.weight = b.count;
 		if(b.strand == '+') ei.strand = 1;
 		if(b.strand == '-') ei.strand = 2;
-		gr.set_edge_info(p, ei);
+		gr.set_edge_info(p, std::move(ei));
 		gr.set_edge_weight(p, b.count);
 	}
 
@@ -375,7 +375,7 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 			gr.set_edge_weight(p, w);
 			edge_info ei;
 			ei.weight = w;
-			gr.set_edge_info(p, ei);
+			gr.set_edge_info(p, std::move(ei));
 		}
 
 		if(r.rtype == END_BOUNDARY) 
@@ -387,7 +387,7 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 			gr.set_edge_weight(p, w);
 			edge_info ei;
 			ei.weight = w;
-			gr.set_edge_info(p, ei);
+			gr.set_edge_info(p, std::move(ei));
 		}
 	}
 
@@ -419,7 +419,7 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 		gr.set_edge_weight(p, wt);
 		edge_info ei;
 		ei.weight = wt;
-		gr.set_edge_info(p, ei);
+		gr.set_edge_info(p, std::move(ei));
 	}
 
 	return 0;
