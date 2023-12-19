@@ -131,10 +131,9 @@ transcript_set::transcript_set(const transcript &t, int r, int count, int sid, d
 	single_exon_overlap = overlap;
 
 	size_t h = t.get_intron_chain_hashing();
-	trans_item ti(t, count, sid);
+	//trans_item ti(t, count, sid);
 	vector<trans_item> v;
-	v.push_back(std::move(ti));
-
+	v.emplace_back(trans_item(t, count, sid));
 	mt.insert(make_pair(h, v));
 }
 
