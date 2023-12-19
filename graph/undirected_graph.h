@@ -29,6 +29,7 @@ public:
 	virtual int remove_edge(int s, int t);
 
 	// access
+	virtual PEB edge(int s, int t);
 	virtual PEEI out_edges(int v);
 
 	// algorithms

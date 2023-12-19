@@ -34,6 +34,7 @@ public:
 	// access functions
 	virtual int in_degree(int v) const;
 	virtual int out_degree(int v) const;
+	virtual PEB edge(int s, int t);
 	virtual PEEI in_edges(int v);
 	virtual PEEI out_edges(int v);
 

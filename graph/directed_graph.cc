@@ -57,6 +57,23 @@ int directed_graph::remove_edge(edge_descriptor e)
 	return 0;
 }
 
+PEB directed_graph::edge(int s, int t) 
+{
+	assert(s >= 0 && s < vv.size());
+	assert(t >= 0 && t < vv.size());
+	PEEI p = vv[s]->out_edges();
+	
+	// TODO: use binary search here
+	for(edge_iterator it = p.first; it != p.second; it++)
+	{
+		assert((*it)->source() == s);
+		int x = (*it)->target();
+		if(x != t) continue;
+		return PEB(*it, true);
+	}
+	return PEB(null_edge, false);
+}
+
 int directed_graph::exchange(int x, int y, int z)
 {
 	assert(x >= 0 && x < num_vertices());

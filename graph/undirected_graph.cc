@@ -94,6 +94,23 @@ PEEI undirected_graph::out_edges(int x)
 	return p;
 }
 
+PEB undirected_graph::edge(int s, int t) 
+{
+	assert(s >= 0 && s < vv.size());
+	assert(t >= 0 && t < vv.size());
+	PEEI p = vv[s]->out_edges();
+	
+	// TODO: use binary search here
+	for(edge_iterator it = p.first; it != p.second; it++)
+	{
+		assert((*it)->source() == s);
+		int x = (*it)->target();
+		if(x != t) continue;
+		return PEB(*it, true);
+	}
+	return PEB(null_edge, false);
+}
+
 vector<int> undirected_graph::assign_connected_components()
 {
 	vector<bool> mm;
