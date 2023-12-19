@@ -12,14 +12,14 @@ See LICENSE for licensing.
 #include "edge_info.h"
 #include "gene.h"
 
-#include <map>
+#include <unordered_map>
 #include <cassert>
 
 #define SMIN 0.00001
 
 using namespace std;
 
-typedef map<edge_descriptor, edge_info> MEIF;
+typedef unordered_map<edge_descriptor, edge_info> MEIF;
 typedef pair<edge_descriptor, edge_info> PEIF;
 
 class splice_graph : public directed_graph
