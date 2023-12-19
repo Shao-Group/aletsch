@@ -6,6 +6,7 @@ See LICENSE for licensing.
 
 #include "edge_base.h"
 #include <cstdio>
+#include <cassert>
 
 using namespace std;
 
@@ -13,6 +14,7 @@ edge_base::edge_base(int _s, int _t)
 	:s(_s), t(_t)
 {}
 
+/*
 int edge_base::move(int x, int y)
 {
 	s = x;
@@ -27,10 +29,18 @@ int edge_base::swap()
 	t = x;
 	return 0;
 }
+*/
 
 int edge_base::source() const
 {
 	return s;
+}
+
+int edge_base::neighbor(int x) const
+{
+	if(x == s) return t;
+	else if(x == t) return s;
+	else assert(false);
 }
 
 int edge_base::target() const

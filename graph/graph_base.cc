@@ -89,6 +89,8 @@ PEB graph_base::edge(int s, int t)
 	assert(s >= 0 && s < vv.size());
 	assert(t >= 0 && t < vv.size());
 	PEEI p = vv[s]->out_edges();
+	
+	// TODO: use binary search here
 	for(edge_iterator it = p.first; it != p.second; it++)
 	{
 		assert((*it)->source() == s);
@@ -105,9 +107,9 @@ vector<edge_descriptor> graph_base::edges(int s, int t)
 	PEEI p = out_edges(s);
 	for(edge_iterator it = p.first; it != p.second; it++)
 	{
-		assert((*it)->source() == s);
-		if((*it)->target() != t) continue;
-		v.push_back(*it);
+		//assert((*it)->source() == s);
+		//if((*it)->target() != t) continue;
+		if((*it)->neighbor(s) == t) v.push_back(*it);
 	}
 	return v;
 }
@@ -123,8 +125,8 @@ set<int> graph_base::adjacent_vertices(int s)
 	PEEI p = out_edges(s);
 	for(edge_iterator it = p.first; it != p.second; it++)
 	{
-		assert((*it)->source() == s);
-		int t = (*it)->target();
+		//assert((*it)->source() == s);
+		int t = (*it)->neighbor(s);
 		if(ss.find(t) == ss.end()) ss.insert(t);
 	}
 	return ss;
@@ -182,7 +184,7 @@ bool graph_base::bfs(const vector<int> &vs, int t, const set<edge_descriptor> &f
 		for(; it1 != it2; it1++)
 		{
 			if(fb.find(*it1) != fb.end()) continue;
-			int y = (*it1)->target();
+			int y = (*it1)->neighbor(x);
 			if(closed.find(y) != closed.end()) continue;
 			closed.insert(y);
 			open.push_back(y);
@@ -213,7 +215,7 @@ int graph_base::bfs(int s, vector<int> &v, vector<int> &b, const set<int> &fb)
 		edge_iterator it1 = pei.first, it2 = pei.second;
 		for(; it1 != it2; it1++)
 		{
-			int y = (*it1)->target();
+			int y = (*it1)->neighbor(x);
 			if(fb.find(y) != fb.end()) continue;
 			if(closed.find(y) != closed.end()) continue;
 			closed.insert(y);
@@ -245,7 +247,7 @@ int graph_base::bfs(int s, vector<int> &v, vector<int> &b)
 		edge_iterator it1 = pei.first, it2 = pei.second;
 		for(; it1 != it2; it1++)
 		{
-			int y = (*it1)->target();
+			int y = (*it1)->neighbor(x);
 			if(closed.find(y) != closed.end()) continue;
 			closed.insert(y);
 			open.push_back(y);
@@ -273,7 +275,7 @@ int graph_base::bfs(int s, set<edge_descriptor> &ss)
 		edge_iterator it1 = pei.first, it2 = pei.second;
 		for(; it1 != it2; it1++)
 		{
-			int y = (*it1)->target();
+			int y = (*it1)->neighbor(x);
 			ss.insert(*it1);
 			if(closed.find(y) != closed.end()) continue;
 			closed.insert(y);
@@ -326,6 +328,7 @@ bool graph_base::compute_shortest_path(int s, int t, vector<int> &p)
 	return true;
 }
 
+/*
 bool graph_base::check_nested() 
 {
 	PEEI p = edges();
@@ -341,6 +344,7 @@ bool graph_base::check_nested()
 	}
 	return true;
 }
+*/
 
 int graph_base::print() const
 {

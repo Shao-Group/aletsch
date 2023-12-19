@@ -47,7 +47,6 @@ public:
 	virtual bool compute_shortest_path(edge_descriptor ex, edge_descriptor ey, vector<int> &p);
 	virtual bool check_path(int x, int y);
 	virtual bool check_path(edge_descriptor ex, edge_descriptor ey);
-	virtual bool intersect(edge_descriptor ex, edge_descriptor ey);
 	virtual vector<int> topological_sort();
 	virtual vector<int> topological_sort_reverse();
 	virtual vector<int> topological_sort0();
@@ -58,6 +57,7 @@ public:
 	virtual int check_nest(int x, int r, set<edge_descriptor> &vv);
 	virtual int check_nest(int x, int r, set<edge_descriptor> &vv, const vector<int> &tpo);
 	virtual int check_nest(int x, int r, const vector<int> &tpo);
+	//virtual bool intersect(edge_descriptor ex, edge_descriptor ey);
 
 	// draw
 	int draw(const string &file, const MIS &mis, const MES &mes, double len, bool footer);
