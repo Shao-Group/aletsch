@@ -913,16 +913,15 @@ bool router::thread_turn(vector<double> &vw)
 	PEEI pei = ug.out_edges(x);
 	for(edge_iterator it = pei.first; it != pei.second; it++)
 	{
-		int s = (*it)->source();
-		int t = (*it)->target();
-		assert(s == x);
+		//int s = (*it)->source();
+		int t = (*it)->neighbor(x);
 		sum += u2w[*it];
 		assert(vw[t] >= vw[x]);
 	}
 
 	for(edge_iterator it = pei.first; it != pei.second; it++)
 	{
-		int t = (*it)->target();
+		int t = (*it)->neighbor(x);
 		double w = vw[x] * u2w[*it] / sum;
 		//;if(u2w[*it] == 1) w = 1;	// set to 1 for those with only 1 read supported
 		PI p = (x < t) ? PI(u2e[x], u2e[t]) : PI(u2e[t], u2e[x]);

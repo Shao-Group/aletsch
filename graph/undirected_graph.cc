@@ -85,7 +85,7 @@ PEEI undirected_graph::out_edges(int x)
 	/*
 	for(edge_iterator it = p.first; it != p.second; it++)
 	{
-		// TODO: for undirected graph, the s->t 
+		// NOTE: for undirected graph, the s->t 
 		// are not guaranteed (in order to maintain
 		// a sorted list of out-edges
 		if((*it)->source() != x) (*it)->swap();
