@@ -2239,7 +2239,7 @@ int scallop::split_merge_path(const vector<int> &p, double ww)
 	return ee;
 }
 
-int scallop::merge_adjacent_equal_edges(int x, int y)
+int scallop::merge_adjacent_equal_edges0(int x, int y)
 {
 	if(i2e[x] == null_edge) return -1;
 	if(i2e[y] == null_edge) return -1;
@@ -2253,7 +2253,7 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
 	int yt = (yy)->target();
 
 	if(xt != ys && yt != xs) return -1;
-	if(yt == xs) return merge_adjacent_equal_edges(y, x);
+	if(yt == xs) return merge_adjacent_equal_edges0(y, x);
 	
 	assert(xt == ys);
 	assert(consistent_strands(x, y));
@@ -2375,6 +2375,94 @@ int scallop::merge_adjacent_equal_edges(int x, int y)
 	}
 
 	return n;
+}
+
+int scallop::merge_adjacent_equal_edges(int x, int y)
+{
+	if(i2e[x] == null_edge) return -1;
+	if(i2e[y] == null_edge) return -1;
+
+	edge_descriptor xx = i2e[x];
+	edge_descriptor yy = i2e[y];
+
+	int xs = (xx)->source();
+	int xt = (xx)->target();
+	int ys = (yy)->source();
+	int yt = (yy)->target();
+
+	if(xt != ys && yt != xs) return -1;
+	if(yt == xs) return merge_adjacent_equal_edges(y, x);
+	
+	assert(xt == ys);
+	assert(consistent_strands(x, y));
+
+	double wx0 = gr.get_edge_weight(xx);
+	double wy0 = gr.get_edge_weight(yy);
+	assert(fabs(wx0 - wy0) <= SMIN);
+	gr.set_edge_weight(xx, wx0 * 0.5 + wy0 * 0.5);
+
+	double sum1 = gr.get_in_weights(xt);
+	double sum2 = gr.get_out_weights(xt);
+	double sum = (sum1 + sum2) * 0.5;
+	double r1 = gr.get_vertex_weight(xt) * (wx0 + wy0) * 0.5 / sum;
+	double r2 = gr.get_vertex_weight(xt) - r1;
+	gr.set_vertex_weight(xt, r2);
+
+    edge_info ei = gr.get_edge_info(xx);
+
+	int lx1 = gr.get_edge_info(xx).length;
+	int ly1 = gr.get_edge_info(yy).length;
+	int lxt = gr.get_vertex_info(xt).length;
+	int lxy = lx1 + ly1 + lxt;
+    ei.length = lxy;
+
+    const edge_info &ei1 = gr.get_edge_info(xx);
+    const edge_info &ei2 = gr.get_edge_info(yy);
+
+    assert(ei1.count > 0 && ei2.count > 0);
+    set_intersection(ei1.samples.begin(), ei1.samples.end(), ei2.samples.begin(), ei2.samples.end(), inserter(ei.samples, ei.samples.begin()));
+    ei.count = ei.samples.size();
+
+    ei.abd = 0;
+    ei.spAbd.clear();
+    if(ei1.count > 0 && ei2.count > 0)//take average
+    {
+        for(auto sp : ei.samples)
+        {
+            //ei.spAbd.insert(make_pair(sp, ei1.spAbd[sp]*0.5+ei2.spAbd[sp]*0.5));
+            double common = min(ei1.spAbd.at(sp), ei2.spAbd.at(sp));
+            ei.spAbd.insert(make_pair(sp, common));
+            ei.abd += common;
+        }
+    }
+    ei.confidence = ei1.confidence + ei2.confidence;
+    gr.set_edge_info(xx, std::move(ei));
+
+	// reuse the strand of e1
+	//borrow_edge_strand(n, x);
+	//borrow_edge_strand(n, y);
+
+	mev[xx].push_back(xt);
+	mev[xx].insert(mev[xx].end(), mev[yy].begin(), mev[yy].end());
+
+	// set up med/mei
+	vertex_info root_info = gr.get_vertex_info(xt);
+	int mi = root_info.rpos - root_info.lpos + mei[xx] + mei[yy];
+	double md = mi * r1 + med[xx] + med[yy];
+	mei[xx] = mi;
+	med[xx] = md;
+
+	//remove_edge(x);
+	gr.move_edge(xx, xs, yt);
+	remove_edge(y);
+
+	if(gr.in_degree(xt) == 0 && gr.out_degree(xt) == 0)
+	{
+		assert(gr.degree(xt) == 0);
+		nonzeroset.erase(xt);
+	}
+
+	return x;
 }
 
 int scallop::remove_edge(int e)
