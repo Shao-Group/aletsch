@@ -109,7 +109,6 @@ private:
 	int merge_adjacent_edges(int x, int y);
 	int merge_adjacent_edges(int x, int y, double ww);
 	int merge_adjacent_equal_edges(int x, int y);
-	int merge_adjacent_equal_edges0(int x, int y);
 	int remove_edge(int e);
 	int split_merge_path(const VE &p, double w);
 	int split_merge_path(const vector<int> &p, double w);
