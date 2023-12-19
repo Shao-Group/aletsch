@@ -8,7 +8,7 @@ See LICENSE for licensing.
 #define __GRAPH_BASE_H__
 
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <string>
 
 #include "vertex_base.h"
@@ -16,14 +16,14 @@ See LICENSE for licensing.
 
 using namespace std;
 
-typedef map<int, string> MIS;
+typedef unordered_map<int, string> MIS;
 typedef pair<int, string> PIS;
-typedef map<edge_descriptor, string> MES;
+typedef unordered_map<edge_descriptor, string> MES;
 typedef pair<edge_descriptor, string> PES;
-typedef map<edge_descriptor, bool> MEB;
-typedef map<edge_descriptor, double> MED;
+typedef unordered_map<edge_descriptor, bool> MEB;
+typedef unordered_map<edge_descriptor, double> MED;
 typedef pair<edge_descriptor, double> PED;
-typedef map<edge_descriptor, int> MEI;
+typedef unordered_map<edge_descriptor, int> MEI;
 typedef pair<edge_descriptor, int> PEI;
 typedef vector<edge_descriptor> VE;
 typedef set<edge_descriptor> SE;

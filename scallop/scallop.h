@@ -14,17 +14,15 @@ See LICENSE for licensing.
 #include "path.h"
 #include "parameters.h"
 
-typedef map<edge_descriptor, double> MED;
-typedef map<edge_descriptor, int> MEI;
-typedef map< edge_descriptor, vector<int> > MEV;
-typedef pair< edge_descriptor, vector<int> > PEV;
-typedef pair< edge_descriptor, double > PED;
-typedef pair< edge_descriptor, int > PEI;
-typedef pair< vector<int>, vector<int> > PVV;
+//typedef map<edge_descriptor, double> MED;
+//typedef map<edge_descriptor, int> MEI;
+typedef unordered_map<edge_descriptor, vector<int>> MEV;
+typedef pair<edge_descriptor, vector<int>> PEV;
+typedef pair<edge_descriptor, double> PED;
+typedef pair<edge_descriptor, int> PEI;
+typedef pair<vector<int>, vector<int> > PVV;
 typedef pair<PEE, int> PPEEI;
-typedef map<PEE, int> MPEEI;
-typedef pair<int, int> PI;
-typedef map<int, int> MI;
+typedef unordered_map<PEE, int> MPEEI;
 
 // for noisy splice graph
 class scallop
