@@ -79,7 +79,7 @@ int bridge_solver::add_adjacent_edges()
 		edge_info ei;
 		ei.weight = 0.5;
 		gr.set_edge_weight(e, 0.5);
-		gr.set_edge_info(e, ei);
+		gr.set_edge_info(e, std::move(ei));
 		adjedges.push_back(e);
 	}
 	return 0;

@@ -368,7 +368,7 @@ int splice_graph::build(const string &file)
 
 		edge_descriptor p = add_edge(x, y);
 		set_edge_weight(p, weight);
-		set_edge_info(p, ei);
+		set_edge_info(p, std::move(ei));
 	}
 
 	fin.close();
@@ -1346,13 +1346,13 @@ int splice_graph::extend_strands()
 		{
 			edge_info ei = get_edge_info(e1.first);
 			if(ei.strand == 0) ei.strand = sd;
-			set_edge_info(e1.first, ei);
+			set_edge_info(e1.first, std::move(ei));
 		}
 		if(e2.second == true) 
 		{
 			edge_info ei = get_edge_info(e2.first);
 			if(ei.strand == 0) ei.strand = sd;
-			set_edge_info(e2.first, ei);
+			set_edge_info(e2.first, std::move(ei));
 		}
 	}
 	return 0;
