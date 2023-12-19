@@ -73,7 +73,7 @@ int scallop::assemble()
 		if(b == true) continue;
 
         b = resolve_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
-		if(b == true) continue;
+        if(b == true) continue;
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, 1, 0.01);
 		if(b == true) continue;
@@ -843,7 +843,7 @@ bool scallop::remove_single_smallest_edge(int i, double max_ratio, double &ratio
 bool scallop::resolve_smallest_edges(double max_ratio)
 {
 	//return false;
-    if(random_ordering) return false;
+    //if(!random_ordering) return false;
     int se = -1;
 	int root = -1;
 	double ratio = max_ratio;
@@ -3297,14 +3297,16 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
         trst.features.max_mid_exon_len = max(trst.features.max_mid_exon_len, exon_len);
     }
     
-    trst.features.start_loss1 = gr.get_vertex_info(p.v[1]).boundary_loss1;
-    trst.features.start_loss2 = gr.get_vertex_info(p.v[1]).boundary_loss2;
-    trst.features.start_loss3 = gr.get_vertex_info(p.v[1]).boundary_loss3;
-    trst.features.end_loss1 = gr.get_vertex_info(p.v[n-2]).boundary_loss1;
-    trst.features.end_loss2 = gr.get_vertex_info(p.v[n-2]).boundary_loss2;
-    trst.features.end_loss3 = gr.get_vertex_info(p.v[n-2]).boundary_loss3;
-    trst.features.start_merged_loss = gr.get_vertex_info(p.v[1]).boundary_merged_loss;
-    trst.features.end_merged_loss = gr.get_vertex_info(p.v[n-2]).boundary_merged_loss;
+    const vertex_info & svi =  gr.get_vertex_info(p.v[1]);
+    const vertex_info & evi = gr.get_vertex_info(p.v[n-2]);
+    trst.features.start_loss1 = svi.boundary_loss1;
+    trst.features.start_loss2 = svi.boundary_loss2;
+    trst.features.start_loss3 = svi.boundary_loss3;
+    trst.features.end_loss1 = evi.boundary_loss1;
+    trst.features.end_loss2 = evi.boundary_loss2;
+    trst.features.end_loss3 = evi.boundary_loss3;
+    trst.features.start_merged_loss = svi.boundary_merged_loss;
+    trst.features.end_merged_loss = evi.boundary_merged_loss;
 
     trst.features.uni_junc = unique_junc(paths, pid);
     trst.features.introns = 0;
@@ -3385,10 +3387,15 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
 
     }
 
+    trst.features.seq_min_st_wt = DBL_MAX;
+    trst.features.seq_min_st_cnt = INT_MAX;
+    trst.features.seq_min_st_abd = DBL_MAX;
+    trst.features.seq_min_st_ratio = 1.0;
     trst.features.seq_min_wt = DBL_MAX;
     trst.features.seq_min_cnt = INT_MAX;
     trst.features.seq_min_abd = DBL_MAX;
     trst.features.seq_min_ratio = 1.0;
+
     trst.features.unbridge_start_coming_count = 0;
     trst.features.unbridge_start_coming_ratio = 0;
     trst.features.unbridge_end_leaving_count = 0;
@@ -3405,21 +3412,40 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
         vertex_info vi1 = gr.get_vertex_info(v1);
         vertex_info vi2 = gr.get_vertex_info(v2);
 
-        trst.features.seq_min_wt = min(trst.features.seq_min_wt, gr.get_edge_weight(e));
-        trst.features.seq_min_cnt = min(trst.features.seq_min_cnt, ei.count);
-        trst.features.seq_min_abd = min(trst.features.seq_min_abd, ei.abd);
-        trst.features.seq_min_ratio = min(trst.features.seq_min_ratio, gr.get_edge_weight(e)/max(gr.get_in_weights(v2), gr.get_out_weights(v1)));
+        if(v1 >= p.junc[0].first && v2 <= p.junc[junc-1].second)
+        {
+            trst.features.seq_min_wt = min(trst.features.seq_min_wt, gr.get_edge_weight(e));
+            trst.features.seq_min_cnt = min(trst.features.seq_min_cnt, ei.count);
+            trst.features.seq_min_abd = min(trst.features.seq_min_abd, ei.abd);
+            trst.features.seq_min_ratio = min(trst.features.seq_min_ratio, gr.get_edge_weight(e)/max(gr.get_in_weights(v2), gr.get_out_weights(v1)));
+        }
+        else
+        {
+            trst.features.seq_min_st_wt = min(trst.features.seq_min_wt, gr.get_edge_weight(e));
+            trst.features.seq_min_st_cnt = min(trst.features.seq_min_cnt, ei.count);
+            trst.features.seq_min_st_abd = min(trst.features.seq_min_abd, ei.abd);
+            trst.features.seq_min_st_ratio = min(trst.features.seq_min_ratio, gr.get_edge_weight(e)/max(gr.get_in_weights(v2), gr.get_out_weights(v1)));
+
+        }
 
         if(i == 1)
         {
             trst.features.unbridge_start_coming_count = vi2.unbridge_coming_count;
             trst.features.unbridge_start_coming_ratio = vi2.unbridge_coming_ratio;
-
+            trst.features.start_cnt = ei.count;
+            trst.features.start_weight = gr.get_edge_weight(e);
+            trst.features.start_abd = ei.abd;
         }
         else if(i == n-2)
         {
             trst.features.unbridge_end_leaving_count = vi2.unbridge_leaving_count;
             trst.features.unbridge_end_leaving_ratio = vi2.unbridge_leaving_ratio;
+        }
+        else if(i == n-1)
+        {
+            trst.features.end_cnt = ei.count;
+            trst.features.end_weight = gr.get_edge_weight(e);
+            trst.features.end_abd = ei.abd;
         }
     }
 

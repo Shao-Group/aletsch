@@ -87,10 +87,21 @@ public:
     int seq_min_cnt;
     double seq_min_abd;
     double seq_min_ratio;
+    double seq_min_st_wt;
+    int seq_min_st_cnt;
+    double seq_min_st_abd;
+    double seq_min_st_ratio;
     int unbridge_start_coming_count;
     double unbridge_start_coming_ratio;
     int unbridge_end_leaving_count;
     double unbridge_end_leaving_ratio;
+    int start_cnt;
+    double start_weight;
+    double start_abd;
+    int end_cnt;
+    double end_weight;
+    double end_abd;
+
     };
 
     TrstFeatures features;

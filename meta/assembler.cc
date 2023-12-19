@@ -228,8 +228,8 @@ int assembler::assemble(vector<bundle*> gv)
     }
 
     //assemble merged graph when the largest graph in the bundle has <=150 vertices
-    bool assemble_merged = false;
-    if(max_v_num <= 150) assemble_merged = true;
+    bool assemble_merged = true;
+    //if(max_v_num <= 150) assemble_merged = true;
 
     //calculate junction supports for combined graph
     junction_support(gx, junc2sup, sup2abd);
