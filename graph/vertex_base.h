@@ -18,7 +18,7 @@ public:
 	vertex_base();
 	virtual ~vertex_base();
 
-protected:
+public:
 	set<edge_base*, edge_comp> si;		// in_edges
 	set<edge_base*, edge_comp> so;		// out_edges
 
