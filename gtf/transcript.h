@@ -52,7 +52,6 @@ public:
     //other features
     string meta_tid;
     double cov2;//coverge in individual sample
-    double alt_cov2;
     double conf;//confidence in individual sample
     double abd;//overall abundance inferred from individuals
     int count1;// inferred count of samples supporting the trst
@@ -87,10 +86,6 @@ public:
     int seq_min_cnt;
     double seq_min_abd;
     double seq_min_ratio;
-    double seq_min_st_wt;
-    int seq_min_st_cnt;
-    double seq_min_st_abd;
-    double seq_min_st_ratio;
     int unbridge_start_coming_count;
     double unbridge_start_coming_ratio;
     int unbridge_end_leaving_count;

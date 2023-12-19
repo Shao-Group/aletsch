@@ -26,7 +26,7 @@ trans_item::trans_item(const transcript &t, int c, int s)
     else 
     {
         samples[s].coverage = max(samples[s].coverage, t.coverage);
-		samples[s].alt_cov2 = t.cov2;
+		//samples[s].alt_cov2 = t.cov2;
         //samples[s].cov2 = max(samples[s].cov2, t.cov2);
         samples[s].conf = max(samples[s].conf, t.conf);
         samples[s].abd = max(samples[s].abd, t.abd);
@@ -45,8 +45,8 @@ int trans_item::merge(const trans_item &ti, int mode)
         trst.extend_bounds(ti.trst);
 		count += ti.count;
 
-        //trst.cov2 = max(trst.cov2, ti.trst.cov2);
-        trst.alt_cov2 = ti.trst.cov2;
+        trst.cov2 = max(trst.cov2, ti.trst.cov2);
+        //trst.alt_cov2 = ti.trst.cov2;
         trst.conf = max(trst.conf, ti.trst.conf);
         trst.abd = max(trst.abd, ti.trst.abd);
         trst.count1 = max(trst.count1, ti.trst.count1);
@@ -56,8 +56,8 @@ int trans_item::merge(const trans_item &ti, int mode)
 			if(samples.find(x.first) == samples.end()) samples.insert(x);
 			else 
             {
-                //samples[x.first].cov2 = max(samples[x.first].cov2, x.second.cov2);
-                samples[x.first].alt_cov2 = x.second.cov2;
+                samples[x.first].cov2 = max(samples[x.first].cov2, x.second.cov2);
+                //samples[x.first].alt_cov2 = x.second.cov2;
                 samples[x.first].conf = max(samples[x.first].conf, x.second.conf);
                 samples[x.first].abd = max(samples[x.first].abd, x.second.abd);
                 samples[x.first].count1 = max(samples[x.first].count1, x.second.count1);

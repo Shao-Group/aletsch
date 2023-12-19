@@ -3387,10 +3387,6 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
 
     }
 
-    trst.features.seq_min_st_wt = DBL_MAX;
-    trst.features.seq_min_st_cnt = INT_MAX;
-    trst.features.seq_min_st_abd = DBL_MAX;
-    trst.features.seq_min_st_ratio = 1.0;
     trst.features.seq_min_wt = DBL_MAX;
     trst.features.seq_min_cnt = INT_MAX;
     trst.features.seq_min_abd = DBL_MAX;
@@ -3412,22 +3408,13 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
         vertex_info vi1 = gr.get_vertex_info(v1);
         vertex_info vi2 = gr.get_vertex_info(v2);
 
-        if(v1 >= p.junc[0].first && v2 <= p.junc[junc-1].second)
-        {
-            trst.features.seq_min_wt = min(trst.features.seq_min_wt, gr.get_edge_weight(e));
-            trst.features.seq_min_cnt = min(trst.features.seq_min_cnt, ei.count);
-            trst.features.seq_min_abd = min(trst.features.seq_min_abd, ei.abd);
-            trst.features.seq_min_ratio = min(trst.features.seq_min_ratio, gr.get_edge_weight(e)/max(gr.get_in_weights(v2), gr.get_out_weights(v1)));
-        }
-        else
-        {
-            trst.features.seq_min_st_wt = min(trst.features.seq_min_wt, gr.get_edge_weight(e));
-            trst.features.seq_min_st_cnt = min(trst.features.seq_min_cnt, ei.count);
-            trst.features.seq_min_st_abd = min(trst.features.seq_min_abd, ei.abd);
-            trst.features.seq_min_st_ratio = min(trst.features.seq_min_ratio, gr.get_edge_weight(e)/max(gr.get_in_weights(v2), gr.get_out_weights(v1)));
-
-        }
-
+        //if(v1 >= p.junc[0].first && v2 <= p.junc[junc-1].second)
+        
+        trst.features.seq_min_wt = min(trst.features.seq_min_wt, gr.get_edge_weight(e));
+        trst.features.seq_min_cnt = min(trst.features.seq_min_cnt, ei.count);
+        trst.features.seq_min_abd = min(trst.features.seq_min_abd, ei.abd);
+        trst.features.seq_min_ratio = min(trst.features.seq_min_ratio, gr.get_edge_weight(e)/max(gr.get_in_weights(v2), gr.get_out_weights(v1)));
+        
         if(i == 1)
         {
             trst.features.unbridge_start_coming_count = vi2.unbridge_coming_count;
