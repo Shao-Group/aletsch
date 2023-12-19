@@ -32,7 +32,7 @@ public:
 	virtual PEEI out_edges(int v);
 
 	// algorithms
-	virtual bool intersect(edge_descriptor ex, edge_descriptor ey);
+	//virtual bool intersect(edge_descriptor ex, edge_descriptor ey);
 	vector< set<int> > compute_connected_components();
 	vector<int> assign_connected_components();
 

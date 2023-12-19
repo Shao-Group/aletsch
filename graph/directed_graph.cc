@@ -164,6 +164,18 @@ int directed_graph::move_edge(edge_base *e, int x, int y)
 	int s = e->source();
 	int t = e->target();
 
+	vv[s]->remove_out_edge(e);
+	vv[t]->remove_in_edge(e);
+
+	e->s = x;
+	e->t = y;
+
+	vv[x]->add_out_edge(e);
+	vv[y]->add_in_edge(e);
+
+	return 0;
+
+	/*
 	if(s != x)
 	{
 		vv[s]->remove_out_edge(e);
@@ -177,7 +189,7 @@ int directed_graph::move_edge(edge_base *e, int x, int y)
 	}
 
 	e->move(x, y);
-	return 0;
+	*/
 }
 
 bool directed_graph::bfs_reverse(const vector<int> &t, int s, const set<edge_descriptor> &fb)
@@ -330,6 +342,7 @@ bool directed_graph::compute_shortest_path(edge_descriptor ex, edge_descriptor e
 	return graph_base::compute_shortest_path(s, t, p);
 }
 
+/*
 bool directed_graph::intersect(edge_descriptor ex, edge_descriptor ey)
 {
 	int xs = ex->source();
@@ -352,6 +365,7 @@ bool directed_graph::intersect(edge_descriptor ex, edge_descriptor ey)
 	}
 	return false;
 }
+*/
 
 vector<int> directed_graph::topological_sort_reverse()
 {

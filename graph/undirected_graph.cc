@@ -61,11 +61,15 @@ int undirected_graph::remove_edge(int s, int t)
 	PEEI p = vv[s]->out_edges();
 	for(edge_iterator it = p.first; it != p.second; it++)
 	{
+		int tt = (*it)->neighbor(s);
+		if(tt != t) continue;
+		/*
 		int ss = (*it)->source();
 		int tt = (*it)->target();
 		assert(ss == s || tt == s);
 		if(ss == s && tt != t) continue;
 		if(tt == s && ss != t) continue;
+		*/
 		v.push_back(*it);
 	}
 	for(int i = 0; i < v.size(); i++)
@@ -78,10 +82,15 @@ int undirected_graph::remove_edge(int s, int t)
 PEEI undirected_graph::out_edges(int x)
 {
 	PEEI p = vv[x]->out_edges();
+	/*
 	for(edge_iterator it = p.first; it != p.second; it++)
 	{
+		// TODO: for undirected graph, the s->t 
+		// are not guaranteed (in order to maintain
+		// a sorted list of out-edges
 		if((*it)->source() != x) (*it)->swap();
 	}
+	*/
 	return p;
 }
 
@@ -124,6 +133,7 @@ vector< set<int> > undirected_graph::compute_connected_components()
 	return vv;
 }
 
+/*
 bool undirected_graph::intersect(edge_descriptor ex, edge_descriptor ey)
 {
 	int xs = ex->source();
@@ -146,6 +156,7 @@ bool undirected_graph::intersect(edge_descriptor ex, edge_descriptor ey)
 	}
 	return false;
 }
+*/
 
 int undirected_graph::draw(const string &file, const MIS &mis, const MES &mes, double len, bool footer)
 {
@@ -199,7 +210,8 @@ int undirected_graph::draw(const string &file, const MIS &mis, const MES &mes, d
 			int cnt = 0;
 			for(pei = out_edges(i), oi1 = pei.first, oi2 = pei.second; oi1 != oi2; oi1++)
 			{
-				if((*oi1)->target() != j) continue;
+				//if((*oi1)->target() != j) continue;
+				if((*oi1)->neighbor(i) != j) continue;
 				cnt++;
 				MES::const_iterator it = mes.find(*oi1);
 				if(it == mes.end()) continue;
