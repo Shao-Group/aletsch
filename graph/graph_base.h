@@ -54,7 +54,6 @@ public:
 	virtual size_t num_vertices() const;
 	virtual size_t num_edges() const;
 	virtual int degree(int v) const;
-	virtual PEB edge(int s, int t);
 	virtual PEEI edges() const;
 	virtual vector<edge_descriptor> edges(int x, int y);
 	virtual set<int> adjacent_vertices(int v);

@@ -84,23 +84,6 @@ int graph_base::degree(int v) const
 	return vv[v]->degree();
 }
 
-PEB graph_base::edge(int s, int t) 
-{
-	assert(s >= 0 && s < vv.size());
-	assert(t >= 0 && t < vv.size());
-	PEEI p = vv[s]->out_edges();
-	
-	// TODO: use binary search here
-	for(edge_iterator it = p.first; it != p.second; it++)
-	{
-		assert((*it)->source() == s);
-		int x = (*it)->target();
-		if(x != t) continue;
-		return PEB(*it, true);
-	}
-	return PEB(null_edge, false);
-}
-
 vector<edge_descriptor> graph_base::edges(int s, int t)
 {
 	vector<edge_descriptor> v;
