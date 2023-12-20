@@ -481,7 +481,7 @@ int incubator::postprocess()
 				if(this->grps[k].chrm != chrm) continue;
 				if(this->grps[k].strand != strand) continue;
 				//printf("arrange chrm %s, strand %c, grp %d\n", chrm.c_str(), strand, k);
-				ts.add(this->grps[k].tmerge, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+				ts.absorb(this->grps[k].tmerge, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 			}
 		});
 	}
@@ -504,7 +504,7 @@ int incubator::postprocess()
 			//if(v[k].count <= 1) continue;
 			for(int k = 0; k < v.size(); k++)
 			{
-				transcript &t = v[k].trst;
+				transcript &t = v[k]->trst;
 			//t.write(cout);
 				//if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
 				//if(verify_exon_length(t, params[DEFAULT]) == false) continue;
@@ -521,21 +521,21 @@ int incubator::postprocess()
 			for(int k = 0; k < v.size(); k++)
 			{
 				//if(v[k].count <= 1) continue;
-				transcript &t = v[k].trst;
+				transcript &t = v[k]->trst;
 				//t.write(cout);
 
 				//if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
 				//if(verify_exon_length(t, params[DEFAULT]) == false) continue;
 
-                assert(v[k].samples.size() == t.count2);
-				t.write(ss, -1, v[k].samples.size());
+                assert(v[k]->samples.size() == t.count2);
+				t.write(ss, -1, v[k]->samples.size());
                 //if(t.exons.size() > 1) t.write_features(-1);
                 //Only output novel transcripts in merged graph
-                if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) 
+                if(t.exons.size() > 1 && t.count2 == 1 && v[k]->samples.find(-1) != v[k]->samples.end()) 
                     t.write_features(-1);
 
 
-				for(auto &p : v[k].samples)
+				for(auto &p : v[k]->samples)
 				{
                     int j = p.first;
 					if(j < 0 || j >= vv.size()) continue;

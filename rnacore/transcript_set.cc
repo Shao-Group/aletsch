@@ -80,17 +80,18 @@ int trans_item::merge(const trans_item &ti, int mode)
 	return 0;
 }
 
-int merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &vy, int mode, double single_exon_ratio)
+vector<trans_item*> merge_sorted_trans_items(vector<trans_item*> &vx, vector<trans_item*> &vy, int mode, double single_exon_ratio)
 {
-	vector<trans_item> vz;
+	vector<trans_item*> vz;
 	int kx = 0, ky = 0;
 	while(kx < vx.size() && ky < vy.size())
 	{
-		int b = vx[kx].trst.compare1(vy[ky].trst, single_exon_ratio);
+		int b = vx[kx]->trst.compare1(vy[ky]->trst, single_exon_ratio);
 		if(b == 0)
 		{
-			vx[kx].merge(vy[ky], mode);
+			vx[kx]->merge(*(vy[ky]), mode);
 			vz.push_back(vx[kx]);
+			delete vy[ky];
 			kx++;
 			ky++;
 		}
@@ -112,9 +113,7 @@ int merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &v
 	for(int i = kx; i < vx.size(); i++) vz.push_back(vx[i]);
 	for(int i = ky; i < vy.size(); i++) vz.push_back(vy[i]);
 
-	vx.clear();
-	vx = vz;
-	return 0;
+	return vz;
 }
 
 transcript_set::transcript_set(const string &c, int r, double s)
@@ -131,46 +130,55 @@ transcript_set::transcript_set(const transcript &t, int r, int count, int sid, d
 	single_exon_overlap = overlap;
 
 	size_t h = t.get_intron_chain_hashing();
-	//trans_item ti(t, count, sid);
-	vector<trans_item> v;
-	v.emplace_back(trans_item(t, count, sid));
+	trans_item *ti = new trans_item(t, count, sid);
+	vector<trans_item*> v;
+	v.push_back(ti);
 	mt.insert(make_pair(h, v));
 }
 
 int transcript_set::clear()
 {
+	for(auto &x : mt)
+	{
+		for(auto &t: x.second)
+		{
+			delete t;
+		}
+	}
 	mt.clear();
-	map<size_t, vector<trans_item>>().swap(mt);
+	map<size_t, vector<trans_item*>>().swap(mt);
 	return 0;
 }
 
 int transcript_set::add(const transcript &t, int count, int sid, int mode)
 {
 	transcript_set ts(t, this->rid, count, sid, this->single_exon_overlap);
-	add(ts, mode);
+	absorb(ts, mode);
 	return 0;
 }
 
-int transcript_set::add(const transcript_set &ts, int mode)
+int transcript_set::absorb(transcript_set &ts, int mode)
 {
 	if(ts.chrm != this->chrm) return 0;
 	if(ts.rid != this->rid && this->rid != -9) return 0;
 
 	for(auto &x : ts.mt)
 	{
-		map<size_t, vector<trans_item>>::iterator z = mt.find(x.first);
+		map<size_t, vector<trans_item*>>::iterator z = mt.find(x.first);
 		if(z == mt.end())
 		{
+			// TODO: std::move?
 			mt.insert(x);
 		}
 		else
 		{
-			merge_sorted_trans_items(z->second, x.second, mode, single_exon_overlap);
+			z->second = merge_sorted_trans_items(z->second, x.second, mode, single_exon_overlap);
 		}
 	}
 	return 0;
 }
 
+/*
 int transcript_set::filter(int min_count)
 {
 	for(auto &x: mt)
@@ -185,6 +193,7 @@ int transcript_set::filter(int min_count)
 	}
 	return 0;
 }
+*/
 
 int transcript_set::increase_count(int count)
 {
@@ -192,7 +201,7 @@ int transcript_set::increase_count(int count)
 	{
 		for(auto &z : x.second)
 		{
-			z.count += count;
+			z->count += count;
 		}
 	}
 	return 0;
@@ -211,16 +220,16 @@ vector<transcript> transcript_set::get_transcripts(int min_count) const
 	{
 		for(auto &z : x.second)
 		{
-			if(z.count < min_count) continue;
-			v.push_back(z.trst);
+			if(z->count < min_count) continue;
+			v.push_back(z->trst);
 		}
 	}
 	return v;
 }
 
-pair<bool, trans_item> transcript_set::query(const transcript &t) const
+pair<bool, trans_item*> transcript_set::query(const transcript &t) const
 {
-	pair<bool, trans_item> p;
+	pair<bool, trans_item*> p;
 	size_t h = t.get_intron_chain_hashing();
 	auto it = mt.find(h);
 	if(it == mt.end()) 
@@ -232,7 +241,7 @@ pair<bool, trans_item> transcript_set::query(const transcript &t) const
 	auto &v = it->second;
 	for(int k = 0; k < v.size(); k++)
 	{
-		const transcript &x = v[k].trst;
+		const transcript &x = v[k]->trst;
 		if(x.strand != t.strand) continue;
 		bool b = x.equal1(t, single_exon_overlap);
 		if(b == true) 
