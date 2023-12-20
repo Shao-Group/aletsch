@@ -126,7 +126,7 @@ int assembler::assemble(bundle &bd)
         assert(ei.spAbd.size() == 0);
         ei.samples.insert(bd.sp.sample_id);
         ei.spAbd.insert(make_pair(bd.sp.sample_id, gr.get_edge_weight(e)));
-        ei.abd += gr.get_edge_weight(e);
+        ei.abd = gr.get_edge_weight(e);
         ei.count = 1;
         //gr.set_edge_info(e, ei);
     }
@@ -178,10 +178,20 @@ int assembler::assemble(vector<bundle*> gv)
         int s = e->source();
         int t = e->target();
 
+        edge_info & ei = gx.get_editable_edge_info(e);
+        ei.samples.clear();
+        ei.spAbd.clear();
+        ei.samples.insert(-1);
+        ei.spAbd.insert(make_pair(-1, gx.get_edge_weight(e)));
+        //printf("bx.sp.sample_id:%d\n", bx.sp.sample_id);
+        ei.abd = gx.get_edge_weight(e);
+        ei.count = 1;
+
         if(s == 0) continue;
         if(t == gx.num_vertices() - 1) continue;
 
         pair<int32_t, int32_t>p = make_pair(gx.get_vertex_info(s).rpos,gx.get_vertex_info(t).lpos);
+        if(p.first == p.second) continue;//ignore non-splicing junctions
         junc2sup[p].insert(-1);
         
         pair< pair<int32_t, int32_t>, int> psp = make_pair(p, -1);
@@ -190,6 +200,7 @@ int assembler::assemble(vector<bundle*> gv)
 
     //transform individual bundle to individual graph
     vector<splice_graph*> grv;
+    vector<int> idv;
     size_t max_v_num = 0;
 
     // individual junction supports
@@ -202,6 +213,8 @@ int assembler::assemble(vector<bundle*> gv)
         grv.push_back(grp);
         splice_graph& gr = *grp; 
         transform(bd, gr, true);
+        idv.push_back(bd.sp.sample_id);
+
         gr.reads = bd.frgs.size();
         gr.subgraph = gv.size();
         max_v_num = max(max_v_num, gr.num_vertices());
@@ -215,11 +228,19 @@ int assembler::assemble(vector<bundle*> gv)
 		    int s = e->source();
 		    int t = e->target();
 
-		    if(s == 0) continue;
-		    if(t == gr.num_vertices() - 1) continue;
-		    if(gr.get_vertex_info(s).rpos == gr.get_vertex_info(t).lpos) continue;//ignore non-splicing junctions
+            edge_info & ei = gr.get_editable_edge_info(e);
+            ei.samples.clear();
+            ei.spAbd.clear();
+            ei.samples.insert(bd.sp.sample_id);
+            ei.spAbd.insert(make_pair(bd.sp.sample_id, gr.get_edge_weight(e)));
+            ei.abd = gr.get_edge_weight(e);
+            ei.count = 1;
 
-            pair<int32_t, int32_t>p = make_pair(gr.get_vertex_info(s).rpos,gr.get_vertex_info(t).lpos);
+            if(s == 0) continue;
+		    if(t == gr.num_vertices() - 1) continue;
+
+            pair<int32_t, int32_t> p = make_pair(gr.get_vertex_info(s).rpos,gr.get_vertex_info(t).lpos);
+            if(p.first == p.second) continue;//ignore non-splicing junctions
             junc2sup[p].insert(bd.sp.sample_id);
             
             pair< pair<int32_t, int32_t>, int> psp = make_pair(p, bd.sp.sample_id);
@@ -227,12 +248,15 @@ int assembler::assemble(vector<bundle*> gv)
         }
     }
 
+    //append gx to grv
+    grv.push_back(&gx);
+    idv.push_back(-1);
+    
+    start_end_support(grv, idv);
+
     //assemble merged graph when the largest graph in the bundle has <=150 vertices
     bool assemble_merged = true;
     //if(max_v_num <= 150) assemble_merged = true;
-
-    //calculate junction supports for combined graph
-    junction_support(gx, junc2sup, sup2abd);
 
 	// assemble individual bundle
 	for(int k = 0; k < gv.size(); k++)
@@ -260,7 +284,7 @@ int assembler::assemble(vector<bundle*> gv)
             //transform(bd1, gr1, true);
             splice_graph &gr1 = *(grv[j]);
 
-            start_end_support(bd1.sp.sample_id, gr1, gr);
+            //start_end_support(bd1.sp.sample_id, gr1, gr);
             non_splicing_support(bd1.sp.sample_id, gr1, gr);
             boundary_extend(bd1.sp.sample_id, gr, gr1, 1);
             boundary_extend(bd1.sp.sample_id, gr, gr1, 2);
@@ -279,7 +303,7 @@ int assembler::assemble(vector<bundle*> gv)
         //calculate start&end&non-splicing suppots for combined graph
         if(assemble_merged)
         {
-            start_end_support(bd.sp.sample_id, gr, gx);
+            //start_end_support(bd.sp.sample_id, gr, gx);
             non_splicing_support(bd.sp.sample_id, gr, gx);
             boundary_extend(-1, gr, gx, 1);
         }
@@ -298,8 +322,9 @@ int assembler::assemble(vector<bundle*> gv)
 
     if(assemble_merged)
     {
-        start_end_support(-1, gx, gx);
-        non_splicing_support(-1, gx, gx);
+        junction_support(gx, junc2sup, sup2abd);
+        //start_end_support(-1, gx, gx);
+        //non_splicing_support(-1, gx, gx);
 
         if(cfg.verbose >= 2) 
         {
@@ -338,7 +363,7 @@ int assembler::junction_support(splice_graph &gr, map< pair<int32_t, int32_t>, s
                 pair< pair<int32_t, int32_t>, int> psp = make_pair(p, sp);
                 if(sup2abd.find(psp) != sup2abd.end()) 
                 {
-                    assert(ei.spAbd[sp] < SMIN);
+                    //assert(ei.spAbd[sp] < SMIN);
                     ei.spAbd[sp] = sup2abd[psp];
                     ei.abd += ei.spAbd[sp]; 
                 }
@@ -394,10 +419,10 @@ int assembler::non_splicing_support(int sample_id, splice_graph &gr, splice_grap
     return 0;
 }
 
-int assembler::start_support(vector<splice_graph*> &grv, const vector<int> &idv)
+int assembler::start_end_support(vector<splice_graph*> &grv, const vector<int> &idv)
 {
-	// build interval_set_map
-	interval_set_pair_map ism;
+	// build start interval_set_map
+	interval_set_pair_map ism_start;
 	int32_t gap = 200;
 	for(int k = 0; k < grv.size(); k++)
 	{
@@ -428,11 +453,11 @@ int assembler::start_support(vector<splice_graph*> &grv, const vector<int> &idv)
 			}
 
 			if(p2 > p1 + gap) p2 = p1 + gap;
-			ism += make_pair(interval32(p1, p2), se);
+			ism_start += make_pair(interval32(p1, p2), se);
 		}
 	}
 
-	for(ISPMI it = ism.begin(); it != ism.end(); it++)
+	for(ISPMI it = ism_start.begin(); it != ism_start.end(); it++)
 	{
 		interval32 iv = it->first;
 		set<PI> se = it->second;
@@ -443,9 +468,9 @@ int assembler::start_support(vector<splice_graph*> &grv, const vector<int> &idv)
 		for(int i = 0; i < v.size(); i++)
 		{
 			int si = idv[v[i].first];
-			int ti = v[i].second;
+			int starti = v[i].second;
 			splice_graph &gi = *(grv[v[i].first]);
-			PEB pi = gi.edge(0, ti);
+			PEB pi = gi.edge(0, starti);
 			assert(pi.second == true);
 			edge_info &ei = gi.get_editable_edge_info(pi.first);
 
@@ -454,9 +479,87 @@ int assembler::start_support(vector<splice_graph*> &grv, const vector<int> &idv)
 				int sj = idv[v[j].first];
 				if(si == sj) continue;
 
-				int tj = v[j].second;
+				int startj = v[j].second;
 				splice_graph &gj = *(grv[v[j].first]);
-				PEB pj = gj.edge(0, tj);
+				PEB pj = gj.edge(0, startj);
+				assert(pj.second == true);
+				edge_info &ej = gj.get_editable_edge_info(pj.first);
+
+				ei.samples.insert(sj);
+				ej.samples.insert(si);
+
+				ei.count = ei.samples.size();
+				ej.count = ej.samples.size();
+
+				ei.spAbd[sj] += gj.get_edge_weight(pj.first);
+				ej.spAbd[si] += gi.get_edge_weight(pi.first);
+
+				ei.abd += gj.get_edge_weight(pj.first);
+				ej.abd += gi.get_edge_weight(pi.first);
+			}
+		}
+	}
+
+    // build end interval_set_map
+	interval_set_pair_map ism_end;
+	for(int k = 0; k < grv.size(); k++)
+	{
+		splice_graph &gr = *(grv[k]);
+		set<PI> se;
+
+		edge_iterator it;
+		PEEI pei = gr.in_edges(gr.num_vertices()-1);
+		for(it = pei.first; it != pei.second; it++)
+		{
+			edge_descriptor e = (*it);
+			int s = e->source();
+			int t = e->target();
+			assert(t == gr.num_vertices()-1);
+			se.insert(PI(k, s));
+
+			int32_t p1 = gr.get_vertex_info(s).lpos;
+			int32_t p2 = gr.get_vertex_info(s).rpos;
+
+			while(p2 - p1 < gap)
+			{
+				if(s - 1 <= 0) break;	
+				PEB peb = gr.edge(s - 1, s);
+				if(peb.second == false) break;
+				if(gr.get_vertex_info(s - 1).rpos != gr.get_vertex_info(s).lpos) break;
+				p1 = gr.get_vertex_info(s - 1).lpos;
+				s--;
+			}
+
+			if(p2 > p1 + gap) p1 = p2 - gap;
+			ism_end += make_pair(interval32(p1, p2), se);
+		}
+	}
+
+    for(ISPMI it = ism_end.begin(); it != ism_end.end(); it++)
+	{
+		interval32 iv = it->first;
+		set<PI> se = it->second;
+		vector<PI> v(se.begin(), se.end());
+		if(v.size() <= 1) continue;
+
+		// mutual support
+		for(int i = 0; i < v.size(); i++)
+		{
+			int si = idv[v[i].first];
+			int endi = v[i].second;
+			splice_graph &gi = *(grv[v[i].first]);
+			PEB pi = gi.edge(endi, gi.num_vertices()-1);
+			assert(pi.second == true);
+			edge_info &ei = gi.get_editable_edge_info(pi.first);
+
+			for(int j = i + 1; j < v.size(); j++)
+			{
+				int sj = idv[v[j].first];
+				if(si == sj) continue;
+
+				int endj = v[j].second;
+				splice_graph &gj = *(grv[v[j].first]);
+				PEB pj = gj.edge(endj, gj.num_vertices()-1);
 				assert(pj.second == true);
 				edge_info &ej = gj.get_editable_edge_info(pj.first);
 
@@ -478,7 +581,7 @@ int assembler::start_support(vector<splice_graph*> &grv, const vector<int> &idv)
     return 0;
 }
 
-int assembler::start_end_support(int sample_id, splice_graph &gr, splice_graph &gx)
+/*int assembler::start_end_support(int sample_id, splice_graph &gr, splice_graph &gx)
 {
     // calculate support of starting vertices
     edge_iterator it;
@@ -578,7 +681,7 @@ int assembler::start_end_support(int sample_id, splice_graph &gr, splice_graph &
 	}
 
     return 0;
-}
+}*/
 
 //record broken boundaries features of gr, inferred from gx
 int assembler::boundary_extend(int sample_id, splice_graph &gr, splice_graph &gx, int pos_type)
