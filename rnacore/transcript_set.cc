@@ -83,6 +83,8 @@ int trans_item::merge(const trans_item &ti, int mode)
 int merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &vy, int mode, double single_exon_ratio)
 {
 	vector<trans_item> vz;
+	vz.reserve(vx.size() + vy.size());
+
 	int kx = 0, ky = 0;
 	while(kx < vx.size() && ky < vy.size())
 	{
