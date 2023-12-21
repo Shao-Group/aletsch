@@ -166,8 +166,8 @@ int assembler::assemble(vector<bundle*> gv)
 	phase_set px;
 
     //junction supports and supported sample abundance
-    map< pair<int32_t, int32_t>, set<int> > junc2sup;
-    map< pair< pair<int32_t, int32_t>, int>, double> sup2abd;
+    unordered_map<int64_t, set<int> > junc2sup;
+    map<pair<int64_t, int>, double> sup2abd;
 
     // combined support
     edge_iterator itx;
@@ -190,11 +190,13 @@ int assembler::assemble(vector<bundle*> gv)
         if(s == 0) continue;
         if(t == gx.num_vertices() - 1) continue;
 
-        pair<int32_t, int32_t>p = make_pair(gx.get_vertex_info(s).rpos,gx.get_vertex_info(t).lpos);
-        if(p.first == p.second) continue;//ignore non-splicing junctions
+        pair<int32_t, int32_t>p0 = make_pair(gx.get_vertex_info(s).rpos, gx.get_vertex_info(t).lpos);
+        if(p0.first == p0.second) continue;//ignore non-splicing junctions
+
+		int64_t p = pack(p0.first, p0.second);
         junc2sup[p].insert(-1);
         
-        pair< pair<int32_t, int32_t>, int> psp = make_pair(p, -1);
+        pair<int64_t, int> psp = make_pair(p, -1);
         sup2abd[psp] += gx.get_edge_weight(e);
     }
 
@@ -239,11 +241,12 @@ int assembler::assemble(vector<bundle*> gv)
             if(s == 0) continue;
 		    if(t == gr.num_vertices() - 1) continue;
 
-            pair<int32_t, int32_t> p = make_pair(gr.get_vertex_info(s).rpos,gr.get_vertex_info(t).lpos);
-            if(p.first == p.second) continue;//ignore non-splicing junctions
+            pair<int32_t, int32_t> p0 = make_pair(gr.get_vertex_info(s).rpos,gr.get_vertex_info(t).lpos);
+            if(p0.first == p0.second) continue;//ignore non-splicing junctions
+			int64_t p = pack(p0.first, p0.second);
             junc2sup[p].insert(bd.sp.sample_id);
             
-            pair< pair<int32_t, int32_t>, int> psp = make_pair(p, bd.sp.sample_id);
+            pair<int64_t, int> psp = make_pair(p, bd.sp.sample_id);
             sup2abd[psp] += gr.get_edge_weight(e);
         }
     }
@@ -338,7 +341,7 @@ int assembler::assemble(vector<bundle*> gv)
     return 0;
 }
 
-int assembler::junction_support(splice_graph &gr, map< pair<int32_t, int32_t>, set<int> > &junc2sup, map< pair< pair<int32_t, int32_t>, int>, double> &sup2abd)
+int assembler::junction_support(splice_graph &gr, unordered_map<int64_t, set<int> > &junc2sup, map<pair<int64_t, int>, double> &sup2abd)
 {
     edge_iterator it;
     PEEI pei = gr.edges();
@@ -352,7 +355,8 @@ int assembler::junction_support(splice_graph &gr, map< pair<int32_t, int32_t>, s
 		if(t == gr.num_vertices() - 1) continue;
 		if(gr.get_vertex_info(s).rpos == gr.get_vertex_info(t).lpos) continue;//ignore non-splicing junctions
 
-        pair<int32_t, int32_t>p = make_pair(gr.get_vertex_info(s).rpos,gr.get_vertex_info(t).lpos);
+        //pair<int32_t, int32_t>p = make_pair(gr.get_vertex_info(s).rpos,gr.get_vertex_info(t).lpos);
+		int64_t p = pack(gr.get_vertex_info(s).rpos,gr.get_vertex_info(t).lpos);
         if(junc2sup.find(p) != junc2sup.end())
         {
             edge_info &ei = gr.get_editable_edge_info(e);
@@ -360,7 +364,7 @@ int assembler::junction_support(splice_graph &gr, map< pair<int32_t, int32_t>, s
             ei.count = ei.samples.size();
             for(auto sp : ei.samples)
             {
-                pair< pair<int32_t, int32_t>, int> psp = make_pair(p, sp);
+                pair<int64_t, int> psp = make_pair(p, sp);
                 if(sup2abd.find(psp) != sup2abd.end()) 
                 {
                     //assert(ei.spAbd[sp] < SMIN);

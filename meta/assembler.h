@@ -12,6 +12,7 @@ See LICENSE for licensing.
 #include "transcript_set.h"
 #include "splice_graph.h"
 #include <mutex>
+#include <unordered_map>
 #include <thread>
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
@@ -46,7 +47,7 @@ public:
 
     //sample support
     //int junction_support(int sample_id, splice_graph &gr, splice_graph &gx);
-    int junction_support(splice_graph &gr, map< pair<int32_t, int32_t>, set<int> > &junc2sup, map< pair< pair<int32_t, int32_t>, int>, double> &sup2abd);
+    int junction_support(splice_graph &gr, unordered_map<int64_t, set<int> > &junc2sup, map<pair<int64_t, int>, double> &sup2abd);
     int start_end_support(int sample_id, splice_graph &gr, splice_graph &gx);
 	int start_end_support(vector<splice_graph*> &grv, const vector<int> &idv);
     int non_splicing_support(int sample_id, splice_graph &gr, splice_graph &gx);
