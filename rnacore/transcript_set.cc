@@ -90,17 +90,18 @@ int merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &v
 		if(b == 0)
 		{
 			vx[kx].merge(vy[ky], mode);
-			vz.push_back(vx[kx]);
+			vz.emplace_back(std::move(vx[kx]));
 			kx++;
 			ky++;
 		}
 		else if(b == 1)
 		{
-			vz.push_back(vx[kx]);
+			vz.emplace_back(std::move(vx[kx]));
 			kx++;
 		}
 		else if(b == -1)
 		{
+			//vz.emplace_back(std::move(vy[ky]));
 			vz.push_back(vy[ky]);
 			ky++;
 		}
@@ -109,11 +110,10 @@ int merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &v
 
 	assert(kx == vx.size() || ky == vy.size());
 
-	for(int i = kx; i < vx.size(); i++) vz.push_back(vx[i]);
+	for(int i = kx; i < vx.size(); i++) vz.emplace_back(std::move(vx[i]));
 	for(int i = ky; i < vy.size(); i++) vz.push_back(vy[i]);
 
-	vx.clear();
-	vx = vz;
+	vx.swap(vz);
 	return 0;
 }
 
@@ -133,7 +133,7 @@ transcript_set::transcript_set(const transcript &t, int r, int count, int sid, d
 	size_t h = t.get_intron_chain_hashing();
 	trans_item ti(t, count, sid);
 	vector<trans_item> v;
-	v.push_back(std::move(ti));
+	v.emplace_back(std::move(ti));
 
 	mt.insert(make_pair(h, v));
 }
