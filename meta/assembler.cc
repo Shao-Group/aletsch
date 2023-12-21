@@ -457,46 +457,72 @@ int assembler::start_end_support(vector<splice_graph*> &grv, const vector<int> &
 		}
 	}
 
+	// first collect all pairs
+	map<PI, vector<PI>> mpairs;
+
 	for(ISPMI it = ism_start.begin(); it != ism_start.end(); it++)
 	{
-		interval32 iv = it->first;
-		set<PI> se = it->second;
-		vector<PI> v(se.begin(), se.end());
-		if(v.size() <= 1) continue;
+		vector<PI> v1(it->second.size());
+		vector<PI> v2(it->second.size());
 
-		// mutual support
-		for(int i = 0; i < v.size(); i++)
+		if(it != ism_start.begin())
 		{
-			int si = idv[v[i].first];
-			int starti = v[i].second;
-			splice_graph &gi = *(grv[v[i].first]);
-			PEB pi = gi.edge(0, starti);
-			assert(pi.second == true);
-			edge_info &ei = gi.get_editable_edge_info(pi.first);
+			auto ix = it;
+			--ix;
 
-			for(int j = i + 1; j < v.size(); j++)
+			auto i1 = std::set_difference(it->second.begin(), it->second.end(), ix->second.begin(), ix->second.end(), v1.begin());
+			v1.resize(i1 - v1.begin());
+
+			auto i2 = std::set_difference(it->second.begin(), it->second.end(), v1.begin(), v1.end(), v2.begin());
+			v2.resize(i2 - v2.begin());
+
+			assert(v1.size() + v2.size() == it->second.size());
+
+			for(int i = 0; i < v1.size(); i++)
 			{
-				int sj = idv[v[j].first];
-				if(si == sj) continue;
-
-				int startj = v[j].second;
-				splice_graph &gj = *(grv[v[j].first]);
-				PEB pj = gj.edge(0, startj);
-				assert(pj.second == true);
-				edge_info &ej = gj.get_editable_edge_info(pj.first);
-
-				ei.samples.insert(sj);
-				ej.samples.insert(si);
-
-				ei.count = ei.samples.size();
-				ej.count = ej.samples.size();
-
-				ei.spAbd[sj] += gj.get_edge_weight(pj.first);
-				ej.spAbd[si] += gi.get_edge_weight(pi.first);
-
-				ei.abd += gj.get_edge_weight(pj.first);
-				ej.abd += gi.get_edge_weight(pi.first);
+				assert(mpairs.find(v1[i]) == mpairs.end());
+				vector<PI> v;
+				v.insert(v.end(), v1.begin() + i + 1, v1.end());
+				v.insert(v.end(), v2.begin(), v2.end());
+				mpairs.insert(make_pair(v1[i], v));
 			}
+		}
+	}
+
+	for(auto x: mpairs)
+	{
+		auto &p = x.first;
+		auto &v = x.second;
+
+		int si = idv[p.first];
+		int starti = p.second;
+		splice_graph &gi = *(grv[p.first]);
+		PEB pi = gi.edge(0, starti);
+		assert(pi.second == true);
+		edge_info &ei = gi.get_editable_edge_info(pi.first);
+
+		for(int j = 0; j < v.size(); j++)
+		{
+			int sj = idv[v[j].first];
+			if(si == sj) continue;
+
+			int startj = v[j].second;
+			splice_graph &gj = *(grv[v[j].first]);
+			PEB pj = gj.edge(0, startj);
+			assert(pj.second == true);
+			edge_info &ej = gj.get_editable_edge_info(pj.first);
+
+			ei.samples.insert(sj);
+			ej.samples.insert(si);
+
+			ei.count = ei.samples.size();
+			ej.count = ej.samples.size();
+
+			ei.spAbd[sj] += gj.get_edge_weight(pj.first);
+			ej.spAbd[si] += gi.get_edge_weight(pi.first);
+
+			ei.abd += gj.get_edge_weight(pj.first);
+			ej.abd += gi.get_edge_weight(pi.first);
 		}
 	}
 
@@ -535,46 +561,72 @@ int assembler::start_end_support(vector<splice_graph*> &grv, const vector<int> &
 		}
 	}
 
-    for(ISPMI it = ism_end.begin(); it != ism_end.end(); it++)
+	// collect all pairs
+	mpairs.clear();
+
+	for(ISPMI it = ism_end.begin(); it != ism_end.end(); it++)
 	{
-		interval32 iv = it->first;
-		set<PI> se = it->second;
-		vector<PI> v(se.begin(), se.end());
-		if(v.size() <= 1) continue;
+		vector<PI> v1(it->second.size());
+		vector<PI> v2(it->second.size());
 
-		// mutual support
-		for(int i = 0; i < v.size(); i++)
+		if(it != ism_end.begin())
 		{
-			int si = idv[v[i].first];
-			int endi = v[i].second;
-			splice_graph &gi = *(grv[v[i].first]);
-			PEB pi = gi.edge(endi, gi.num_vertices()-1);
-			assert(pi.second == true);
-			edge_info &ei = gi.get_editable_edge_info(pi.first);
+			auto ix = it;
+			--ix;
 
-			for(int j = i + 1; j < v.size(); j++)
+			auto i1 = std::set_difference(it->second.begin(), it->second.end(), ix->second.begin(), ix->second.end(), v1.begin());
+			v1.resize(i1 - v1.begin());
+
+			auto i2 = std::set_difference(it->second.begin(), it->second.end(), v1.begin(), v1.end(), v2.begin());
+			v2.resize(i2 - v2.begin());
+
+			assert(v1.size() + v2.size() == it->second.size());
+
+			for(int i = 0; i < v1.size(); i++)
 			{
-				int sj = idv[v[j].first];
-				if(si == sj) continue;
-
-				int endj = v[j].second;
-				splice_graph &gj = *(grv[v[j].first]);
-				PEB pj = gj.edge(endj, gj.num_vertices()-1);
-				assert(pj.second == true);
-				edge_info &ej = gj.get_editable_edge_info(pj.first);
-
-				ei.samples.insert(sj);
-				ej.samples.insert(si);
-
-				ei.count = ei.samples.size();
-				ej.count = ej.samples.size();
-
-				ei.spAbd[sj] += gj.get_edge_weight(pj.first);
-				ej.spAbd[si] += gi.get_edge_weight(pi.first);
-
-				ei.abd += gj.get_edge_weight(pj.first);
-				ej.abd += gi.get_edge_weight(pi.first);
+				assert(mpairs.find(v1[i]) == mpairs.end());
+				vector<PI> v;
+				v.insert(v.end(), v1.begin() + i + 1, v1.end());
+				v.insert(v.end(), v2.begin(), v2.end());
+				mpairs.insert(make_pair(v1[i], v));
 			}
+		}
+	}
+
+	for(auto x: mpairs)
+	{
+		auto &p = x.first;
+		auto &v = x.second;
+
+		int si = idv[p.first];
+		int endi = p.second;
+		splice_graph &gi = *(grv[p.first]);
+		PEB pi = gi.edge(endi, gi.num_vertices()-1);
+		assert(pi.second == true);
+		edge_info &ei = gi.get_editable_edge_info(pi.first);
+
+		for(int j = 0; j < v.size(); j++)
+		{
+			int sj = idv[v[j].first];
+			if(si == sj) continue;
+
+			int endj = v[j].second;
+			splice_graph &gj = *(grv[v[j].first]);
+			PEB pj = gj.edge(endj, gj.num_vertices()-1);
+			assert(pj.second == true);
+			edge_info &ej = gj.get_editable_edge_info(pj.first);
+
+			ei.samples.insert(sj);
+			ej.samples.insert(si);
+
+			ei.count = ei.samples.size();
+			ej.count = ej.samples.size();
+
+			ei.spAbd[sj] += gj.get_edge_weight(pj.first);
+			ej.spAbd[si] += gi.get_edge_weight(pi.first);
+
+			ei.abd += gj.get_edge_weight(pj.first);
+			ej.abd += gi.get_edge_weight(pi.first);
 		}
 	}
 
