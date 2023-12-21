@@ -47,7 +47,7 @@ public:
 
     //sample support
     //int junction_support(int sample_id, splice_graph &gr, splice_graph &gx);
-    int junction_support(splice_graph &gr, unordered_map<int64_t, set<int> > &junc2sup, map<pair<int64_t, int>, double> &sup2abd);
+    int junction_support(splice_graph &gr, unordered_map<int64_t, set<int> > &junc2sup, unordered_map<int64_t, unordered_map<int, double>> &sup2abd);
     int start_end_support(int sample_id, splice_graph &gr, splice_graph &gx);
 	int start_end_support(vector<splice_graph*> &grv, const vector<int> &idv);
     int non_splicing_support(int sample_id, splice_graph &gr, splice_graph &gx);

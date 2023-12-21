@@ -8,7 +8,7 @@ See LICENSE for licensing.
 #define __EDGE_INFO__
 
 #include <set>
-#include <map>
+#include <unordered_map>
 using namespace std;
 
 class edge_info
@@ -30,7 +30,7 @@ public:
 	//string feature;	// feature
 
     set<int> samples;
-    map<int, double> spAbd; //map sample_id to abd
+    unordered_map<int, double> spAbd; //map sample_id to abd
     double abd;
 };
 

@@ -167,7 +167,7 @@ int assembler::assemble(vector<bundle*> gv)
 
     //junction supports and supported sample abundance
     unordered_map<int64_t, set<int> > junc2sup;
-    map<pair<int64_t, int>, double> sup2abd;
+    unordered_map<int64_t, unordered_map<int, double>> sup2abd;
 
     // combined support
     edge_iterator itx;
@@ -196,8 +196,9 @@ int assembler::assemble(vector<bundle*> gv)
 		int64_t p = pack(p0.first, p0.second);
         junc2sup[p].insert(-1);
         
-        pair<int64_t, int> psp = make_pair(p, -1);
-        sup2abd[psp] += gx.get_edge_weight(e);
+        //pair<int64_t, int> psp = make_pair(p, -1);
+        //sup2abd[psp] += gx.get_edge_weight(e);
+        sup2abd[p].insert(make_pair(-1, gx.get_edge_weight(e)));
     }
 
     //transform individual bundle to individual graph
@@ -246,8 +247,9 @@ int assembler::assemble(vector<bundle*> gv)
 			int64_t p = pack(p0.first, p0.second);
             junc2sup[p].insert(bd.sp.sample_id);
             
-            pair<int64_t, int> psp = make_pair(p, bd.sp.sample_id);
-            sup2abd[psp] += gr.get_edge_weight(e);
+            //pair<int64_t, int> psp = make_pair(p, bd.sp.sample_id);
+            //sup2abd[psp] += gr.get_edge_weight(e);
+            sup2abd[p].insert(make_pair(bd.sp.sample_id, gr.get_edge_weight(e)));
         }
     }
 
@@ -341,7 +343,7 @@ int assembler::assemble(vector<bundle*> gv)
     return 0;
 }
 
-int assembler::junction_support(splice_graph &gr, unordered_map<int64_t, set<int> > &junc2sup, map<pair<int64_t, int>, double> &sup2abd)
+int assembler::junction_support(splice_graph &gr, unordered_map<int64_t, set<int> > &junc2sup, unordered_map<int64_t, unordered_map<int, double>> &sup2abd)
 {
     edge_iterator it;
     PEEI pei = gr.edges();
@@ -361,7 +363,13 @@ int assembler::junction_support(splice_graph &gr, unordered_map<int64_t, set<int
         {
             edge_info &ei = gr.get_editable_edge_info(e);
             ei.samples = junc2sup[p];
+			ei.spAbd = sup2abd[p];
             ei.count = ei.samples.size();
+			for(auto &z : sup2abd[p])
+			{
+				ei.abd += z.second;
+			}
+			/*
             for(auto sp : ei.samples)
             {
                 pair<int64_t, int> psp = make_pair(p, sp);
@@ -372,6 +380,7 @@ int assembler::junction_support(splice_graph &gr, unordered_map<int64_t, set<int
                     ei.abd += ei.spAbd[sp]; 
                 }
             }
+			*/
             //gr.set_edge_info(e, ei);
         }
     }
