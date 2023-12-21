@@ -252,7 +252,7 @@ int assembler::assemble(vector<bundle*> gv)
     grv.push_back(&gx);
     idv.push_back(-1);
     
-    start_end_support(grv, idv);
+    //start_end_support(grv, idv);
 
     //assemble merged graph when the largest graph in the bundle has <=150 vertices
     bool assemble_merged = true;
@@ -284,7 +284,7 @@ int assembler::assemble(vector<bundle*> gv)
             //transform(bd1, gr1, true);
             splice_graph &gr1 = *(grv[j]);
 
-            //start_end_support(bd1.sp.sample_id, gr1, gr);
+            start_end_support(bd1.sp.sample_id, gr1, gr);
             non_splicing_support(bd1.sp.sample_id, gr1, gr);
             boundary_extend(bd1.sp.sample_id, gr, gr1, 1);
             boundary_extend(bd1.sp.sample_id, gr, gr1, 2);
@@ -303,7 +303,7 @@ int assembler::assemble(vector<bundle*> gv)
         //calculate start&end&non-splicing suppots for combined graph
         if(assemble_merged)
         {
-            //start_end_support(bd.sp.sample_id, gr, gx);
+            start_end_support(bd.sp.sample_id, gr, gx);
             non_splicing_support(bd.sp.sample_id, gr, gx);
             boundary_extend(-1, gr, gx, 1);
         }
@@ -419,7 +419,7 @@ int assembler::non_splicing_support(int sample_id, splice_graph &gr, splice_grap
     return 0;
 }
 
-int assembler::start_end_support(vector<splice_graph*> &grv, const vector<int> &idv)
+/*int assembler::start_end_support(vector<splice_graph*> &grv, const vector<int> &idv)
 {
 	// build start interval_set_map
 	interval_set_pair_map ism_start;
@@ -605,9 +605,9 @@ int assembler::start_end_support(vector<splice_graph*> &grv, const vector<int> &
 	}
 
     return 0;
-}
+}*/
 
-/*int assembler::start_end_support(int sample_id, splice_graph &gr, splice_graph &gx)
+int assembler::start_end_support(int sample_id, splice_graph &gr, splice_graph &gx)
 {
     // calculate support of starting vertices
     edge_iterator it;
@@ -707,7 +707,7 @@ int assembler::start_end_support(vector<splice_graph*> &grv, const vector<int> &
 	}
 
     return 0;
-}*/
+}
 
 //record broken boundaries features of gr, inferred from gx
 int assembler::boundary_extend(int sample_id, splice_graph &gr, splice_graph &gx, int pos_type)
