@@ -258,8 +258,15 @@ int bundle_group::build_splice_similarity(const vector<int> &ss, vector<PPID> &v
 			if(cfg.verbose >= 2) printf("graph-similarity: r = %.3lf, c = %d, size1 = %lu, size2 = %lu, sp1 = %d-%d, sp2 = %d-%d\n", 
 					r, c, splices[i].size(), splices[j].size(), splices[i].front(), splices[i].back(), splices[j].front(), splices[j].back());
 
-			if(c <= 0.50) continue;
-			if(r < min_similarity) continue;
+			//if(c <= 0.5) continue;
+			//if(r < min_similarity) continue;
+
+			int d1 = splices[i].size() - c;
+			int d2 = splices[j].size() - c;
+			double dr = (d1 + d2) * 1.0 / c;
+
+			if(c <= 1.5) continue;
+			if(d1 <= 0 || d2 <= 0) continue;
 
 			if(local == true) vpid.push_back(PPID(PI(xi, xj), r));
 			else vpid.push_back(PPID(PI(i, j), r));
