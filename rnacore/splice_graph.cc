@@ -1189,6 +1189,7 @@ int splice_graph::locate_vertex(int32_t p, int a, int b)
 	// return the leftmost vertex v such that p < v.rpos
 	// when this function is called, vertex b (exclusive)
 	// won't be checked
+	/*
 	if(a >= b) return b;
 	int m = (a + b) / 2;
 	assert(m >= a && m < b);
@@ -1197,8 +1198,21 @@ int splice_graph::locate_vertex(int32_t p, int a, int b)
 	if(p >= v.lpos && p < v.rpos) return m;
 	if(p < v.lpos) return locate_vertex(p, a, m);
 	return locate_vertex(p, m + 1, b);
-}
+	*/
 
+	// rewrite this w/o recurrence calling
+	while(a < b)
+	{
+		int m = (a + b) / 2;
+		assert(m >= a && m < b);
+		assert(m >= 0 && m < num_vertices());
+		const vertex_info &v = get_vertex_info(m);
+		if(p >= v.lpos && p < v.rpos) return m;
+		if(p < v.lpos) b = m;
+		else a = m + 1;
+	}
+	return b;
+}
 
 int splice_graph::draw(const string &file, const MIS &mis, const MES &mes, double len, const vector<int> &tp, bool footer)
 {
