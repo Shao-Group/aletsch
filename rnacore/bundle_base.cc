@@ -100,7 +100,10 @@ int bundle_base::add_intervals(bam1_t *b)
 		if(bam_cigar_op(cigar[k]) == BAM_CMATCH)
 		{
 			int32_t s = p - bam_cigar_oplen(cigar[k]);
-			mmap += make_pair(ROI(s, p), 1);
+			//mmap += make_pair(ROI(s, p), 1);
+			int64_t u = pack(s, p);
+			if(umap.find(u) == umap.end()) umap.insert(make_pair(u, 1));
+			else umap[u] += 1;
 		}
 
 		if(bam_cigar_op(cigar[k]) == BAM_CINS)
@@ -114,6 +117,16 @@ int bundle_base::add_intervals(bam1_t *b)
 			imap += make_pair(ROI(s, p), 1);
 		}
 	}
+	return 0;
+}
+
+int bundle_base::build_interval_map()
+{
+	for(auto &x : umap)
+	{
+		mmap += make_pair(ROI(high32(x.first), low32(x.first)), x.second);
+	}
+	umap.clear();
 	return 0;
 }
 

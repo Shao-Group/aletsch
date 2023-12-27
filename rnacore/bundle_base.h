@@ -37,6 +37,7 @@ public:
 	chain_set fcst;					// chain set for frgs
 	split_interval_map mmap;		// matched interval map
 	split_interval_map imap;		// indel interval map
+	unordered_map<int64_t, int> umap;	// temp for mmap
 
 public:
 	int clear();
@@ -51,6 +52,7 @@ public:
 	int update_bridges(const vector<int> &frlist, const vector<int32_t> &chain, int strand);
 	int filter_multialigned_hits();
 	int add_borrowed_path(const vector<int32_t> &p, double w);
+	int build_interval_map();
 
 private:
 	int add_hit(const hit &ht);

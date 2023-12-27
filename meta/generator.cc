@@ -154,6 +154,7 @@ int generator::generate(bundle_base &bb, int index)
 	strcpy(buf, sp.hdr->target_name[bb.tid]);
 
 	bundle bd(cfg, sp, std::move(bb));
+	bd.build_interval_map();
 	bd.chrm = string(buf);
 	bd.gid = "gene." + tostring(sp.sample_id) + "." + tostring(index);
 	bd.compute_strand(sp.library_type);
