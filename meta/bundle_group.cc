@@ -265,7 +265,7 @@ int bundle_group::build_splice_similarity(const vector<int> &ss, vector<PPID> &v
 			int d2 = splices[j].size() - c;
 			double dr = (d1 + d2) * 1.0 / c;
 
-			if(c <= 1.5) continue;
+			if(c <= 0.5) continue;
 			if(d1 <= 0 || d2 <= 0) continue;
 
 			if(local == true) vpid.push_back(PPID(PI(xi, xj), r));
