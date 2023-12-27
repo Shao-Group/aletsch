@@ -54,9 +54,11 @@ int bundle::copy_meta_information(const bundle &bb)
 
 int bundle::bridge()
 {
+	/*
 	int round = 0;
 	while(round < 2)
 	{
+	*/
 		splice_graph gr;
 		graph_builder gb(*this, cfg, sp);
 		gb.build(gr);
@@ -76,10 +78,12 @@ int bundle::bridge()
 			cnt += update_bridges(vc[k].frlist, bs.opt[k].chain, bs.opt[k].strand);
 		}
 
+	/*
 		//printf("total frags %lu, bridged frags = %d\n", bb.frgs.size(), cnt);
 		round++;
 		if(cnt <= 0) break;
 	}
+	*/
 	return 0;
 }
 
