@@ -97,6 +97,8 @@ int bundle::combine(const bundle &bb)
 	if(rpos < bb.rpos) rpos = bb.rpos;
 	hcst.add(bb.hcst);
 	fcst.add(bb.fcst);
+	//mmap.insert(mmap.end(), bb.mmap.begin(), bb.mmap.end());
+	//imap.insert(imap.end(), bb.imap.begin(), bb.imap.end());
 	mmap += bb.mmap;
 	imap += bb.imap;
 	//for(SIMI z = bb.mmap.begin(); z != bb.mmap.end(); z++) mmap += *z;
