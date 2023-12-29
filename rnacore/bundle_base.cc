@@ -22,6 +22,12 @@ bundle_base::bundle_base()
 	rpos = 0;
 	strand = '.';
 	//unbridged = -1;
+	for(int i = 0; i < INTERVAL_BUF_SIZE; i++) 
+	{
+		interval_cnt[i] = 0;
+		interval_buf[i * 2 + 0] = -1;
+		interval_buf[i * 2 + 1] = -1;
+	}
 }
 
 int bundle_base::add_hit_intervals(const hit &ht, bam1_t *b)
@@ -90,6 +96,7 @@ int bundle_base::add_intervals(bam1_t *b)
 	int32_t p = b->core.pos;
 	uint32_t *cigar = bam_get_cigar(b);
 
+	int z = 0;
     for(int k = 0; k < b->core.n_cigar; k++)
 	{
 		if(bam_cigar_type(bam_cigar_op(cigar[k]))&2)
@@ -100,9 +107,30 @@ int bundle_base::add_intervals(bam1_t *b)
 		if(bam_cigar_op(cigar[k]) == BAM_CMATCH)
 		{
 			int32_t s = p - bam_cigar_oplen(cigar[k]);
-			mmap += make_pair(ROI(s, p), 1);
-		}
 
+			if(z >= INTERVAL_BUF_SIZE)
+			{
+				mmap += make_pair(ROI(s, p), 1);
+			}
+			else
+			{
+				if(s == interval_buf[z * 2 + 0] && p == interval_buf[z * 2 + 1])
+				{
+					interval_cnt[z]++;
+				}
+				else
+				{
+					if(interval_buf[z * 2 + 0] != -1 && interval_buf[z * 2 + 1] != -1)
+					{
+						mmap += make_pair(ROI(interval_buf[z * 2 + 0], interval_buf[z * 2 + 1]), interval_cnt[z]);
+					}
+					interval_buf[z * 2 + 0] = s;
+					interval_buf[z * 2 + 1] = p;
+					interval_cnt[z] = 1;
+				}
+			}
+			z++;
+		}
 		if(bam_cigar_op(cigar[k]) == BAM_CINS)
 		{
 			imap += make_pair(ROI(p - 1, p + 1), 1);
@@ -113,6 +141,21 @@ int bundle_base::add_intervals(bam1_t *b)
 			int32_t s = p - bam_cigar_oplen(cigar[k]);
 			imap += make_pair(ROI(s, p), 1);
 		}
+	}
+	return 0;
+}
+
+int bundle_base::add_buf_intervals()
+{
+	for(int i = 0; i < INTERVAL_BUF_SIZE; i++)
+	{
+		if(interval_buf[i * 2 + 0] == -1) continue;
+		if(interval_buf[i * 2 + 1] == -1) continue;
+		if(interval_cnt[i] <= 0) continue;
+		mmap += make_pair(ROI(interval_buf[i * 2 + 0], interval_buf[i * 2 + 1]), interval_cnt[i]);
+		interval_buf[i * 2 + 0] = -1;
+		interval_buf[i * 2 + 1] = -1;
+		interval_cnt[i] = 0;
 	}
 	return 0;
 }

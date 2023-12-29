@@ -18,6 +18,8 @@ See LICENSE for licensing.
 #include "phase_set.h"
 #include "splice_graph.h"
 
+#define INTERVAL_BUF_SIZE 10
+
 using namespace std;
 
 class bundle_base
@@ -37,6 +39,8 @@ public:
 	chain_set fcst;					// chain set for frgs
 	split_interval_map mmap;		// matched interval map
 	split_interval_map imap;		// indel interval map
+	int32_t interval_buf[INTERVAL_BUF_SIZE * 2];
+	int32_t interval_cnt[INTERVAL_BUF_SIZE];
 
 public:
 	int clear();
@@ -51,6 +55,7 @@ public:
 	int update_bridges(const vector<int> &frlist, const vector<int32_t> &chain, int strand);
 	int filter_multialigned_hits();
 	int add_borrowed_path(const vector<int32_t> &p, double w);
+	int add_buf_intervals();
 
 private:
 	int add_hit(const hit &ht);

@@ -152,6 +152,7 @@ int generator::generate(bundle_base &bb, int index)
 	if(bb.tid < 0) return 0;
 	char buf[1024];
 	strcpy(buf, sp.hdr->target_name[bb.tid]);
+	bb.add_buf_intervals();
 
 	bundle bd(cfg, sp, std::move(bb));
 	bd.chrm = string(buf);
