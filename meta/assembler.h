@@ -13,7 +13,6 @@ See LICENSE for licensing.
 #include "splice_graph.h"
 #include <mutex>
 #include <unordered_map>
-#include <thread>
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/pending/disjoint_sets.hpp>

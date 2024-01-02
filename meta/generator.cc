@@ -21,8 +21,8 @@ See LICENSE for licensing.
 #include "hyper_set.h"
 #include "assembler.h"
 
-generator::generator(sample_profile &s, vector<bundle> &v, const parameters &c, int tid, int rid)
-	: vcb(v), cfg(c), sp(s), target_id(tid), region_id(rid)
+generator::generator(sample_profile &s, vector<bundle> &v, const parameters &c, thread_pool &p, int tid, int rid)
+	: vcb(v), cfg(c), sp(s), pool(p), target_id(tid), region_id(rid)
 {
 	index = 0;
 	sp.open_align_file();
@@ -144,6 +144,8 @@ int generator::resolve()
 	if(term1 && region_id < sp.start1[target_id].size() - 1) sp.start1[target_id][region_id + 1] = new_start1;
 	if(term2 && region_id < sp.start2[target_id].size() - 1) sp.start2[target_id][region_id + 1] = new_start2;
 
+	process();
+
 	return 0;
 }
 
@@ -154,18 +156,45 @@ int generator::generate(bundle_base &bb, int index)
 	strcpy(buf, sp.hdr->target_name[bb.tid]);
 	bb.add_buf_intervals();
 
-	bundle bd(cfg, sp, std::move(bb));
+	//bundle bd(cfg, sp, std::move(bb));
+	vcb.emplace_back(bundle(cfg, sp, std::move(bb)));
+	bundle &bd = vcb.back();
+
+	//boost::asio::post(this->tpool, [&bd, &sp, index, &vcb_mutex]{ 
 	bd.chrm = string(buf);
 	bd.gid = "gene." + tostring(sp.sample_id) + "." + tostring(index);
 	bd.compute_strand(sp.library_type);
 	bd.build_fragments();
 	bd.bridge();
-	//bd.filter_multialigned_hits();
 
-	// TODO, storing reads
-	// TODO, don't keep bridged reads
+	//vcb_mutex.lock();
+	//vcb.push_back(std::move(bd));
+	//vcb_mutex.unlock();
+	//});
 
-	vcb.push_back(std::move(bd));
+	return 0;
+}
+
+int generator::process()
+{
+	vector<mutex> v(vcb.size());
+	for(int i = 0; i < vcb.size(); i++)
+	{
+		bundle &bd = vcb[i];
+		mutex &m = v[i];
+		m.lock();
+		boost::asio::post(this->pool, [this, &bd, &m]{ 
+			bd.compute_strand(this->sp.library_type);
+			bd.build_fragments();
+			bd.bridge();
+			m.unlock();
+		});
+	}
+
+	for(int i = 0; i < v.size(); i++)
+	{
+		v[i].lock();
+	}
 	return 0;
 }
 

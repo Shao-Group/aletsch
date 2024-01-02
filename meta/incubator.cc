@@ -373,7 +373,7 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 
 	vector<bundle> v;
 	//transcript_set ts(chrm, params[DEFAULT].min_single_exon_clustering_overlap);
-	generator gt(sp, v, params[sp.data_type], tid, rid);
+	generator gt(sp, v, params[sp.data_type], tpool, tid, rid);
 	gt.resolve();
 	//save_transcript_set(ts, tlock);
 
