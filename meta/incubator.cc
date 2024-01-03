@@ -21,7 +21,7 @@ See LICENSE for licensing.
 #include <algorithm>
 
 incubator::incubator(vector<parameters> &v)
-	: params(v), tpool(params[DEFAULT].max_threads), gmutex(99999), tmutex(99999), group_size(20)
+	: params(v), tpool(params[DEFAULT].max_threads), gmutex(99999), tmutex(99999), group_size(5)
 {
 	if(params[DEFAULT].profile_only == true) return;
 	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str(), std::ofstream::out | std::ofstream::app);
