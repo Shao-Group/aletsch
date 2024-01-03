@@ -35,7 +35,7 @@ public:
 	vector<vector<int>> gvv;			// merged graphs
 	string chrm;						// chrm name
 	char strand;						// strandness
-	int rid;							// region id
+	int gid;							// group id
 	thread_pool &tpool;					// thread pool
 	transcript_set_pool tspool;			// transcripts for this bundle_group
 	transcript_set tmerge;				// merged transcripts

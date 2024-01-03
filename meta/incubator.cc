@@ -21,7 +21,7 @@ See LICENSE for licensing.
 #include <algorithm>
 
 incubator::incubator(vector<parameters> &v)
-	: params(v), tpool(params[DEFAULT].max_threads), gmutex(99999)
+	: params(v), tpool(params[DEFAULT].max_threads), gmutex(99999), group_size(20)
 {
 	if(params[DEFAULT].profile_only == true) return;
 	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str(), std::ofstream::out | std::ofstream::app);
@@ -53,11 +53,11 @@ int incubator::resolve()
 	for(auto &x: sindex)
 	{
 		string chrm = x.first;
-		int max_region = get_max_region(chrm);
-		for(int k = 0; k < max_region; k++)
+		int m = ceil(get_max_region(chrm) * 1.0 / group_size);
+		for(int k = 0; k < m; k++)
 		{
 			mytime = time(NULL);
-			printf("processing chrm %s, region %d, max-region = %d, %s", chrm.c_str(), k, max_region, ctime(&mytime));
+			printf("processing chrm %s, group %d, max-gropu = %d, %s", chrm.c_str(), k, m, ctime(&mytime));
 			generate_merge_assemble(chrm, k);
 		}
 
@@ -283,7 +283,7 @@ int incubator::init_bundle_groups()
 	for(auto &z : sindex)
 	{
 		string chrm = z.first;
-		int m = get_max_region(chrm);
+		int m = ceil(get_max_region(chrm) * 1.0 / group_size);
 		for(int k = 0; k < m; k++)
 		{
 			grps.push_back(bundle_group(chrm, '+', k, params[DEFAULT], tpool));
@@ -311,47 +311,50 @@ int incubator::init_transcript_sets()
 	return 0;
 }
 
-int incubator::get_bundle_group(string chrm, int rid)
+int incubator::get_bundle_group(string chrm, int gid)
 {
 	for(int k = 0; k < grps.size(); k++)
 	{
-		if(grps[k].chrm != chrm) continue;
-		if(grps[k].rid != rid) continue;
-		return k;
+		//if(grps[k].chrm == chrm && grps[k].gid * group_size <= rid && rid < (grps[k].gid + 1) * group_size) return k;
+		if(grps[k].chrm == chrm && grps[k].gid == gid) return k;
 	}
 	return -1;
 }
 
-int incubator::generate_merge_assemble(string chrm, int rid)
+int incubator::generate_merge_assemble(string chrm, int gid)
 {
 	if(sindex.find(chrm) == sindex.end()) return 0;
 	const vector<PI> &v = sindex[chrm];
 	if(v.size() == 0) return 0;
 
-	vector<mutex> sample_locks(v.size());
-	for(int k = 0; k < sample_locks.size(); k++) sample_locks[k].lock();
+	vector<mutex> locks(v.size() * group_size);
+	for(int k = 0; k < locks.size(); k++) locks[k].lock();
 
 	for(int i = 0; i < v.size(); i++)
 	{
 		int sid = v[i].first;
 		int tid = v[i].second;
 		//sample_profile &sp = samples[sid];
-		mutex &sample_lock = sample_locks[i];
 
-		boost::asio::post(this->tpool, [this, &sample_lock, sid, chrm, tid, rid]{ 
-			this->generate(sid, tid, rid, chrm, sample_lock); 
-		});
+		for(int j = 0; j < group_size; j++)
+		{
+			int rid = gid * group_size + j;
+			mutex &lock = locks[i * group_size + j];
+			boost::asio::post(this->tpool, [this, &lock, sid, chrm, tid, rid]{ 
+					this->generate(sid, tid, rid, chrm, lock); 
+			});
+		}
 	}
 
-	for(int k = 0; k < sample_locks.size(); k++) sample_locks[k].lock();
+	for(int k = 0; k < locks.size(); k++) locks[k].lock();
 
-	int bi = this->get_bundle_group(chrm, rid);
+	int bi = this->get_bundle_group(chrm, gid);
 	for(int i = 0; i < 3; i++)
 	{
 		bundle_group &g = this->grps[bi + i];
 		mutex &mtx = this->gmutex[bi + i];
 		g.resolve(); 
-		this->assemble(g, rid, i, mtx);
+		this->assemble(g, gid, i, mtx);
 		g.clear();
 	}
 
@@ -377,7 +380,8 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 	gt.resolve();
 	//save_transcript_set(ts, tlock);
 
-	int bi = get_bundle_group(chrm, rid);
+	int gid = rid / group_size;
+	int bi = get_bundle_group(chrm, gid);
 	assert(bi != -1);
 
 	gmutex[bi + 0].lock();
@@ -407,7 +411,7 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 	return 0;
 }
 
-int incubator::assemble(bundle_group &g, int rid, int gid, mutex &mtx)
+int incubator::assemble(bundle_group &g, int gid, int gi, mutex &mtx)
 {
 	int instance = 0;
 	vector<bool> vb(g.gset.size(), false);
@@ -422,9 +426,9 @@ int incubator::assemble(bundle_group &g, int rid, int gid, mutex &mtx)
 			assert(vb[v[j]] == false);
 			vb[v[j]] = true;
 		}
-		assert(g.rid == rid);
-		boost::asio::post(this->tpool, [this, &g, gv, instance, rid, gid, &mtx]{ 
-				assembler asmb(params[DEFAULT], g.tspool, g.tmerge, mtx, this->tpool, rid, gid, instance);
+		assert(g.gid == gid);
+		boost::asio::post(this->tpool, [this, &g, gv, instance, gid, gi, &mtx]{ 
+				assembler asmb(params[DEFAULT], g.tspool, g.tmerge, mtx, this->tpool, gid, gi, instance);
 				asmb.resolve(gv);
 		});
 		instance++;

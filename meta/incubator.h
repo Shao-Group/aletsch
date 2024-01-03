@@ -40,6 +40,7 @@ public:
 	vector<bundle_group> grps;						// bundle groups
 	vector<mutex> gmutex;							// mutex for transcripts in each bundle_group
 	thread_pool tpool;
+	int group_size;									// number of regions in a group
 	//transcript_set_pool tspool;					// a pool for ts
 	//transcript_set tmerge;						// assembled transcripts for all samples
 	//mutex tlock;									// global lock for transcripts
@@ -61,10 +62,10 @@ private:
 	int init_transcript_sets();
 	int get_max_region(string chrm);
 	int get_chrm_index(string chrm, int sid);
-	int get_bundle_group(string chrm, int rid);
-	int generate_merge_assemble(string chrm, int rid);
+	int get_bundle_group(string chrm, int gid);
+	int generate_merge_assemble(string chrm, int gid);
 	int generate(int sid, int tid, int rid, string chrm, mutex &sample_lock);
-	int assemble(bundle_group &g, int rid, int gid, mutex &mtx);
+	int assemble(bundle_group &g, int gid, int gi, mutex &mtx);
 	int write_individual_gtf(int id, const vector<transcript> &t);
 	int print_groups(const vector<bundle_group> &grps);
 	//int postprocess(const transcript_set &ts, ofstream &fout, mutex &mylock);

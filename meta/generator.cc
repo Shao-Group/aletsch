@@ -141,10 +141,12 @@ int generator::resolve()
 	if(cfg.verbose >= 2) printf("generate target %d, region %d, starts = %d/%d, next starts = %d/%d, terms=%c/%c, hid = %d\n", 
 			target_id, region_id, start1, start2, new_start1, new_start2, term1 ? 'T' : 'F', term2 ? 'T' : 'F', hid);
 
+	/* TODO: do not update start1/2 for now
 	if(term1 && region_id < sp.start1[target_id].size() - 1) sp.start1[target_id][region_id + 1] = new_start1;
 	if(term2 && region_id < sp.start2[target_id].size() - 1) sp.start2[target_id][region_id + 1] = new_start2;
+	*/
 
-	process();
+	//process();
 
 	return 0;
 }
@@ -156,22 +158,15 @@ int generator::generate(bundle_base &bb, int index)
 	strcpy(buf, sp.hdr->target_name[bb.tid]);
 	bb.add_buf_intervals();
 
-	//bundle bd(cfg, sp, std::move(bb));
 	vcb.emplace_back(bundle(cfg, sp, std::move(bb)));
 	bundle &bd = vcb.back();
 
-	//boost::asio::post(this->tpool, [&bd, &sp, index, &vcb_mutex]{ 
 	bd.chrm = string(buf);
 	bd.gid = "gene." + tostring(sp.sample_id) + "." + tostring(index);
 	bd.compute_strand(sp.library_type);
 	bd.build_fragments();
 	bd.bridge();
-
-	//vcb_mutex.lock();
 	//vcb.push_back(std::move(bd));
-	//vcb_mutex.unlock();
-	//});
-
 	return 0;
 }
 
@@ -182,8 +177,11 @@ int generator::process()
 	{
 		bundle &bd = vcb[i];
 		mutex &m = v[i];
+		m.unlock();
 		m.lock();
+		printf("process %d/%lu\n", i, vcb.size());
 		boost::asio::post(this->pool, [this, &bd, &m]{ 
+			printf("process in a new thread\n");
 			bd.compute_strand(this->sp.library_type);
 			bd.build_fragments();
 			bd.bridge();
@@ -191,8 +189,10 @@ int generator::process()
 		});
 	}
 
+	printf("done process\n");
 	for(int i = 0; i < v.size(); i++)
 	{
+		printf("check v[%d]\n", i);
 		v[i].lock();
 	}
 	return 0;

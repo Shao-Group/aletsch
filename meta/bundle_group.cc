@@ -14,12 +14,12 @@ See LICENSE for licensing.
 
 //mutex bundle_group::gmutex;
 
-bundle_group::bundle_group(string c, char s, int r, const parameters &f, thread_pool &p)
-	: cfg(f), tpool(p), tmerge(c, r, f.min_single_exon_clustering_overlap)
+bundle_group::bundle_group(string c, char s, int g, const parameters &f, thread_pool &p)
+	: cfg(f), tpool(p), tmerge(c, g, f.min_single_exon_clustering_overlap)
 {
 	chrm = c;
 	strand = s;
-	rid = r;
+	gid = g;
 }
 
 int bundle_group::resolve()
@@ -438,7 +438,7 @@ int bundle_group::stats(int r)
 
 	for(map<int, int>::iterator it = m.begin(); it != m.end(); it++)
 	{
-		printf("bundle group stats: round %d, chrm %s, rid %d, strand %c, total %d graphs with combined %d graphs\n", r, chrm.c_str(), rid, strand, it->second, it->first);
+		printf("bundle group stats: round %d, chrm %s, gid %d, strand %c, total %d graphs with combined %d graphs\n", r, chrm.c_str(), gid, strand, it->second, it->first);
 	}
 	return 0;
 }
