@@ -24,7 +24,6 @@ bundle_group::bundle_group(string c, char s, int r, const parameters &f, thread_
 
 int bundle_group::resolve()
 {
-	printf("bundle resolve A\n");
 	grouped.assign(gset.size(), false);
 
 	build_splices();
@@ -35,58 +34,40 @@ int bundle_group::resolve()
 
 	//test_overlap_similarity();
 
-	printf("bundle resolve B\n");
 	// round one
 	min_similarity = cfg.max_grouping_similarity;
 	min_group_size = cfg.max_group_size;
 
-	vector<mutex> mx(sindex.size());
 	int k = 0;
-	mutex gmutex;
 	for(auto &z: sindex)
 	{
 		set<int> &s = z.second;
-		mx[k].lock();
-		//boost::asio::post(tpool, [this, &s, &mx, &z, &gmutex, k]{ this->process_subset1(s, mx[k], gmutex); });
-		process_subset1(s, mx[k], gmutex);
+		process_subset1(s);
 		k++;
 	}
-
-	printf("bundle resolve C\n");
-	//for(auto &z: mx) z.lock();
 
 	stats(1);
 	if(cfg.verbose >= 2) print();
 
-	printf("bundle resolve D\n");
 	// round two
 	disjoint_set ds(gset.size());
 	min_similarity = cfg.min_grouping_similarity;
 	min_group_size = 1;
-	vector<mutex> sx(sindex.size());
 	k = 0;
 	for(auto &z: sindex)
 	{
 		const set<int> &s = z.second;
-		sx[k].lock();
-		//boost::asio::post(tpool, [this, &s, &ds, &sx, &gmutex, k]{ this->process_subset2(s, ds, 1, sx[k], gmutex); });
-		process_subset2(s, ds, 1, sx[k], gmutex);
+		process_subset2(s, ds, 1);
 		k++;
 	}
 
-	printf("bundle resolve F\n");
-	//for(auto &z: sx) z.lock();
-
-	printf("bundle resolve G\n");
 	build_groups(ds);
 
 	stats(2);
 	if(cfg.verbose >= 2) print();
 
-	printf("bundle resolve H\n");
 	sindex.clear();
 
-	printf("bundle resolve I\n");
 	//jindex.clear();
 	return 0;
 }
@@ -124,27 +105,21 @@ int bundle_group::clear()
 	return 0;
 }
 
-int bundle_group::process_subset1(const set<int> &s, mutex &smutex, mutex &gmutex)
+int bundle_group::process_subset1(const set<int> &s)
 {
-	gmutex.lock();
 	vector<int> ss = filter(s);
-	gmutex.unlock();
 
 	vector<PPID> vpid;
 	build_splice_similarity(ss, vpid, true);
 
-	gmutex.lock();
 	vector<PPID> v = filter(ss, vpid);
 	disjoint_set ds(ss.size());
 	augment_disjoint_set(v, ds);
 	build_groups(ss, ds);
-	gmutex.unlock();
-
-	smutex.unlock();
 	return 0;
 }
 
-int bundle_group::process_subset2(const set<int> &s, disjoint_set &ds, int sim, mutex &smutex, mutex &gmutex)
+int bundle_group::process_subset2(const set<int> &s, disjoint_set &ds, int sim)
 {
 	vector<int> ss = filter(s);
 
@@ -155,11 +130,7 @@ int bundle_group::process_subset2(const set<int> &s, disjoint_set &ds, int sim, 
 
 	vector<PPID> v = filter(vpid);
 
-	gmutex.lock();
 	augment_disjoint_set(v, ds);
-	gmutex.unlock();
-
-	smutex.unlock();
 	return 0;
 }
 

@@ -353,10 +353,10 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 
 	for(int k = 0; k < locks.size(); k++) 
 	{
-		printf("try to lock sample %d\n", k);
+		//printf("try to lock sample %d\n", k);
 		locks[k].lock();
 	}
-	printf("locked samples\n");
+	//printf("locked samples\n");
 
 	for(int j = 0; j < group_size; j++)
 	{
@@ -372,7 +372,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 					mutex &mtx = this->tmutex[bi + i];
 					g.resolve(); 
 
-					printf("into assemble function\n");
+					//printf("into assemble function\n");
 					this->assemble(g, rid, i, mtx);
 					g.clear();
 			});
@@ -392,7 +392,7 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 
 	if(rid >= sp.start1[cid].size()) 
 	{
-		printf("unlock rid = %d\n", rid);
+		//printf("unlock rid = %d\n", rid);
 		sample_lock.unlock();
 		return 0;
 	}
@@ -435,7 +435,7 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 
 	printf("finish generating tid = %d, rid = %d, of sample %s\n", tid, rid, sp.align_file.c_str());
 
-	printf("unlock rid = %d\n", rid);
+	//printf("unlock rid = %d\n", rid);
 	sample_lock.unlock();
 	return 0;
 }
