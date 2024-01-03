@@ -185,7 +185,7 @@ int sample_profile::read_index_iterators()
 			//string query = string(hdr->target_name[i]) + ":" + to_string(s) + "-" + to_string(t);
 			string query = string(hdr->target_name[i]) + ":" + to_string(s);
 
-			//printf("build index for target-id %d, %d-%d, query = %s\n", i, s, t, query.c_str());
+			printf("build index for target-id %d, %d-%d, query = %s\n", i, s, t, query.c_str());
 
 			hts_itr_t *iter = sam_itr_querys(idx, hdr, query.c_str());
 

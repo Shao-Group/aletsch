@@ -7,6 +7,7 @@ See LICENSE for licensing.
 #ifndef __GENERATOR_H__
 #define __GENERATOR_H__
 
+#include <htslib/sam.h>
 #include <fstream>
 #include <string>
 #include <mutex>
@@ -34,6 +35,8 @@ public:
 
 private:
 	const parameters &cfg;
+	samFile *sfn;
+	bam_hdr_t *hdr;
 	thread_pool &pool;
 	sample_profile &sp;
 	int target_id;

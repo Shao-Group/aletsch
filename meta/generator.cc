@@ -25,12 +25,17 @@ generator::generator(sample_profile &s, vector<bundle> &v, const parameters &c, 
 	: vcb(v), cfg(c), sp(s), pool(p), target_id(tid), region_id(rid)
 {
 	index = 0;
-	sp.open_align_file();
+	//sp.open_align_file();
+	sfn = sam_open(sp.align_file.c_str(), "r");
+	hdr = sam_hdr_read(sfn);
+
 }
 
 generator::~generator()
 {
-	sp.close_align_file();
+	//sp.close_align_file();
+    if(hdr != NULL) bam_hdr_destroy(hdr);
+    if(sfn != NULL) sam_close(sfn);
 }
 
 int generator::resolve()
@@ -53,7 +58,8 @@ int generator::resolve()
 	int32_t new_start2 = start2;
 
 	bool term1 = false, term2 = false;
-	while(sam_itr_next(sp.sfn, iter, b1t) >= 0)
+	// sp.sfn
+	while(sam_itr_next(sfn, iter, b1t) >= 0)
 	{
 		bam1_core_t &p = b1t->core;
 
@@ -155,7 +161,7 @@ int generator::generate(bundle_base &bb, int index)
 {
 	if(bb.tid < 0) return 0;
 	char buf[1024];
-	strcpy(buf, sp.hdr->target_name[bb.tid]);
+	strcpy(buf, hdr->target_name[bb.tid]);
 	bb.add_buf_intervals();
 
 	vcb.emplace_back(bundle(cfg, sp, std::move(bb)));

@@ -21,7 +21,7 @@ See LICENSE for licensing.
 #include <algorithm>
 
 incubator::incubator(vector<parameters> &v)
-	: params(v), tpool(params[DEFAULT].max_threads), gmutex(99999), group_size(20)
+	: params(v), tpool(params[DEFAULT].max_threads), gmutex(99999), group_size(10)
 {
 	if(params[DEFAULT].profile_only == true) return;
 	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str(), std::ofstream::out | std::ofstream::app);
@@ -49,6 +49,8 @@ int incubator::resolve()
 	init_bundle_groups();
 	init_transcript_sets();
 
+	for(int k = 0; k < samples.size(); k++) samples[k].open_align_file();
+
 	time_t mytime;
 	for(auto &x: sindex)
 	{
@@ -57,10 +59,9 @@ int incubator::resolve()
 		for(int k = 0; k < m; k++)
 		{
 			mytime = time(NULL);
-			printf("processing chrm %s, group %d, max-gropu = %d, %s", chrm.c_str(), k, m, ctime(&mytime));
+			printf("processing chrm %s, group %d, max-group = %d, %s", chrm.c_str(), k, m, ctime(&mytime));
 			generate_merge_assemble(chrm, k);
 		}
-
 	}
 	tpool.join();
 
@@ -327,6 +328,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 	const vector<PI> &v = sindex[chrm];
 	if(v.size() == 0) return 0;
 
+
 	vector<mutex> locks(v.size() * group_size);
 	for(int k = 0; k < locks.size(); k++) locks[k].lock();
 
@@ -340,6 +342,8 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 		{
 			int rid = gid * group_size + j;
 			mutex &lock = locks[i * group_size + j];
+
+			printf("to generate chrm %s, gid = %d, rid = %d\n", chrm.c_str(), gid, rid);
 			boost::asio::post(this->tpool, [this, &lock, sid, chrm, tid, rid]{ 
 					this->generate(sid, tid, rid, chrm, lock); 
 			});
@@ -358,6 +362,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 		g.clear();
 	}
 
+	//for(int k = 0; k < samples.size(); k++) samples[k].close_align_file();
 	return 0;
 }
 
@@ -376,6 +381,8 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 
 	vector<bundle> v;
 	//transcript_set ts(chrm, params[DEFAULT].min_single_exon_clustering_overlap);
+
+	printf("in generating sid = %d, tid = %d, rid = %d, chrm = %s, cid = %d, regions = %lu\n", sid, tid, rid, chrm.c_str(), cid, sp.start1[cid].size());
 	generator gt(sp, v, params[sp.data_type], tpool, tid, rid);
 	gt.resolve();
 	//save_transcript_set(ts, tlock);
