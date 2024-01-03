@@ -38,7 +38,8 @@ public:
 	map<pair<string, char>, transcript_set> tts;	// transcripts for each chrm
 	ofstream meta_gtf;								// meta gtf
 	vector<bundle_group> grps;						// bundle groups
-	vector<mutex> gmutex;							// mutex for transcripts in each bundle_group
+	vector<mutex> gmutex;							// mutex for writing to gset in each bundle_group
+	vector<mutex> tmutex;							// mutex for transcripts in each bundle_group
 	thread_pool tpool;
 	int group_size;									// number of regions in a group
 	//transcript_set_pool tspool;					// a pool for ts

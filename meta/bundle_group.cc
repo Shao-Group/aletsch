@@ -14,16 +14,17 @@ See LICENSE for licensing.
 
 //mutex bundle_group::gmutex;
 
-bundle_group::bundle_group(string c, char s, int g, const parameters &f, thread_pool &p)
-	: cfg(f), tpool(p), tmerge(c, g, f.min_single_exon_clustering_overlap)
+bundle_group::bundle_group(string c, char s, int r, const parameters &f, thread_pool &p)
+	: cfg(f), tpool(p), tmerge(c, r, f.min_single_exon_clustering_overlap)
 {
 	chrm = c;
 	strand = s;
-	gid = g;
+	rid = r;
 }
 
 int bundle_group::resolve()
 {
+	printf("bundle resolve A\n");
 	grouped.assign(gset.size(), false);
 
 	build_splices();
@@ -34,6 +35,7 @@ int bundle_group::resolve()
 
 	//test_overlap_similarity();
 
+	printf("bundle resolve B\n");
 	// round one
 	min_similarity = cfg.max_grouping_similarity;
 	min_group_size = cfg.max_group_size;
@@ -45,15 +47,18 @@ int bundle_group::resolve()
 	{
 		set<int> &s = z.second;
 		mx[k].lock();
-		boost::asio::post(tpool, [this, &s, &mx, &z, &gmutex, k]{ this->process_subset1(s, mx[k], gmutex); });
+		//boost::asio::post(tpool, [this, &s, &mx, &z, &gmutex, k]{ this->process_subset1(s, mx[k], gmutex); });
+		process_subset1(s, mx[k], gmutex);
 		k++;
 	}
 
-	for(auto &z: mx) z.lock();
+	printf("bundle resolve C\n");
+	//for(auto &z: mx) z.lock();
 
 	stats(1);
 	if(cfg.verbose >= 2) print();
 
+	printf("bundle resolve D\n");
 	// round two
 	disjoint_set ds(gset.size());
 	min_similarity = cfg.min_grouping_similarity;
@@ -64,32 +69,24 @@ int bundle_group::resolve()
 	{
 		const set<int> &s = z.second;
 		sx[k].lock();
-		boost::asio::post(tpool, [this, &s, &ds, &sx, &gmutex, k]{ this->process_subset2(s, ds, 1, sx[k], gmutex); });
+		//boost::asio::post(tpool, [this, &s, &ds, &sx, &gmutex, k]{ this->process_subset2(s, ds, 1, sx[k], gmutex); });
+		process_subset2(s, ds, 1, sx[k], gmutex);
 		k++;
 	}
 
-	// do not use interval-overlap for clustering
-	/*
-	vector<mutex> jx(jindex.size());
-	k = 0;
-	for(auto &z: jindex)
-	{
-		const set<int> &s = z.second;
-		jx[k].lock();
-		boost::asio::post(this->tpool, [this, &s, &ds, &jx, &gmutex, k]{ this->process_subset2(s, ds, 2, jx[k], gmutex); });
-		k++;
-	}
-	*/
+	printf("bundle resolve F\n");
+	//for(auto &z: sx) z.lock();
 
-	for(auto &z: sx) z.lock();
-	//for(auto &z: jx) z.lock();
-
+	printf("bundle resolve G\n");
 	build_groups(ds);
 
 	stats(2);
 	if(cfg.verbose >= 2) print();
 
+	printf("bundle resolve H\n");
 	sindex.clear();
+
+	printf("bundle resolve I\n");
 	//jindex.clear();
 	return 0;
 }
@@ -438,7 +435,7 @@ int bundle_group::stats(int r)
 
 	for(map<int, int>::iterator it = m.begin(); it != m.end(); it++)
 	{
-		printf("bundle group stats: round %d, chrm %s, gid %d, strand %c, total %d graphs with combined %d graphs\n", r, chrm.c_str(), gid, strand, it->second, it->first);
+		printf("bundle group stats: round %d, chrm %s, rid %d, strand %c, total %d graphs with combined %d graphs\n", r, chrm.c_str(), rid, strand, it->second, it->first);
 	}
 	return 0;
 }
@@ -451,7 +448,7 @@ int bundle_group::print()
 		for(int i = 0; i < gvv[k].size(); i++)
 		{
 			int g = gvv[k][i];
-			printf(" graph %d, gid = %s, splices = %lu, hits = %lu\n", g, gset[g].gid.c_str(), splices[g].size(), gset[g].hits.size());
+			printf(" graph %d, rid = %s, splices = %lu, hits = %lu\n", g, gset[g].gid.c_str(), splices[g].size(), gset[g].hits.size());
 		}
 	}
 	printf("\n");
