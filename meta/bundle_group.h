@@ -46,13 +46,9 @@ private:
 	MISI sindex;				// splice index
 	interval_set_map jindex;	// index for jmaps
 	vector<bool> grouped;		// track grouped graphs
-	double min_similarity;		// minimum similarity for this round
-	int min_group_size;			// minimum #graphs to form a group
 
 public:
-	//int add_graph(const bundle &gr);
 	int resolve();
-	int resolve0();
 	int print();
 	int clear();
 	int stats(int k);
@@ -62,19 +58,13 @@ private:
 	int build_join_interval_maps();
 	int build_splice_index();
 	int build_join_interval_map_index();
-	int process_subset1(const set<int> &ss);
-	int process_subset2(const set<int> &ss, disjoint_set &ds, int sim);
-	int build_splice_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local);
-	int build_splice_similarity(const set<int> &ss, unordered_map<int64_t, double> &pm, unordered_set<int64_t> &ps);
+	int build_splice_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local, double d);
 	int build_overlap_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local);
-	int augment_disjoint_set(const vector<PPID> &vpid, disjoint_set &ds);
-	int build_disjoint_set(const unordered_map<int64_t, double> &pm, disjoint_set &ds);
-	int build_groups(const vector<int> &ss, disjoint_set &ds);
-	int build_groups(disjoint_set &ds);
 	int test_overlap_similarity();
-	int filter(const vector<PPID> &vpid, vector<PPID> &v);
-	int filter(const vector<int> &ss, const vector<PPID> &vpid, vector<PPID> &v);
-	int filter(const set<int> &s, vector<int> &v);
+	int process_subset(const set<int> &ss, disjoint_set &ds, double d);
+	int augment_disjoint_set(const vector<PPID> &vpid, disjoint_set &ds);
+	int build_groups(disjoint_set &ds);
+	int filter(const set<int> &s, disjoint_set &ds, vector<int> &v);
 };
 
 #endif

@@ -24,42 +24,27 @@ bundle_group::bundle_group(string c, char s, int r, const parameters &f, thread_
 
 int bundle_group::resolve()
 {
-	grouped.assign(gset.size(), false);
-
 	build_splices();
 	build_splice_index();
 
-	//build_join_interval_maps();
-	//build_join_interval_map_index();
+	disjoint_set ds(gset.size());
+	grouped.assign(gset.size(), false);
 
-	//test_overlap_similarity();
-
-	// skip round one
-	/*
 	// round one
-	min_similarity = cfg.max_grouping_similarity;
-	min_group_size = cfg.max_group_size;
-
 	for(auto &z: sindex)
 	{
 		if(z.second.size() <= 1) continue;
-		set<int> &s = z.second;
-		process_subset1(s);
+		process_subset(z.second, ds, cfg.max_grouping_similarity);
 	}
 
 	stats(1);
 	if(cfg.verbose >= 2) print();
-	*/
 
 	// round two
-	disjoint_set ds(gset.size());
-	min_similarity = cfg.min_grouping_similarity;
-	min_group_size = 1;
 	for(auto &z: sindex)
 	{
 		if(z.second.size() <= 1) continue;
-		const set<int> &s = z.second;
-		process_subset2(s, ds, 1);
+		process_subset(z.second, ds, cfg.min_grouping_similarity);
 	}
 
 	build_groups(ds);
@@ -67,46 +52,6 @@ int bundle_group::resolve()
 	stats(2);
 	if(cfg.verbose >= 2) print();
 
-	sindex.clear();
-
-	//jindex.clear();
-	return 0;
-}
-
-int bundle_group::resolve0()
-{
-	grouped.assign(gset.size(), false);
-
-	build_splices();
-	build_splice_index();
-
-	min_similarity = cfg.max_grouping_similarity;
-	min_group_size = cfg.max_group_size;
-
-	unordered_map<int64_t, double> pm;
-	unordered_set<int64_t> ps;
-	for(auto &z: sindex)
-	{
-		//printf("build similarity for splice %d, size = %lu\n", z.first, z.second.size());
-		if(z.second.size() <= 1) continue;
-		build_splice_similarity(z.second, pm, ps);
-	}
-	printf("done with building similarity\n");
-
-	disjoint_set ds(gset.size());
-	build_disjoint_set(pm, ds);
-
-	printf("done with building disjoint set\n");
-
-	build_groups(ds);
-
-	printf("done with building group\n");
-
-	stats(1);
-	if(cfg.verbose >= 2) print();
-
-	sindex.clear();
-	//jindex.clear();
 	return 0;
 }
 
@@ -143,37 +88,15 @@ int bundle_group::clear()
 	return 0;
 }
 
-int bundle_group::process_subset1(const set<int> &s)
+int bundle_group::process_subset(const set<int> &s, disjoint_set &ds, double d)
 {
 	vector<int> ss;
-	filter(s, ss);
+	filter(s, ds, ss);
 
 	vector<PPID> vpid;
-	build_splice_similarity(ss, vpid, true);
+	build_splice_similarity(ss, vpid, false, d);
 
-	// TODO: this filter needed?
-	vector<PPID> v;
-	filter(ss, vpid, v);
-	disjoint_set ds(ss.size());
-	augment_disjoint_set(v, ds);
-	build_groups(ss, ds);
-	return 0;
-}
-
-int bundle_group::process_subset2(const set<int> &s, disjoint_set &ds, int sim)
-{
-	vector<int> ss;
-	filter(s, ss);
-
-	vector<PPID> vpid;
-
-	if(sim == 1) build_splice_similarity(ss, vpid, false);
-	if(sim == 2) build_overlap_similarity(ss, vpid, false);
-
-	vector<PPID> v;
-	filter(vpid, v);
-
-	augment_disjoint_set(v, ds);
+	augment_disjoint_set(vpid, ds);
 	return 0;
 }
 
@@ -243,7 +166,7 @@ int bundle_group::build_join_interval_map_index()
 	return 0;
 }
 
-int bundle_group::build_splice_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local)
+int bundle_group::build_splice_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local, double min_similarity)
 {
 	//printf("START BUILD SIMILARITY; cfg.max_num_junctions_to_combine = %d, ss.size() =%lu\n", cfg.max_num_junctions_to_combine, ss.size());
 	for(int xi = 0; xi < ss.size(); xi++)
@@ -278,39 +201,6 @@ int bundle_group::build_splice_similarity(const vector<int> &ss, vector<PPID> &v
 	}
 
 	sort(vpid.begin(), vpid.end(), [](const PPID &x, const PPID &y){ return x.second > y.second; });
-
-	return 0;
-}
-
-int bundle_group::build_splice_similarity(const set<int> &ss, unordered_map<int64_t, double> &pm, unordered_set<int64_t> &ps)
-{
-	for(auto & i: ss)
-	{
-		if(splices[i].size() / 2.0 > cfg.max_num_junctions_to_combine) continue;
-		vector<int32_t> vv(splices[i].size(), 0);
-
-		for(auto &j: ss)
-		{
-			if(i >= j) continue;
-			if(splices[j].size() / 2.0 > cfg.max_num_junctions_to_combine) continue;
-
-			int64_t p = pack(int32_t(i), int32_t(j));
-			if(pm.find(p) != pm.end()) continue;
-			if(ps.find(p) != ps.end()) continue;
-
-			vector<int32_t>::iterator it = set_intersection(splices[i].begin(), splices[i].end(), splices[j].begin(), splices[j].end(), vv.begin());
-			int c = it - vv.begin();
-
-			int small = splices[i].size() < splices[j].size() ? splices[i].size() : splices[j].size();
-			double r = c * 1.0 / small;
-
-			if(cfg.verbose >= 2) printf("graph-similarity: r = %.3lf, c = %d, size1 = %lu, size2 = %lu, sp1 = %d-%d, sp2 = %d-%d\n", 
-					r, c, splices[i].size(), splices[j].size(), splices[i].front(), splices[i].back(), splices[j].front(), splices[j].back());
-
-			if(c <= 0.50 || r < min_similarity) ps.insert(p);
-			else pm.insert(make_pair(p, r));
-		}
-	}
 
 	return 0;
 }
@@ -378,34 +268,6 @@ int bundle_group::build_overlap_similarity(const vector<int> &ss, vector<PPID> &
 	return 0;
 }
 
-int bundle_group::build_disjoint_set(const unordered_map<int64_t, double> &pm, disjoint_set &ds)
-{
-	typedef pair<int64_t, double> PX;
-	vector<PX> vs(pm.begin(), pm.end());
-	sort(vs.begin(), vs.end(), [](const PX &x, const PX &y){ return x.second > y.second; });
-
-	for(int i = 0; i < vs.size(); i++)
-	{
-		int x = high32(vs[i].first);
-		int y = low32(vs[i].first);
-		int px = ds.find_set(x);
-		int py = ds.find_set(y);
-		if(px == py) continue;
-
-		int sx = ds.get_size(px);
-		int sy = ds.get_size(py);
-		if(sx >= cfg.max_group_size) continue;
-		if(sy >= cfg.max_group_size) continue;
-
-		ds.link(px, py);
-
-		int q = ds.find_set(px);
-		assert(q == ds.find_set(py));
-		ds.set_size(q, sx + sy);
-	}
-	return 0;
-}
-
 int bundle_group::augment_disjoint_set(const vector<PPID> &vpid, disjoint_set &ds)
 {
 	for(int i = 0; i < vpid.size(); i++)
@@ -432,66 +294,39 @@ int bundle_group::augment_disjoint_set(const vector<PPID> &vpid, disjoint_set &d
 
 int bundle_group::build_groups(disjoint_set &ds)
 {
-	vector<int> ss(gset.size());
-	for(int i = 0; i < ss.size(); i++) ss[i] = i;
-	build_groups(ss, ds);
-	return 0;
-}
-
-int bundle_group::build_groups(const vector<int> &ss, disjoint_set &ds)
-{
 	map<int, int> mm;
-	for(int i = 0; i < ss.size(); i++)
+	for(int i = 0; i < gset.size(); i++)
 	{
 		int p = ds.find_set(i);
 		int s = ds.get_size(p);
-		if(s < min_group_size) continue;
-		if(grouped[ss[i]] == true) continue;
 
-		grouped[ss[i]] = true;
 		if(mm.find(p) == mm.end())
 		{
 			vector<int> gv;
-			gv.push_back(ss[i]);
+			gv.push_back(i);
 			mm.insert(pair<int, int>(p, gvv.size()));
-			gvv.push_back(gv);
+			gvv.push_back(std::move(gv));
 		}
 		else
 		{
 			int k = mm[p];
-			gvv[k].push_back(ss[i]);
+			gvv[k].push_back(i);
 		}
 	}
 	return 0;
 }
 
-int bundle_group::filter(const vector<int> &ss, const vector<PPID> &vpid, vector<PPID> &v)
-{
-	for(int i = 0; i < vpid.size(); i++)
-	{
-		int x = vpid[i].first.first;
-		int y = vpid[i].first.second;
-
-		if(grouped[ss[x]] == true) continue;
-		if(grouped[ss[y]] == true) continue;
-		v.push_back(vpid[i]);
-	}
-	return 0;
-}
-
-int bundle_group::filter(const vector<PPID> &vpid, vector<PPID> &v)
-{
-	vector<int> ss(gset.size());
-	for(int i = 0; i < ss.size(); i++) ss[i] = i;
-	filter(ss, vpid, v);
-	return 0;
-}
-
-int bundle_group::filter(const set<int> &s, vector<int> &ss)
+int bundle_group::filter(const set<int> &s, disjoint_set &ds, vector<int> &ss)
 {
 	for(auto &z: s)
 	{
 		if(grouped[z] == true) continue;
+		int p = ds.find_set(z);
+		if(ds.get_size(p) >= cfg.max_group_size) 
+		{
+			grouped[z] = true;
+			continue;
+		}
 		ss.push_back(z);
 	}
 	return 0;
