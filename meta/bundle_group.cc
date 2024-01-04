@@ -22,7 +22,7 @@ bundle_group::bundle_group(string c, char s, int r, const parameters &f, thread_
 	rid = r;
 }
 
-int bundle_group::resolve()
+int bundle_group::resolve0()
 {
 	grouped.assign(gset.size(), false);
 
@@ -38,12 +38,10 @@ int bundle_group::resolve()
 	min_similarity = cfg.max_grouping_similarity;
 	min_group_size = cfg.max_group_size;
 
-	int k = 0;
 	for(auto &z: sindex)
 	{
 		set<int> &s = z.second;
 		process_subset1(s);
-		k++;
 	}
 
 	stats(1);
@@ -53,12 +51,10 @@ int bundle_group::resolve()
 	disjoint_set ds(gset.size());
 	min_similarity = cfg.min_grouping_similarity;
 	min_group_size = 1;
-	k = 0;
 	for(auto &z: sindex)
 	{
 		const set<int> &s = z.second;
 		process_subset2(s, ds, 1);
-		k++;
 	}
 
 	build_groups(ds);
@@ -68,6 +64,34 @@ int bundle_group::resolve()
 
 	sindex.clear();
 
+	//jindex.clear();
+	return 0;
+}
+
+int bundle_group::resolve()
+{
+	build_splices();
+	build_splice_index();
+
+	min_similarity = cfg.max_grouping_similarity;
+	min_group_size = cfg.max_group_size;
+
+	unordered_map<int64_t, double> pm;
+	unordered_set<int64_t> ps;
+	for(auto &z: sindex)
+	{
+		build_splice_similarity(z.second, pm, ps);
+	}
+
+	// round two
+	disjoint_set ds(gset.size());
+	build_disjoint_set(pm, ds);
+	build_groups(ds);
+
+	stats(1);
+	if(cfg.verbose >= 2) print();
+
+	sindex.clear();
 	//jindex.clear();
 	return 0;
 }
@@ -239,6 +263,39 @@ int bundle_group::build_splice_similarity(const vector<int> &ss, vector<PPID> &v
 	return 0;
 }
 
+int bundle_group::build_splice_similarity(const set<int> &ss, unordered_map<int64_t, double> &pm, unordered_set<int64_t> &ps)
+{
+	for(auto & i: ss)
+	{
+		if(splices[i].size() / 2.0 > cfg.max_num_junctions_to_combine) continue;
+		vector<int32_t> vv(splices[i].size(), 0);
+
+		for(auto &j: ss)
+		{
+			if(i >= j) continue;
+			if(splices[j].size() / 2.0 > cfg.max_num_junctions_to_combine) continue;
+
+			int64_t p = pack(int32_t(i), int32_t(j));
+			if(pm.find(p) != pm.end()) continue;
+			if(ps.find(p) != ps.end()) continue;
+
+			vector<int32_t>::iterator it = set_intersection(splices[i].begin(), splices[i].end(), splices[j].begin(), splices[j].end(), vv.begin());
+			int c = it - vv.begin();
+
+			int small = splices[i].size() < splices[j].size() ? splices[i].size() : splices[j].size();
+			double r = c * 1.0 / small;
+
+			if(cfg.verbose >= 2) printf("graph-similarity: r = %.3lf, c = %d, size1 = %lu, size2 = %lu, sp1 = %d-%d, sp2 = %d-%d\n", 
+					r, c, splices[i].size(), splices[j].size(), splices[i].front(), splices[i].back(), splices[j].front(), splices[j].back());
+
+			if(c <= 0.50 || r < min_similarity) ps.insert(p);
+			else pm.insert(make_pair(p, r));
+		}
+	}
+
+	return 0;
+}
+
 int bundle_group::test_overlap_similarity()
 {
 	vector<PPID> vpid;
@@ -299,6 +356,34 @@ int bundle_group::build_overlap_similarity(const vector<int> &ss, vector<PPID> &
 
 	sort(vpid.begin(), vpid.end(), [](const PPID &x, const PPID &y){ return x.second > y.second; });
 
+	return 0;
+}
+
+int bundle_group::build_disjoint_set(const unordered_map<int64_t, double> &pm, disjoint_set &ds)
+{
+	typedef pair<int64_t, double> PX;
+	vector<PX> vs(pm.begin(), pm.end());
+	sort(vs.begin(), vs.end(), [](const PX &x, const PX &y){ return x.second > y.second; });
+
+	for(int i = 0; i < vs.size(); i++)
+	{
+		int x = high32(vs[i].first);
+		int y = low32(vs[i].first);
+		int px = ds.find_set(x);
+		int py = ds.find_set(y);
+		if(px == py) continue;
+
+		int sx = ds.get_size(px);
+		int sy = ds.get_size(py);
+		if(sx >= cfg.max_group_size) continue;
+		if(sy >= cfg.max_group_size) continue;
+
+		ds.link(px, py);
+
+		int q = ds.find_set(px);
+		assert(q == ds.find_set(py));
+		ds.set_size(q, sx + sy);
+	}
 	return 0;
 }
 

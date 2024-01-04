@@ -14,6 +14,8 @@ See LICENSE for licensing.
 #include "interval_map.h"
 #include "transcript_set.h"
 #include <mutex>
+#include <unordered_map>
+#include <unordered_set>
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/pending/disjoint_sets.hpp>
@@ -50,6 +52,7 @@ private:
 public:
 	//int add_graph(const bundle &gr);
 	int resolve();
+	int resolve0();
 	int print();
 	int clear();
 	int stats(int k);
@@ -62,8 +65,10 @@ private:
 	int process_subset1(const set<int> &ss);
 	int process_subset2(const set<int> &ss, disjoint_set &ds, int sim);
 	int build_splice_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local);
+	int build_splice_similarity(const set<int> &ss, unordered_map<int64_t, double> &pm, unordered_set<int64_t> &ps);
 	int build_overlap_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local);
 	int augment_disjoint_set(const vector<PPID> &vpid, disjoint_set &ds);
+	int build_disjoint_set(const unordered_map<int64_t, double> &pm, disjoint_set &ds);
 	int build_groups(const vector<int> &ss, disjoint_set &ds);
 	int build_groups(disjoint_set &ds);
 	int test_overlap_similarity();
