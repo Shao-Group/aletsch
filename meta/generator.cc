@@ -160,10 +160,9 @@ int generator::generate(bundle_base &bb, int index)
 	strcpy(buf, hdr->target_name[bb.tid]);
 	bb.add_buf_intervals();
 
-	//vcb.emplace_back(bundle(cfg, sp, std::move(bb)));
-	//bundle &bd = vcb.back();
-	bundle bd(cfg, sp, std::move(bb));
-
+	vcb.emplace_back(bundle(cfg, sp, std::move(bb)));
+	bundle &bd = vcb.back();
+	//bundle bd(cfg, sp, std::move(bb));
 	bd.chrm = string(buf);
 	bd.gid = "gene." + tostring(sp.sample_id) + "." + tostring(index);
 	bd.compute_strand(sp.library_type);
