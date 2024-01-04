@@ -403,6 +403,8 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 	gt.resolve();
 	//save_transcript_set(ts, tlock);
 
+	// skip single ones
+	/*
 	mutex mtx;
 	transcript_set ts0(chrm, rid, params[DEFAULT].min_single_exon_clustering_overlap);
 	transcript_set ts1(chrm, rid, params[DEFAULT].min_single_exon_clustering_overlap);
@@ -452,6 +454,7 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 		grps[bi + 2].tmerge.add(ts2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		tmutex[bi + 2].unlock();
 	}
+	*/
 
 	gmutex[bi + 0].lock();
 	for(int k = 0; k < v.size(); k++)

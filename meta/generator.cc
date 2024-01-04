@@ -72,8 +72,8 @@ int generator::resolve()
 		if(p.n_cigar < 1) continue;													// should never happen
 
 		hit ht(b1t, hid++);
-		if(fabs(ht.pos - ht.rpos) >= 1000000) continue;								// skip long hit
-		if(((p.flag & 0x8) <= 0) && fabs(ht.pos - ht.mpos) >= 1000000) continue;
+		if(fabs(ht.pos - ht.rpos) >= 500000) continue;								// skip long hit
+		if(((p.flag & 0x8) <= 0) && fabs(ht.pos - ht.mpos) >= 500000) continue;
 
 		ht.set_tags(b1t);
 		ht.set_strand(sp.library_type);
