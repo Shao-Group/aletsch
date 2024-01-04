@@ -72,9 +72,9 @@ private:
 	int build_groups(const vector<int> &ss, disjoint_set &ds);
 	int build_groups(disjoint_set &ds);
 	int test_overlap_similarity();
-	vector<PPID> filter(const vector<PPID> &vpid);
-	vector<PPID> filter(const vector<int> &ss, const vector<PPID> &vpid);
-	vector<int> filter(const set<int> &s);
+	int filter(const vector<PPID> &vpid, vector<PPID> &v);
+	int filter(const vector<int> &ss, const vector<PPID> &vpid, vector<PPID> &v);
+	int filter(const set<int> &s, vector<int> &v);
 };
 
 #endif

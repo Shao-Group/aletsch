@@ -22,7 +22,7 @@ bundle_group::bundle_group(string c, char s, int r, const parameters &f, thread_
 	rid = r;
 }
 
-int bundle_group::resolve0()
+int bundle_group::resolve()
 {
 	grouped.assign(gset.size(), false);
 
@@ -40,6 +40,7 @@ int bundle_group::resolve0()
 
 	for(auto &z: sindex)
 	{
+		if(z.second.size() <= 1) continue;
 		set<int> &s = z.second;
 		process_subset1(s);
 	}
@@ -68,7 +69,7 @@ int bundle_group::resolve0()
 	return 0;
 }
 
-int bundle_group::resolve()
+int bundle_group::resolve0()
 {
 	grouped.assign(gset.size(), false);
 
@@ -140,12 +141,15 @@ int bundle_group::clear()
 
 int bundle_group::process_subset1(const set<int> &s)
 {
-	vector<int> ss = filter(s);
+	vector<int> ss;
+	filter(s, ss);
 
 	vector<PPID> vpid;
 	build_splice_similarity(ss, vpid, true);
 
-	vector<PPID> v = filter(ss, vpid);
+	// TODO: this filter needed?
+	vector<PPID> v;
+	filter(ss, vpid, v);
 	disjoint_set ds(ss.size());
 	augment_disjoint_set(v, ds);
 	build_groups(ss, ds);
@@ -154,14 +158,16 @@ int bundle_group::process_subset1(const set<int> &s)
 
 int bundle_group::process_subset2(const set<int> &s, disjoint_set &ds, int sim)
 {
-	vector<int> ss = filter(s);
+	vector<int> ss;
+	filter(s, ss);
 
 	vector<PPID> vpid;
 
 	if(sim == 1) build_splice_similarity(ss, vpid, false);
 	if(sim == 2) build_overlap_similarity(ss, vpid, false);
 
-	vector<PPID> v = filter(vpid);
+	vector<PPID> v;
+	filter(vpid, v);
 
 	augment_disjoint_set(v, ds);
 	return 0;
@@ -455,9 +461,8 @@ int bundle_group::build_groups(const vector<int> &ss, disjoint_set &ds)
 	return 0;
 }
 
-vector<PPID> bundle_group::filter(const vector<int> &ss, const vector<PPID> &vpid)
+int bundle_group::filter(const vector<int> &ss, const vector<PPID> &vpid, vector<PPID> &v)
 {
-	vector<PPID> v;
 	for(int i = 0; i < vpid.size(); i++)
 	{
 		int x = vpid[i].first.first;
@@ -467,25 +472,25 @@ vector<PPID> bundle_group::filter(const vector<int> &ss, const vector<PPID> &vpi
 		if(grouped[ss[y]] == true) continue;
 		v.push_back(vpid[i]);
 	}
-	return v;
+	return 0;
 }
 
-vector<PPID> bundle_group::filter(const vector<PPID> &vpid)
+int bundle_group::filter(const vector<PPID> &vpid, vector<PPID> &v)
 {
 	vector<int> ss(gset.size());
 	for(int i = 0; i < ss.size(); i++) ss[i] = i;
-	return filter(ss, vpid);
+	filter(ss, vpid, v);
+	return 0;
 }
 
-vector<int> bundle_group::filter(const set<int> &s)
+int bundle_group::filter(const set<int> &s, vector<int> &ss)
 {
-	vector<int> ss;
 	for(auto &z: s)
 	{
 		if(grouped[z] == true) continue;
 		ss.push_back(z);
 	}
-	return ss;
+	return 0;
 }
 
 int bundle_group::stats(int r)
