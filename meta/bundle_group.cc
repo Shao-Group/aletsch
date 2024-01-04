@@ -34,6 +34,8 @@ int bundle_group::resolve()
 
 	//test_overlap_similarity();
 
+	// skip round one
+	/*
 	// round one
 	min_similarity = cfg.max_grouping_similarity;
 	min_group_size = cfg.max_group_size;
@@ -47,6 +49,7 @@ int bundle_group::resolve()
 
 	stats(1);
 	if(cfg.verbose >= 2) print();
+	*/
 
 	// round two
 	disjoint_set ds(gset.size());
@@ -54,6 +57,7 @@ int bundle_group::resolve()
 	min_group_size = 1;
 	for(auto &z: sindex)
 	{
+		if(z.second.size() <= 1) continue;
 		const set<int> &s = z.second;
 		process_subset2(s, ds, 1);
 	}
