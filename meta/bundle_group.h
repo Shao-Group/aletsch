@@ -51,7 +51,6 @@ public:
 	int resolve();
 	int print();
 	int clear();
-	int stats(int k);
 
 private:
 	int build_splices();
@@ -65,6 +64,7 @@ private:
 	int augment_disjoint_set(const vector<PPID> &vpid, disjoint_set &ds);
 	int build_groups(disjoint_set &ds);
 	int filter(const set<int> &s, disjoint_set &ds, vector<int> &v);
+	int stats(disjoint_set &ds, int k);
 };
 
 #endif

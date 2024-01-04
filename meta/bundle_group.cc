@@ -37,7 +37,7 @@ int bundle_group::resolve()
 		process_subset(z.second, ds, cfg.max_grouping_similarity);
 	}
 
-	stats(1);
+	stats(ds, 1);
 	if(cfg.verbose >= 2) print();
 
 	// round two
@@ -49,7 +49,7 @@ int bundle_group::resolve()
 
 	build_groups(ds);
 
-	stats(2);
+	stats(ds, 2);
 	if(cfg.verbose >= 2) print();
 
 	return 0;
@@ -332,8 +332,19 @@ int bundle_group::filter(const set<int> &s, disjoint_set &ds, vector<int> &ss)
 	return 0;
 }
 
-int bundle_group::stats(int r)
+int bundle_group::stats(disjoint_set &ds, int r)
 {
+	int cnt = 0;
+	for(int z = 0; z < gset.size(); z++)
+	{
+		int p = ds.find_set(z);
+		int s = ds.get_size(p);
+		if(grouped[z] == true) assert(s >= cfg.max_group_size);
+		if(ds.get_size(p) >= cfg.max_group_size) cnt++;
+	}
+
+	printf("bundle group stats: round %d, chrm %s, rid %d, strand %c, total %d / %lu graphs grouped\n", r, chrm.c_str(), rid, strand, cnt, gset.size());
+
 	map<int, int> m;
 	for(int k = 0; k < gvv.size(); k++)
 	{
