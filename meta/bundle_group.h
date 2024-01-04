@@ -57,7 +57,7 @@ private:
 	int build_join_interval_maps();
 	int build_splice_index();
 	int build_join_interval_map_index();
-	int build_splice_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local, double d);
+	int build_splice_similarity(const vector<int> &ss, vector<PPID> &vpid, disjoint_set &ds, bool local, double d);
 	int build_overlap_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local);
 	int test_overlap_similarity();
 	int process_subset(const set<int> &ss, disjoint_set &ds, double d);

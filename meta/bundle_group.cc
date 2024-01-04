@@ -94,7 +94,7 @@ int bundle_group::process_subset(const set<int> &s, disjoint_set &ds, double d)
 	filter(s, ds, ss);
 
 	vector<PPID> vpid;
-	build_splice_similarity(ss, vpid, false, d);
+	build_splice_similarity(ss, vpid, ds, false, d);
 
 	augment_disjoint_set(vpid, ds);
 	return 0;
@@ -166,18 +166,22 @@ int bundle_group::build_join_interval_map_index()
 	return 0;
 }
 
-int bundle_group::build_splice_similarity(const vector<int> &ss, vector<PPID> &vpid, bool local, double min_similarity)
+int bundle_group::build_splice_similarity(const vector<int> &ss, vector<PPID> &vpid, disjoint_set &ds, bool local, double min_similarity)
 {
 	//printf("START BUILD SIMILARITY; cfg.max_num_junctions_to_combine = %d, ss.size() =%lu\n", cfg.max_num_junctions_to_combine, ss.size());
 	for(int xi = 0; xi < ss.size(); xi++)
 	{
 		int i = ss[xi];
 		if(splices[i].size() / 2.0 > cfg.max_num_junctions_to_combine) continue;
+		int pi = ds.find_set(i);
 		for(int xj = 0; xj < ss.size(); xj++)
 		{
 			int j = ss[xj];
 			if(i >= j) continue;
 			if(splices[j].size() / 2.0 > cfg.max_num_junctions_to_combine) continue;
+
+			int pj = ds.find_set(j);
+			if(pi == pj) continue;
 
 			assert(gset[i].chrm == gset[j].chrm);
 			assert(gset[i].strand == gset[j].strand);
