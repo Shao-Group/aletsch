@@ -21,17 +21,6 @@ bundle_group::bundle_group(string c, char s, int r, const parameters &f)
 	strand = s;
 	rid = r;
 	num_assembled = 0;
-	gmutex = new std::mutex();
-	tmutex = new std::mutex();
-}
-
-
-bundle_group::~bundle_group()
-{
-	if(gmutex != NULL) delete gmutex;
-	if(tmutex != NULL) delete tmutex;
-	gmutex = NULL;
-	tmutex = NULL;
 }
 
 int bundle_group::resolve()

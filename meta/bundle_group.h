@@ -26,7 +26,6 @@ class bundle_group
 {
 public:
 	bundle_group(string c, char s, int r, const parameters &cfg);
-	~bundle_group();
 
 public:
 	const parameters &cfg;				// config
@@ -38,8 +37,6 @@ public:
 	char strand;						// strandness
 	int rid;							// group id
 	int num_assembled;					// instance increasing
-	mutex *gmutex;						// for gset
-	mutex *tmutex;						// for tmerge
 
 private:
 	MISI sindex;				// splice index

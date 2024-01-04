@@ -21,7 +21,7 @@ See LICENSE for licensing.
 #include <algorithm>
 
 incubator::incubator(vector<parameters> &v)
-	: params(v), tpool(params[DEFAULT].max_threads), group_size(20)
+	: params(v), tpool(params[DEFAULT].max_threads), group_size(20), gmutex(99999), tmutex(99999)
 {
 	if(params[DEFAULT].profile_only == true) return;
 	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str(), std::ofstream::out | std::ofstream::app);
@@ -403,10 +403,12 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 	gt.resolve();
 	//save_transcript_set(ts, tlock);
 
+	/*
 	mutex mtx;
 	transcript_set ts0(chrm, rid, params[DEFAULT].min_single_exon_clustering_overlap);
 	transcript_set ts1(chrm, rid, params[DEFAULT].min_single_exon_clustering_overlap);
 	transcript_set ts2(chrm, rid, params[DEFAULT].min_single_exon_clustering_overlap);
+
 	for(int k = 0; k < v.size(); k++)
 	{
 		if(v[k].splices.size() >= 1) continue;
@@ -433,45 +435,46 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 
 	if(grps[bi + 0].num_assembled >= 1)
 	{
-		grps[bi + 0].tmutex->lock();
+		tmutex[bi + 0].lock();
 		grps[bi + 0].tmerge.add(ts0, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-		grps[bi + 0].tmutex->unlock();
+		tmutex[bi + 0].unlock();
 	}
 
 	if(grps[bi + 1].num_assembled >= 1)
 	{
-		grps[bi + 1].tmutex->lock();
+		tmutex[bi + 1].lock();
 		grps[bi + 1].tmerge.add(ts1, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-		grps[bi + 1].tmutex->unlock();
+		tmutex[bi + 1].unlock();
 	}
 
 	if(grps[bi + 2].num_assembled >= 1)
 	{
-		grps[bi + 2].tmutex->lock();
+		tmutex[bi + 2].lock();
 		grps[bi + 2].tmerge.add(ts2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-		grps[bi + 2].tmutex->unlock();
+		tmutex[bi + 2].unlock();
 	}
+	*/
 
-	grps[bi + 0].gmutex->lock();
+	gmutex[bi + 0].lock();
 	for(int k = 0; k < v.size(); k++)
 	{
-		if(v[k].strand == '+' && v[k].splices.size() >= 1) grps[bi + 1].gset.push_back(std::move(v[k]));
+		if(v[k].strand == '+' && v[k].splices.size() >= 1) grps[bi + 0].gset.push_back(std::move(v[k]));
 	}
-	grps[bi + 0].gmutex->unlock();
+	gmutex[bi + 0].unlock();
 
-	grps[bi + 1].gmutex->lock();
+	gmutex[bi + 1].lock();
 	for(int k = 0; k < v.size(); k++)
 	{
 		if(v[k].strand == '-' && v[k].splices.size() >= 1) grps[bi + 1].gset.push_back(std::move(v[k]));
 	}
-	grps[bi + 1].gmutex->unlock();
+	gmutex[bi + 1].unlock();
 
-	grps[bi + 2].gmutex->lock();
+	gmutex[bi + 2].lock();
 	for(int k = 0; k < v.size(); k++)
 	{
-		if(v[k].strand == '.' && v[k].splices.size() >= 1) grps[bi + 1].gset.push_back(std::move(v[k]));
+		if(v[k].strand == '.' && v[k].splices.size() >= 1) grps[bi + 2].gset.push_back(std::move(v[k]));
 	}
-	grps[bi + 2].gmutex->unlock();
+	gmutex[bi + 2].unlock();
 
 	sample_lock.unlock();
 	printf("finish generating tid = %d, rid = %d, of sample %s\n", tid, rid, sp.align_file.c_str());
@@ -494,8 +497,10 @@ int incubator::assemble(bundle_group &g, int rid, int gi)
 			vb[v[j]] = true;
 		}
 		assert(g.rid == rid);
-		boost::asio::post(this->tpool, [this, &g, gv, rid, gi, instance]{ 
-				assembler asmb(params[DEFAULT], g.tmerge, *(g.tmutex), rid, gi, instance);
+		int bi = get_bundle_group(g.chrm, rid);
+		mutex &mtx = tmutex[bi + gi];
+		boost::asio::post(this->tpool, [this, &g, &mtx, gv, rid, gi, instance]{ 
+				assembler asmb(params[DEFAULT], g.tmerge, mtx, rid, gi, instance);
 				asmb.resolve(gv);
 		});
 		instance++;
