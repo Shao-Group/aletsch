@@ -70,6 +70,8 @@ int bundle_group::resolve0()
 
 int bundle_group::resolve()
 {
+	grouped.assign(gset.size(), false);
+
 	build_splices();
 	build_splice_index();
 
@@ -80,13 +82,20 @@ int bundle_group::resolve()
 	unordered_set<int64_t> ps;
 	for(auto &z: sindex)
 	{
+		//printf("build similarity for splice %d, size = %lu\n", z.first, z.second.size());
+		if(z.second.size() <= 1) continue;
 		build_splice_similarity(z.second, pm, ps);
 	}
+	printf("done with building similarity\n");
 
-	// round two
 	disjoint_set ds(gset.size());
 	build_disjoint_set(pm, ds);
+
+	printf("done with building disjoint set\n");
+
 	build_groups(ds);
+
+	printf("done with building group\n");
 
 	stats(1);
 	if(cfg.verbose >= 2) print();
