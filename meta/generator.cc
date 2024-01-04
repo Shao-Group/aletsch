@@ -171,6 +171,7 @@ int generator::generate(bundle_base &bb, int index)
 	bd.bridge();
 	bd.splices = bd.hcst.get_splices();
 	if(bd.splices.size() >= 1) vcb.emplace_back(std::move(bd));
+	else bd.clear();
 	return 0;
 }
 
