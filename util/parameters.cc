@@ -35,7 +35,7 @@ parameters::parameters()
 
 	// for meta-assembly
 	max_group_size = 20;
-	min_grouping_similarity = 0.10;
+	min_grouping_similarity = 0.20;
 	max_grouping_similarity = 0.90;
 	max_num_junctions_to_combine = 500;
 	assembly_repeats = 1;
