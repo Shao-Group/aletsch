@@ -14,17 +14,28 @@ See LICENSE for licensing.
 
 //mutex bundle_group::gmutex;
 
-bundle_group::bundle_group(string c, char s, int r, const parameters &f, thread_pool &p)
-	: cfg(f), tpool(p), tmerge(c, r, f.min_single_exon_clustering_overlap)
+bundle_group::bundle_group(string c, char s, int r, const parameters &f)
+	: cfg(f), tmerge(c, r, f.min_single_exon_clustering_overlap)
 {
 	chrm = c;
 	strand = s;
 	rid = r;
+	num_assembled = 0;
+	gmutex = new std::mutex();
+	tmutex = new std::mutex();
+}
+
+
+bundle_group::~bundle_group()
+{
+	if(gmutex != NULL) delete gmutex;
+	if(tmutex != NULL) delete tmutex;
+	gmutex = NULL;
+	tmutex = NULL;
 }
 
 int bundle_group::resolve()
 {
-	build_splices();
 	build_splice_index();
 
 	disjoint_set ds(gset.size());
@@ -57,14 +68,6 @@ int bundle_group::resolve()
 
 int bundle_group::clear()
 {
-	for(int k = 0; k < splices.size(); k++)
-	{
-		splices[k].clear();
-		vector<int32_t>().swap(splices[k]);
-	}
-	splices.clear();
-	vector<vector<int32_t>>().swap(splices);
-
 	for(auto &z: jmaps) join_interval_map().swap(z);
 	jmaps.clear();
 	vector<join_interval_map>().swap(jmaps);
@@ -85,6 +88,8 @@ int bundle_group::clear()
 
 	grouped.clear();
 	vector<bool>().swap(grouped);
+
+	num_assembled = 0;
 	return 0;
 }
 
@@ -97,17 +102,6 @@ int bundle_group::process_subset(const set<int> &s, disjoint_set &ds, double d)
 	build_splice_similarity(ss, vpid, ds, false, d);
 
 	augment_disjoint_set(vpid, ds);
-	return 0;
-}
-
-int bundle_group::build_splices()
-{
-	splices.clear();
-	for(int i = 0; i < gset.size(); i++)
-	{
-		vector<int32_t> v = gset[i].hcst.get_splices();
-		splices.push_back(std::move(v));
-	}
 	return 0;
 }
 
@@ -131,9 +125,9 @@ int bundle_group::build_splice_index()
 	sindex.clear();
 	for(int k = 0; k < gset.size(); k++)
 	{
-		for(int i = 0; i < splices[k].size(); i++)
+		for(int i = 0; i < gset[k].splices.size(); i++)
 		{
-			int32_t p = splices[k][i];
+			int32_t p = gset[k].splices[i];
 			MISI::iterator it = sindex.find(p);
 			if(it == sindex.end())
 			{
@@ -172,13 +166,13 @@ int bundle_group::build_splice_similarity(const vector<int> &ss, vector<PPID> &v
 	for(int xi = 0; xi < ss.size(); xi++)
 	{
 		int i = ss[xi];
-		if(splices[i].size() / 2.0 > cfg.max_num_junctions_to_combine) continue;
+		if(gset[i].splices.size() / 2.0 > cfg.max_num_junctions_to_combine) continue;
 		int pi = ds.find_set(i);
 		for(int xj = 0; xj < ss.size(); xj++)
 		{
 			int j = ss[xj];
 			if(i >= j) continue;
-			if(splices[j].size() / 2.0 > cfg.max_num_junctions_to_combine) continue;
+			if(gset[j].splices.size() / 2.0 > cfg.max_num_junctions_to_combine) continue;
 
 			int pj = ds.find_set(j);
 			if(pi == pj) continue;
@@ -186,15 +180,15 @@ int bundle_group::build_splice_similarity(const vector<int> &ss, vector<PPID> &v
 			assert(gset[i].chrm == gset[j].chrm);
 			assert(gset[i].strand == gset[j].strand);
 
-			vector<int32_t> vv(splices[i].size() + splices[j].size(), 0);
-			vector<int32_t>::iterator it = set_intersection(splices[i].begin(), splices[i].end(), splices[j].begin(), splices[j].end(), vv.begin());
+			vector<int32_t> vv(gset[i].splices.size() + gset[j].splices.size(), 0);
+			vector<int32_t>::iterator it = set_intersection(gset[i].splices.begin(), gset[i].splices.end(), gset[j].splices.begin(), gset[j].splices.end(), vv.begin());
 			int c = it - vv.begin();
-			//double r = c * 1.0 / (splices[i].size() + splices[j].size() - c);
-			int small = splices[i].size() < splices[j].size() ? splices[i].size() : splices[j].size();
+			//double r = c * 1.0 / (gset[i].splices.size() + gset[j].splices.size() - c);
+			int small = gset[i].splices.size() < gset[j].splices.size() ? gset[i].splices.size() : gset[j].splices.size();
 			double r = c * 1.0 / small;
 
 			if(cfg.verbose >= 2) printf("graph-similarity: r = %.3lf, c = %d, size1 = %lu, size2 = %lu, sp1 = %d-%d, sp2 = %d-%d\n", 
-					r, c, splices[i].size(), splices[j].size(), splices[i].front(), splices[i].back(), splices[j].front(), splices[j].back());
+					r, c, gset[i].splices.size(), gset[j].splices.size(), gset[i].splices.front(), gset[i].splices.back(), gset[j].splices.front(), gset[j].splices.back());
 
 			if(c <= 0.50) continue;
 			if(r < min_similarity) continue;
@@ -251,14 +245,14 @@ int bundle_group::build_overlap_similarity(const vector<int> &ss, vector<PPID> &
 			double o2 = len * 100.0 / len2;
 			double oo = o1 > o2 ? o1 : o2;
 
-			vector<int32_t> vv(splices[i].size() + splices[j].size(), 0);
-			vector<int32_t>::iterator it = set_intersection(splices[i].begin(), splices[i].end(), splices[j].begin(), splices[j].end(), vv.begin());
+			vector<int32_t> vv(gset[i].splices.size() + gset[j].splices.size(), 0);
+			vector<int32_t>::iterator it = set_intersection(gset[i].splices.begin(), gset[i].splices.end(), gset[j].splices.begin(), gset[j].splices.end(), vv.begin());
 			int c = it - vv.begin();
-			int small = splices[i].size() < splices[j].size() ? splices[i].size() : splices[j].size();
+			int small = gset[i].splices.size() < gset[j].splices.size() ? gset[i].splices.size() : gset[j].splices.size();
 			double r = c * 1.0 / small;
 
 			if(cfg.verbose >= 2) printf("combined-similarity: r = %.3lf, c = %d, sp1 = %lu, sp2 = %lu, len1 = %d, len2 = %d, o1 = %.1lf, o2 = %.1lf, oo = %.1lf\n", 
-					r, c, splices[i].size(), splices[j].size(), len1, len2, o1, o2, oo);
+					r, c, gset[i].splices.size(), gset[j].splices.size(), len1, len2, o1, o2, oo);
 
 			if(oo < 0.75) continue;
 			if(local == true) vpid.push_back(PPID(PI(xi, xj), oo));
@@ -358,7 +352,7 @@ int bundle_group::stats(disjoint_set &ds, int r)
 	int wsp = 0;
 	for(int z = 0; z < gset.size(); z++)
 	{
-		if(splices[z].size() >= 1) wsp++;
+		if(gset[z].splices.size() >= 1) wsp++;
 	}
 
 	printf("bundle group stats: round %d, chrm %s, rid %d, strand %c, %d / %lu graphs grouped (%d w splices)\n", r, chrm.c_str(), rid, strand, cnt, gset.size(), wsp);
@@ -378,7 +372,7 @@ int bundle_group::print()
 		for(int i = 0; i < gvv[k].size(); i++)
 		{
 			int g = gvv[k][i];
-			printf(" graph %d, rid = %s, splices = %lu, hits = %lu\n", g, gset[g].gid.c_str(), splices[g].size(), gset[g].hits.size());
+			printf(" graph %d, rid = %s, splices = %lu, hits = %lu\n", g, gset[g].gid.c_str(), gset[g].splices.size(), gset[g].hits.size());
 		}
 	}
 	printf("\n");

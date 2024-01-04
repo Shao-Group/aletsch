@@ -21,14 +21,13 @@ See LICENSE for licensing.
 #include "hyper_set.h"
 #include "assembler.h"
 
-generator::generator(sample_profile &s, vector<bundle> &v, const parameters &c, thread_pool &p, int tid, int rid)
-	: vcb(v), cfg(c), sp(s), pool(p), target_id(tid), region_id(rid)
+generator::generator(sample_profile &s, vector<bundle> &v, const parameters &c, int tid, int rid)
+	: vcb(v), cfg(c), sp(s), target_id(tid), region_id(rid)
 {
 	index = 0;
 	//sp.open_align_file();
 	sfn = sam_open(sp.align_file.c_str(), "r");
 	hdr = sam_hdr_read(sfn);
-
 }
 
 generator::~generator()
@@ -151,9 +150,6 @@ int generator::resolve()
 	if(term1 && region_id < sp.start1[target_id].size() - 1) sp.start1[target_id][region_id + 1] = new_start1;
 	if(term2 && region_id < sp.start2[target_id].size() - 1) sp.start2[target_id][region_id + 1] = new_start2;
 	*/
-
-	//process();
-
 	return 0;
 }
 
@@ -172,35 +168,7 @@ int generator::generate(bundle_base &bb, int index)
 	bd.compute_strand(sp.library_type);
 	bd.build_fragments();
 	bd.bridge();
-	//vcb.push_back(std::move(bd));
-	return 0;
-}
-
-int generator::process()
-{
-	vector<mutex> v(vcb.size());
-	for(int i = 0; i < vcb.size(); i++)
-	{
-		bundle &bd = vcb[i];
-		mutex &m = v[i];
-		m.unlock();
-		m.lock();
-		printf("process %d/%lu\n", i, vcb.size());
-		boost::asio::post(this->pool, [this, &bd, &m]{ 
-			printf("process in a new thread\n");
-			bd.compute_strand(this->sp.library_type);
-			bd.build_fragments();
-			bd.bridge();
-			m.unlock();
-		});
-	}
-
-	printf("done process\n");
-	for(int i = 0; i < v.size(); i++)
-	{
-		printf("check v[%d]\n", i);
-		v[i].lock();
-	}
+	bd.splices = bd.hcst.get_splices();
 	return 0;
 }
 
