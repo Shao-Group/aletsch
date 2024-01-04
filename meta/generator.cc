@@ -72,7 +72,7 @@ int generator::resolve()
 		if(p.n_cigar < 1) continue;													// should never happen
 
 		hit ht(b1t, hid++);
-		if(fabs(ht.pos - ht.rpos) >= 100000) continue;								// skip long hit
+		if(fabs(ht.pos - ht.rpos) >= 1000000) continue;								// skip long hit
 
 		ht.set_tags(b1t);
 		ht.set_strand(sp.library_type);
