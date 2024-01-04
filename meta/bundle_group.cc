@@ -347,8 +347,6 @@ int bundle_group::stats(disjoint_set &ds, int r)
 		if(ds.get_size(p) >= cfg.max_group_size) cnt++;
 	}
 
-	printf("bundle group stats: round %d, chrm %s, rid %d, strand %c, total %d / %lu graphs grouped\n", r, chrm.c_str(), rid, strand, cnt, gset.size());
-
 	map<int, int> m;
 	for(int k = 0; k < gvv.size(); k++)
 	{
@@ -356,6 +354,14 @@ int bundle_group::stats(disjoint_set &ds, int r)
 		if(m.find(n) == m.end()) m.insert(pair<int, int>(n, 1));
 		else m[n]++;
 	}
+
+	int wsp = 0;
+	for(int z = 0; z < gset.size(); z++)
+	{
+		if(splices[z].size() >= 1) wsp++;
+	}
+
+	printf("bundle group stats: round %d, chrm %s, rid %d, strand %c, %d / %lu graphs grouped (%d w splices)\n", r, chrm.c_str(), rid, strand, cnt, gset.size(), wsp);
 
 	for(map<int, int>::iterator it = m.begin(); it != m.end(); it++)
 	{
