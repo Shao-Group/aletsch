@@ -408,47 +408,47 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 	transcript_set ts1(chrm, rid, params[DEFAULT].min_single_exon_clustering_overlap);
 	transcript_set ts2(chrm, rid, params[DEFAULT].min_single_exon_clustering_overlap);
 
+	int cnt0 = 0, cnt1 = 0, cnt2 = 0;
 	for(int k = 0; k < v.size(); k++)
 	{
 		if(v[k].splices.size() >= 1) continue;
 
 		if(v[k].strand == '+')
 		{
-			assembler asmb(params[DEFAULT], ts0, mtx, rid, 0, grps[bi + 0].num_assembled);
+			assembler asmb(params[DEFAULT], ts0, mtx, rid, 0, cnt0++);
 			asmb.assemble(v[k]);
-			grps[bi + 0].num_assembled++;
 		}
 		if(v[k].strand == '-')
 		{
-			assembler asmb(params[DEFAULT], ts1, mtx, rid, 1, grps[bi + 1].num_assembled);
+			assembler asmb(params[DEFAULT], ts1, mtx, rid, 1, cnt1++);
 			asmb.assemble(v[k]);
-			grps[bi + 1].num_assembled++;
 		}
 		if(v[k].strand == '.')
 		{
-			assembler asmb(params[DEFAULT], ts2, mtx, rid, 2, grps[bi + 2].num_assembled);
+			assembler asmb(params[DEFAULT], ts2, mtx, rid, 2, cnt2++);
 			asmb.assemble(v[k]);
-			grps[bi + 2].num_assembled++;
 		}
 	}
 
-	if(grps[bi + 0].num_assembled >= 1)
+	if(cnt0 >= 1)
 	{
-		tmutex[bi + 0].lock();
+		grps[bi + 0].num_assembled = cnt0;
 		grps[bi + 0].tmerge.add(ts0, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		tmutex[bi + 0].unlock();
 	}
 
-	if(grps[bi + 1].num_assembled >= 1)
+	if(cnt1 >= 1)
 	{
 		tmutex[bi + 1].lock();
+		grps[bi + 1].num_assembled = cnt1;
 		grps[bi + 1].tmerge.add(ts1, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		tmutex[bi + 1].unlock();
 	}
 
-	if(grps[bi + 2].num_assembled >= 1)
+	if(cnt2 >= 1)
 	{
 		tmutex[bi + 2].lock();
+		grps[bi + 2].num_assembled = cnt2;
 		grps[bi + 2].tmerge.add(ts2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		tmutex[bi + 2].unlock();
 	}
