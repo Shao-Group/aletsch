@@ -3391,6 +3391,11 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
     trst.features.seq_min_cnt = INT_MAX;
     trst.features.seq_min_abd = DBL_MAX;
     trst.features.seq_min_ratio = 1.0;
+    trst.features.seq_max_wt = 0;
+    trst.features.seq_max_cnt = 0;
+    trst.features.seq_max_abd = 0;
+    trst.features.seq_max_ratio = 0;
+
 
     trst.features.unbridge_start_coming_count = 0;
     trst.features.unbridge_start_coming_ratio = 0;
@@ -3414,6 +3419,12 @@ int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, v
         trst.features.seq_min_cnt = min(trst.features.seq_min_cnt, ei.count);
         trst.features.seq_min_abd = min(trst.features.seq_min_abd, ei.abd);
         trst.features.seq_min_ratio = min(trst.features.seq_min_ratio, gr.get_edge_weight(e)/max(gr.get_in_weights(v2), gr.get_out_weights(v1)));
+
+        trst.features.seq_max_wt = max(trst.features.seq_max_wt, gr.get_edge_weight(e));
+        trst.features.seq_max_cnt = max(trst.features.seq_max_cnt, ei.count);
+        trst.features.seq_max_abd = max(trst.features.seq_max_abd, ei.abd);
+        trst.features.seq_max_ratio = max(trst.features.seq_max_ratio, gr.get_edge_weight(e)/max(gr.get_in_weights(v2), gr.get_out_weights(v1)));
+
         
         if(i == 1)
         {
