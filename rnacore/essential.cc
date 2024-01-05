@@ -688,7 +688,7 @@ int write_unpaired_reads(BGZF *fout, const vector<hit> &hits, const vector<bool>
 
 		const hit &h = hits[i];
 
-		/* TODO TODO
+		/* TODO
 		bam1_t b1t;
 		bool b = build_bam1_t(b1t, h, hits[i].spos);
 		if(b == true) bam_write1(fout, &(b1t));
