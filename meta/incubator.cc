@@ -49,7 +49,7 @@ int incubator::resolve()
 	init_bundle_groups();
 	init_transcript_sets();
 
-	for(int k = 0; k < samples.size(); k++) samples[k].open_align_file();
+	//for(int k = 0; k < samples.size(); k++) samples[k].open_align_file();
 
 	time_t mytime;
 	for(auto &x: sindex)
