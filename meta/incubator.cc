@@ -349,6 +349,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 	for(int k = 0; k < locks.size(); k++) locks[k].lock();
 
 	// print start/end positions
+	/*
 	for(int i = 0; i < v.size(); i++)
 	{
 		int sid = v[i].first;
@@ -362,6 +363,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 			printf("sample %d, tid = %d, rid = %d, strand -, expected end = %d, actual end = %d\n", sid, tid, rid, samples[sid].start2[tid][rid] + samples[sid].region_partition_length, samples[sid].end2[tid][rid]);
 		}
 	}
+	*/
 
 	for(int j = 0; j < group_size; j++)
 	{
@@ -372,7 +374,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 		{
 			bundle_group &g = this->grps[bi + i];
 			time_t mytime = time(NULL);
-			printf("assemble chrm %s, gid = %d, rid = %d, bi = %d, %s", chrm.c_str(), gid, rid, bi, ctime(&mytime));
+			//printf("assemble chrm %s, gid = %d, rid = %d, bi = %d, %s", chrm.c_str(), gid, rid, bi, ctime(&mytime));
 			boost::asio::post(this->tpool, [this, &g, bi, rid, i]{ 
 					g.resolve(); 
 					this->assemble(g, rid, i);
