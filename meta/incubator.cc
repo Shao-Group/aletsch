@@ -339,7 +339,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 			mutex &lock = locks[i * group_size + j];
 
 			time_t mytime = time(NULL);
-			printf("generate chrm %s, gid = %d, rid = %d, %s", chrm.c_str(), gid, rid, ctime(&mytime));
+			//printf("generate chrm %s, gid = %d, rid = %d, %s", chrm.c_str(), gid, rid, ctime(&mytime));
 			boost::asio::post(this->tpool, [this, &lock, sid, chrm, tid, rid]{ 
 					this->generate(sid, tid, rid, chrm, lock); 
 			});

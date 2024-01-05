@@ -74,7 +74,7 @@ int bundle_group::remove_duplicates()
 		{
 			int32_t end = bd.sp.end1[tid][rid - 1];
 			if(bd.rpos > end) continue;
-			printf("duplicate bundle+: rid = %d, sid = %d, tid = %d, pos:%d-%d, pre-end = %d\n", rid, sid, tid, bd.lpos, bd.rpos, end);
+			//printf("duplicate bundle+: rid = %d, sid = %d, tid = %d, pos:%d-%d, pre-end = %d\n", rid, sid, tid, bd.lpos, bd.rpos, end);
 			bd.clear();
 			bd.splices.clear();
 		}
@@ -82,7 +82,7 @@ int bundle_group::remove_duplicates()
 		{
 			int32_t end = bd.sp.end2[tid][rid - 1];
 			if(bd.rpos > end) continue;
-			printf("duplicate bundle-: rid = %d, sid = %d, tid = %d, pos:%d-%d, pre-end = %d\n", rid, sid, tid, bd.lpos, bd.rpos, end);
+			//printf("duplicate bundle-: rid = %d, sid = %d, tid = %d, pos:%d-%d, pre-end = %d\n", rid, sid, tid, bd.lpos, bd.rpos, end);
 			bd.clear();
 			bd.splices.clear();
 		}
