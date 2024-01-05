@@ -287,9 +287,9 @@ int incubator::init_bundle_groups()
 		int m = get_max_region(chrm);
 		for(int k = 0; k < m; k++)
 		{
-			grps.push_back(bundle_group(chrm, '+', k, params[DEFAULT]));
-			grps.push_back(bundle_group(chrm, '-', k, params[DEFAULT]));
-			grps.push_back(bundle_group(chrm, '.', k, params[DEFAULT]));
+			grps.push_back(bundle_group(chrm, '+', k, params[DEFAULT], sindex));
+			grps.push_back(bundle_group(chrm, '-', k, params[DEFAULT], sindex));
+			grps.push_back(bundle_group(chrm, '.', k, params[DEFAULT], sindex));
 		}
 	}
 	return 0;

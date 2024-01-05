@@ -25,18 +25,19 @@ typedef boost::asio::thread_pool thread_pool;
 class bundle_group
 {
 public:
-	bundle_group(string c, char s, int r, const parameters &cfg);
+	bundle_group(string c, char s, int r, const parameters &cfg, const map<string, vector<PI>> &si);
 
 public:
-	const parameters &cfg;				// config
-	transcript_set tmerge;				// merged transcripts
-	vector<bundle> gset;				// given graphs
-	vector<join_interval_map> jmaps;	// join interval maps for all bundles
-	vector<vector<int>> gvv;			// merged graphs
-	string chrm;						// chrm name
-	char strand;						// strandness
-	int rid;							// group id
-	int num_assembled;					// instance increasing
+	const parameters &cfg;						// config
+	const map<string, vector<PI>> sidx;			// sample index
+	transcript_set tmerge;						// merged transcripts
+	vector<bundle> gset;						// given graphs
+	vector<join_interval_map> jmaps;			// join interval maps for all bundles
+	vector<vector<int>> gvv;					// merged graphs
+	string chrm;								// chrm name
+	char strand;								// strandness
+	int rid;									// group id
+	int num_assembled;							// instance increasing
 
 private:
 	MISI sindex;				// splice index
@@ -49,6 +50,7 @@ public:
 	int clear();
 
 private:
+	int remove_duplicates();
 	int build_join_interval_maps();
 	int build_splice_index();
 	int build_join_interval_map_index();

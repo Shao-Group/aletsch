@@ -14,8 +14,8 @@ See LICENSE for licensing.
 
 //mutex bundle_group::gmutex;
 
-bundle_group::bundle_group(string c, char s, int r, const parameters &f)
-	: cfg(f), tmerge(c, r, f.min_single_exon_clustering_overlap)
+bundle_group::bundle_group(string c, char s, int r, const parameters &f, const map<string, vector<PI>> &si)
+	: cfg(f), tmerge(c, r, f.min_single_exon_clustering_overlap), sidx(si)
 {
 	chrm = c;
 	strand = s;
@@ -25,8 +25,8 @@ bundle_group::bundle_group(string c, char s, int r, const parameters &f)
 
 int bundle_group::resolve()
 {
+	remove_duplicates();
 	build_splice_index();
-
 	disjoint_set ds(gset.size());
 	grouped.assign(gset.size(), false);
 
@@ -52,6 +52,41 @@ int bundle_group::resolve()
 	stats(ds, 2);
 	if(cfg.verbose >= 2) print();
 
+	return 0;
+}
+
+int bundle_group::remove_duplicates()
+{
+	// build sample-id to target-id index
+	if(rid <= 0) return 0;
+	if(sidx.find(chrm) == sidx.end()) return 0;
+	const vector<PI> &vv = sidx.at(chrm);
+	map<int, int> mv;
+	for(int k = 0; k < vv.size(); k++) mv.insert(vv[k]);
+
+	for(int i = 0; i < gset.size(); i++)
+	{
+		bundle &bd = gset[i];
+		int sid = bd.sp.sample_id;
+		int tid = mv[sid];
+
+		if(strand == '+')
+		{
+			int32_t end = bd.sp.end1[tid][rid - 1];
+			if(bd.rpos > end) continue;
+			printf("duplicate bundle+: rid = %d, sid = %d, tid = %d, pos:%d-%d, pre-end = %d\n", rid, sid, tid, bd.lpos, bd.rpos, end);
+			bd.clear();
+			bd.splices.clear();
+		}
+		if(strand == '-')
+		{
+			int32_t end = bd.sp.end2[tid][rid - 1];
+			if(bd.rpos > end) continue;
+			printf("duplicate bundle-: rid = %d, sid = %d, tid = %d, pos:%d-%d, pre-end = %d\n", rid, sid, tid, bd.lpos, bd.rpos, end);
+			bd.clear();
+			bd.splices.clear();
+		}
+	}
 	return 0;
 }
 
