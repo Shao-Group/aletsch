@@ -192,7 +192,11 @@ vector<int32_t> chain_set::get_splices() const
 		for(int j = 0; j < chains[i].size(); j++)
 		{
 			const PVI3 &p = chains[i][j];
-			if(p.second[0] + p.second[1] + p.second[2] <= 0) continue;
+			if(p.second[0] + p.second[1] + p.second[2] <= 0)
+			{
+				printf("error: count <= 0\n");
+				continue;
+			}
 			for(int k = 0; k < p.first.size(); k++)
 			{
 				s.insert(p.first[k]);
