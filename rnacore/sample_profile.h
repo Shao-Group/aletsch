@@ -46,6 +46,8 @@ public:
 	vector<vector<hts_itr_t*>> iters;
 	vector<vector<int32_t>> start1;
 	vector<vector<int32_t>> start2;
+	vector<vector<int32_t>> end1;
+	vector<vector<int32_t>> end2;
 
 public:
 	int load_profile(const string &dir);

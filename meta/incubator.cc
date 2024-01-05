@@ -349,12 +349,20 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 		}
 	}
 
-	for(int k = 0; k < locks.size(); k++) 
+	for(int k = 0; k < locks.size(); k++) locks[k].lock();
+
+	// print start/end positions
+	for(int i = 0; i < v.size(); i++)
 	{
-		//printf("try to lock sample %d\n", k);
-		locks[k].lock();
+		int sid = v[i].first;
+		int tid = v[i].second;
+		for(int j = 0; j < group_size; j++)
+		{
+			int rid = gid * group_size + j;
+			printf("sample %d, tid = %d, rid = %d, strand +, expected end = %d, actual end = %d\n", sid, tid, rid, samples[sid].start1[tid][rid] + samples[sid].region_partition_length, samples[sid].end1[tid][rid]);
+			printf("sample %d, tid = %d, rid = %d, strand -, expected end = %d, actual end = %d\n", sid, tid, rid, samples[sid].start2[tid][rid] + samples[sid].region_partition_length, samples[sid].end2[tid][rid]);
+		}
 	}
-	//printf("locked samples\n");
 
 	for(int j = 0; j < group_size; j++)
 	{

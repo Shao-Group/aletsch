@@ -191,6 +191,8 @@ int sample_profile::read_index_iterators()
 			iters[i].push_back(iter);
 			start1[i].push_back(s);
 			start2[i].push_back(s);
+			end1[i].push_back(s + region_partition_length);
+			end2[i].push_back(s + region_partition_length);
 		}
 		assert(iters[i].size() == start1[i].size());
 		assert(iters[i].size() == start2[i].size());
