@@ -171,7 +171,7 @@ int generator::generate(bundle_base &bb, int index)
 	bd.compute_strand(sp.library_type);
 	bd.build_fragments();
 	bd.bridge();
-	bd.splices = bd.hcst.get_splices();
+	bd.splices = bd.fcst.get_splices();
 	//if(bd.splices.size() >= 1) vcb.emplace_back(std::move(bd));
 	//else bd.clear();
 	return 0;
