@@ -170,6 +170,11 @@ int generator::generate(bundle_base &bb, int index)
 	bd.build_fragments();
 	bd.bridge();
 	bd.splices = bd.hcst.get_splices();
+
+	if(bd.splices.size() != bd.fcst.get_splices().size())
+	{
+		printf("hcst splices = %lu, fcst splices = %lu\n", bd.splices.size(), bd.fcst.get_splices().size());
+	}
 	//if(bd.splices.size() >= 1) vcb.emplace_back(std::move(bd));
 	//else bd.clear();
 	return 0;
