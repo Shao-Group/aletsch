@@ -7,11 +7,7 @@ RNACORE_INCLUDE = $(top_srcdir)/rnacore
 SCALLOP_INCLUDE = $(top_srcdir)/scallop
 BRIDGE_INCLUDE = $(top_srcdir)/bridge
 
-<<<<<<< HEAD
-libmeta_a_CPPFLAGS = -std=c++11 -I$(GTF_INCLUDE) -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE) -I$(SCALLOP_INCLUDE) -I$(RNACORE_INCLUDE) -I$(BRIDGE_INCLUDE)
-=======
 libmeta_a_CPPFLAGS = -O2 -std=c++11 -I$(GTF_INCLUDE) -I$(GRAPH_INCLUDE) -I$(UTIL_INCLUDE) -I$(SCALLOP_INCLUDE) -I$(RNACORE_INCLUDE) -I$(BRIDGE_INCLUDE)
->>>>>>> 4a63886c011f574b6de5d61f890f0672694d72eb
 libmeta_a_SOURCES = bundle.h bundle.cc \
 					bundle_group.h bundle_group.cc \
 					generator.h generator.cc \
