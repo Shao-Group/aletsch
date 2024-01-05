@@ -26,7 +26,6 @@ public:
 	string index_file;
 	samFile *sfn;
 	bam_hdr_t *hdr;
-	BGZF *bridged_bam;
 	ofstream *individual_gtf;
 	static mutex bam_lock;
 	static mutex gtf_lock;
@@ -53,15 +52,12 @@ public:
 	int load_profile(const string &dir);
 	int save_profile(const string &dir);
 	int open_align_file();
-	int open_bridged_bam(const string &dir);
-	int init_bridged_bam(const string &dir);
 	int open_individual_gtf(const string &dir);
 	int read_align_headers();
 	int read_index_iterators();
 	int free_align_headers();
 	int free_index_iterators();
 	int close_individual_gtf();
-	int close_bridged_bam();
 	int close_align_file();
 	int print();
 };

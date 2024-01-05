@@ -28,7 +28,6 @@ public:
 	string chrm_list_string;
 	string output_gtf_file;
 	string output_gtf_dir;
-	string output_bridged_bam_dir;
 	string profile_dir;
 	int verbose;
 	string algo;
@@ -84,6 +83,7 @@ public:
 	bool use_second_alignment;
 	int batch_bundle_size;
 	int32_t max_reads_partition_gap;
+	int32_t max_read_span;
 
 	// for preview
 	int max_preview_reads;

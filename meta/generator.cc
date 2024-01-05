@@ -72,8 +72,8 @@ int generator::resolve()
 		if(p.n_cigar < 1) continue;													// should never happen
 
 		hit ht(b1t, hid++);
-		if(fabs(ht.pos - ht.rpos) >= 500000) continue;								// skip long hit
-		if(((p.flag & 0x8) <= 0) && fabs(ht.pos - ht.mpos) >= 500000) continue;
+		if(fabs(ht.pos - ht.rpos) >= cfg.max_read_span) continue;								// skip long hit
+		if(((p.flag & 0x8) <= 0) && fabs(ht.pos - ht.mpos) >= cfg.max_read_span) continue;
 
 		ht.set_tags(b1t);
 		ht.set_strand(sp.library_type);
@@ -183,50 +183,9 @@ bool generator::regional(splice_graph &gr, phase_set &ps, vector<pereads_cluster
 		if(gr.get_vertex_info(i).regional == false) all_regional = false;
 		if(all_regional == false) break;
 	}
-
 	if(all_regional == false && gr.num_edges() >= 1) return false;
-
-	if(cfg.output_bridged_bam_dir != "" && vc.size() >= 1)
-	{
-		sp.open_bridged_bam(cfg.output_bridged_bam_dir);
-		for(int k = 0; k < vc.size(); k++)
-		{
-			write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
-			vc[k].clear();
-		}
-		sp.close_bridged_bam();
-	}
-
-	//gr.print(); printf("above graph is a regional graph\n\n");
-
 	return true;
 }
-
-/*
-bool generator::assemble_single(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &vc)
-{
-	transcript t;
-	bool b = build_single_exon_transcript(gr, t);
-	if(b == false) return false;
-
-	if(cfg.output_bridged_bam_dir != "" && vc.size() >= 1)
-	{
-		sp.open_bridged_bam(cfg.output_bridged_bam_dir);
-		for(int k = 0; k < vc.size(); k++)
-		{
-			write_unbridged_pereads_cluster(sp.bridged_bam, vc[k]);
-			vc[k].clear();
-		}
-		sp.close_bridged_bam();
-	}
-
-	//if(t.coverage < cfg.min_single_exon_transcript_coverage) return true;
-	if(t.length() < cfg.min_single_exon_transcript_length) return true;
-
-	ts.add(t, 2, sp.sample_id, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-	return true;
-}
-*/
 
 int generator::partition(splice_graph &gr, phase_set &ps, vector<pereads_cluster> &ub, vector<splice_graph> &grv, vector<phase_set> &psv, vector< vector<pereads_cluster> > &ubv)
 {

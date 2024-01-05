@@ -22,7 +22,6 @@ parameters::parameters()
 	input_bam_list = "";
 	output_gtf_file = "";
 	output_gtf_dir = "";
-	output_bridged_bam_dir = "";
 	chrm_list_string = "";
 	chrm_list_file = "";
 	profile_dir = "";
@@ -58,6 +57,7 @@ parameters::parameters()
 	uniquely_mapped_only = false;
 	batch_bundle_size = 100;
 	max_reads_partition_gap = 10;
+	max_read_span = 500000;
 	
 	// for preview
 	max_preview_reads = 2000000;
@@ -151,16 +151,6 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 		else if(string(argv[i]) == "--output_gtf_dir")
 		{
 			output_gtf_dir = string(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "-b")
-		{
-			output_bridged_bam_dir = string(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "--output_bridged_bam_dir")
-		{
-			output_bridged_bam_dir = string(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "-p")
@@ -545,7 +535,6 @@ int parameters::print_help()
 	printf(" %-46s  %s\n", "-l/--chrm_list_string <string>",  "list of chromosomes that will be assembled, default: N/A (i.e., assemble all)");
 	printf(" %-46s  %s\n", "-L/--chrm_list_file <string>",  "file with chromosomes that will be assembled, default: N/A (i.e., assemble all)");
 	printf(" %-46s  %s\n", "-d/--output_gtf_dir <string>",  "existing directory for individual transcripts, default: N/A");
-	printf(" %-46s  %s\n", "-b/--output_bridged_bam_dir <string>",  "existing directory for individual bridged alignments, default: N/A");
 	printf(" %-46s  %s\n", "-p/--profile_dir <string>",  "existing directory for saving/loading profiles of each samples, default: N/A");
 	printf(" %-46s  %s\n", "-t/--max_threads <integer>",  "maximized number of threads, default: 10");
 	printf(" %-46s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 20");

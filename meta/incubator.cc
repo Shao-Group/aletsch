@@ -21,7 +21,7 @@ See LICENSE for licensing.
 #include <algorithm>
 
 incubator::incubator(vector<parameters> &v)
-	: params(v), tpool(params[DEFAULT].max_threads), group_size(20), gmutex(99999), tmutex(99999)
+	: params(v), tpool(params[DEFAULT].max_threads), group_size(params[DEFAULT].max_threads), gmutex(99999), tmutex(99999)
 {
 	if(params[DEFAULT].profile_only == true) return;
 	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str(), std::ofstream::out | std::ofstream::app);
@@ -136,10 +136,7 @@ int incubator::init_samples()
 				pre.infer_library_type();
 				if(sp.data_type == PAIRED_END) pre.infer_insertsize();
 			}
-
 			sp.read_index_iterators(); 
-			string bdir = cfg.output_bridged_bam_dir;
-			if(bdir != "") sp.init_bridged_bam(bdir);
 		});
 	}
 	pool.join();

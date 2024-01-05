@@ -17,7 +17,6 @@ sample_profile::sample_profile(int id, int32_t p)
 	sample_id = id;
 	sfn = NULL;
 	hdr = NULL;
-	bridged_bam = NULL;
 	individual_gtf = NULL;
 	data_type = DEFAULT;
 	insertsize_low = 80;
@@ -111,26 +110,6 @@ int sample_profile::open_align_file()
 	return 0;
 }
 
-int sample_profile::init_bridged_bam(const string &dir)
-{
-	char file[10240];
-	sprintf(file, "%s/%d.bam", dir.c_str(), sample_id);
-	open_align_file();
-	bridged_bam = bgzf_open(file, "w");
-	bam_hdr_write(bridged_bam, hdr);
-	close_bridged_bam();
-	close_align_file();
-	return 0;
-}
-
-int sample_profile::open_bridged_bam(const string &dir)
-{
-	char file[10240];
-	sprintf(file, "%s/%d.bam", dir.c_str(), sample_id);
-	bridged_bam = bgzf_open(file, "a");
-	return 0;
-}
-
 int sample_profile::open_individual_gtf(const string &dir)
 {
 	char file[10240];
@@ -149,12 +128,6 @@ int sample_profile::close_individual_gtf()
 {
 	individual_gtf->close();
 	delete individual_gtf;
-	return 0;
-}
-
-int sample_profile::close_bridged_bam()
-{
-	if(bridged_bam != NULL) bgzf_close(bridged_bam);
 	return 0;
 }
 
