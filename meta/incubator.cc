@@ -417,6 +417,7 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 	transcript_set ts1(chrm, rid, params[DEFAULT].min_single_exon_clustering_overlap);
 	transcript_set ts2(chrm, rid, params[DEFAULT].min_single_exon_clustering_overlap);
 
+	int index = 0;
 	int cnt0 = 0, cnt1 = 0, cnt2 = 0;
 	for(int k = 0; k < v.size(); k++)
 	{
@@ -426,18 +427,21 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 
 		if(v[k].strand == '+')
 		{
-			assembler asmb(params[DEFAULT], ts0, mtx, rid, 0, cnt0++);
+			assembler asmb(params[DEFAULT], ts0, mtx, rid, sid, index++);
 			asmb.assemble(v[k]);
+			cnt0++;
 		}
 		if(v[k].strand == '-')
 		{
-			assembler asmb(params[DEFAULT], ts1, mtx, rid, 1, cnt1++);
+			assembler asmb(params[DEFAULT], ts1, mtx, rid, sid, index++);
 			asmb.assemble(v[k]);
+			cnt1++;
 		}
 		if(v[k].strand == '.')
 		{
-			assembler asmb(params[DEFAULT], ts2, mtx, rid, 2, cnt2++);
+			assembler asmb(params[DEFAULT], ts2, mtx, rid, sid, index++);
 			asmb.assemble(v[k]);
+			cnt2++;
 		}
 	}
 
@@ -446,7 +450,7 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 		vector<transcript> v = ts0.get_transcripts(1);
 		for(int i = 0; i < v.size(); i++) v[i].write(cout);
 		tmutex[bi + 0].lock();
-		grps[bi + 0].num_assembled = cnt0;
+		grps[bi + 0].num_assembled += cnt0;
 		grps[bi + 0].tmerge.add(ts0, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		tmutex[bi + 0].unlock();
 	}
@@ -457,7 +461,7 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 		for(int i = 0; i < v.size(); i++) v[i].write(cout);
 
 		tmutex[bi + 1].lock();
-		grps[bi + 1].num_assembled = cnt1;
+		grps[bi + 1].num_assembled += cnt1;
 		grps[bi + 1].tmerge.add(ts1, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		tmutex[bi + 1].unlock();
 	}
@@ -468,7 +472,7 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 		for(int i = 0; i < v.size(); i++) v[i].write(cout);
 
 		tmutex[bi + 2].lock();
-		grps[bi + 2].num_assembled = cnt2;
+		grps[bi + 2].num_assembled += cnt2;
 		grps[bi + 2].tmerge.add(ts2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		tmutex[bi + 2].unlock();
 	}
