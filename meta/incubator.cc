@@ -422,6 +422,8 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 	{
 		if(v[k].splices.size() >= 1) continue;
 
+		assert(v[k].splices.size() <= 0);
+
 		if(v[k].strand == '+')
 		{
 			assembler asmb(params[DEFAULT], ts0, mtx, rid, 0, cnt0++);
@@ -441,6 +443,8 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 
 	if(cnt0 >= 1)
 	{
+		vector<transcript> v = ts0.get_transcripts(1);
+		for(int i = 0; i < v.size(); i++) v[i].write(cout);
 		tmutex[bi + 0].lock();
 		grps[bi + 0].num_assembled = cnt0;
 		grps[bi + 0].tmerge.add(ts0, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
@@ -449,6 +453,9 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 
 	if(cnt1 >= 1)
 	{
+		vector<transcript> v = ts1.get_transcripts(1);
+		for(int i = 0; i < v.size(); i++) v[i].write(cout);
+
 		tmutex[bi + 1].lock();
 		grps[bi + 1].num_assembled = cnt1;
 		grps[bi + 1].tmerge.add(ts1, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
@@ -457,6 +464,9 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 
 	if(cnt2 >= 1)
 	{
+		vector<transcript> v = ts2.get_transcripts(1);
+		for(int i = 0; i < v.size(); i++) v[i].write(cout);
+
 		tmutex[bi + 2].lock();
 		grps[bi + 2].num_assembled = cnt2;
 		grps[bi + 2].tmerge.add(ts2, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
@@ -466,21 +476,21 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &sample_lo
 	gmutex[bi + 0].lock();
 	for(int k = 0; k < v.size(); k++)
 	{
-		if(v[k].strand == '+' && v[k].splices.size() >= 1) grps[bi + 0].gset.push_back(std::move(v[k]));
+		if(v[k].strand == '+' && v[k].splices.size() >= 1) grps[bi + 0].gset.emplace_back(std::move(v[k]));
 	}
 	gmutex[bi + 0].unlock();
 
 	gmutex[bi + 1].lock();
 	for(int k = 0; k < v.size(); k++)
 	{
-		if(v[k].strand == '-' && v[k].splices.size() >= 1) grps[bi + 1].gset.push_back(std::move(v[k]));
+		if(v[k].strand == '-' && v[k].splices.size() >= 1) grps[bi + 1].gset.emplace_back(std::move(v[k]));
 	}
 	gmutex[bi + 1].unlock();
 
 	gmutex[bi + 2].lock();
 	for(int k = 0; k < v.size(); k++)
 	{
-		if(v[k].strand == '.' && v[k].splices.size() >= 1) grps[bi + 2].gset.push_back(std::move(v[k]));
+		if(v[k].strand == '.' && v[k].splices.size() >= 1) grps[bi + 2].gset.emplace_back(std::move(v[k]));
 	}
 	gmutex[bi + 2].unlock();
 

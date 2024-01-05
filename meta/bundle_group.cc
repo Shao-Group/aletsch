@@ -376,6 +376,7 @@ int bundle_group::stats(disjoint_set &ds, int r)
 	int wsp = 0;
 	for(int z = 0; z < gset.size(); z++)
 	{
+		if(gset[z].tid >= 0) assert(gset[z].splices.size() >= 1);
 		if(gset[z].splices.size() >= 1) wsp++;
 	}
 
