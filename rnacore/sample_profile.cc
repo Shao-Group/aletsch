@@ -174,6 +174,8 @@ int sample_profile::read_index_iterators()
 	iters.resize(hdr->n_targets);
 	start1.resize(hdr->n_targets);
 	start2.resize(hdr->n_targets);
+	end1.resize(hdr->n_targets);
+	end2.resize(hdr->n_targets);
 	for(int i = 0; i < hdr->n_targets; i++)
 	{
 		int32_t len = hdr->target_len[i];
