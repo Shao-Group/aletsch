@@ -86,6 +86,10 @@ public:
     int seq_min_cnt;
     double seq_min_abd;
     double seq_min_ratio;
+    double seq_max_wt;
+    int seq_max_cnt;
+    double seq_max_abd;
+    double seq_max_ratio;
     int unbridge_start_coming_count;
     double unbridge_start_coming_ratio;
     int unbridge_end_leaving_count;

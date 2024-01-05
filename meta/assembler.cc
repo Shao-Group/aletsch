@@ -58,10 +58,20 @@ int assembler::resolve(vector<bundle*> gv)
 		*/
 
 		//refine_pairwise(gv, sim);
-		bridge(gv);
 		//refine(gv);
-		assemble(gv);
 		//pairwise_assemble(gv, ts, sim, instance);
+
+		bundle bx(cfg, gv[0]->sp);
+		bx.copy_meta_information(*(gv[0]));
+		for(int k = 0; k < gv.size(); k++) bx.combine(*(gv[k]));
+
+		splice_graph gx;
+		transform(bx, gx, false);	
+
+		bridge(gv, bx, gx);
+		assemble(gv, bx, gx);
+
+		bx.clear();
 	}
 	return 0;
 }
@@ -143,20 +153,21 @@ int assembler::assemble(bundle &bd)
 	return 0;
 }
 
-int assembler::assemble(vector<bundle*> gv)
+int assembler::assemble(vector<bundle*> gv, bundle &bx, splice_graph &gx)
 {
 	assert(gv.size() >= 2);
 	int subindex = 0;
 
-	// combined bundle
+	/*
 	bundle bx(cfg, gv[0]->sp);
 	bx.copy_meta_information(*(gv[0]));
 	for(int k = 0; k < gv.size(); k++) bx.combine(*(gv[k]));
-	bx.set_gid(rid, gid, instance, subindex++);
 
-	// combined graph
 	splice_graph gx;
 	transform(bx, gx, false);	// TODO
+	*/
+
+	bx.set_gid(rid, gid, instance, subindex++);
 
     gx.reads = bx.frgs.size();
     gx.subgraph = gv.size();
@@ -323,7 +334,7 @@ int assembler::assemble(vector<bundle*> gv)
         delete grv[k];
     }
 
-	bx.clear();
+	//bx.clear();
 
     if(assemble_merged)
     {
@@ -945,18 +956,18 @@ int assembler::fix_missing_edges(splice_graph &gr, splice_graph &gx)
 	return 0;
 }
 
-int assembler::bridge(vector<bundle*> gv)
+int assembler::bridge(vector<bundle*> gv, bundle &cb, splice_graph &gr)
 {
 	assert(gv.size() >= 2);
 
-	// construct combined bundle
+	/*
 	bundle cb(cfg, gv[0]->sp);
 	cb.copy_meta_information(*(gv[0]));
 	for(int k = 0; k < gv.size(); k++) cb.combine(*(gv[k]));
 
-	// construct combined graph
 	splice_graph gr;
 	transform(cb, gr, false);
+	*/
 
 	// bridge each individual bundle
 	for(int k = 0; k < gv.size(); k++)

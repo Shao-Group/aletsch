@@ -35,12 +35,12 @@ public:
 public:
 	int resolve(vector<bundle*> gv);
 	int build_similarity(vector<bundle*> &gv, vector<vector<PID>> &sim);
-	int assemble(vector<bundle*> gv);
+	int assemble(vector<bundle*> gv, bundle &bx, splice_graph &gx);
 	int assemble(bundle &cb);
 	int assemble(splice_graph &gx, phase_set &px, int sid);
 	int transform(bundle &cb, splice_graph &gr, bool revising);
 	int fix_missing_edges(splice_graph &gr, splice_graph &gx);
-	int bridge(vector<bundle*> gv);
+	int bridge(vector<bundle*> gv, bundle &bx, splice_graph &gx);
 
     //sample support
     //int junction_support(int sample_id, splice_graph &gr, splice_graph &gx);
