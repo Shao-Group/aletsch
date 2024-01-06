@@ -1060,6 +1060,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 	if(pa.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges\n", gx.gid.c_str(), z, gx.num_vertices(), gx.num_edges());
 	if(gx.num_vertices() >= 1000) printf("assemble %s: %d transcripts, large graph with %lu vertices and %lu edges\n", gx.gid.c_str(), z, gx.num_vertices(), gx.num_edges());
 
+	/*
 	//printf("try to lock in assembler\n");
 	mylock.lock();
 	//printf("locked in assembler\n");
@@ -1067,6 +1068,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 	//printf("B: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
 	tm.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	mylock.unlock();
+	*/
 
 	return 0;
 }
