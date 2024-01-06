@@ -80,14 +80,14 @@ parameters::parameters()
 	min_boundary_log_ratio = 2.0;
 
 	// for decomposing splice graph
-	max_decompose_error_ratio[0] = 0.45;
+	max_decompose_error_ratio[0] = 0.30;
 	max_decompose_error_ratio[1] = 0.00;
 	max_decompose_error_ratio[2] = 1.10;
 	max_decompose_error_ratio[3] = 1.10;
 	max_decompose_error_ratio[4] = 1.10;
 	max_decompose_error_ratio[5] = 0.30;
 	max_decompose_error_ratio[6] = 0.00;
-	max_decompose_error_ratio[7] = 0.80;
+	max_decompose_error_ratio[7] = 1.00;
 	min_guaranteed_edge_weight = 0.01;
 	max_dp_table_size = 10000;
 	
