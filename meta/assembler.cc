@@ -154,11 +154,13 @@ int assembler::combine_bundles(bundle &bx, vector<bundle*> gv)
 	}
 	sort(v.begin(), v.end(), [](const PI &x, const PI &y){ return x.second > y.second; });
 
+	/*
 	bx.mmap = gv[v[0].first]->mmap;
 	bx.imap = gv[v[0].first]->imap;
 	bx.combine(*(gv[v[0].first]), false);
+	*/
 
-	for(int i = 1; i < v.size(); i++)
+	for(int i = 0; i < v.size(); i++)
 	{
 		int k = v[i].first;
 		bx.combine(*(gv[k]), true);
