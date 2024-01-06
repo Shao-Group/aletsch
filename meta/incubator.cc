@@ -488,6 +488,10 @@ int incubator::postprocess()
 
 	pool1.join();
 
+	// extend samples
+	sample_profile sn(samples.size(), samples[0].region_partition_length);
+	samples.emplace_back(std::move(sn));
+
 	//vector<int> ct;
 	//vector<transcript> vt;
 	vector<vector<transcript>> vv(samples.size());
@@ -534,11 +538,10 @@ int incubator::postprocess()
                 if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) 
                     t.write_features(-1);
 
-
 				for(auto &p : v[k].samples)
 				{
                     int j = p.first;
-					if(j < 0 || j >= vv.size()) continue;
+					if(j == -1) j = samples.size() - 1;
                     assert(p.second.count2 == t.count2);
 					assert(abs(p.second.coverage - t.coverage)<SMIN);
 					vv[j].push_back(p.second);
