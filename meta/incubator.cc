@@ -346,7 +346,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 		}
 	}
 
-	for(int k = 0; k < locks.size(); k++) locks[k].lock();
+	//for(int k = 0; k < locks.size(); k++) locks[k].lock();
 
 	// print start/end positions
 	/*
