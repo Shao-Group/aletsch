@@ -145,8 +145,17 @@ int assembler::assemble(bundle &bd)
 
 int assembler::combine_bundles(bundle &bx, vector<bundle*> gv)
 {
+	vector<PI> v;
 	for(int k = 0; k < gv.size(); k++)
 	{
+		v.push_back(PI(k, std::distance(gv[k]->mmap.begin(), gv[k]->mmap.end())));
+	}
+
+	sort(v.begin(), v.end(), [](const PI &x, const PI &y){ return x.second < y.second; });
+
+	for(int i = 0; i < v.size(); i++)
+	{
+		int k = v[i].first;
 		printf("to combine %d/%lu, size = %ld\n", k, gv.size(), std::distance(gv[k]->mmap.begin(), gv[k]->mmap.end()));
 		bx.combine(*(gv[k]));
 	}
