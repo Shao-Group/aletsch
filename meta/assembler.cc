@@ -151,7 +151,7 @@ int assembler::combine_bundles(bundle &bx, vector<bundle*> gv)
 		v.push_back(PI(k, std::distance(gv[k]->mmap.begin(), gv[k]->mmap.end())));
 	}
 
-	sort(v.begin(), v.end(), [](const PI &x, const PI &y){ return x.second < y.second; });
+	sort(v.begin(), v.end(), [](const PI &x, const PI &y){ return x.second > y.second; });
 
 	for(int i = 0; i < v.size(); i++)
 	{
