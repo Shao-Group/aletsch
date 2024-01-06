@@ -85,7 +85,7 @@ parameters::parameters()
 	max_decompose_error_ratio[2] = 1.10;
 	max_decompose_error_ratio[3] = 1.10;
 	max_decompose_error_ratio[4] = 1.10;
-	max_decompose_error_ratio[5] = 0.30;
+	max_decompose_error_ratio[5] = 0.40;
 	max_decompose_error_ratio[6] = 0.00;
 	max_decompose_error_ratio[7] = 1.00;
 	min_guaranteed_edge_weight = 0.01;
