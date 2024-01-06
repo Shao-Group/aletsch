@@ -365,24 +365,68 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 	}
 	*/
 
-	for(int j = 0; j < group_size; j++)
+	vector<bool> posted(group_size, false);
+	while(true)
 	{
-		for(int i = 0; i < v.size(); i++) locks[i * group_size + j].lock();
-
-		int rid = gid * group_size + j;
-		int bi = this->get_bundle_group(chrm, rid);
-		if(bi == -1) continue;
-		for(int i = 0; i < 3; i++)
+		for(int j = 0; j < group_size; j++)
 		{
-			bundle_group &g = this->grps[bi + i];
-			time_t mytime = time(NULL);
-			//printf("assemble chrm %s, gid = %d, rid = %d, bi = %d, %s", chrm.c_str(), gid, rid, bi, ctime(&mytime));
-			boost::asio::post(this->tpool, [this, &g, bi, rid, i]{ 
-					g.resolve(); 
-					this->assemble(g, rid, i);
-					g.clear();
-			});
+			if(posted[j] == true) continue;
+
+			bool succeed0 = true;
+			bool succeed1 = true;
+			vector<bool> ck0(v.size(), false);
+			vector<bool> ck1(v.size(), false);
+
+			if(j >= 1)
+			{
+				for(int i = 0; i < v.size(); i++) 
+				{
+					ck0[i] = locks[i * group_size + j - 1].try_lock();
+					if(ck0[i] == false) succeed0 = false;
+				}
+			}
+
+			for(int i = 0; i < v.size(); i++) 
+			{
+				ck1[i] = locks[i * group_size + j].try_lock();
+				if(ck1[i] == false) succeed1 = false;
+			}
+
+			if(succeed0 && succeed1)
+			{
+				int rid = gid * group_size + j;
+				int bi = this->get_bundle_group(chrm, rid);
+				if(bi >= 0)
+				{
+					for(int i = 0; i < 3; i++)
+					{
+						bundle_group &g = this->grps[bi + i];
+						time_t mytime = time(NULL);
+						//printf("assemble chrm %s, gid = %d, rid = %d, bi = %d, %s", chrm.c_str(), gid, rid, bi, ctime(&mytime));
+						boost::asio::post(this->tpool, [this, &g, bi, rid, i]{ 
+								g.resolve(); 
+								this->assemble(g, rid, i);
+								g.clear();
+						});
+					}
+				}
+				posted[j] = true;
+			}
+
+			for(int i = 0; i < v.size(); i++) 
+			{
+				if(j >= 1 && ck0[i] == true) locks[i * group_size + j - 1].unlock();
+				if(j >= 0 && ck1[i] == true) locks[i * group_size + j - 0].unlock();
+			}
 		}
+
+		bool all_posted = true;
+		for(int j = 0; j < posted.size(); j++)
+		{
+			if(posted[j] == false) all_posted = false;
+		}
+		
+		if(all_posted == true) break;
 	}
 
 	//for(int k = 0; k < samples.size(); k++) samples[k].close_align_file();
