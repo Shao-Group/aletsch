@@ -87,7 +87,7 @@ int bundle::bridge()
 	return 0;
 }
 
-int bundle::combine(const bundle &bb)
+int bundle::combine(const bundle &bb, bool combine_map)
 {
 	num_combined += bb.num_combined;
 	assert(strand == bb.strand);
@@ -99,8 +99,8 @@ int bundle::combine(const bundle &bb)
 	fcst.add(bb.fcst);
 	//mmap.insert(mmap.end(), bb.mmap.begin(), bb.mmap.end());
 	//imap.insert(imap.end(), bb.imap.begin(), bb.imap.end());
-	mmap += bb.mmap;
-	imap += bb.imap;
+	if(combine_map) mmap += bb.mmap;
+	if(combine_map) imap += bb.imap;
 	//for(SIMI z = bb.mmap.begin(); z != bb.mmap.end(); z++) mmap += *z;
 	//for(SIMI z = bb.imap.begin(); z != bb.imap.end(); z++) imap += *z;
 	return 0;
