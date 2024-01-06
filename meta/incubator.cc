@@ -579,72 +579,78 @@ int incubator::postprocess()
 			}
 		});
 	}
-
 	pool1.join();
 
 	// extend samples
 	sample_profile sn(samples.size(), samples[0].region_partition_length);
 	samples.emplace_back(std::move(sn));
 
-	//vector<int> ct;
-	//vector<transcript> vt;
 	vector<vector<transcript>> vv(samples.size());
+	vector<mutex> wmutex(samples.size());
 
+	boost::asio::thread_pool pool2(params[DEFAULT].max_threads);
 	for(auto &z: tts)
 	{
-		string chrm = z.first.first;
-		char strand = z.first.second;
-		transcript_set &tm = z.second;
-		int count = 0;
-		for(auto &it : tm.mt)
-		{
-			auto &v = it.second;
-			//if(v[k].count <= 1) continue;
-			for(int k = 0; k < v.size(); k++)
-			{
-				transcript &t = v[k].trst;
-			//t.write(cout);
-				//if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
-				//if(verify_exon_length(t, params[DEFAULT]) == false) continue;
-				count ++;
-			}
-		}
+		boost::asio::post(pool2, [this, z, &wmutex, &vv]{ 
 
-		printf("collecting: chrm %s, strand %c, %d transcripts\n", chrm.c_str(), strand, count);
-
-		stringstream ss;
-		for(auto &it : tm.mt)
-		{
-			auto &v = it.second;
-			for(int k = 0; k < v.size(); k++)
+			string chrm = z.first.first;
+			char strand = z.first.second;
+			const transcript_set &tm = z.second;
+			int count = 0;
+			for(auto &it : tm.mt)
 			{
+				auto &v = it.second;
 				//if(v[k].count <= 1) continue;
-				transcript &t = v[k].trst;
-				//t.write(cout);
-
-				//if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
-				//if(verify_exon_length(t, params[DEFAULT]) == false) continue;
-
-                assert(v[k].samples.size() == t.count2);
-				t.write(ss, -1, v[k].samples.size());
-                //if(t.exons.size() > 1) t.write_features(-1);
-                //Only output novel transcripts in merged graph
-                if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) 
-                    t.write_features(-1);
-
-				for(auto &p : v[k].samples)
+				for(int k = 0; k < v.size(); k++)
 				{
-                    int j = p.first;
-					if(j == -1) j = samples.size() - 1;
-                    assert(p.second.count2 == t.count2);
-					assert(abs(p.second.coverage - t.coverage)<SMIN);
-					vv[j].push_back(p.second);
+					const transcript &t = v[k].trst;
+					//t.write(cout);
+					//if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
+					//if(verify_exon_length(t, params[DEFAULT]) == false) continue;
+					count ++;
 				}
 			}
-		}
-		const string &s = ss.str();
-		meta_gtf.write(s.c_str(), s.size());
+
+			printf("collecting: chrm %s, strand %c, %d transcripts\n", chrm.c_str(), strand, count);
+
+			stringstream ss;
+			for(auto &it : tm.mt)
+			{
+				auto &v = it.second;
+				for(int k = 0; k < v.size(); k++)
+				{
+					//if(v[k].count <= 1) continue;
+					const transcript &t = v[k].trst;
+					//t.write(cout);
+
+					//if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
+					//if(verify_exon_length(t, params[DEFAULT]) == false) continue;
+
+					assert(v[k].samples.size() == t.count2);
+					t.write(ss, -1, v[k].samples.size());
+					//if(t.exons.size() > 1) t.write_features(-1);
+					//Only output novel transcripts in merged graph
+					if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) 
+						t.write_features(-1);
+
+					for(auto &p : v[k].samples)
+					{
+						int j = p.first;
+						if(j == -1) j = samples.size() - 1;
+						assert(p.second.count2 == t.count2);
+						assert(abs(p.second.coverage - t.coverage)<SMIN);
+
+						wmutex[j].lock();
+						vv[j].push_back(p.second);
+						wmutex[j].unlock();
+					}
+				}
+			}
+			const string &s = ss.str();
+			meta_gtf.write(s.c_str(), s.size());
+		});
 	}
+	pool2.join();
 
 	if(params[DEFAULT].output_gtf_dir != "")
 	{
