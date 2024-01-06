@@ -147,6 +147,8 @@ int scallop::assemble()
 		b = resolve_trivial_vertex(2, true, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 		if(b == true) continue;
 
+		break;
+
 		// process mixed vertices
 		break_divided_phases();
 
@@ -168,7 +170,6 @@ int scallop::assemble()
 		b = resolve_mixed_vertex(MIXED_TANGLED);
 		if(b == true) continue;
 
-		break;
 	}
 
 	collect_existing_st_paths();
