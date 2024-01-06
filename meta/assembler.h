@@ -41,6 +41,7 @@ public:
 	int transform(bundle &cb, splice_graph &gr, bool revising);
 	int fix_missing_edges(splice_graph &gr, splice_graph &gx);
 	int bridge(vector<bundle*> gv);
+	int combine_bundles(bundle &bd, vector<bundle*> gv);
 
     //sample support
     //int junction_support(int sample_id, splice_graph &gr, splice_graph &gx);

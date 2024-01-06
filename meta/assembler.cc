@@ -143,18 +143,26 @@ int assembler::assemble(bundle &bd)
 	return 0;
 }
 
+int assembler::combine_bundles(bundle &bx, vector<bundle*> gv)
+{
+	for(int k = 0; k < gv.size(); k++)
+	{
+		printf("to combine %d/%lu, size = %ld\n", k, gv.size(), std::distance(gv[k]->mmap.begin(), gv[k]->mmap.end()));
+		bx.combine(*(gv[k]));
+	}
+	return 0;
+}
+
 int assembler::assemble(vector<bundle*> gv)
 {
 	assert(gv.size() >= 2);
 	int subindex = 0;
 
-	// combined bundle
 	bundle bx(cfg, gv[0]->sp);
 	bx.copy_meta_information(*(gv[0]));
-	for(int k = 0; k < gv.size(); k++) bx.combine(*(gv[k]));
+	combine_bundles(bx, gv);
 	bx.set_gid(rid, gid, instance, subindex++);
 
-	// combined graph
 	splice_graph gx;
 	transform(bx, gx, false);	// TODO
 
@@ -949,12 +957,10 @@ int assembler::bridge(vector<bundle*> gv)
 {
 	assert(gv.size() >= 2);
 
-	// construct combined bundle
 	bundle cb(cfg, gv[0]->sp);
 	cb.copy_meta_information(*(gv[0]));
-	for(int k = 0; k < gv.size(); k++) cb.combine(*(gv[k]));
+	combine_bundles(cb, gv);
 
-	// construct combined graph
 	splice_graph gr;
 	transform(cb, gr, false);
 
