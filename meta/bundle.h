@@ -37,7 +37,7 @@ public:
 	int set_gid(int instance, int subindex);
 	int set_gid(int rid, int gid, int instance, int subindex);
 	int copy_meta_information(const bundle &bb);
-	int combine(const bundle &bb);
+	int combine(const bundle &bb, bool combine_map);
 	int print(int k);
 	int bridge();
 };

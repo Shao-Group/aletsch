@@ -327,14 +327,14 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 	vector<mutex> locks(v.size() * group_size);
 	for(int k = 0; k < locks.size(); k++) locks[k].lock();
 
-	for(int i = 0; i < v.size(); i++)
+	for(int j = 0; j < group_size; j++)
 	{
-		int sid = v[i].first;
-		int tid = v[i].second;
-		//sample_profile &sp = samples[sid];
-
-		for(int j = 0; j < group_size; j++)
+		for(int i = 0; i < v.size(); i++)
 		{
+			int sid = v[i].first;
+			int tid = v[i].second;
+			//sample_profile &sp = samples[sid];
+
 			int rid = gid * group_size + j;
 			mutex &lock = locks[i * group_size + j];
 
@@ -346,7 +346,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 		}
 	}
 
-	for(int k = 0; k < locks.size(); k++) locks[k].lock();
+	//for(int k = 0; k < locks.size(); k++) locks[k].lock();
 
 	// print start/end positions
 	/*
@@ -367,6 +367,8 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 
 	for(int j = 0; j < group_size; j++)
 	{
+		for(int i = 0; i < v.size(); i++) locks[i * group_size + j].lock();
+
 		int rid = gid * group_size + j;
 		int bi = this->get_bundle_group(chrm, rid);
 		if(bi == -1) continue;

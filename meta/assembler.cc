@@ -143,18 +143,41 @@ int assembler::assemble(bundle &bd)
 	return 0;
 }
 
+int assembler::combine_bundles(bundle &bx, vector<bundle*> gv)
+{
+	if(gv.size() == 0) return 0;
+
+	vector<PI> v;
+	for(int k = 0; k < gv.size(); k++)
+	{
+		v.push_back(PI(k, std::distance(gv[k]->mmap.begin(), gv[k]->mmap.end())));
+	}
+	sort(v.begin(), v.end(), [](const PI &x, const PI &y){ return x.second > y.second; });
+
+	/*
+	bx.mmap = gv[v[0].first]->mmap;
+	bx.imap = gv[v[0].first]->imap;
+	bx.combine(*(gv[v[0].first]), false);
+	*/
+
+	for(int i = 0; i < v.size(); i++)
+	{
+		int k = v[i].first;
+		bx.combine(*(gv[k]), true);
+	}
+	return 0;
+}
+
 int assembler::assemble(vector<bundle*> gv)
 {
 	assert(gv.size() >= 2);
 	int subindex = 0;
 
-	// combined bundle
 	bundle bx(cfg, gv[0]->sp);
 	bx.copy_meta_information(*(gv[0]));
-	for(int k = 0; k < gv.size(); k++) bx.combine(*(gv[k]));
+	combine_bundles(bx, gv);
 	bx.set_gid(rid, gid, instance, subindex++);
 
-	// combined graph
 	splice_graph gx;
 	transform(bx, gx, false);	// TODO
 
@@ -949,12 +972,10 @@ int assembler::bridge(vector<bundle*> gv)
 {
 	assert(gv.size() >= 2);
 
-	// construct combined bundle
 	bundle cb(cfg, gv[0]->sp);
 	cb.copy_meta_information(*(gv[0]));
-	for(int k = 0; k < gv.size(); k++) cb.combine(*(gv[k]));
+	combine_bundles(cb, gv);
 
-	// construct combined graph
 	splice_graph gr;
 	transform(cb, gr, false);
 
