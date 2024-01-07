@@ -28,7 +28,7 @@ public:
 	map<int, transcript> samples;
 
 public:
-	int merge(const trans_item &ti, int mode);
+	int merge(trans_item &ti, int mode);
 };
 
 int merge_sorted_trans_items(vector<trans_item> &vx, vector<trans_item> &vy, int mode, double single_exon_overlap);

@@ -35,7 +35,7 @@ trans_item::trans_item(const transcript &t, int c, int s)
     }
 }
 
-int trans_item::merge(const trans_item &ti, int mode)
+int trans_item::merge(trans_item &ti, int mode)
 {
 	if(mode == TRANSCRIPT_COUNT_ADD_COVERAGE_ADD) 
 	{
@@ -53,7 +53,7 @@ int trans_item::merge(const trans_item &ti, int mode)
 
 		for(auto &x : ti.samples)
 		{
-			if(samples.find(x.first) == samples.end()) samples.insert(x);
+			if(samples.find(x.first) == samples.end()) samples.emplace(std::move(x));
 			else 
             {
                 samples[x.first].cov2 = max(samples[x.first].cov2, x.second.cov2);
@@ -136,8 +136,7 @@ transcript_set::transcript_set(const transcript &t, int r, int count, int sid, d
 	trans_item ti(t, count, sid);
 	vector<trans_item> v;
 	v.emplace_back(std::move(ti));
-
-	mt.insert(make_pair(h, v));
+	mt.emplace(make_pair(h, v));
 }
 
 int transcript_set::clear()
