@@ -671,7 +671,7 @@ int incubator::write_combined_gtf()
 				//Only output novel transcripts in merged graph
 				
 				// FIXME
-				if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) t.write_features(-1);
+				//if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) t.write_features(-1);
 			}
 		}
 		const string &s = ss.str();
