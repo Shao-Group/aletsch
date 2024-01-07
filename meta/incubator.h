@@ -65,7 +65,7 @@ private:
 	int get_chrm_index(string chrm, int sid);
 	int get_bundle_group(string chrm, int gid);
 	int generate_merge_assemble(string chrm, int gid);
-	int generate(int sid, int tid, int rid, string chrm, mutex &slock, mutex &plock);
+	int generate(int sid, int tid, int rid, string chrm, mutex &curlock);
 	int assemble(bundle_group &g, int gid, int gi);
 	int write_individual_gtf(int id, const vector<transcript> &t);
 	int print_groups(const vector<bundle_group> &grps);

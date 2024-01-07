@@ -326,9 +326,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 	const vector<PI> &v = sindex[chrm];
 	if(v.size() == 0) return 0;
 
-	vector<mutex> prelocks(v.size() * group_size);
 	vector<mutex> curlocks(v.size() * group_size);
-	for(int k = 0; k < prelocks.size(); k++) prelocks[k].lock();
 	for(int k = 0; k < curlocks.size(); k++) curlocks[k].lock();
 
 	for(int j = 0; j < group_size; j++)
@@ -340,13 +338,12 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 			//sample_profile &sp = samples[sid];
 
 			int rid = gid * group_size + j;
-			mutex &prelock = prelocks[i * group_size + j];
 			mutex &curlock = curlocks[i * group_size + j];
 
 			time_t mytime = time(NULL);
 			//printf("generate chrm %s, gid = %d, rid = %d, %s", chrm.c_str(), gid, rid, ctime(&mytime));
-			boost::asio::post(this->tpool, [this, &curlock, &prelock, sid, chrm, tid, rid]{ 
-					this->generate(sid, tid, rid, chrm, prelock, curlock); 
+			boost::asio::post(this->tpool, [this, &curlock, sid, chrm, tid, rid]{ 
+					this->generate(sid, tid, rid, chrm, curlock); 
 			});
 		}
 	}
@@ -386,7 +383,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 			{
 				for(int i = 0; i < v.size(); i++) 
 				{
-					ck0[i] = prelocks[i * group_size + j - 1].try_lock();
+					ck0[i] = curlocks[i * group_size + j - 1].try_lock();
 					if(ck0[i] == false) succeed0 = false;
 				}
 			}
@@ -420,7 +417,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 
 			for(int i = 0; i < v.size(); i++) 
 			{
-				if(j >= 1 && ck0[i] == true) prelocks[i * group_size + j - 1].unlock();
+				if(j >= 1 && ck0[i] == true) curlocks[i * group_size + j - 1].unlock();
 				if(j >= 0 && ck1[i] == true) curlocks[i * group_size + j - 0].unlock();
 			}
 		}
@@ -438,7 +435,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 	return 0;
 }
 
-int incubator::generate(int sid, int tid, int rid, string chrm, mutex &prelock, mutex &curlock)
+int incubator::generate(int sid, int tid, int rid, string chrm, mutex &curlock)
 {	
 	sample_profile &sp = samples[sid];
 	int cid = get_chrm_index(chrm, sid);
@@ -448,7 +445,6 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &prelock, 
 	if(rid >= sp.start1[cid].size()) 
 	{
 		//printf("unlock rid = %d\n", rid);
-		prelock.unlock();
 		curlock.unlock();
 		return 0;
 	}
@@ -463,7 +459,6 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &prelock, 
 	generator gt(sp, v, params[sp.data_type], tid, rid);
 	gt.resolve();
 
-	prelock.unlock();
 	//save_transcript_set(ts, tlock);
 
 	gmutex[bi + 0].lock();
@@ -486,8 +481,6 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &prelock, 
 		if(v[k].strand == '.' && v[k].splices.size() >= 1) grps[bi + 2].gset.emplace_back(std::move(v[k]));
 	}
 	gmutex[bi + 2].unlock();
-
-	curlock.unlock();
 
 
 	mutex mtx;
@@ -549,6 +542,7 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &prelock, 
 		tmutex[bi + 2].unlock();
 	}
 
+	curlock.unlock();
 	printf("finish generating tid = %d, rid = %d, of sample %s\n", tid, rid, sp.align_file.c_str());
 	return 0;
 }
