@@ -635,83 +635,91 @@ int incubator::postprocess()
 	sample_profile sn(samples.size(), samples[0].region_partition_length);
 	samples.emplace_back(std::move(sn));
 
-	vector<vector<transcript>> vv(samples.size());
-	vector<mutex> wmutex(samples.size());
-
+	// write gtf
 	boost::asio::thread_pool pool2(params[DEFAULT].max_threads);
-	for(auto &z: tts)
+	boost::asio::post(pool2, [this] { this->write_combined_gtf(); });
+	for(int i = 0; i < samples.size(); i++)
 	{
-		boost::asio::post(pool2, [this, z, &wmutex, &vv]{ 
-
-			string chrm = z.first.first;
-			char strand = z.first.second;
-			const transcript_set &tm = z.second;
-			int count = 0;
-			for(auto &it : tm.mt)
-			{
-				auto &v = it.second;
-				//if(v[k].count <= 1) continue;
-				for(int k = 0; k < v.size(); k++)
-				{
-					const transcript &t = v[k].trst;
-					//t.write(cout);
-					//if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
-					//if(verify_exon_length(t, params[DEFAULT]) == false) continue;
-					count ++;
-				}
-			}
-
-			printf("collecting: chrm %s, strand %c, %d transcripts\n", chrm.c_str(), strand, count);
-
-			stringstream ss;
-			for(auto &it : tm.mt)
-			{
-				auto &v = it.second;
-				for(int k = 0; k < v.size(); k++)
-				{
-					//if(v[k].count <= 1) continue;
-					const transcript &t = v[k].trst;
-					//t.write(cout);
-
-					//if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
-					//if(verify_exon_length(t, params[DEFAULT]) == false) continue;
-
-					assert(v[k].samples.size() == t.count2);
-					t.write(ss, -1, v[k].samples.size());
-					//if(t.exons.size() > 1) t.write_features(-1);
-					//Only output novel transcripts in merged graph
-					if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) 
-						t.write_features(-1);
-
-					for(auto &p : v[k].samples)
-					{
-						int j = p.first;
-						if(j == -1) j = samples.size() - 1;
-						assert(p.second.count2 == t.count2);
-						assert(abs(p.second.coverage - t.coverage)<SMIN);
-
-						wmutex[j].lock();
-						vv[j].push_back(p.second);
-						wmutex[j].unlock();
-					}
-				}
-			}
-			const string &s = ss.str();
-			meta_gtf.write(s.c_str(), s.size());
-		});
+		boost::asio::post(pool2, [this, i]{ this->write_individual_gtf(i); });
 	}
 	pool2.join();
+	return 0;
+}
 
-	if(params[DEFAULT].output_gtf_dir != "")
+int incubator::write_combined_gtf()
+{
+	for(auto &z: tts)
 	{
-		boost::asio::thread_pool pool(params[DEFAULT].max_threads);
-		for(int i = 0; i < vv.size(); i++)
+		string chrm = z.first.first;
+		char strand = z.first.second;
+		const transcript_set &tm = z.second;
+
+		for(auto &it : tm.mt)
 		{
-			const vector<transcript> &v = vv[i];
-			boost::asio::post(pool, [this, i, &v]{ this->write_individual_gtf(i, v); });
+			auto &v = it.second;
+			for(int k = 0; k < v.size(); k++)
+			{
+				const transcript &t = v[k].trst;
+
+				//if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
+				//if(verify_exon_length(t, params[DEFAULT]) == false) continue;
+				assert(v[k].samples.size() == t.count2);
+				t.write(meta_gtf, -1, v[k].samples.size());
+
+				//if(t.exons.size() > 1) t.write_features(-1);
+				//Only output novel transcripts in merged graph
+				
+				// FIXME
+				if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) t.write_features(-1);
+			}
 		}
-		pool.join();
 	}
+	return 0;
+}
+
+int incubator::write_individual_gtf(int sid)
+{
+	sample_profile &sp = samples[sid];
+	sp.gtf_lock.lock();
+	sp.open_individual_gtf(params[DEFAULT].output_gtf_dir);
+
+	//sp.individual_gtf->write(s.c_str(), s.size());
+
+	for(auto &z: tts)
+	{
+		string chrm = z.first.first;
+		char strand = z.first.second;
+		const transcript_set &tm = z.second;
+
+		for(auto &it : tm.mt)
+		{
+			auto &v = it.second;
+			for(int k = 0; k < v.size(); k++)
+			{
+				for(auto &p : v[k].samples)
+				{
+					int j = p.first;
+					if(j == -1) j = samples.size() - 1;
+					if(j != sid) continue;
+
+					const transcript &t = p.second;
+
+					assert(p.second.count2 == t.count2);
+					assert(abs(p.second.coverage - t.coverage)<SMIN);
+
+					if(t.exons.size() == 1 && t.cov2 < params[DEFAULT].min_single_exon_individual_coverage) continue;
+					t.write(*(sp.individual_gtf), t.cov2, t.count2);
+
+					// FIXME
+					//if(t.exons.size() > 1) t.write_features(sid);
+				}
+			}
+		}
+	}
+
+	sp.close_individual_gtf();
+	sp.gtf_lock.unlock();
+
 	return 0;
 }
 
@@ -724,13 +732,12 @@ int incubator::write_individual_gtf(int id, const vector<transcript> &v)
 	{
 		const transcript &t = v[i];
 
-		// TODO: fetch cov2 from v[i]
 		double cov2 = v[i].cov2;
 		if(t.exons.size() == 1 && cov2 < params[DEFAULT].min_single_exon_individual_coverage) continue;
 
-		// TODO fetch ct from v[i]
 		int ct = v[i].count2;
 		t.write(ss, cov2, ct);
+
         if(t.exons.size() > 1) t.write_features(id);
 	}
 
