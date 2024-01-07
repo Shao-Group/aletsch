@@ -482,6 +482,7 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &curlock)
 	}
 	gmutex[bi + 2].unlock();
 
+	curlock.unlock();
 
 	mutex mtx;
 	transcript_set ts0(chrm, rid, params[DEFAULT].min_single_exon_clustering_overlap);
@@ -542,7 +543,6 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &curlock)
 		tmutex[bi + 2].unlock();
 	}
 
-	curlock.unlock();
 	printf("finish generating tid = %d, rid = %d, of sample %s\n", tid, rid, sp.align_file.c_str());
 	return 0;
 }

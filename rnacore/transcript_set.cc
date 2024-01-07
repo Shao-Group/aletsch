@@ -80,7 +80,7 @@ int trans_item::merge(const trans_item &ti, int mode)
 	return 0;
 }
 
-int merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &vy, int mode, double single_exon_ratio)
+int merge_sorted_trans_items(vector<trans_item> &vx, vector<trans_item> &vy, int mode, double single_exon_ratio)
 {
 	vector<trans_item> vz;
 	vz.reserve(vx.size() + vy.size());
@@ -104,7 +104,7 @@ int merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &v
 		else if(b == -1)
 		{
 			//vz.emplace_back(std::move(vy[ky]));
-			vz.push_back(vy[ky]);
+			vz.emplace_back(std::move(vy[ky]));
 			ky++;
 		}
 		else assert(false);
@@ -113,7 +113,7 @@ int merge_sorted_trans_items(vector<trans_item> &vx, const vector<trans_item> &v
 	assert(kx == vx.size() || ky == vy.size());
 
 	for(int i = kx; i < vx.size(); i++) vz.emplace_back(std::move(vx[i]));
-	for(int i = ky; i < vy.size(); i++) vz.push_back(vy[i]);
+	for(int i = ky; i < vy.size(); i++) vz.emplace_back(std::move(vy[i]));
 
 	vx.swap(vz);
 	return 0;
@@ -154,7 +154,7 @@ int transcript_set::add(const transcript &t, int count, int sid, int mode)
 	return 0;
 }
 
-int transcript_set::add(const transcript_set &ts, int mode)
+int transcript_set::add(transcript_set &ts, int mode)
 {
 	if(ts.chrm != this->chrm) return 0;
 	if(ts.rid != this->rid && this->rid != -9) return 0;
@@ -164,7 +164,8 @@ int transcript_set::add(const transcript_set &ts, int mode)
 		map<size_t, vector<trans_item>>::iterator z = mt.find(x.first);
 		if(z == mt.end())
 		{
-			mt.insert(x);
+			//mt.emplace(make_pair(x.first, std::move(x.second)));
+			mt.emplace(std::move(x));
 		}
 		else
 		{
