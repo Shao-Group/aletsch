@@ -37,6 +37,7 @@ public:
 	map<string, vector<PI>> sindex;					// sample index
 	map<pair<string, char>, transcript_set> tts;	// transcripts for each chrm
 	ofstream meta_gtf;								// meta gtf
+	ofstream meta_ftr;								// meta feature
 	vector<bundle_group> grps;						// bundle groups
 	thread_pool tpool;
 	int group_size;									// number of regions in a group

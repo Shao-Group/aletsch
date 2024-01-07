@@ -24,10 +24,20 @@ incubator::incubator(vector<parameters> &v)
 	: params(v), tpool(params[DEFAULT].max_threads), group_size(params[DEFAULT].max_threads), gmutex(99999), tmutex(99999)
 {
 	if(params[DEFAULT].profile_only == true) return;
+
 	meta_gtf.open(params[DEFAULT].output_gtf_file.c_str(), std::ofstream::out | std::ofstream::app);
 	if(meta_gtf.fail())
 	{
-		printf("cannot open output-get-file %s\n", params[DEFAULT].output_gtf_file.c_str());
+		printf("cannot open output-gtf-file %s\n", params[DEFAULT].output_gtf_file.c_str());
+		exit(0);
+	}
+
+	meta_ftr.open(params[DEFAULT].output_ftr_file.c_str(), std::ofstream::out | std::ofstream::app);
+    meta_ftr.setf(ios::fixed, ios::floatfield);
+    meta_ftr.precision(2);
+	if(meta_ftr.fail())
+	{
+		printf("cannot open output-feature-file %s\n", params[DEFAULT].output_ftr_file.c_str());
 		exit(0);
 	}
 }
@@ -36,6 +46,7 @@ incubator::~incubator()
 {
 	if(params[DEFAULT].profile_only == true) return;
 	meta_gtf.close();
+	meta_ftr.close();
 }
 
 int incubator::resolve()
@@ -655,6 +666,7 @@ int incubator::write_combined_gtf()
 		const transcript_set &tm = z.second;
 
 		stringstream ss;
+		stringstream sf;
 		for(auto &it : tm.mt)
 		{
 			auto &v = it.second;
@@ -670,12 +682,13 @@ int incubator::write_combined_gtf()
 				//if(t.exons.size() > 1) t.write_features(-1);
 				//Only output novel transcripts in merged graph
 				
-				// FIXME
-				//if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) t.write_features(-1);
+				if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) t.write_features(sf);
 			}
 		}
 		const string &s = ss.str();
+		const string &f = sf.str();
 		meta_gtf.write(s.c_str(), s.size());
+		meta_ftr.write(f.c_str(), f.size());
 	}
 	return 0;
 }
@@ -685,6 +698,7 @@ int incubator::write_individual_gtf(int sid)
 	sample_profile &sp = samples[sid];
 	sp.gtf_lock.lock();
 	sp.open_individual_gtf(params[DEFAULT].output_gtf_dir);
+	sp.open_individual_ftr(params[DEFAULT].output_gtf_dir);
 
 	//sp.individual_gtf->write(s.c_str(), s.size());
 
@@ -695,6 +709,7 @@ int incubator::write_individual_gtf(int sid)
 		const transcript_set &tm = z.second;
 
 		stringstream ss;
+		stringstream sf;
 		for(auto &it : tm.mt)
 		{
 			auto &v = it.second;
@@ -714,17 +729,18 @@ int incubator::write_individual_gtf(int sid)
 					if(t.exons.size() == 1 && t.cov2 < params[DEFAULT].min_single_exon_individual_coverage) continue;
 					//t.write(*(sp.individual_gtf), t.cov2, t.count2);
 					t.write(ss, t.cov2, t.count2);
-
-					// FIXME
-					//if(t.exons.size() > 1) t.write_features(sid);
+					if(t.exons.size() > 1) t.write_features(sf);
 				}
 			}
 		}
 		const string &s = ss.str();
+		const string &f = sf.str();
 		sp.individual_gtf->write(s.c_str(), s.size());
+		sp.individual_ftr->write(f.c_str(), f.size());
 	}
 
 	sp.close_individual_gtf();
+	sp.close_individual_ftr();
 	sp.gtf_lock.unlock();
 
 	return 0;

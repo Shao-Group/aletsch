@@ -128,6 +128,7 @@ public:
 	string label() const;
 	int write(ostream &fout, double cov2 = -1, int count = -1) const;
     int write_features(int sample_id) const;
+    int write_features(ostream &fout) const;
     void write_seq_features(ofstream & stat_file, const vector<int>& v) const;
     void write_seq_features(ofstream & stat_file, const vector<double>& v) const;
 

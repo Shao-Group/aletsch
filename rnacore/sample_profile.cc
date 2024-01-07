@@ -110,6 +110,22 @@ int sample_profile::open_align_file()
 	return 0;
 }
 
+int sample_profile::open_individual_ftr(const string &dir)
+{
+	char file[10240];
+	sprintf(file, "%s/%d.csv", dir.c_str(), sample_id);
+	individual_ftr = new ofstream;
+	individual_ftr->open(file, std::ofstream::app);
+    individual_ftr->setf(ios::fixed, ios::floatfield);
+    individual_ftr->precision(2);
+	if(individual_ftr->fail()) 
+	{
+		printf("cannot open individual feature file %s\n", file);
+		exit(0);
+	}
+	return 0;
+}
+
 int sample_profile::open_individual_gtf(const string &dir)
 {
 	char file[10240];
@@ -128,6 +144,13 @@ int sample_profile::close_individual_gtf()
 {
 	individual_gtf->close();
 	delete individual_gtf;
+	return 0;
+}
+
+int sample_profile::close_individual_ftr()
+{
+	individual_ftr->close();
+	delete individual_ftr;
 	return 0;
 }
 

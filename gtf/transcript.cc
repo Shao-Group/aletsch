@@ -359,6 +359,73 @@ int transcript::write(ostream &fout, double cov2, int count) const
 	return 0;
 }
 
+int transcript::write_features(ostream &stat_file) const
+{
+	/*
+    ofstream stat_file;
+    string filename;
+    if(sample_id < 0) filename = "meta.trstFeature.csv";
+    else filename = "gtf/"+ to_string(sample_id) + ".trstFeature.csv";
+    stat_file.open(filename, fstream::app);
+    stat_file.setf(ios::fixed, ios::floatfield);
+    stat_file.precision(2);
+	*/
+
+    stat_file << transcript_id << '\t'       // Transcript ID
+        << meta_tid << '\t'         //Transcript ID in meta.gtf
+        << coverage << '\t'        // Meta coverage
+        << cov2 << '\t'            // Individual coverage 2 
+        << abd << '\t'             // Abundance
+        << conf << '\t'            // Confidence
+        << count1 << '\t'          // Actual count of meta trst       
+        << count2 << '\t'          // Inferred count by individual trst
+        << exons.size() << '\t'   // Number of exons
+        << features.gr_vertices << '\t'
+        << features.gr_edges << '\t'
+        << features.gr_reads << '\t'
+        << features.gr_subgraph << '\t'
+        << features.num_vertices << '\t'
+        << features.num_edges << '\t'
+        << features.junc_ratio << '\t'
+        << features.max_mid_exon_len << '\t'
+        << features.start_loss1 << '\t'
+        << features.start_loss2 << '\t'
+        << features.start_loss3 << '\t'
+        << features.end_loss1 << '\t'
+        << features.end_loss2 << '\t'
+        << features.end_loss3 << '\t'
+        << features.start_merged_loss << '\t'
+        << features.end_merged_loss << '\t'
+        << features.introns << '\t'
+        << features.intron_ratio << '\t'
+        << features.start_introns << '\t'
+        << features.start_intron_ratio << '\t'
+        << features.end_introns << '\t'
+        << features.end_intron_ratio << '\t'
+        << features.uni_junc << '\t'
+        << features.seq_min_wt << '\t'
+        << features.seq_min_cnt << '\t'
+        << features.seq_min_abd << '\t'
+        << features.seq_min_ratio << '\t'
+        << features.seq_max_wt << '\t'
+        << features.seq_max_cnt << '\t'
+        << features.seq_max_abd << '\t'
+        << features.seq_max_ratio << '\t'
+        << features.start_cnt << '\t'
+        << features.start_weight << '\t'
+        << features.start_abd << '\t'
+        << features.end_cnt << '\t'
+        << features.end_weight << '\t'
+        << features.end_abd << '\t'
+        << features.unbridge_start_coming_count << '\t'
+        << features.unbridge_start_coming_ratio << '\t'
+        << features.unbridge_end_leaving_count << '\t'
+        << features.unbridge_end_leaving_ratio << endl;
+        
+    //stat_file.close();
+    return 0;
+}
+
 int transcript::write_features(int sample_id) const
 {
     ofstream stat_file;

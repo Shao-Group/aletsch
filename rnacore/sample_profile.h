@@ -27,6 +27,7 @@ public:
 	samFile *sfn;
 	bam_hdr_t *hdr;
 	ofstream *individual_gtf;
+	ofstream *individual_ftr;
 	static mutex bam_lock;
 	static mutex gtf_lock;
 	int data_type;
@@ -53,11 +54,13 @@ public:
 	int save_profile(const string &dir);
 	int open_align_file();
 	int open_individual_gtf(const string &dir);
+	int open_individual_ftr(const string &dir);
 	int read_align_headers();
 	int read_index_iterators();
 	int free_align_headers();
 	int free_index_iterators();
 	int close_individual_gtf();
+	int close_individual_ftr();
 	int close_align_file();
 	int print();
 };

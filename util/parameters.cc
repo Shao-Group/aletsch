@@ -123,6 +123,11 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			output_gtf_file = string(argv[i + 1]);
 			i++;
 		}
+		else if(string(argv[i]) == "-f")
+		{
+			output_ftr_file = string(argv[i + 1]);
+			i++;
+		}
 		if(string(argv[i]) == "-l")
 		{
 			chrm_list_string = string(argv[i + 1]);
