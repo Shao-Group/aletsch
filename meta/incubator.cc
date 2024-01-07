@@ -625,12 +625,11 @@ int incubator::postprocess()
 				if(this->grps[k].strand != strand) continue;
 				//printf("arrange chrm %s, strand %c, grp %d\n", chrm.c_str(), strand, k);
 				ts.add(this->grps[k].tmerge, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+				//this->grps[k].tmerge.clear();
 			}
 		});
 	}
 	pool1.join();
-
-	return 0;
 
 	// extend samples
 	sample_profile sn(samples.size(), samples[0].region_partition_length);
