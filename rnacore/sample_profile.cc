@@ -113,7 +113,7 @@ int sample_profile::open_align_file()
 int sample_profile::open_individual_ftr(const string &dir)
 {
 	char file[10240];
-	sprintf(file, "%s/%d.csv", dir.c_str(), sample_id);
+	sprintf(file, "%s/%d.trstFeature.csv", dir.c_str(), sample_id);
 	individual_ftr = new ofstream;
 	individual_ftr->open(file, std::ofstream::app);
     individual_ftr->setf(ios::fixed, ios::floatfield);
