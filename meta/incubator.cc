@@ -654,6 +654,7 @@ int incubator::write_combined_gtf()
 		char strand = z.first.second;
 		const transcript_set &tm = z.second;
 
+		stringstream ss;
 		for(auto &it : tm.mt)
 		{
 			auto &v = it.second;
@@ -664,7 +665,7 @@ int incubator::write_combined_gtf()
 				//if(verify_length_coverage(t, params[DEFAULT]) == false) continue;
 				//if(verify_exon_length(t, params[DEFAULT]) == false) continue;
 				assert(v[k].samples.size() == t.count2);
-				t.write(meta_gtf, -1, v[k].samples.size());
+				t.write(ss, -1, v[k].samples.size());
 
 				//if(t.exons.size() > 1) t.write_features(-1);
 				//Only output novel transcripts in merged graph
@@ -673,6 +674,8 @@ int incubator::write_combined_gtf()
 				if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) t.write_features(-1);
 			}
 		}
+		const string &s = ss.str();
+		meta_gtf.write(s.c_str(), s.size());
 	}
 	return 0;
 }
@@ -691,6 +694,7 @@ int incubator::write_individual_gtf(int sid)
 		char strand = z.first.second;
 		const transcript_set &tm = z.second;
 
+		stringstream ss;
 		for(auto &it : tm.mt)
 		{
 			auto &v = it.second;
@@ -708,13 +712,16 @@ int incubator::write_individual_gtf(int sid)
 					assert(abs(p.second.coverage - t.coverage)<SMIN);
 
 					if(t.exons.size() == 1 && t.cov2 < params[DEFAULT].min_single_exon_individual_coverage) continue;
-					t.write(*(sp.individual_gtf), t.cov2, t.count2);
+					//t.write(*(sp.individual_gtf), t.cov2, t.count2);
+					t.write(ss, t.cov2, t.count2);
 
 					// FIXME
 					//if(t.exons.size() > 1) t.write_features(sid);
 				}
 			}
 		}
+		const string &s = ss.str();
+		sp.individual_gtf->write(s.c_str(), s.size());
 	}
 
 	sp.close_individual_gtf();
