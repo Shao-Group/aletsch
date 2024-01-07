@@ -68,6 +68,8 @@ int incubator::resolve()
 	printf("postprocess and write assembled transcripts, %s", ctime(&mytime));
 	postprocess();
 
+	mytime = time(NULL);
+	printf("free samples, %s", ctime(&mytime));
 	free_samples();
 	return 0;
 }
@@ -436,7 +438,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 	return 0;
 }
 
-int incubator::generate(int sid, int tid, int rid, string chrm, mutex &curlock, mutex &prelock)
+int incubator::generate(int sid, int tid, int rid, string chrm, mutex &prelock, mutex &curlock)
 {	
 	sample_profile &sp = samples[sid];
 	int cid = get_chrm_index(chrm, sid);
@@ -463,6 +465,30 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &curlock, 
 
 	prelock.unlock();
 	//save_transcript_set(ts, tlock);
+
+	gmutex[bi + 0].lock();
+	for(int k = 0; k < v.size(); k++)
+	{
+		if(v[k].strand == '+' && v[k].splices.size() >= 1) grps[bi + 0].gset.emplace_back(std::move(v[k]));
+	}
+	gmutex[bi + 0].unlock();
+
+	gmutex[bi + 1].lock();
+	for(int k = 0; k < v.size(); k++)
+	{
+		if(v[k].strand == '-' && v[k].splices.size() >= 1) grps[bi + 1].gset.emplace_back(std::move(v[k]));
+	}
+	gmutex[bi + 1].unlock();
+
+	gmutex[bi + 2].lock();
+	for(int k = 0; k < v.size(); k++)
+	{
+		if(v[k].strand == '.' && v[k].splices.size() >= 1) grps[bi + 2].gset.emplace_back(std::move(v[k]));
+	}
+	gmutex[bi + 2].unlock();
+
+	curlock.unlock();
+
 
 	mutex mtx;
 	transcript_set ts0(chrm, rid, params[DEFAULT].min_single_exon_clustering_overlap);
@@ -523,28 +549,6 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &curlock, 
 		tmutex[bi + 2].unlock();
 	}
 
-	gmutex[bi + 0].lock();
-	for(int k = 0; k < v.size(); k++)
-	{
-		if(v[k].strand == '+' && v[k].splices.size() >= 1) grps[bi + 0].gset.emplace_back(std::move(v[k]));
-	}
-	gmutex[bi + 0].unlock();
-
-	gmutex[bi + 1].lock();
-	for(int k = 0; k < v.size(); k++)
-	{
-		if(v[k].strand == '-' && v[k].splices.size() >= 1) grps[bi + 1].gset.emplace_back(std::move(v[k]));
-	}
-	gmutex[bi + 1].unlock();
-
-	gmutex[bi + 2].lock();
-	for(int k = 0; k < v.size(); k++)
-	{
-		if(v[k].strand == '.' && v[k].splices.size() >= 1) grps[bi + 2].gset.emplace_back(std::move(v[k]));
-	}
-	gmutex[bi + 2].unlock();
-
-	curlock.unlock();
 	printf("finish generating tid = %d, rid = %d, of sample %s\n", tid, rid, sp.align_file.c_str());
 	return 0;
 }
@@ -553,6 +557,7 @@ int incubator::assemble(bundle_group &g, int rid, int gi)
 {
 	int instance = g.num_assembled + 1;
 	vector<bool> vb(g.gset.size(), false);
+	int sid = samples.size();
 	for(int k = 0; k < g.gvv.size(); k++)
 	{
 		const vector<int> &v = g.gvv[k];
@@ -567,8 +572,8 @@ int incubator::assemble(bundle_group &g, int rid, int gi)
 		assert(g.rid == rid);
 		int bi = get_bundle_group(g.chrm, rid);
 		mutex &mtx = tmutex[bi + gi];
-		boost::asio::post(this->tpool, [this, &g, &mtx, gv, rid, gi, instance]{ 
-				assembler asmb(params[DEFAULT], g.tmerge, mtx, rid, gi, instance);
+		boost::asio::post(this->tpool, [this, &g, &mtx, gv, rid, sid, instance]{ 
+				assembler asmb(params[DEFAULT], g.tmerge, mtx, rid, sid, instance);
 				asmb.resolve(gv);
 		});
 		instance++;
@@ -630,6 +635,8 @@ int incubator::postprocess()
 		});
 	}
 	pool1.join();
+
+	return 0;
 
 	// extend samples
 	sample_profile sn(samples.size(), samples[0].region_partition_length);
