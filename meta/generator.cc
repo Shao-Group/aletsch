@@ -160,6 +160,9 @@ int generator::generate(bundle_base &bb, int index)
 	char buf[1024];
 	strcpy(buf, hdr->target_name[bb.tid]);
 	bb.add_buf_intervals();
+	bb.splices = bb.hcst.get_splices();
+
+	if(cfg.skip_single_exon_transcripts && bb.splices.size() <= 0) return 0;
 
 	vcb.emplace_back(bundle(cfg, sp, std::move(bb)));
 	bundle &bd = vcb.back();
@@ -169,7 +172,6 @@ int generator::generate(bundle_base &bb, int index)
 	bd.compute_strand(sp.library_type);
 	bd.build_fragments();
 	bd.bridge();
-	bd.splices = bd.hcst.get_splices();
 
 	//if(bd.splices.size() != bd.fcst.get_splices().size()) printf("hcst splices = %lu, fcst splices = %lu\n", bd.splices.size(), bd.fcst.get_splices().size());
 

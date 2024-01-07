@@ -1052,6 +1052,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 	for(int i = 0; i < sx.trsts.size(); i++)
 	{
 		transcript &t = sx.trsts[i];
+		if(t.exons.size() <= 1 && cfg.skip_single_exon_transcripts) continue;
 		z++;
 		t.RPKM = 0;
 		ts.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
@@ -1067,6 +1068,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 	//printf("B: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
 	tm.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	mylock.unlock();
+	ts.clear();
 
 	return 0;
 }

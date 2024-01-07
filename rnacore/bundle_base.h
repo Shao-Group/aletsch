@@ -35,6 +35,7 @@ public:
 	int32_t rpos;					// the rightmost boundary on reference
 	vector<hit> hits;				// hits
 	vector<AI3> frgs;				// fragments <hit1, hit2, type>, type: -1: cannot be bridged; 0: to-be-bridged; 1: bridge with empty; 2: bridge with extra splices
+	vector<int32_t> splices;		// list of splicing positions
 	chain_set hcst;					// chain set for hits 
 	chain_set fcst;					// chain set for frgs
 	split_interval_map mmap;		// matched interval map

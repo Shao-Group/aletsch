@@ -36,6 +36,7 @@ public:
 	int max_threads;
 	bool profile_only;
 	bool boost_precision;
+	bool skip_single_exon_transcripts;
 
 	// for meta-assembly
 	int max_group_size;

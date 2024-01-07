@@ -179,8 +179,10 @@ int bundle_base::clear()
 	int m = frgs.size();
 	hits.clear();
 	frgs.clear();
+	splices.clear();
 	vector<hit>().swap(hits);
 	vector<AI3>().swap(frgs);
+	vector<int32_t>().swap(splices);
 	hcst.clear();
 	fcst.clear();
 	mmap.clear();

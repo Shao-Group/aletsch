@@ -31,7 +31,6 @@ public:
 	const parameters &cfg;
 	const sample_profile &sp;
 	int num_combined;
-	vector<int32_t> splices;
 
 public:
 	int set_gid(int instance, int subindex);

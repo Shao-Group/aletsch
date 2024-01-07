@@ -31,6 +31,7 @@ parameters::parameters()
 	max_threads = 10;
 	profile_only = false;
 	boost_precision = false;
+	skip_single_exon_transcripts = true;
 
 	// for meta-assembly
 	max_group_size = 20;
@@ -221,6 +222,10 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 		else if(string(argv[i]) == "--boost_precision")
 		{
 			boost_precision = true;
+		}
+		else if(string(argv[i]) == "--output_single_exon_transcripts")
+		{
+			skip_single_exon_transcripts = false;
 		}
 		else if(string(argv[i]) == "--profile")
 		{
@@ -537,6 +542,7 @@ int parameters::print_help()
 	printf(" %-46s  %s\n", "--version",  "print current version of aletsch and exit");
 	printf(" %-46s  %s\n", "--profile",  "profiling individual samples and exit (will write to files if -p provided)");
 	printf(" %-46s  %s\n", "--boost_precision",  "reduce false positives, default: not to do so");
+	printf(" %-46s  %s\n", "--output_single_exon_transcripts",  "assemble single-exon transcripts, default: not to do so");
 	printf(" %-46s  %s\n", "-l/--chrm_list_string <string>",  "list of chromosomes that will be assembled, default: N/A (i.e., assemble all)");
 	printf(" %-46s  %s\n", "-L/--chrm_list_file <string>",  "file with chromosomes that will be assembled, default: N/A (i.e., assemble all)");
 	printf(" %-46s  %s\n", "-d/--output_gtf_dir <string>",  "existing directory for individual transcripts, default: N/A");
