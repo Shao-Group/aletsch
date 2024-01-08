@@ -636,7 +636,7 @@ int incubator::postprocess()
 			{
 				if(this->grps[k].chrm != chrm) continue;
 				if(this->grps[k].strand != strand) continue;
-				printf("arrange chrm %s, strand %c, grp %d\n", chrm.c_str(), strand, k);
+				//printf("arrange chrm %s, strand %c, grp %d\n", chrm.c_str(), strand, k);
 				ts.add(this->grps[k].tmerge, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 				//this->grps[k].tmerge.clear();
 			}
@@ -654,8 +654,8 @@ int incubator::postprocess()
 	for(int i = 0; i < samples.size(); i++)
 	{
 		boost::asio::post(pool2, [this, i]{ 
-				time_t mytime = time(NULL);
-				printf("write gtf to sample %d, %s", i, ctime(&mytime));
+				//time_t mytime = time(NULL);
+				//printf("write gtf to sample %d, %s", i, ctime(&mytime));
 				this->write_individual_gtf(i); });
 	}
 	pool2.join();
