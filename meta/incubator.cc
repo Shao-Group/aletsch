@@ -405,7 +405,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 				if(ck1[i] == false) succeed1 = false;
 			}
 
-			printf("test j: succeed0 = %c, succeed1 = %c\n", succeed0 ? 'T' : 'F', succeed1 ? 'T' : 'F');
+			//printf("test j: succeed0 = %c, succeed1 = %c\n", succeed0 ? 'T' : 'F', succeed1 ? 'T' : 'F');
 
 			if(succeed0 && succeed1)
 			{
