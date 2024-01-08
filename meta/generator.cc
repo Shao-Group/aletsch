@@ -170,8 +170,8 @@ int generator::generate(bundle_base &bb, int index)
 	bd.chrm = string(buf);
 	bd.gid = "gene." + tostring(sp.sample_id) + "." + tostring(index);
 	bd.compute_strand(sp.library_type);
-	bd.build_fragments();
-	bd.bridge();
+	//bd.build_fragments();
+	//bd.bridge();
 
 	//if(bd.splices.size() != bd.fcst.get_splices().size()) printf("hcst splices = %lu, fcst splices = %lu\n", bd.splices.size(), bd.fcst.get_splices().size());
 

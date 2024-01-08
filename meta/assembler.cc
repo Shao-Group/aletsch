@@ -34,6 +34,12 @@ int assembler::resolve(vector<bundle*> gv)
 {
 	int subindex = 0;
 
+	for(int k = 0; k < gv.size(); k++)
+	{
+		gv[k]->build_fragments();
+		gv[k]->bridge();
+	}
+
 	// FEATURE: gv.size()
 	if(gv.size() == 1)
 	{
@@ -1007,6 +1013,7 @@ int assembler::bridge(vector<bundle*> gv)
 		//if(cfg.verbose >= 2) 
 		//printf("gid %s: further bridge %d / %lu clusters, %d / %d fragments\n", bd.gid.c_str(), cnt1, vc.size(), cnt2, unbridged);
 	}
+	cb.clear();
 	return 0;
 }
 

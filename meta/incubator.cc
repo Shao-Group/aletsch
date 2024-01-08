@@ -71,7 +71,9 @@ int incubator::resolve()
 		for(int k = 0; k < m; k++)
 		{
 			generate_merge_assemble(chrm, k);
+			break;
 		}
+		break;
 	}
 	tpool.join();
 
