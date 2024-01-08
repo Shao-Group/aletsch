@@ -654,7 +654,8 @@ int incubator::postprocess()
 	for(int i = 0; i < samples.size(); i++)
 	{
 		boost::asio::post(pool2, [this, i]{ 
-				printf("write gtf to sample %d\n", i);
+				time_t mytime = time(NULL);
+				printf("write gtf to sample %d, %s", i, ctime(&mytime));
 				this->write_individual_gtf(i); });
 	}
 	pool2.join();
