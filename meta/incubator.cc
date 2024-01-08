@@ -77,7 +77,7 @@ int incubator::resolve()
 
 	mytime = time(NULL);
 	printf("postprocess and write assembled transcripts, %s", ctime(&mytime));
-	postprocess();
+	//postprocess();
 
 	mytime = time(NULL);
 	printf("free samples, %s", ctime(&mytime));

@@ -1073,7 +1073,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 	//printf("locked in assembler\n");
 	//tsp.tsets.push_back(ts);
 	//printf("B: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
-	//tm.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+	tm.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 	mylock.unlock();
 	ts.clear();
 
