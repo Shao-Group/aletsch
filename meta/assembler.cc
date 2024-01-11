@@ -1044,14 +1044,14 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 	parameters pa = cfg;
 	for(int k = 0; k < cfg.assembly_repeats; k++)
 	{
-		//splice_graph gr(gx);
+		splice_graph gr(gx);
 		hyper_set hs(hx);
-		transcript_set ts(gx.chrm, tm.rid, pa.min_single_exon_clustering_overlap);
+		transcript_set ts(gr.chrm, tm.rid, pa.min_single_exon_clustering_overlap);
 
 		//printf("A: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
 
-		gx.gid = gx.gid + "." + tostring(k);
-		scallop sx(gx, hs, pa, k == 0 ? false : true);
+		gr.gid = gx.gid + "." + tostring(k);
+		scallop sx(gr, hs, pa, k == 0 ? false : true);
 		sx.assemble();
 
 		int z = 0;
@@ -1064,8 +1064,8 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 			ts.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 		}
 
-		if(pa.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges\n", gx.gid.c_str(), z, gx.num_vertices(), gx.num_edges());
-		if(gx.num_vertices() >= 1000) printf("assemble %s: %d transcripts, large graph with %lu vertices and %lu edges\n", gx.gid.c_str(), z, gx.num_vertices(), gx.num_edges());
+		if(pa.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges\n", gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges());
+		if(gr.num_vertices() >= 1000) printf("assemble %s: %d transcripts, large graph with %lu vertices and %lu edges\n", gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges());
 
 		//printf("try to lock in assembler\n");
 		mylock.lock();
