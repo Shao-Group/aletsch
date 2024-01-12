@@ -843,8 +843,7 @@ bool scallop::remove_single_smallest_edge(int i, double max_ratio, double &ratio
 
 bool scallop::resolve_smallest_edges(double max_ratio)
 {
-	//return false;
-    //if(!random_ordering) return false;
+    if(!random_ordering) return false;
     int se = -1;
 	int root = -1;
 	double ratio = max_ratio;
