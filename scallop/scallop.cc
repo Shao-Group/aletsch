@@ -3256,7 +3256,7 @@ int scallop::build_transcripts(splice_graph &gr)
 
 	for(int i = 0; i < paths.size(); i++)
 	{
-		string tid = "chrm" + gr.chrm + "." + gr.gid + "." + tostring(i);
+		string tid = "chr" + gr.chrm + "." + gr.gid + "." + tostring(i);
 		transcript trst;
 		path &p = paths[i];
         update_trst_features(gr, trst, i, paths);

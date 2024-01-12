@@ -373,6 +373,7 @@ int transcript::write_features(ostream &stat_file) const
 
     stat_file << transcript_id << '\t'       // Transcript ID
         << meta_tid << '\t'         //Transcript ID in meta.gtf
+        << seqname << '\t'
         << coverage << '\t'        // Meta coverage
         << cov2 << '\t'            // Individual coverage 2 
         << abd << '\t'             // Abundance
@@ -438,6 +439,7 @@ int transcript::write_features(int sample_id) const
     stat_file.precision(2);
     stat_file << transcript_id << '\t'       // Transcript ID
         << meta_tid << '\t'         //Transcript ID in meta.gtf
+        << seqname << '\t'
         << coverage << '\t'        // Meta coverage
         << cov2 << '\t'            // Individual coverage 2 
         << abd << '\t'             // Abundance
