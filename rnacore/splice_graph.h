@@ -76,6 +76,7 @@ public:
 
 	// modify the splice_graph
 	int clear();
+	int copy(const splice_graph &gr);
 	int copy(const splice_graph &gr, MEE &x2y, MEE &y2x);
 
 	// read, write, and simulate splice graph

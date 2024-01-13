@@ -29,10 +29,27 @@ splice_graph::splice_graph(const splice_graph &gr)
     subgraph = gr.subgraph;
 	lindex = gr.lindex;
 	rindex = gr.rindex;
+	copy(gr);
+}
 
-	MEE x2y;
-	MEE y2x;
-	copy(gr, x2y, y2x);
+int splice_graph::copy(const splice_graph &gr)
+{
+	clear();
+	for(int i = 0; i < gr.num_vertices(); i++)
+	{
+		add_vertex();
+		set_vertex_weight(i, gr.get_vertex_weight(i));
+		set_vertex_info(i, gr.get_vertex_info(i));
+	}
+
+	PEEI p = gr.edges();
+	for(edge_iterator it = p.first; it != p.second; it++)
+	{
+		edge_descriptor e = add_edge((*it)->source(), (*it)->target());
+		set_edge_weight(e, gr.get_edge_weight(*it));
+		set_edge_info(e, gr.get_edge_info(*it));
+	}
+	return 0;
 }
 
 int splice_graph::copy(const splice_graph &gr, MEE &x2y, MEE &y2x)
