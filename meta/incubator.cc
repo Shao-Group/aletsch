@@ -512,19 +512,19 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &curlock)
 
 		if(v[k].strand == '+')
 		{
-			assembler asmb(params[DEFAULT], ts0, mtx, rid, sid, index++);
+			assembler asmb(params[DEFAULT], ts0, mtx, tpool, rid, sid, index++);
 			asmb.assemble(v[k]);
 			cnt0++;
 		}
 		if(v[k].strand == '-')
 		{
-			assembler asmb(params[DEFAULT], ts1, mtx, rid, sid, index++);
+			assembler asmb(params[DEFAULT], ts1, mtx, tpool, rid, sid, index++);
 			asmb.assemble(v[k]);
 			cnt1++;
 		}
 		if(v[k].strand == '.')
 		{
-			assembler asmb(params[DEFAULT], ts2, mtx, rid, sid, index++);
+			assembler asmb(params[DEFAULT], ts2, mtx, tpool, rid, sid, index++);
 			asmb.assemble(v[k]);
 			cnt2++;
 		}
@@ -580,7 +580,7 @@ int incubator::assemble(bundle_group &g, int rid, int gi)
 		int bi = get_bundle_group(g.chrm, rid);
 		mutex &mtx = tmutex[bi + gi];
 		boost::asio::post(this->tpool, [this, &g, &mtx, gv, rid, sid, instance]{ 
-				assembler asmb(params[DEFAULT], g.tmerge, mtx, rid, sid, instance);
+				assembler asmb(params[DEFAULT], g.tmerge, mtx, this->tpool, rid, sid, instance);
 				asmb.resolve(gv);
 		});
 		instance++;

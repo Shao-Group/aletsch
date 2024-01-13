@@ -24,8 +24,8 @@ See LICENSE for licensing.
 #include <boost/asio/thread_pool.hpp>
 #include <boost/pending/disjoint_sets.hpp>
 
-assembler::assembler(const parameters &c, transcript_set &tm, mutex &m, int r, int g, int i)
-	: cfg(c), tmerge(tm), mylock(m), rid(r), gid(g), instance(i)
+assembler::assembler(const parameters &c, transcript_set &tm, mutex &m, thread_pool &p, int r, int g, int i)
+	: cfg(c), tmerge(tm), mylock(m), pool(p), rid(r), gid(g), instance(i)
 {
 	assert(tmerge.rid == rid);
 }
@@ -1042,40 +1042,64 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 
 	transcript_set &tm = tmerge;
 	parameters pa = cfg;
-	for(int k = 0; k < cfg.assembly_repeats; k++)
+	for(int k = 1; k < cfg.assembly_repeats; k++)
 	{
 		splice_graph gr(gx);
 		hyper_set hs(hx);
-		transcript_set ts(gr.chrm, tm.rid, pa.min_single_exon_clustering_overlap);
-
-		//printf("A: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
-
 		gr.gid = gx.gid + "." + tostring(k);
-		scallop sx(gr, hs, pa, k == 0 ? false : true);
-		sx.assemble();
 
-		int z = 0;
-		for(int i = 0; i < sx.trsts.size(); i++)
-		{
-			transcript &t = sx.trsts[i];
-			if(t.exons.size() <= 1 && cfg.skip_single_exon_transcripts) continue;
-			z++;
-			t.RPKM = 0;
-			ts.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-		}
+		boost::asio::post(pool, [this, &gr, &hs, k, sid, pa, &tm] {
+				//printf("A: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
 
-		if(pa.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges\n", gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges());
-		if(gr.num_vertices() >= 1000) printf("assemble %s: %d transcripts, large graph with %lu vertices and %lu edges\n", gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges());
+				scallop sx(gr, hs, pa, k == 0 ? false : true);
+				sx.assemble();
 
-		//printf("try to lock in assembler\n");
-		mylock.lock();
-		//printf("locked in assembler\n");
-		//tsp.tsets.push_back(ts);
-		//printf("B: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
-		tm.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
-		mylock.unlock();
-		ts.clear();
+				int z = 0;
+				transcript_set ts(gr.chrm, tm.rid, pa.min_single_exon_clustering_overlap);
+				for(int i = 0; i < sx.trsts.size(); i++)
+				{
+					transcript &t = sx.trsts[i];
+					if(t.exons.size() <= 1 && cfg.skip_single_exon_transcripts) continue;
+					z++;
+					t.RPKM = 0;
+					ts.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+				}
+
+				if(pa.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges\n", gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges());
+				if(gr.num_vertices() >= 1000) printf("assemble %s: %d transcripts, large graph with %lu vertices and %lu edges\n", gr.gid.c_str(), z, gr.num_vertices(), gr.num_edges());
+
+				this->mylock.lock();
+				tm.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+				this->mylock.unlock();
+				ts.clear();
+		});
 	}
+
+	//printf("A: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
+
+	int k = 0;
+	gx.gid = gx.gid + "." + tostring(k);
+	scallop sx(gx, hx, pa, k == 0 ? false : true);
+	sx.assemble();
+
+	int z = 0;
+	transcript_set ts(gx.chrm, tm.rid, pa.min_single_exon_clustering_overlap);
+	for(int i = 0; i < sx.trsts.size(); i++)
+	{
+		transcript &t = sx.trsts[i];
+		if(t.exons.size() <= 1 && cfg.skip_single_exon_transcripts) continue;
+		z++;
+		t.RPKM = 0;
+		ts.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+	}
+
+	if(pa.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges\n", gx.gid.c_str(), z, gx.num_vertices(), gx.num_edges());
+	if(gx.num_vertices() >= 1000) printf("assemble %s: %d transcripts, large graph with %lu vertices and %lu edges\n", gx.gid.c_str(), z, gx.num_vertices(), gx.num_edges());
+
+	mylock.lock();
+	tm.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+	mylock.unlock();
+	ts.clear();
 
 	return 0;
 }

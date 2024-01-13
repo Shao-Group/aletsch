@@ -22,10 +22,11 @@ typedef boost::asio::thread_pool thread_pool;
 class assembler
 {
 public:
-	assembler(const parameters &cfg, transcript_set &tmerge, mutex &mylock, int rid, int gid, int instance);
+	assembler(const parameters &cfg, transcript_set &tmerge, mutex &mylock, thread_pool &p, int rid, int gid, int instance);
 
 public:
 	const parameters &cfg;
+	thread_pool &pool;
 	transcript_set &tmerge;
 	mutex &mylock;
 	int rid;
