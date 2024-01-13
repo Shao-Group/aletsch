@@ -1048,8 +1048,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 		hyper_set hs(hx);
 		gr.gid = gx.gid + "." + tostring(k);
 
-		boost::asio::post(pool, [this, &gr, &hs, k, sid, pa, &tm] {
-				//printf("A: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
+		//boost::asio::post(pool, [this, &gr, &hs, k, sid, pa, &tm] {
 
 				scallop sx(gr, hs, pa, k == 0 ? false : true);
 				sx.assemble();
@@ -1072,7 +1071,7 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 				tm.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
 				this->mylock.unlock();
 				ts.clear();
-		});
+		//});
 	}
 
 	//printf("A: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
