@@ -72,8 +72,8 @@ int scallop::assemble()
 		b = resolve_trivial_vertex(1, true, cfg.max_decompose_error_ratio[TRIVIAL_VERTEX]);
 		if(b == true) continue;
 
-        b = resolve_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
-        if(b == true) continue;
+        //b = resolve_smallest_edges(cfg.max_decompose_error_ratio[SMALLEST_EDGE]);
+        //if(b == true) continue;
 
 		b = resolve_unsplittable_vertex(UNSPLITTABLE_SINGLE, 1, 0.01);
 		if(b == true) continue;
