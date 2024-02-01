@@ -60,6 +60,8 @@ int incubator::resolve()
 	init_bundle_groups();
 	init_transcript_sets();
 
+	return 0;
+
 	//for(int k = 0; k < samples.size(); k++) samples[k].open_align_file();
 
 	time_t mytime;
