@@ -50,6 +50,7 @@ public:
 	vector<vector<int32_t>> end2;
 
 public:
+	int set_batch_boundaries(int gap);
 	int load_profile(const string &dir);
 	int save_profile(const string &dir);
 	int open_align_file();

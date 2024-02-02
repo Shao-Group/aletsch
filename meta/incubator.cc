@@ -51,13 +51,26 @@ incubator::~incubator()
 
 int incubator::resolve()
 {
+	printf("AAAAA\n");
 	read_bam_list();
+	build_sample_index();
+
+	printf("BBBBB\n");
+
 	init_samples();
 
 	if(params[DEFAULT].profile_only == true) return 0;
 
-	build_sample_index();
+	return 0;
+
+	printf("CCCCC\n");
+
+
+	printf("DDDDD\n");
+
 	init_bundle_groups();
+
+	printf("EEEEE\n");
 	init_transcript_sets();
 
 	return 0;
@@ -128,16 +141,16 @@ int incubator::init_samples()
 	for(int i = 0; i < samples.size(); i++)
 	{
 		sample_profile &sp = samples[i];
-		boost::asio::post(pool, [this, &sp] 
-		{
+		set<int> tlist = get_target_list(i);
+		boost::asio::post(pool, [this, &sp] {	
 			const parameters &cfg = this->params[sp.data_type];
-
 			if(cfg.profile_only == true)
 			{
 				previewer pre(cfg, sp);
 				pre.infer_library_type();
 				if(sp.data_type == PAIRED_END) pre.infer_insertsize();
 				//if(cfg.profile_dir != "") sp.save_profile(cfg.profile_dir);
+				//continue;
 				return;
 			}
 
@@ -151,7 +164,8 @@ int incubator::init_samples()
 				pre.infer_library_type();
 				if(sp.data_type == PAIRED_END) pre.infer_insertsize();
 			}
-			sp.read_index_iterators(); 
+			//sp.read_index_iterators(); 
+			sp.set_batch_boundaries(cfg.min_bundle_gap);
 		});
 	}
 	pool.join();
@@ -262,6 +276,20 @@ int incubator::build_sample_index()
 		sp.close_align_file();
 	}
 	return 0;
+}
+
+set<int> incubator::get_target_list(int sid)
+{
+	set<int> t;
+	for(auto &s: sindex)
+	{
+		string chrm = s.first;
+		for(auto &z: sindex[chrm])
+		{
+			if(z.first == sid) t.insert(z.second);
+		}
+	}
+	return t;
 }
 
 int incubator::get_chrm_index(string chrm, int sid)

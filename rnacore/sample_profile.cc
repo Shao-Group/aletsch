@@ -4,6 +4,7 @@ Part of aletsch
 See LICENSE for licensing.
 */
 
+#include "hit.h"
 #include "sample_profile.h"
 #include "htslib/bgzf.h"
 #include "constants.h"
@@ -161,10 +162,90 @@ int sample_profile::close_align_file()
 	return 0;
 }
 
+int sample_profile::set_batch_boundaries(int min_bundle_gap)
+{
+	open_align_file();
+
+	start1.resize(hdr->n_targets);
+	start2.resize(hdr->n_targets);
+	end1.resize(hdr->n_targets);
+	end2.resize(hdr->n_targets);
+
+	for(int i = 0; i < hdr->n_targets; i++)
+	{
+		int32_t len = hdr->target_len[i];
+		int n = hdr->target_len[i] / region_partition_length + 1; 
+		//printf("hdr size = %d, chrm %d len = %d, n = %d\n", hdr->n_targets, i, len, n);
+		start1[i].assign(n, 0);
+		start2[i].assign(n, 0);
+		end1[i].assign(n, 0);
+		end2[i].assign(n, 0);
+	}
+
+	int hid = 0;
+	int tid = -1;
+	int rid = 0;
+	int32_t rpos = 0;
+	bam1_t *b1t = bam_init1();
+    while(sam_read1(sfn, hdr, b1t) >= 0)
+	{
+		bam1_core_t &p = b1t->core;
+
+		if((p.flag & 0x4) >= 1) continue;												// read is not mapped
+		//if((p.flag & 0x100) >= 1) continue;											// secondary alignment
+		//if(p.n_cigar > cfg.max_num_cigar) continue;									// ignore hits with more than max-num-cigar types
+		//if(p.qual < cfg.min_mapping_quality) continue;								// ignore hits with small quality
+		//if(p.n_cigar < 1) continue;													// should never happen
+
+		hit ht(b1t, hid++);
+		//ht.set_tags(b1t);
+		//ht.set_strand(library_type);
+
+		if(ht.tid != tid)
+		{
+			if(tid >= 0) end1[tid][rid] = rpos;
+			assert(ht.tid < start1.size());
+			tid = ht.tid;
+			rid = 0;
+			start1[tid][rid] = ht.pos;
+			rpos = ht.rpos;
+		}
+
+		if(ht.pos > rpos + min_bundle_gap)
+		{
+			if(ht.pos >= region_partition_length * (1 + rid))
+			{
+				end1[tid][rid] = rpos;
+				rid = ht.pos / region_partition_length;
+				assert(rid < start1[tid].size());
+				start1[tid][rid] = ht.pos;
+			}
+		}
+
+		if(ht.rpos > rpos) rpos = ht.rpos;
+	}
+
+	for(int i = 0; i < hdr->n_targets; i++)
+	{
+		int32_t len = hdr->target_len[i];
+		for(int k = 0; k < start1[i].size(); k++)
+		{
+			printf("boundaries of tid %d, region %d: %d-%d | %d-%d, len = %d\n", 
+					i, k, start1[i][k], end1[i][k], k * region_partition_length, (k+1)* region_partition_length, len);
+		}
+	}
+
+    bam_destroy1(b1t);
+	close_align_file();
+	return 0;
+}
+
 int sample_profile::read_index_iterators()
 {
 	open_align_file();
 	hts_idx_t *idx = sam_index_load(sfn, index_file.c_str());
+
+	printf("hdr size = %d\n", hdr->n_targets);
 
 	iters.clear();
 	iters.resize(hdr->n_targets);
@@ -182,10 +263,10 @@ int sample_profile::read_index_iterators()
 			int32_t t = (k + 2) * region_partition_length;
 			//string query = string(hdr->target_name[i]) + ":" + to_string(s) + "-" + to_string(t);
 			string query = string(hdr->target_name[i]) + ":" + to_string(s);
+			printf("build index for target-id %d, %d-%d, query = %s\n", i, s, t, query.c_str());
 
-			//printf("build index for target-id %d, %d-%d, query = %s\n", i, s, t, query.c_str());
-			hts_itr_t *iter = sam_itr_querys(idx, hdr, query.c_str());
-
+			//hts_itr_t *iter = sam_itr_querys(idx, hdr, query.c_str());
+			hts_itr_t *iter = NULL;
 			iters[i].push_back(iter);
 			start1[i].push_back(s);
 			start2[i].push_back(s);

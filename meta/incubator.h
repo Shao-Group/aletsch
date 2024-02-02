@@ -64,6 +64,7 @@ private:
 	int init_transcript_sets();
 	int get_max_region(string chrm);
 	int get_chrm_index(string chrm, int sid);
+	set<int> get_target_list(int sid);
 	int get_bundle_group(string chrm, int gid);
 	int generate_merge_assemble(string chrm, int gid);
 	int generate(int sid, int tid, int rid, string chrm, mutex &curlock);
