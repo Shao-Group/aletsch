@@ -402,11 +402,12 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 		{
 			if(posted[j] == true) continue;
 
-			bool succeed0 = true;
+			//bool succeed0 = true;
 			bool succeed1 = true;
-			vector<bool> ck0(v.size(), false);
+			//vector<bool> ck0(v.size(), false);
 			vector<bool> ck1(v.size(), false);
 
+			/*
 			if(j >= 1)
 			{
 				for(int i = 0; i < v.size(); i++) 
@@ -415,6 +416,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 					if(ck0[i] == false) succeed0 = false;
 				}
 			}
+			*/
 
 			for(int i = 0; i < v.size(); i++) 
 			{
@@ -424,7 +426,8 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 
 			//printf("test j: succeed0 = %c, succeed1 = %c\n", succeed0 ? 'T' : 'F', succeed1 ? 'T' : 'F');
 
-			if(succeed0 && succeed1)
+			//if(succeed0 && succeed1)
+			if(succeed1)
 			{
 				int rid = gid * group_size + j;
 				int bi = this->get_bundle_group(chrm, rid);
@@ -447,7 +450,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 
 			for(int i = 0; i < v.size(); i++) 
 			{
-				if(j >= 1 && ck0[i] == true) curlocks[i * group_size + j - 1].unlock();
+				//if(j >= 1 && ck0[i] == true) curlocks[i * group_size + j - 1].unlock();
 				if(j >= 0 && ck1[i] == true) curlocks[i * group_size + j - 0].unlock();
 			}
 		}
