@@ -28,11 +28,13 @@ generator::generator(sample_profile &s, vector<bundle> &v, const parameters &c, 
 	//sp.open_align_file();
 	sfn = sam_open(sp.align_file.c_str(), "r");
 	hdr = sam_hdr_read(sfn);
+	idx = sam_index_load(sfn, sp.index_file.c_str());
 }
 
 generator::~generator()
 {
 	//sp.close_align_file();
+	if(idx != NULL) hts_idx_destroy(idx);
     if(hdr != NULL) bam_hdr_destroy(hdr);
     if(sfn != NULL) sam_close(sfn);
 }
@@ -46,24 +48,22 @@ int generator::resolve()
 	bundle_base bb2;
 
 	int hid = 0;
-    bam1_t *b1t = bam_init1();
-
-	hts_itr_t *iter = sp.iters[target_id][region_id];
-	if(iter == NULL) return 0;
 
 	int32_t start1 = sp.start1[target_id][region_id];
-	int32_t start2 = sp.start2[target_id][region_id];
-	int32_t new_start1 = start1;
-	int32_t new_start2 = start2;
+	int32_t end1 = sp.end1[target_id][region_id];
+	hts_itr_t *iter = sam_itr_queryi(idx, target_id, start1, end1);
+	//hts_itr_t *iter = sp.iters[target_id][region_id];
+	if(iter == NULL) return 0;
 
-	bool term1 = false, term2 = false;
-	// sp.sfn
+	int32_t rrpos = 0;
+	//bool term1 = false, term2 = false;
+    bam1_t *b1t = bam_init1();
 	while(sam_itr_next(sfn, iter, b1t) >= 0)
 	{
 		bam1_core_t &p = b1t->core;
 
-		if(p.pos < sp.region_partition_length * region_id) continue;
-		if(p.pos < start1 && p.pos < start2) continue;
+		//if(p.pos < sp.region_partition_length * region_id) continue;
+		//if(p.pos < start1 && p.pos < start2) continue;
 
 		if((p.flag & 0x4) >= 1) continue;											// read is not mapped
 		if((p.flag & 0x100) >= 1 && cfg.use_second_alignment == false) continue;	// secondary alignment
@@ -82,39 +82,50 @@ int generator::resolve()
 		// truncate
 		if(bb1.hits.size() >= 1 && (ht.tid != bb1.tid || ht.pos > bb1.rpos + cfg.min_bundle_gap))
 		{
+			if(bb1.rpos > rrpos) rrpos = bb1.rpos;
 			generate(bb1, index);
 			bb1.clear();
 			index++;
+			/*
 			if(ht.pos >= sp.region_partition_length * (1 + region_id) && term1 == false)
 			{
 				term1 = true;
 				new_start1 = ht.pos;
 			}
+			*/
 		}
+
+		/*
 		if(bb1.hits.size() <= 0 && ht.pos >= sp.region_partition_length * (1 + region_id) && term1 == false) 
 		{
 			term1 = true;
 			new_start1 = ht.pos;
 		}
+		*/
 
 		if(bb2.hits.size() >= 1 && (ht.tid != bb2.tid || ht.pos > bb2.rpos + cfg.min_bundle_gap))
 		{
+			if(bb2.rpos > rrpos) rrpos = bb2.rpos;
 			generate(bb2, index);
 			bb2.clear();
 			index++;
+			/*
 			if(ht.pos >= sp.region_partition_length * (1 + region_id) && term2 == false)
 			{
 				term2 = true;
 				new_start2 = ht.pos;
 			}
+			*/
 		}
+		/*
 		if(bb2.hits.size() <= 0 && ht.pos >= sp.region_partition_length * (1 + region_id) && term2 == false) 
 		{
 			term2 = true;
 			new_start2 = ht.pos;
 		}
+		*/
 
-		if(term1 == true && term2 == true) break;
+		//if(term1 == true && term2 == true) break;
 
 		// add hit
 		if(cfg.uniquely_mapped_only == true && ht.nh != 1) continue;
@@ -123,34 +134,42 @@ int generator::resolve()
 		//if(sp.library_type == UNSTRANDED && sp.bam_with_xs == 1 && ht.xs == '.') continue;
 		if(sp.library_type != UNSTRANDED && ht.strand == '.' && ht.xs != '.') ht.strand = ht.xs;
 
-		if(sp.library_type != UNSTRANDED && ht.strand == '+' && ht.pos >= start1 && term1 == false) bb1.add_hit_intervals(ht, b1t);
-		if(sp.library_type != UNSTRANDED && ht.strand == '-' && ht.pos >= start2 && term2 == false) bb2.add_hit_intervals(ht, b1t);
+		if(sp.library_type != UNSTRANDED && ht.strand == '+') bb1.add_hit_intervals(ht, b1t);
+		if(sp.library_type != UNSTRANDED && ht.strand == '-') bb2.add_hit_intervals(ht, b1t);
+		//if(sp.library_type != UNSTRANDED && ht.strand == '+' && ht.pos >= start1 && term1 == false) bb1.add_hit_intervals(ht, b1t);
+		//if(sp.library_type != UNSTRANDED && ht.strand == '-' && ht.pos >= start2 && term2 == false) bb2.add_hit_intervals(ht, b1t);
 
 		//if(sp.library_type == UNSTRANDED && ht.pos >= start1 && term1 == false) bb1.add_hit_intervals(ht, b1t);
 
-		// unstranded
-		if(sp.library_type == UNSTRANDED && ht.xs == '+' && ht.pos >= start1 && term1 == false) bb1.add_hit_intervals(ht, b1t);
-		if(sp.library_type == UNSTRANDED && ht.xs == '-' && ht.pos >= start2 && term2 == false) bb2.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '+') bb1.add_hit_intervals(ht, b1t);
+		if(sp.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit_intervals(ht, b1t);
+		//if(sp.library_type == UNSTRANDED && ht.xs == '+' && ht.pos >= start1 && term1 == false) bb1.add_hit_intervals(ht, b1t);
+		//if(sp.library_type == UNSTRANDED && ht.xs == '-' && ht.pos >= start2 && term2 == false) bb2.add_hit_intervals(ht, b1t);
 		if(sp.library_type == UNSTRANDED && ht.xs == '.') 
 		{
 			bool b = ht.contain_splices(b1t);
-			if(b == false && ht.pos >= start1 && term1 == false) bb1.add_hit_intervals(ht, b1t);
-			if(b == false && ht.pos >= start2 && term2 == false) bb2.add_hit_intervals(ht, b1t);
+			//if(b == false && ht.pos >= start1 && term1 == false) bb1.add_hit_intervals(ht, b1t);
+			//if(b == false && ht.pos >= start2 && term2 == false) bb2.add_hit_intervals(ht, b1t);
+			if(b == false) bb1.add_hit_intervals(ht, b1t);
+			if(b == false) bb2.add_hit_intervals(ht, b1t);
 		}
 	}
 
-    bam_destroy1(b1t);
-
+	if(bb1.rpos > rrpos) rrpos = bb1.rpos;
+	if(bb2.rpos > rrpos) rrpos = bb2.rpos;
 	generate(bb1, index++);
 	generate(bb2, index++);
 	bb1.clear();
 	bb2.clear();
 
-	if(cfg.verbose >= 2) printf("generate target %d, region %d, starts = %d/%d, next starts = %d/%d, terms=%c/%c, hid = %d\n", 
-			target_id, region_id, start1, start2, new_start1, new_start2, term1 ? 'T' : 'F', term2 ? 'T' : 'F', hid);
+    bam_destroy1(b1t);
+	hts_itr_destroy(iter);
 
-	if(term1 && region_id < sp.start1[target_id].size()) sp.end1[target_id][region_id] = new_start1;
-	if(term2 && region_id < sp.start2[target_id].size()) sp.end2[target_id][region_id] = new_start2;
+	if(cfg.verbose >= 2) printf("generate target %d, region %d, start/end = %d/%d, rrpos = %d, hid = %d\n", 
+			target_id, region_id, start1, end1, rrpos, hid);
+
+	//if(term1 && region_id < sp.start1[target_id].size()) sp.end1[target_id][region_id] = new_start1;
+	//if(term2 && region_id < sp.start2[target_id].size()) sp.end2[target_id][region_id] = new_start2;
 	return 0;
 }
 

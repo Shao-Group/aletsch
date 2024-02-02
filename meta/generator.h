@@ -36,6 +36,7 @@ public:
 
 private:
 	const parameters &cfg;
+	hts_idx_t *idx;
 	samFile *sfn;
 	bam_hdr_t *hdr;
 	sample_profile &sp;

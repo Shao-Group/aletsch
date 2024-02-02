@@ -51,29 +51,16 @@ incubator::~incubator()
 
 int incubator::resolve()
 {
-	printf("AAAAA\n");
 	read_bam_list();
 	build_sample_index();
-
-	printf("BBBBB\n");
 
 	init_samples();
 
 	if(params[DEFAULT].profile_only == true) return 0;
 
-	return 0;
-
-	printf("CCCCC\n");
-
-
-	printf("DDDDD\n");
-
 	init_bundle_groups();
 
-	printf("EEEEE\n");
 	init_transcript_sets();
-
-	return 0;
 
 	//for(int k = 0; k < samples.size(); k++) samples[k].open_align_file();
 
