@@ -11,6 +11,8 @@ See LICENSE for licensing.
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/pending/disjoint_sets.hpp>
+#include <sys/resource.h>
+#include <unistd.h>
 
 #include "constants.h"
 #include "parameters.h"
@@ -20,6 +22,12 @@ See LICENSE for licensing.
 #include "essential.h"
 #include "hyper_set.h"
 #include "assembler.h"
+
+void check_memory_usage() {
+    struct rusage usage;
+    getrusage(RUSAGE_SELF, &usage);
+    printf("Memory usage: %ld kilobytes\n", usage.ru_maxrss);
+}
 
 generator::generator(sample_profile &s, vector<bundle> &v, const parameters &c, int tid, int rid)
 	: vcb(v), cfg(c), sp(s), target_id(tid), region_id(rid)
@@ -163,7 +171,10 @@ int generator::resolve()
 	bb2.clear();
 
     bam_destroy1(b1t);
+
+    check_memory_usage();
 	hts_itr_destroy(iter);
+    check_memory_usage();
 
 	if(cfg.verbose >= 2) printf("generate target %d, region %d, start/end = %d/%d, rrpos = %d, hid = %d\n", 
 			target_id, region_id, start1, end1, rrpos, hid);
