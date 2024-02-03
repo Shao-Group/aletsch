@@ -13,6 +13,7 @@ See LICENSE for licensing.
 #include <boost/pending/disjoint_sets.hpp>
 #include <sys/resource.h>
 #include <unistd.h>
+#include <htslib/bgzf.h>
 
 #include "constants.h"
 #include "parameters.h"
@@ -58,17 +59,23 @@ int generator::resolve()
 	int hid = 0;
 
 	int32_t start1 = sp.start1[target_id][region_id];
+	int32_t start2 = sp.start2[target_id][region_id] + 1;
 	int32_t end1 = sp.end1[target_id][region_id];
-	hts_itr_t *iter = sam_itr_queryi(idx, target_id, start1, end1);
-	//hts_itr_t *iter = sp.iters[target_id][region_id];
-	if(iter == NULL) return 0;
+	off_t offt = sp.start_off[target_id][region_id];
+
+	//hts_itr_t *iter = sam_itr_queryi(idx, target_id, start1, end1);
+	//hts_itr_t *iter = sam_itr_queryi(idx, target_id, start1, start2);
+	//if(iter == NULL) return 0;
 
 	int32_t rrpos = 0;
-	//bool term1 = false, term2 = false;
+	bgzf_seek(sfn->fp.bgzf, offt, SEEK_SET);
     bam1_t *b1t = bam_init1();
-	while(sam_itr_next(sfn, iter, b1t) >= 0)
+	//while(sam_itr_next(sfn, iter, b1t) >= 0)
+    while(sam_read1(sfn, hdr, b1t) >= 0)
 	{
 		bam1_core_t &p = b1t->core;
+
+		if(p.pos >= end1) break;
 
 		//if(p.pos < sp.region_partition_length * region_id) continue;
 		//if(p.pos < start1 && p.pos < start2) continue;
@@ -172,9 +179,9 @@ int generator::resolve()
 
     bam_destroy1(b1t);
 
-    check_memory_usage();
-	hts_itr_destroy(iter);
-    check_memory_usage();
+    //check_memory_usage();
+	//hts_itr_destroy(iter);
+    //check_memory_usage();
 
 	if(cfg.verbose >= 2) printf("generate target %d, region %d, start/end = %d/%d, rrpos = %d, hid = %d\n", 
 			target_id, region_id, start1, end1, rrpos, hid);
