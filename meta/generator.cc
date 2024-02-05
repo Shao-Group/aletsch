@@ -76,6 +76,7 @@ int generator::resolve()
 		bam1_core_t &p = b1t->core;
 
 		if(p.pos >= end1) break;
+		if(p.tid != target_id) break;
 
 		//if(p.pos < sp.region_partition_length * region_id) continue;
 		//if(p.pos < start1 && p.pos < start2) continue;
