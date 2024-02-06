@@ -29,7 +29,7 @@ public:
 
 public:
 	const parameters &cfg;						// config
-	const map<string, vector<PI>> sidx;			// sample index
+	const map<string, vector<PI>> &sidx;		// sample index
 	transcript_set tmerge;						// merged transcripts
 	vector<bundle> gset;						// given graphs
 	vector<join_interval_map> jmaps;			// join interval maps for all bundles
