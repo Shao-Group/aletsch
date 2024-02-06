@@ -55,17 +55,15 @@ int incubator::resolve()
 	build_sample_index();
 
 	init_samples();
-	printf("finish init-samples\n");
+	//printf("finish init-samples\n");
 
 	if(params[DEFAULT].profile_only == true) return 0;
 
 	init_bundle_groups();
-	printf("finish init-bundle-groups\n");
+	//printf("finish init-bundle-groups\n");
 
 	init_transcript_sets();
-	printf("finish init-transcript-set\n");
-
-	return 0;
+	//printf("finish init-transcript-set\n");
 
 	//for(int k = 0; k < samples.size(); k++) samples[k].open_align_file();
 
@@ -448,8 +446,8 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 						time_t mytime = time(NULL);
 						//printf("assemble chrm %s, gid = %d, rid = %d, bi = %d, %s", chrm.c_str(), gid, rid, bi, ctime(&mytime));
 						boost::asio::post(this->tpool, [this, &g, bi, rid, i]{ 
-								//g.resolve(); 
-								//this->assemble(g, rid, i);
+								g.resolve(); 
+								this->assemble(g, rid, i);
 								g.clear();
 						});
 					}
