@@ -55,12 +55,17 @@ int incubator::resolve()
 	build_sample_index();
 
 	init_samples();
+	printf("finish init-samples\n");
 
 	if(params[DEFAULT].profile_only == true) return 0;
 
 	init_bundle_groups();
+	printf("finish init-bundle-groups\n");
 
 	init_transcript_sets();
+	printf("finish init-transcript-set\n");
+
+	return 0;
 
 	//for(int k = 0; k < samples.size(); k++) samples[k].open_align_file();
 
