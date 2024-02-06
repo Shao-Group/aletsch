@@ -441,8 +441,8 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 						time_t mytime = time(NULL);
 						//printf("assemble chrm %s, gid = %d, rid = %d, bi = %d, %s", chrm.c_str(), gid, rid, bi, ctime(&mytime));
 						boost::asio::post(this->tpool, [this, &g, bi, rid, i]{ 
-								g.resolve(); 
-								this->assemble(g, rid, i);
+								//g.resolve(); 
+								//this->assemble(g, rid, i);
 								g.clear();
 						});
 					}
