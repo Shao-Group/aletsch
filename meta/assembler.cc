@@ -343,7 +343,7 @@ int assembler::assemble(vector<bundle*> gv)
         }
 
 		assemble(gr, ps, bd.sp.sample_id);
-		//bd.clear();
+		bd.clear();
 	}
 
     for(int k = 0; k < gv.size(); k++)
