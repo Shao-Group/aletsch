@@ -113,8 +113,10 @@ int bundle_group::clear()
 	grouped.clear();
 	vector<bool>().swap(grouped);
 
+	/*
 	for(int k = 0; k < gset.size(); k++) gset[k].clear();
 	gset.clear();
+	*/
 	num_assembled = 0;
 	return 0;
 }
