@@ -34,6 +34,7 @@ public:
 	vector<bundle> gset;						// given graphs
 	vector<join_interval_map> jmaps;			// join interval maps for all bundles
 	vector<vector<int>> gvv;					// merged graphs
+	vector<int> completed;						// if the cluster gets fully decomposed
 	string chrm;								// chrm name
 	char strand;								// strandness
 	int rid;									// group id

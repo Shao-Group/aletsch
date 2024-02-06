@@ -412,6 +412,26 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 	vector<bool> posted(batch_size, false);
 	while(true)
 	{
+		for(int k = 0; k < grps.size(); k++)
+		{
+			bundle_group &g = grps[k];
+			bool b = true;
+			for(int i = 0; i < g.gvv.size(); i++)
+			{
+				if(g.completed[i] != 1) b = false;
+				if(b == false) continue;
+			}
+			if(b == false) continue;
+
+			printf("clear gset of bundle-graph %d\n", k);
+			g.gset.clear();
+			vector<bundle>().swap(g.gset);
+			for(int i = 0; i < g.completed.size(); i++)
+			{
+				g.completed[i] = 2;
+			}
+		}
+
 		for(int j = 0; j < batch_size; j++)
 		{
 			if(posted[j] == true) continue;
@@ -600,6 +620,7 @@ int incubator::assemble(bundle_group &g, int rid, int gi)
 	int instance = g.num_assembled + 1;
 	vector<bool> vb(g.gset.size(), false);
 	int sid = samples.size();
+	g.completed.assign(g.gvv.size(), 0);
 	for(int k = 0; k < g.gvv.size(); k++)
 	{
 		const vector<int> &v = g.gvv[k];
@@ -614,9 +635,10 @@ int incubator::assemble(bundle_group &g, int rid, int gi)
 		assert(g.rid == rid);
 		int bi = get_bundle_group(g.chrm, rid);
 		mutex &mtx = tmutex[bi + gi];
-		boost::asio::post(this->tpool, [this, &g, &mtx, gv, rid, sid, instance]{ 
+		boost::asio::post(this->tpool, [this, &g, &mtx, k, gv, rid, sid, instance]{ 
 				assembler asmb(params[DEFAULT], g.tmerge, mtx, rid, sid, instance);
 				asmb.resolve(gv);
+				g.completed[k] = 1;
 		});
 		instance++;
 	}
