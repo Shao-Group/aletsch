@@ -40,7 +40,6 @@ public:
 	ofstream meta_ftr;								// meta feature
 	vector<bundle_group> grps;						// bundle groups
 	thread_pool tpool;
-	int group_size;									// number of regions in a group
 	vector<mutex> gmutex;							// mutex for writing to gset in each bundle_group
 	vector<mutex> tmutex;							// mutex for transcripts in each bundle_group
 	//transcript_set_pool tspool;					// a pool for ts

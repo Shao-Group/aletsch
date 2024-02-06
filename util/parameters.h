@@ -45,6 +45,7 @@ public:
 	int max_num_junctions_to_combine;
 	int assembly_repeats;
 	int32_t region_partition_length;
+	int batch_partition_size;
 
 	// for bridging paired-end reads
 	int bridge_end_relaxing;

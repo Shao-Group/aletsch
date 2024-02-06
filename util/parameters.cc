@@ -40,6 +40,7 @@ parameters::parameters()
 	max_num_junctions_to_combine = 500;
 	assembly_repeats = 1;
 	region_partition_length = 1000000;
+	batch_partition_size = 3;
 
 	// for bridging paired-end reads
 	bridge_end_relaxing = 10;
@@ -207,6 +208,11 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 		else if(string(argv[i]) == "--assembly_repeats")
 		{
 			assembly_repeats = atoi(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "-b")
+		{
+			batch_partition_size = atoi(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "-g")
@@ -549,6 +555,8 @@ int parameters::print_help()
 	printf(" %-46s  %s\n", "-p/--profile_dir <string>",  "existing directory for saving/loading profiles of each samples, default: N/A");
 	printf(" %-46s  %s\n", "-t/--max_threads <integer>",  "maximized number of threads, default: 10");
 	printf(" %-46s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 20");
+	printf(" %-46s  %s\n", "-b/--batch_partition_size <integer>",  "the number of partitions loaded each time, default: 3");
+	printf(" %-46s  %s\n", "-g/--region_partition_length <integer>",  "the length of a partition , default: 1000000");
 	printf(" %-46s  %s\n", "-s/--min_grouping_similarity <float>",  "the minimized similarity for two graphs to be combined, default: 0.2");
 	printf(" %-46s  %s\n", "-r/--assembly_repeats <integer>",  "the number of repeats for consensus assembly, default: 5");
 	printf(" %-46s  %s\n", "--min_bridging_score <float>",  "the minimum score for bridging a paired-end reads, default: 1.5");

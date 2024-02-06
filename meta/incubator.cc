@@ -21,7 +21,7 @@ See LICENSE for licensing.
 #include <algorithm>
 
 incubator::incubator(vector<parameters> &v)
-	: params(v), tpool(params[DEFAULT].max_threads), group_size(params[DEFAULT].max_threads), gmutex(99999), tmutex(99999)
+	: params(v), tpool(params[DEFAULT].max_threads), gmutex(99999), tmutex(99999)
 {
 	if(params[DEFAULT].profile_only == true) return;
 
@@ -68,7 +68,7 @@ int incubator::resolve()
 	for(auto &x: sindex)
 	{
 		string chrm = x.first;
-		int m = ceil(get_max_region(chrm) * 1.0 / group_size);
+		int m = ceil(get_max_region(chrm) * 1.0 / params[DEFAULT].batch_partition_size);
 		//int m = get_max_region(chrm);
 		for(int k = 0; k < m; k++)
 		{
@@ -354,10 +354,12 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 	const vector<PI> &v = sindex[chrm];
 	if(v.size() == 0) return 0;
 
-	vector<mutex> curlocks(v.size() * group_size);
+	int batch_size = params[DEFAULT].batch_partition_size;
+
+	vector<mutex> curlocks(v.size() * batch_size);
 	for(int k = 0; k < curlocks.size(); k++) curlocks[k].lock();
 
-	for(int j = 0; j < group_size; j++)
+	for(int j = 0; j < batch_size; j++)
 	{
 		for(int i = 0; i < v.size(); i++)
 		{
@@ -365,8 +367,8 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 			int tid = v[i].second;
 			//sample_profile &sp = samples[sid];
 
-			int rid = gid * group_size + j;
-			mutex &curlock = curlocks[i * group_size + j];
+			int rid = gid * batch_size + j;
+			mutex &curlock = curlocks[i * batch_size + j];
 
 			time_t mytime = time(NULL);
 			//printf("generate chrm %s, gid = %d, rid = %d, %s", chrm.c_str(), gid, rid, ctime(&mytime));
@@ -384,9 +386,9 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 	{
 		int sid = v[i].first;
 		int tid = v[i].second;
-		for(int j = 0; j < group_size; j++)
+		for(int j = 0; j < batch_size; j++)
 		{
-			int rid = gid * group_size + j;
+			int rid = gid * batch_size + j;
 			if(rid >= samples[sid].start1[tid].size()) continue;
 			if(rid >= samples[sid].start2[tid].size()) continue;
 			printf("sample %d, tid = %d, rid = %d, strand +, expected end = %d, actual end = %d\n", sid, tid, rid, samples[sid].start1[tid][rid] + samples[sid].region_partition_length, samples[sid].end1[tid][rid]);
@@ -395,10 +397,10 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 	}
 	*/
 
-	vector<bool> posted(group_size, false);
+	vector<bool> posted(batch_size, false);
 	while(true)
 	{
-		for(int j = 0; j < group_size; j++)
+		for(int j = 0; j < batch_size; j++)
 		{
 			if(posted[j] == true) continue;
 
@@ -412,7 +414,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 			{
 				for(int i = 0; i < v.size(); i++) 
 				{
-					ck0[i] = curlocks[i * group_size + j - 1].try_lock();
+					ck0[i] = curlocks[i * batch_size + j - 1].try_lock();
 					if(ck0[i] == false) succeed0 = false;
 				}
 			}
@@ -420,7 +422,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 
 			for(int i = 0; i < v.size(); i++) 
 			{
-				ck1[i] = curlocks[i * group_size + j].try_lock();
+				ck1[i] = curlocks[i * batch_size + j].try_lock();
 				if(ck1[i] == false) succeed1 = false;
 			}
 
@@ -429,7 +431,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 			//if(succeed0 && succeed1)
 			if(succeed1)
 			{
-				int rid = gid * group_size + j;
+				int rid = gid * batch_size + j;
 				int bi = this->get_bundle_group(chrm, rid);
 				if(bi >= 0)
 				{
@@ -450,8 +452,8 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 
 			for(int i = 0; i < v.size(); i++) 
 			{
-				//if(j >= 1 && ck0[i] == true) curlocks[i * group_size + j - 1].unlock();
-				if(j >= 0 && ck1[i] == true) curlocks[i * group_size + j - 0].unlock();
+				//if(j >= 1 && ck0[i] == true) curlocks[i * batch_size + j - 1].unlock();
+				if(j >= 0 && ck1[i] == true) curlocks[i * batch_size + j - 0].unlock();
 			}
 		}
 
