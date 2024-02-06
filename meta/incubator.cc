@@ -428,7 +428,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 
 			printf("clear gset of bundle-graph %d, gset.size = %lu\n", k, g.gset.size());
 			g.gset.clear();
-			//vector<bundle>().swap(g.gset);
+			vector<bundle>().swap(g.gset);
 			//for(int i = 0; i < g.completed.size(); i++) g.completed[i] = 2;
 			printf("finish clear gset of bundle-graph %d\n", k);
 		}
