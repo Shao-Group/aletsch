@@ -415,21 +415,22 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 		for(int k = 0; k < grps.size(); k++)
 		{
 			bundle_group &g = grps[k];
+			if(g.gset.size() <= 0) continue;
+
 			bool b = true;
-			for(int i = 0; i < g.gvv.size(); i++)
+			if(g.completed.size() <= 0) b = false;
+			for(int i = 0; i < g.completed.size(); i++)
 			{
 				if(g.completed[i] != 1) b = false;
-				if(b == false) continue;
+				if(b == false) break;
 			}
 			if(b == false) continue;
 
-			printf("clear gset of bundle-graph %d\n", k);
+			printf("clear gset of bundle-graph %d, gset.size = %lu\n", k, g.gset.size());
 			g.gset.clear();
-			vector<bundle>().swap(g.gset);
-			for(int i = 0; i < g.completed.size(); i++)
-			{
-				g.completed[i] = 2;
-			}
+			//vector<bundle>().swap(g.gset);
+			//for(int i = 0; i < g.completed.size(); i++) g.completed[i] = 2;
+			printf("finish clear gset of bundle-graph %d\n", k);
 		}
 
 		for(int j = 0; j < batch_size; j++)
