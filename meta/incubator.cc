@@ -317,11 +317,13 @@ int incubator::init_bundle_groups()
 		string chrm = z.first;
 		//int m = ceil(get_max_region(chrm) * 1.0 / group_size);
 		int m = get_max_region(chrm);
+
+		printf("init bundle graph for chrm %s, partitions = %d\n", chrm.c_str(), m);
 		for(int k = 0; k < m; k++)
 		{
-			grps.push_back(bundle_group(chrm, '+', k, params[DEFAULT], sindex));
-			grps.push_back(bundle_group(chrm, '-', k, params[DEFAULT], sindex));
-			grps.push_back(bundle_group(chrm, '.', k, params[DEFAULT], sindex));
+			grps.emplace_back(bundle_group(chrm, '+', k, params[DEFAULT], sindex));
+			grps.emplace_back(bundle_group(chrm, '-', k, params[DEFAULT], sindex));
+			grps.emplace_back(bundle_group(chrm, '.', k, params[DEFAULT], sindex));
 		}
 	}
 	return 0;
