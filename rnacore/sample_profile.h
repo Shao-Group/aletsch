@@ -51,7 +51,7 @@ public:
 	vector<vector<off_t>> start_off;
 
 public:
-	int set_batch_boundaries(int gap);
+	int set_batch_boundaries(int gap, int max_read_span);
 	int load_profile(const string &dir);
 	int save_profile(const string &dir);
 	int open_align_file();

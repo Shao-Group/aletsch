@@ -145,7 +145,7 @@ int incubator::init_samples()
 				if(sp.data_type == PAIRED_END) pre.infer_insertsize();
 			}
 			//sp.read_index_iterators(); 
-			sp.set_batch_boundaries(cfg.min_bundle_gap);
+			sp.set_batch_boundaries(cfg.min_bundle_gap, cfg.max_read_span);
 		});
 	}
 	pool.join();

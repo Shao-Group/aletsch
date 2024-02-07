@@ -8,7 +8,9 @@ See LICENSE for licensing.
 #include "sample_profile.h"
 #include "htslib/bgzf.h"
 #include "constants.h"
+#include "parameters.h"
 #include <cassert>
+#include <cmath>
 
 mutex sample_profile::bam_lock;
 mutex sample_profile::gtf_lock;
@@ -162,7 +164,7 @@ int sample_profile::close_align_file()
 	return 0;
 }
 
-int sample_profile::set_batch_boundaries(int min_bundle_gap)
+int sample_profile::set_batch_boundaries(int min_bundle_gap, int max_read_span)
 {
 	open_align_file();
 
@@ -200,7 +202,7 @@ int sample_profile::set_batch_boundaries(int min_bundle_gap)
 		//if(p.n_cigar < 1) continue;													// should never happen
 
 		hit ht(b1t, hid++);
-        if(fabs(ht.pos - ht.rpos) >= cfg.max_read_span) continue;
+        if(fabs(ht.pos - ht.rpos) >= max_read_span) continue;
 		//ht.set_tags(b1t);
 		//ht.set_strand(library_type);
 
