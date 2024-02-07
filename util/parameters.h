@@ -27,7 +27,6 @@ public:
 	string chrm_list_file;
 	string chrm_list_string;
 	string output_gtf_file;
-	string output_ftr_file;
 	string output_gtf_dir;
 	string profile_dir;
 	int verbose;
