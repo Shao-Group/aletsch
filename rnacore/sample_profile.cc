@@ -200,6 +200,7 @@ int sample_profile::set_batch_boundaries(int min_bundle_gap)
 		//if(p.n_cigar < 1) continue;													// should never happen
 
 		hit ht(b1t, hid++);
+        if(fabs(ht.pos - ht.rpos) >= cfg.max_read_span) continue;
 		//ht.set_tags(b1t);
 		//ht.set_strand(library_type);
 
