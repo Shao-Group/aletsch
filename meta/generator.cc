@@ -67,6 +67,9 @@ int generator::resolve()
 	//hts_itr_t *iter = sam_itr_queryi(idx, target_id, start1, start2);
 	//if(iter == NULL) return 0;
 
+	int32_t pre_lpos = -1;
+	int32_t pre_rpos = -1;
+
 	int32_t rrpos = 0;
 	if(bgzf_seek(sfn->fp.bgzf, offt, SEEK_SET) < 0) printf("Failed to seek to offseti %ld\n", offt);
     bam1_t *b1t = bam_init1();
@@ -90,6 +93,11 @@ int generator::resolve()
 		hit ht(b1t, hid++);
 		if(fabs(ht.pos - ht.rpos) >= cfg.max_read_span) continue;								// skip long hit
 		if(((p.flag & 0x8) <= 0) && fabs(ht.pos - ht.mpos) >= cfg.max_read_span) continue;
+
+		if(ht.pos == pre_lpos && ht.rpos == pre_rpos) continue;
+
+		pre_lpos = ht.pos;
+		pre_rpos = ht.rpos;
 
 		ht.set_tags(b1t);
 		ht.set_strand(sp.library_type);

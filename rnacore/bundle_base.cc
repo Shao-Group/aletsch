@@ -69,6 +69,14 @@ int bundle_base::add_borrowed_path(const vector<int32_t> &p, double w)
 
 int bundle_base::add_hit(const hit &ht)
 {
+	if(hits.size() >= 1)
+	{
+		hit &p = hits.back();
+		if(p.pos == ht.pos && p.rpos == ht.rpos) 
+		{
+			return 0;
+		}
+	}
 	// store new hit
 	hits.push_back(ht);
 
