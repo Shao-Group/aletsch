@@ -120,14 +120,9 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			input_bam_list = string(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "-o")
+		if(string(argv[i]) == "-o")
 		{
 			output_gtf_file = string(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "-f")
-		{
-			output_ftr_file = string(argv[i + 1]);
 			i++;
 		}
 		if(string(argv[i]) == "-l")

@@ -68,7 +68,7 @@ int generator::resolve()
 	//if(iter == NULL) return 0;
 
 	int32_t rrpos = 0;
-	bgzf_seek(sfn->fp.bgzf, offt, SEEK_SET);
+	if(bgzf_seek(sfn->fp.bgzf, offt, SEEK_SET) < 0) printf("Failed to seek to offseti %ld\n", offt);
     bam1_t *b1t = bam_init1();
 	//while(sam_itr_next(sfn, iter, b1t) >= 0)
     while(sam_read1(sfn, hdr, b1t) >= 0)

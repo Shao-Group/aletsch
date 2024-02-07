@@ -30,23 +30,13 @@ incubator::incubator(vector<parameters> &v)
 	{
 		printf("cannot open output-gtf-file %s\n", params[DEFAULT].output_gtf_file.c_str());
 		exit(0);
-	}
-
-	meta_ftr.open(params[DEFAULT].output_ftr_file.c_str(), std::ofstream::out | std::ofstream::app);
-    meta_ftr.setf(ios::fixed, ios::floatfield);
-    meta_ftr.precision(2);
-	if(meta_ftr.fail())
-	{
-		printf("cannot open output-feature-file %s\n", params[DEFAULT].output_ftr_file.c_str());
-		exit(0);
-	}
+	}	
 }
 
 incubator::~incubator()
 {
 	if(params[DEFAULT].profile_only == true) return;
 	meta_gtf.close();
-	meta_ftr.close();
 }
 
 int incubator::resolve()
@@ -729,7 +719,6 @@ int incubator::write_combined_gtf()
 		const transcript_set &tm = z.second;
 
 		stringstream ss;
-		stringstream sf;
 		for(auto &it : tm.mt)
 		{
 			auto &v = it.second;
@@ -744,14 +733,11 @@ int incubator::write_combined_gtf()
 
 				//if(t.exons.size() > 1) t.write_features(-1);
 				//Only output novel transcripts in merged graph
-				
-				if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) t.write_features(sf);
+				//if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) t.write_features(sf);
 			}
 		}
 		const string &s = ss.str();
-		const string &f = sf.str();
 		meta_gtf.write(s.c_str(), s.size());
-		meta_ftr.write(f.c_str(), f.size());
 	}
 	return 0;
 }
