@@ -8,12 +8,13 @@ for single-cell RNA-seq data).
 The datasets and scripts used to compare the performance of Aletsch with other assemblers are available at
 [aletsch-test](https://github.com/Shao-Group/aletsch-test).
 
-
-#It uses splice graph and phasing paths as underlying data strctures to represent
-#the alignments of each gene loci in individual RNA-seq samples.
-#Efficient algorithms are implemented to combine splice graphs (and phasing paths)
-#at overlapped gene loci. Eventually, the core algorithm used in Scallop (i.e., phase-preserving decomposition)
-#is employed to decompose the combined splice graphs to transcripts.
+<!--
+It uses splice graph and phasing paths as underlying data strctures to represent
+the alignments of each gene loci in individual RNA-seq samples.
+Efficient algorithms are implemented to combine splice graphs (and phasing paths)
+at overlapped gene loci. Eventually, the core algorithm used in Scallop (i.e., phase-preserving decomposition)
+is employed to decompose the combined splice graphs to transcripts.
+-->
 
 # Installation
 Download the source code of latest aletsch from
