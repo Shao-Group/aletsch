@@ -40,12 +40,12 @@ def load_data(input_dir, sample_size):
         frames.append(df)
 
     combined_df = pd.concat(frames, ignore_index=True)
-    print(combined_df)
+    #print(combined_df)
 
     max_cnt = combined_df['count2'].max()
     combined_df[features_to_normalize] = combined_df[features_to_normalize]/max_cnt
-    print("max_cnt: ", max_cnt)
-    print(combined_df)
+    #print("max_cnt: ", max_cnt)
+    #print(combined_df)
     return combined_df
 
 
@@ -89,9 +89,7 @@ def main(args):
             ).reset_index()
 
     output_df = meta_df[meta_df['y_prob_mean'] >= args.prob_score]
-    print(output_df)
     output_df = output_df[['meta_tid', 'y_prob_mean']]
-    print(output_df)
     output_df.to_csv(args.output_file, index=False)
     print(f"Save scores into {args.output_file}.")    
 
