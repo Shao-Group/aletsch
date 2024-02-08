@@ -19,7 +19,15 @@ is employed to decompose the combined splice graphs to transcripts.
 
 # Version v1.1.1
 
-Aletsch [v1.1.1](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.1) has significant improvements in memory and time efficiency during the processing of read alignment files, compared to [v1.1.0](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.0). Below are the comparative analyses of memory and time usage across various real datasets:
+We released Aletsch [v1.1.1](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.1),
+a version that substantially improved 
+the memory usage and running time of Aletsch
+over its previous version [v1.1.0](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.0), 
+while maintaining an identical assembly accuracy.
+The improvement was made by fixing the incorrect use of bam-file queries
+and by removing PCR duplicates.
+We detail the memory usage and running time (both CPU-time and Wall-time) of the two versions
+across all datasets we tested (see [aletsch-test](https://github.com/Shao-Group/aletsch-test)).
 
 ### Memory Usage Comparison (in GB):
 
