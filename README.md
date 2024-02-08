@@ -21,8 +21,7 @@ is employed to decompose the combined splice graphs to transcripts.
 
 We released Aletsch [v1.1.1](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.1),
 a version that substantially improved 
-the memory usage and running time of Aletsch
-over its previous version [v1.1.0](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.0), 
+the memory usage and running time over its previous version [v1.1.0](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.0), 
 while maintaining an identical assembly accuracy.
 The improvement was made by fixing the incorrect use of bam-file queries
 and by removing PCR duplicates.
