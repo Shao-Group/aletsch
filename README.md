@@ -25,7 +25,7 @@ the memory usage and running time over its previous version [v1.1.0](https://git
 while maintaining an identical assembly accuracy.
 The improvement was primarily made by fixing the incorrect use of bam-file queries
 and by removing PCR duplicates.
-We detail the memory usage and running time (both CPU-time and Wall-time) of the two versions
+Below we detail the memory usage and running time, both CPU-time and Wall-time (10 threads), of the two versions
 across all datasets we tested (see [aletsch-test](https://github.com/Shao-Group/aletsch-test)).
 
 ### Memory Usage Comparison (in GB):
