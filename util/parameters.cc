@@ -34,7 +34,7 @@ parameters::parameters()
 	skip_single_exon_transcripts = true;
 
 	// for meta-assembly
-	max_group_size = 20;
+	max_group_size = 200;
 	min_grouping_similarity = 0.10;
 	max_grouping_similarity = 0.80;
 	max_num_junctions_to_combine = 500;
@@ -549,11 +549,11 @@ int parameters::print_help()
 	printf(" %-46s  %s\n", "-d/--output_gtf_dir <string>",  "existing directory for individual transcripts, default: N/A");
 	printf(" %-46s  %s\n", "-p/--profile_dir <string>",  "existing directory for saving/loading profiles of each samples, default: N/A");
 	printf(" %-46s  %s\n", "-t/--max_threads <integer>",  "maximized number of threads, default: 10");
-	printf(" %-46s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 20");
+	printf(" %-46s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 200");
 	printf(" %-46s  %s\n", "-b/--batch_partition_size <integer>",  "the number of partitions loaded each time, default: 3");
 	printf(" %-46s  %s\n", "-g/--region_partition_length <integer>",  "the length of a partition , default: 1000000");
 	printf(" %-46s  %s\n", "-s/--min_grouping_similarity <float>",  "the minimized similarity for two graphs to be combined, default: 0.2");
-	printf(" %-46s  %s\n", "-r/--assembly_repeats <integer>",  "the number of repeats for consensus assembly, default: 5");
+    //printf(" %-46s  %s\n", "-r/--assembly_repeats <integer>",  "the number of repeats for consensus assembly, default: 5");
 	printf(" %-46s  %s\n", "--min_bridging_score <float>",  "the minimum score for bridging a paired-end reads, default: 1.5");
 	printf(" %-46s  %s\n", "--min_splice_bundary_hits <integer>",  "the minimum number of spliced reads required to support a junction, default: 1");
 	printf(" %-46s  %s\n", "--min_transcript_coverage <float>",  "minimum coverage required for a multi-exon transcript, default: 2.0");
