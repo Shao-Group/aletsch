@@ -3,45 +3,21 @@
 
 # Introduction
 
-Aletsch implements an efficient algorithm to assemble multiple RNA-seq samples.
-It uses splice graph and phasing paths as underlying data strctures to represent
-the alignments of each gene loci in individual RNA-seq samples.
-Efficient algorithms are implemented to combine splice graphs (and phasing paths)
-at overlapped gene loci. Eventually, the core algorithm used in Scallop (i.e., phase-preserving decomposition)
-is employed to decompose the combined splice graphs to transcripts.
+Aletsch implements an efficient algorithm to assemble multiple RNA-seq samples (or multiple cells
+for single-cell RNA-seq data).
+The datasets and scripts used to compare the performance of Aletsch with other assemblers are available at
+[aletsch-test](https://github.com/Shao-Group/aletsch-test).
 
 
-# Version v1.1.1
-
-Aletsch [v1.1.1](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.1) has significant improvements in memory and time efficiency during the processing of read alignment files, compared to [v1.1.0](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.0). Below are the comparative analyses of memory and time usage across various real datasets:
-
-### Memory Usage Comparison (in GB):
-
-| Dataset | v1.1.1 | v1.1.0 |
-| :-----: | ------ | ------ |
-|  BK-H1  | 6.96   | 35.55  |
-|  BK-H2  | 11.79  | 64.44  |
-|  BK-H3  | 5.32   | 34.35  |
-|  BK-M1  | 21.47  | 168.01 |
-| SC-H1&3 | 4.12   | 47.23  |
-|  SC-H2  | 24.43  | 251.81 |
-|  SC-M1  | 9.27   | 82.93  |
-
-### CPU And Wall-Clock Time Comparison (in minutes):
-
-| Dataset | v1.1.1(CPU) | v1.1.1(Wall) | v1.1.0(CPU) | v1.1.0(Wall) |
-| :-----: | :---------: | :----------: | :---------: | :----------: |
-|  BK-H1  |     219     |      27      |     541     |      53      |
-|  BK-H2  |     923     |      96      |    1319     |     135      |
-|  BK-H3  |     155     |      17      |     258     |      28      |
-|  BK-M1  |     691     |      73      |    1464     |     169      |
-| SC-H1&3 |     186     |      21      |     167     |      20      |
-|  SC-H2  |    1077     |     129      |    1530     |     183      |
-|  SC-M1  |     382     |      44      |     441     |      52      |
+#It uses splice graph and phasing paths as underlying data strctures to represent
+#the alignments of each gene loci in individual RNA-seq samples.
+#Efficient algorithms are implemented to combine splice graphs (and phasing paths)
+#at overlapped gene loci. Eventually, the core algorithm used in Scallop (i.e., phase-preserving decomposition)
+#is employed to decompose the combined splice graphs to transcripts.
 
 # Installation
 Download the source code of latest aletsch from
-[here](https://github.com/Shao-Group/aletsch/releases/download/v1.1.0/aletsch-1.1.0.tar.gz).
+[here](https://github.com/Shao-Group/aletsch/releases/download/v1.0.3/aletsch-1.0.3.tar.gz).
 Aletsch uses additional libraries of Boost and htslib. 
 If they have not been installed in your system, you first
 need to download and install them. You might also need to
@@ -103,12 +79,6 @@ The usage of `aletsch` is:
 ./aletsch -i <input-bam-list> -o <output.gtf> [options]
 ```
 
-We highly recommend to generate profiles for individual samples first:
-```
-./aletsch --profile -i <input-bam-list> -p <profile>
-./aletsch -i <input-bam-list> -o <output.gtf> -p <profile> [options]
-```
-
 ## Format of Input and Output
 Each line of `input-bam-list` describes a single sample, with 3 fields separated by space.
 The 3 fields are: `alignment-file` (in .bam format), `index-alignment-file` (in. bai format), and `protocol`.
@@ -126,8 +96,8 @@ The assembled transcripts from all these samples will be written to `output.gtf`
 
 ## Options
 
-Aletsch supports the following parameters. It also supports all parameters
-that needed in the core algorithm of Scallop. Try to run `aletsch` for more
+Aletsch support the following parameters. It also supports all parameters
+that needed in the core algorithm of Scallop. Dry run `aletsch` for more
 details.
 
  Parameters | Type | Default Value | Description
@@ -141,7 +111,7 @@ details.
  -b | string |    | the directory where bridged alignments for individual samples will be generated
  -p | string |    | the directory where profiles for individual samples will be read from / saved to
  -t | integer | 10  | number of threads
- -c | integer | 200  | the maximized number of splice graphs that will be combined into a cluster; we recommend setting this as twice the number of input samples.
+ -c | integer | 20  | the maximized number of splice graphs that will be combined into a cluster
  -s | float   | 0.2 | the minimized similarity between two splice graphs that will be combined
 
 If `-l string` or `-L file` option is provided, Aletsch will only assemble the specified chromosomes;
