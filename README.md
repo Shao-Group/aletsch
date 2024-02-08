@@ -55,7 +55,7 @@ across all datasets we tested (see [aletsch-test](https://github.com/Shao-Group/
 # Installation
 
 Aletsch can be installed through [conda](https://anaconda.org/bioconda/aletsch)
-or by compiling source (see [INSTALLATION](https://github.com/Shao-Group/aletsch/blob/master/INSTALLATION).
+or by compiling source (see [INSTALLATION](https://github.com/Shao-Group/aletsch/blob/master/INSTALLATION)).
 
 # Usage
 
