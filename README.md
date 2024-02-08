@@ -13,7 +13,7 @@ is employed to decompose the combined splice graphs to transcripts.
 
 # Version v1.1.1
 
-Aletsch v1.1.1 has significant improvements in memory and time efficiency during the processing of read alignment files, compared to [v1.1.0](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.0). Below are the comparative analyses of memory and time usage across various real datasets:
+Aletsch [v1.1.1](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.1) has significant improvements in memory and time efficiency during the processing of read alignment files, compared to [v1.1.0](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.0). Below are the comparative analyses of memory and time usage across various real datasets:
 
 ### Memory Usage Comparison (in GB):
 
