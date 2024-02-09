@@ -3,17 +3,30 @@
 
 # Introduction
 
-Aletsch implements an efficient algorithm to assemble multiple RNA-seq samples.
+Aletsch implements an efficient algorithm to assemble multiple RNA-seq samples (or multiple cells
+for single-cell RNA-seq data).
+The datasets and scripts used to compare the performance of Aletsch with other assemblers are available at
+[aletsch-test](https://github.com/Shao-Group/aletsch-test).
+
+<!--
 It uses splice graph and phasing paths as underlying data strctures to represent
 the alignments of each gene loci in individual RNA-seq samples.
 Efficient algorithms are implemented to combine splice graphs (and phasing paths)
 at overlapped gene loci. Eventually, the core algorithm used in Scallop (i.e., phase-preserving decomposition)
 is employed to decompose the combined splice graphs to transcripts.
+-->
 
 
 # Version v1.1.1
 
-Aletsch [v1.1.1](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.1) has significant improvements in memory and time efficiency during the processing of read alignment files, compared to [v1.1.0](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.0). Below are the comparative analyses of memory and time usage across various real datasets:
+We released Aletsch [v1.1.1](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.1),
+a version that substantially improved 
+the memory usage and running time over its previous version [v1.1.0](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.0), 
+while maintaining an identical assembly accuracy.
+The improvement was primarily made by fixing the incorrect use of bam-file queries
+and by removing PCR duplicates.
+Below we detail the memory usage and running time, both CPU-time and Wall-time (10 threads), of the two versions
+across all datasets we tested (see [aletsch-test](https://github.com/Shao-Group/aletsch-test)).
 
 ### Memory Usage Comparison (in GB):
 
@@ -40,61 +53,9 @@ Aletsch [v1.1.1](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.1) has 
 |  SC-M1  |     382     |      44      |     441     |      52      |
 
 # Installation
-Download the source code of latest aletsch from
-[here](https://github.com/Shao-Group/aletsch/releases/download/v1.1.0/aletsch-1.1.0.tar.gz).
-Aletsch uses additional libraries of Boost and htslib. 
-If they have not been installed in your system, you first
-need to download and install them. You might also need to
-export the runtime library path to certain environmental
-variable (for example, `LD_LIBRARY_PATH`, for most linux distributions).
-After install these dependencies, you then compile the source code of aletsch.
-If some of the above dependencies are not installed to the default system 
-directories (for example, `/usr/local`, for most linux distributions),
-their corresponding installing paths should be specified to `configure` of aletsch.
 
-## Download Boost
-If Boost has not been downloaded/installed, download Boost
-[(license)](http://www.boost.org/LICENSE_1_0.txt) from (http://www.boost.org).
-Uncompress it somewhere (compiling and installing are not necessary).
-
-## Install htslib
-If htslib has not been installed, download htslib 
-[(license)](https://github.com/samtools/htslib/blob/develop/LICENSE)
-from (http://www.htslib.org/) with version 1.5 or higher.
-(Note that htslib relies on zlib. So if zlib has not been installed in your system,
-you need to install zlib first.) 
-
-Use the following commands to build htslib:
-```
-./configure --disable-bz2 --disable-lzma --disable-gcs --disable-s3 --enable-libcurl=no
-make
-make install
-```
-The default installation location of htslib is `/usr/lib`.
-If you would install it to a different location, replace the above `configure` line with
-the following (by adding `--prefix=/path/to/your/htslib` to the end):
-```
-./configure --disable-bz2 --disable-lzma --disable-gcs --disable-s3 --enable-libcurl=no --prefix=/path/to/your/htslib
-```
-In this case, you also need to export the runtime library path (note that there
-is an additional `lib` following the installation path):
-```
-export LD_LIBRARY_PATH=/path/to/your/htslib/lib:$LD_LIBRARY_PATH
-```
-
-## Compile Aletsch
-
-Use the following to compile aletsch:
-```
-mkdir build
-cd build
-../configure --with-htslib=/path/to/your/htslib --with-boost=/path/to/your/boost
-make
-```
-
-If some of the dependencies are installed in the default system directory (for example, `/usr/lib`),
-then the corresponding `--with-` option might not be necessary.
-The executable file `aletsch` will appear at current folder.
+Aletsch can be installed through [conda](https://anaconda.org/bioconda/aletsch)
+or by compiling source (see [INSTALLATION](https://github.com/Shao-Group/aletsch/blob/master/INSTALLATION.md)).
 
 # Usage
 
