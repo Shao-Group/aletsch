@@ -114,14 +114,7 @@ Aletsch employs a random forest model for scoring transcripts, available for dow
 
 ## Dependencies
 
-Required Python libraries:
-
-- NumPy
-- pandas
-- scikit-learn
-- joblib
-
-### Installation
+Required Python libraries: numPy, pandas, scikit-learn, joblib
 
 - Using pip:
 
