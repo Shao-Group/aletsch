@@ -1,6 +1,6 @@
 # Installation
 Download the source code of latest aletsch from
-[here](https://github.com/Shao-Group/aletsch/releases/download/v1.1.0/aletsch-1.1.0.tar.gz).
+[here](https://github.com/Shao-Group/aletsch/releases/download/v1.1.1/aletsch-1.1.1.tar.gz).
 Aletsch uses additional libraries of Boost and htslib. 
 If they have not been installed in your system, you first
 need to download and install them. You might also need to

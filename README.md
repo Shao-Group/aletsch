@@ -97,7 +97,6 @@ Aletsch provides several options for transcript assembly, supporting both its un
 | -l         | string  |               | Specifies chromosomes to assemble.                           |
 | -L         | string  |               | Specifies a file containing a list of chromosomes to assemble. |
 | -d         | string  |               | Output directory for individual sample transcripts. Directory must exist prior to execution. |
-| -b         | string  |               | Output directory for bridged alignment files. Directory must exist prior to execution. |
 | -p         | string  |               | Directory for reading/saving individual sample profiles. Directory must exist prior to execution. |
 | -t         | integer | 10            | Number of threads.                                           |
 | -c         | integer | 200           | Maximum number of splice graphs in a cluster, recommended as twice the number of samples. |
@@ -105,7 +104,11 @@ Aletsch provides several options for transcript assembly, supporting both its un
 
 * If `-l string` or `-L file` option is provided, Aletsch assembles only the specified chromosomes; otherwise, it assembles all chromosomes.
 
-- Directories specified by `-d`, `-b`, and `-p` must exist before running Aletsch; the tool does not create directories.
+<!--
+| -b         | string  |               | Output directory for bridged alignment files. Directory must exist prior to execution. |
+-->
+
+- Directories specified by `-d` and `-p` must exist before running Aletsch; the tool does not create directories.
 - With `--profile`, Aletsch infers profiles of individual samples, using the `XS` tag from input BAM files.
 
 # Scoring Transcripts with Pre-trained Model
