@@ -126,39 +126,66 @@ The assembled transcripts from all these samples will be written to `output.gtf`
 
 ## Options
 
-Aletsch supports the following parameters. It also supports all parameters
-that needed in the core algorithm of Scallop. Try to run `aletsch` for more
-details.
+Aletsch provides several options for transcript assembly, supporting both its unique parameters and those required by the core algorithm of Scallop. For a detailed list, execute `aletsch` without arguments.
 
- Parameters | Type | Default Value | Description
- ------------- | ------------ | ------------- | ----------
- --help  | | | print usage of aletsch and exit
- --version | | | print version of aletsch and exit
- --profile | | | profiling individual samples and exit (will write to files if -p provided)
- -l | string |    | the list of chromosomes that will be assembled
- -L | string |    | the file consits of a list of chromosomes that will be assembled
- -d | string |    | the directory where transcripts for individual samples will be generated
- -b | string |    | the directory where bridged alignments for individual samples will be generated
- -p | string |    | the directory where profiles for individual samples will be read from / saved to
- -t | integer | 10  | number of threads
- -c | integer | 200  | the maximized number of splice graphs that will be combined into a cluster; we recommend setting this as twice the number of input samples.
- -s | float   | 0.2 | the minimized similarity between two splice graphs that will be combined
+| Parameters | Type    | Default Value | Description                                                  |
+| ---------- | ------- | ------------- | ------------------------------------------------------------ |
+| --help     |         |               | Displays Aletsch usage information and exits.                |
+| --version  |         |               | Shows Aletsch version information and exits.                 |
+| --profile  |         |               | Profiles individual samples and exits. Writes to files if `-p` is specified. |
+| -l         | string  |               | Specifies chromosomes to assemble.                           |
+| -L         | string  |               | Specifies a file containing a list of chromosomes to assemble. |
+| -d         | string  |               | Output directory for individual sample transcripts. Directory must exist prior to execution. |
+| -b         | string  |               | Output directory for bridged alignment files. Directory must exist prior to execution. |
+| -p         | string  |               | Directory for reading/saving individual sample profiles. Directory must exist prior to execution. |
+| -t         | integer | 10            | Number of threads.                                           |
+| -c         | integer | 200           | Maximum number of splice graphs in a cluster, recommended as twice the number of samples. |
+| -s         | float   | 0.2           | Minimum similarity for combining two splice graphs.          |
 
-If `-l string` or `-L file` option is provided, Aletsch will only assemble the specified chromosomes;
-otherwise, all chromosomes will be assembled.
+* If `-l string` or `-L file` option is provided, Aletsch assembles only the specified chromosomes; otherwise, it assembles all chromosomes.
 
-If `-d directory` option is provided, the assembled transcripts for each individual
-sample will be generated under the specified directory. 
-NOTE: make sure the specified directory exists, as `aletsch` will NOT create them in the program.
+- Directories specified by `-d`, `-b`, and `-p` must exist before running Aletsch; the tool does not create directories.
+- With `--profile`, Aletsch infers profiles of individual samples, using the `XS` tag from input BAM files.
 
-If `-b directory` option is provided, the bridged alignment files for each individual
-sample will be generated under the specified directory. NOTE: make sure the specified
-directory exists, as `aletsch` will NOT create them in the program.
+# Scoring Transcripts with Pre-trained Model
 
-If `-p directory` option is provided, the profile for for each individual
-sample will be saved to / read from the specified directory. NOTE: make sure the specified
-directory exists, as `aletsch` will NOT create them in the program.
+Aletsch employs a random forest model for scoring transcripts, available for download from [Zenodo](https://doi.org/10.5281/zenodo.10602529). Use the provided Python script `score.py` with this model.
 
-If `--profile` is provided, Aletsch will only infer the profiles of
-individual samples.  NOTE: Aletsch will infer the `library_type` of each
-individual sample using the `XS` tag stored in the input bam files. 
+## Dependencies
+
+Required Python libraries:
+
+- NumPy
+- pandas
+- scikit-learn
+- joblib
+
+### Installation
+
+- Using pip:
+
+  ```bash
+  pip install numpy pandas scikit-learn joblib
+  ```
+
+- Using conda (recommended):
+
+  ```bash
+  conda install numpy pandas scikit-learn joblib
+  ```
+
+## Usage
+
+Score transcripts with the syntax below:
+
+```
+python3 score.py -i <individual_gtf_dir> -m <pretrained_model.joblib> -c <num_of_samples> -p <min_probability_score> -o <output_score.csv>
+```
+
+| Parameter | Type    | Default | Description                                                  |
+| --------- | ------- | ------- | ------------------------------------------------------------ |
+| `-i`      | String  |         | Directory containing Aletsch's feature files. This is the same directory where Aletsch outputs individual GTF files, as designated by the `-d` option in Aletsch's assembly process. |
+| -m        | String  |         | Path to the pre-trained model file for scoring.              |
+| -c        | Integer |         | Number of samples/cells                                      |
+| -p        | String  | 0.2     | Minimum probability score threshold (range: 0 to 1).         |
+| -o        | String  |         | Output directoty of scored .csv file.                        |

@@ -573,6 +573,6 @@ int parameters::print_help()
 
 int parameters::print_copyright()
 {
-	printf("Aletsch %s (c) 2020 Mingfu Shao, The Pennsylvania State University\n", version.c_str());
+	printf("Aletsch %s (c) 2024 Qian Shi, Qimin Zhang, Mingfu Shao, The Pennsylvania State University\n", version.c_str());
 	return 0;
 }
