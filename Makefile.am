@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
-EXTRA_DIST = LICENSE
+EXTRA_DIST = LICENSE score.py
 SUBDIRS = util graph gtf rnacore scallop bridge meta
 
 bin_PROGRAMS = aletsch
