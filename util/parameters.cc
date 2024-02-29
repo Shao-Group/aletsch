@@ -27,19 +27,20 @@ parameters::parameters()
 	profile_dir = "";
 	verbose = 1;
 	algo = "aletsch";
-	version = "1.0.3";
+	version = "1.1.1";
 	max_threads = 10;
 	profile_only = false;
 	boost_precision = false;
 	skip_single_exon_transcripts = true;
 
 	// for meta-assembly
-	max_group_size = 20;
+	max_group_size = 200;
 	min_grouping_similarity = 0.10;
 	max_grouping_similarity = 0.80;
 	max_num_junctions_to_combine = 500;
 	assembly_repeats = 1;
 	region_partition_length = 1000000;
+	batch_partition_size = 3;
 
 	// for bridging paired-end reads
 	bridge_end_relaxing = 10;
@@ -119,14 +120,9 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 			input_bam_list = string(argv[i + 1]);
 			i++;
 		}
-		else if(string(argv[i]) == "-o")
+		if(string(argv[i]) == "-o")
 		{
 			output_gtf_file = string(argv[i + 1]);
-			i++;
-		}
-		else if(string(argv[i]) == "-f")
-		{
-			output_ftr_file = string(argv[i + 1]);
 			i++;
 		}
 		if(string(argv[i]) == "-l")
@@ -207,6 +203,11 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 		else if(string(argv[i]) == "--assembly_repeats")
 		{
 			assembly_repeats = atoi(argv[i + 1]);
+			i++;
+		}
+		else if(string(argv[i]) == "-b")
+		{
+			batch_partition_size = atoi(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "-g")
@@ -548,9 +549,11 @@ int parameters::print_help()
 	printf(" %-46s  %s\n", "-d/--output_gtf_dir <string>",  "existing directory for individual transcripts, default: N/A");
 	printf(" %-46s  %s\n", "-p/--profile_dir <string>",  "existing directory for saving/loading profiles of each samples, default: N/A");
 	printf(" %-46s  %s\n", "-t/--max_threads <integer>",  "maximized number of threads, default: 10");
-	printf(" %-46s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 20");
+	printf(" %-46s  %s\n", "-c/--max_group_size <integer>",  "the maximized number of splice graphs that will be combined, default: 200");
+	printf(" %-46s  %s\n", "-b/--batch_partition_size <integer>",  "the number of partitions loaded each time, default: 3");
+	printf(" %-46s  %s\n", "-g/--region_partition_length <integer>",  "the length of a partition , default: 1000000");
 	printf(" %-46s  %s\n", "-s/--min_grouping_similarity <float>",  "the minimized similarity for two graphs to be combined, default: 0.2");
-	printf(" %-46s  %s\n", "-r/--assembly_repeats <integer>",  "the number of repeats for consensus assembly, default: 5");
+    //printf(" %-46s  %s\n", "-r/--assembly_repeats <integer>",  "the number of repeats for consensus assembly, default: 5");
 	printf(" %-46s  %s\n", "--min_bridging_score <float>",  "the minimum score for bridging a paired-end reads, default: 1.5");
 	printf(" %-46s  %s\n", "--min_splice_bundary_hits <integer>",  "the minimum number of spliced reads required to support a junction, default: 1");
 	printf(" %-46s  %s\n", "--min_transcript_coverage <float>",  "minimum coverage required for a multi-exon transcript, default: 2.0");
@@ -570,6 +573,6 @@ int parameters::print_help()
 
 int parameters::print_copyright()
 {
-	printf("Aletsch %s (c) 2020 Mingfu Shao, The Pennsylvania State University\n", version.c_str());
+	printf("Aletsch %s (c) 2024 Qian Shi, Qimin Zhang, Mingfu Shao, The Pennsylvania State University\n", version.c_str());
 	return 0;
 }

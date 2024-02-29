@@ -21,7 +21,7 @@ See LICENSE for licensing.
 #include <algorithm>
 
 incubator::incubator(vector<parameters> &v)
-	: params(v), tpool(params[DEFAULT].max_threads), group_size(params[DEFAULT].max_threads), gmutex(99999), tmutex(99999)
+	: params(v), tpool(params[DEFAULT].max_threads), gmutex(99999), tmutex(99999)
 {
 	if(params[DEFAULT].profile_only == true) return;
 
@@ -30,35 +30,30 @@ incubator::incubator(vector<parameters> &v)
 	{
 		printf("cannot open output-gtf-file %s\n", params[DEFAULT].output_gtf_file.c_str());
 		exit(0);
-	}
-
-	meta_ftr.open(params[DEFAULT].output_ftr_file.c_str(), std::ofstream::out | std::ofstream::app);
-    meta_ftr.setf(ios::fixed, ios::floatfield);
-    meta_ftr.precision(2);
-	if(meta_ftr.fail())
-	{
-		printf("cannot open output-feature-file %s\n", params[DEFAULT].output_ftr_file.c_str());
-		exit(0);
-	}
+	}	
 }
 
 incubator::~incubator()
 {
 	if(params[DEFAULT].profile_only == true) return;
 	meta_gtf.close();
-	meta_ftr.close();
 }
 
 int incubator::resolve()
 {
 	read_bam_list();
+	build_sample_index();
+
 	init_samples();
+	//printf("finish init-samples\n");
 
 	if(params[DEFAULT].profile_only == true) return 0;
 
-	build_sample_index();
 	init_bundle_groups();
+	//printf("finish init-bundle-groups\n");
+
 	init_transcript_sets();
+	//printf("finish init-transcript-set\n");
 
 	//for(int k = 0; k < samples.size(); k++) samples[k].open_align_file();
 
@@ -66,7 +61,7 @@ int incubator::resolve()
 	for(auto &x: sindex)
 	{
 		string chrm = x.first;
-		int m = ceil(get_max_region(chrm) * 1.0 / group_size);
+		int m = ceil(get_max_region(chrm) * 1.0 / params[DEFAULT].batch_partition_size);
 		//int m = get_max_region(chrm);
 		for(int k = 0; k < m; k++)
 		{
@@ -126,16 +121,16 @@ int incubator::init_samples()
 	for(int i = 0; i < samples.size(); i++)
 	{
 		sample_profile &sp = samples[i];
-		boost::asio::post(pool, [this, &sp] 
-		{
+		set<int> tlist = get_target_list(i);
+		boost::asio::post(pool, [this, &sp] {	
 			const parameters &cfg = this->params[sp.data_type];
-
 			if(cfg.profile_only == true)
 			{
 				previewer pre(cfg, sp);
 				pre.infer_library_type();
 				if(sp.data_type == PAIRED_END) pre.infer_insertsize();
 				//if(cfg.profile_dir != "") sp.save_profile(cfg.profile_dir);
+				//continue;
 				return;
 			}
 
@@ -149,7 +144,8 @@ int incubator::init_samples()
 				pre.infer_library_type();
 				if(sp.data_type == PAIRED_END) pre.infer_insertsize();
 			}
-			sp.read_index_iterators(); 
+			//sp.read_index_iterators(); 
+			sp.set_batch_boundaries(cfg.min_bundle_gap, cfg.max_read_span);
 		});
 	}
 	pool.join();
@@ -262,6 +258,20 @@ int incubator::build_sample_index()
 	return 0;
 }
 
+set<int> incubator::get_target_list(int sid)
+{
+	set<int> t;
+	for(auto &s: sindex)
+	{
+		string chrm = s.first;
+		for(auto &z: sindex[chrm])
+		{
+			if(z.first == sid) t.insert(z.second);
+		}
+	}
+	return t;
+}
+
 int incubator::get_chrm_index(string chrm, int sid)
 {
 	assert(sindex.find(chrm) != sindex.end());
@@ -295,11 +305,13 @@ int incubator::init_bundle_groups()
 		string chrm = z.first;
 		//int m = ceil(get_max_region(chrm) * 1.0 / group_size);
 		int m = get_max_region(chrm);
+
+		printf("init bundle graph for chrm %s, partitions = %d\n", chrm.c_str(), m);
 		for(int k = 0; k < m; k++)
 		{
-			grps.push_back(bundle_group(chrm, '+', k, params[DEFAULT], sindex));
-			grps.push_back(bundle_group(chrm, '-', k, params[DEFAULT], sindex));
-			grps.push_back(bundle_group(chrm, '.', k, params[DEFAULT], sindex));
+			grps.emplace_back(bundle_group(chrm, '+', k, params[DEFAULT], sindex));
+			grps.emplace_back(bundle_group(chrm, '-', k, params[DEFAULT], sindex));
+			grps.emplace_back(bundle_group(chrm, '.', k, params[DEFAULT], sindex));
 		}
 	}
 	return 0;
@@ -337,10 +349,12 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 	const vector<PI> &v = sindex[chrm];
 	if(v.size() == 0) return 0;
 
-	vector<mutex> curlocks(v.size() * group_size);
+	int batch_size = params[DEFAULT].batch_partition_size;
+
+	vector<mutex> curlocks(v.size() * batch_size);
 	for(int k = 0; k < curlocks.size(); k++) curlocks[k].lock();
 
-	for(int j = 0; j < group_size; j++)
+	for(int j = 0; j < batch_size; j++)
 	{
 		for(int i = 0; i < v.size(); i++)
 		{
@@ -348,8 +362,15 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 			int tid = v[i].second;
 			//sample_profile &sp = samples[sid];
 
-			int rid = gid * group_size + j;
-			mutex &curlock = curlocks[i * group_size + j];
+			int rid = gid * batch_size + j;
+			mutex &curlock = curlocks[i * batch_size + j];
+
+			sample_profile &sp = samples[sid];
+			if(rid >= sp.start1[tid].size() || sp.start1[tid][rid] >= sp.end1[tid][rid])
+			{
+				curlock.unlock();
+				continue;
+			}
 
 			time_t mytime = time(NULL);
 			//printf("generate chrm %s, gid = %d, rid = %d, %s", chrm.c_str(), gid, rid, ctime(&mytime));
@@ -367,9 +388,9 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 	{
 		int sid = v[i].first;
 		int tid = v[i].second;
-		for(int j = 0; j < group_size; j++)
+		for(int j = 0; j < batch_size; j++)
 		{
-			int rid = gid * group_size + j;
+			int rid = gid * batch_size + j;
 			if(rid >= samples[sid].start1[tid].size()) continue;
 			if(rid >= samples[sid].start2[tid].size()) continue;
 			printf("sample %d, tid = %d, rid = %d, strand +, expected end = %d, actual end = %d\n", sid, tid, rid, samples[sid].start1[tid][rid] + samples[sid].region_partition_length, samples[sid].end1[tid][rid]);
@@ -378,38 +399,62 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 	}
 	*/
 
-	vector<bool> posted(group_size, false);
+	vector<bool> posted(batch_size, false);
 	while(true)
 	{
-		for(int j = 0; j < group_size; j++)
+		for(int k = 0; k < grps.size(); k++)
+		{
+			bundle_group &g = grps[k];
+			if(g.gset.size() <= 0) continue;
+
+			bool b = true;
+			if(g.completed.size() <= 0) b = false;
+			for(int i = 0; i < g.completed.size(); i++)
+			{
+				if(g.completed[i] != 1) b = false;
+				if(b == false) break;
+			}
+			if(b == false) continue;
+
+			printf("clear gset of bundle-graph %d, gset.size = %lu\n", k, g.gset.size());
+			g.gset.clear();
+			vector<bundle>().swap(g.gset);
+			//for(int i = 0; i < g.completed.size(); i++) g.completed[i] = 2;
+			printf("finish clear gset of bundle-graph %d\n", k);
+		}
+
+		for(int j = 0; j < batch_size; j++)
 		{
 			if(posted[j] == true) continue;
 
-			bool succeed0 = true;
+			//bool succeed0 = true;
 			bool succeed1 = true;
-			vector<bool> ck0(v.size(), false);
+			//vector<bool> ck0(v.size(), false);
 			vector<bool> ck1(v.size(), false);
 
+			/*
 			if(j >= 1)
 			{
 				for(int i = 0; i < v.size(); i++) 
 				{
-					ck0[i] = curlocks[i * group_size + j - 1].try_lock();
+					ck0[i] = curlocks[i * batch_size + j - 1].try_lock();
 					if(ck0[i] == false) succeed0 = false;
 				}
 			}
+			*/
 
 			for(int i = 0; i < v.size(); i++) 
 			{
-				ck1[i] = curlocks[i * group_size + j].try_lock();
+				ck1[i] = curlocks[i * batch_size + j].try_lock();
 				if(ck1[i] == false) succeed1 = false;
 			}
 
 			//printf("test j: succeed0 = %c, succeed1 = %c\n", succeed0 ? 'T' : 'F', succeed1 ? 'T' : 'F');
 
-			if(succeed0 && succeed1)
+			//if(succeed0 && succeed1)
+			if(succeed1)
 			{
-				int rid = gid * group_size + j;
+				int rid = gid * batch_size + j;
 				int bi = this->get_bundle_group(chrm, rid);
 				if(bi >= 0)
 				{
@@ -430,8 +475,8 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 
 			for(int i = 0; i < v.size(); i++) 
 			{
-				if(j >= 1 && ck0[i] == true) curlocks[i * group_size + j - 1].unlock();
-				if(j >= 0 && ck1[i] == true) curlocks[i * group_size + j - 0].unlock();
+				//if(j >= 1 && ck0[i] == true) curlocks[i * batch_size + j - 1].unlock();
+				if(j >= 0 && ck1[i] == true) curlocks[i * batch_size + j - 0].unlock();
 			}
 		}
 
@@ -451,8 +496,8 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 int incubator::generate(int sid, int tid, int rid, string chrm, mutex &curlock)
 {	
 	sample_profile &sp = samples[sid];
+	/*
 	int cid = get_chrm_index(chrm, sid);
-
 	//printf("sp.start1[cid].size = %lu, sid = %d, rid = %d, tid = %d, cid = %d, chrm = %s\n", sp.start1[cid].size(), sid, rid, tid, cid, chrm.c_str());
 
 	if(rid >= sp.start1[cid].size()) 
@@ -461,6 +506,7 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &curlock)
 		curlock.unlock();
 		return 0;
 	}
+	*/
 
 	vector<bundle> v;
 	//transcript_set ts(chrm, params[DEFAULT].min_single_exon_clustering_overlap);
@@ -565,6 +611,7 @@ int incubator::assemble(bundle_group &g, int rid, int gi)
 	int instance = g.num_assembled + 1;
 	vector<bool> vb(g.gset.size(), false);
 	int sid = samples.size();
+	g.completed.assign(g.gvv.size(), 0);
 	for(int k = 0; k < g.gvv.size(); k++)
 	{
 		const vector<int> &v = g.gvv[k];
@@ -579,9 +626,10 @@ int incubator::assemble(bundle_group &g, int rid, int gi)
 		assert(g.rid == rid);
 		int bi = get_bundle_group(g.chrm, rid);
 		mutex &mtx = tmutex[bi + gi];
-		boost::asio::post(this->tpool, [this, &g, &mtx, gv, rid, sid, instance]{ 
+		boost::asio::post(this->tpool, [this, &g, &mtx, k, gv, rid, sid, instance]{ 
 				assembler asmb(params[DEFAULT], g.tmerge, mtx, rid, sid, instance);
 				asmb.resolve(gv);
+				g.completed[k] = 1;
 		});
 		instance++;
 	}
@@ -671,7 +719,6 @@ int incubator::write_combined_gtf()
 		const transcript_set &tm = z.second;
 
 		stringstream ss;
-		stringstream sf;
 		for(auto &it : tm.mt)
 		{
 			auto &v = it.second;
@@ -686,14 +733,11 @@ int incubator::write_combined_gtf()
 
 				//if(t.exons.size() > 1) t.write_features(-1);
 				//Only output novel transcripts in merged graph
-				
-				if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) t.write_features(sf);
+				//if(t.exons.size() > 1 && t.count2 == 1 && v[k].samples.find(-1) != v[k].samples.end()) t.write_features(sf);
 			}
 		}
 		const string &s = ss.str();
-		const string &f = sf.str();
 		meta_gtf.write(s.c_str(), s.size());
-		meta_ftr.write(f.c_str(), f.size());
 	}
 	return 0;
 }

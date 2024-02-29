@@ -343,7 +343,7 @@ int assembler::assemble(vector<bundle*> gv)
         }
 
 		assemble(gr, ps, bd.sp.sample_id);
-		//bd.clear();
+		bd.clear();
 	}
 
     for(int k = 0; k < gv.size(); k++)
@@ -1017,7 +1017,7 @@ int assembler::bridge(vector<bundle*> gv)
 	return 0;
 }
 
-int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
+/*int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 {
 	gx.extend_strands();
 
@@ -1031,14 +1031,6 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 
 	if(cfg.verbose >= 2) gx.print();
 	if(cfg.verbose >= 2) hx.print_nodes();
-
-	/*
-	if(gx.num_vertices() <= 40) 
-	{
-		string texfile = "tex/" + gx.gid + ".tex";
-		gx.draw(texfile);
-	}
-	*/
 
 	transcript_set &tm = tmerge;
 	parameters pa = cfg;
@@ -1078,4 +1070,68 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 	}
 
 	return 0;
+}*/
+
+int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
+{
+	gx.extend_strands();
+
+	map<int32_t, int32_t> smap, tmap;
+	group_start_boundaries(gx, smap, cfg.max_group_boundary_distance);
+	group_end_boundaries(gx, tmap, cfg.max_group_boundary_distance);
+	px.project_boundaries(smap, tmap);
+
+	hyper_set hx(gx, px);
+	hx.filter_nodes(gx);
+
+	if(cfg.verbose >= 2) gx.print();
+	if(cfg.verbose >= 2) hx.print_nodes();
+
+	/*
+	if(gx.num_vertices() <= 40)
+	{
+		string texfile = "tex/" + gx.gid + ".tex";
+		gx.draw(texfile);
+	}
+	*/
+
+	transcript_set &tm = tmerge;
+	parameters pa = cfg;
+
+	//splice_graph gr(gx);
+	//hyper_set hs(hx);
+
+	transcript_set ts(gx.chrm, tm.rid, pa.min_single_exon_clustering_overlap);
+
+	//printf("A: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
+
+	int k = 0;
+	gx.gid = gx.gid + "." + tostring(k);
+	scallop sx(gx, hx, pa, k == 0 ? false : true);
+	sx.assemble();
+
+	int z = 0;
+	for(int i = 0; i < sx.trsts.size(); i++)
+	{
+		transcript &t = sx.trsts[i];
+		if(t.exons.size() <= 1 && cfg.skip_single_exon_transcripts) continue;
+		z++;
+		t.RPKM = 0;
+		ts.add(t, 1, sid, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+	}
+
+	if(pa.verbose >= 2) printf("assemble %s: %d transcripts, graph with %lu vertices and %lu edges\n", gx.gid.c_str(), z, gx.num_vertices(), gx.num_edges());
+	if(gx.num_vertices() >= 1000) printf("assemble %s: %d transcripts, large graph with %lu vertices and %lu edges\n", gx.gid.c_str(), z, gx.num_vertices(), gx.num_edges());
+
+	//printf("try to lock in assembler\n");
+	mylock.lock();
+	//printf("locked in assembler\n");
+	//tsp.tsets.push_back(ts);
+	//printf("B: tm.rid = %d, ts.rid = %d, this->rid = %d\n", tm.rid, ts.rid, this->rid);
+	tm.add(ts, TRANSCRIPT_COUNT_ADD_COVERAGE_ADD);
+	mylock.unlock();
+	ts.clear();
+
+	return 0;
 }
+

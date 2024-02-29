@@ -48,8 +48,10 @@ public:
 	vector<vector<int32_t>> start2;
 	vector<vector<int32_t>> end1;
 	vector<vector<int32_t>> end2;
+	vector<vector<off_t>> start_off;
 
 public:
+	int set_batch_boundaries(int gap, int max_read_span);
 	int load_profile(const string &dir);
 	int save_profile(const string &dir);
 	int open_align_file();
