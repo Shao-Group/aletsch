@@ -624,8 +624,8 @@ long splice_graph::compute_num_paths(int a, int b)
 			int t = (*it1)->target();
 			assert(t == i);
 			if(s < a) continue;
-			table[t] += table[s - a];
-			if(table[t] >= max) return max;
+			table[t-a] += table[s - a];
+			if(table[t-a] >= max) return max;
 		}
 	}
 	return table[n - 1];

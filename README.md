@@ -141,8 +141,10 @@ python3 score.py -i <individual_gtf_dir> -m <pretrained_model.joblib> -c <num_of
 
 | Parameter | Type    | Default | Description                                                  |
 | --------- | ------- | ------- | ------------------------------------------------------------ |
-| `-i`      | String  |         | Directory containing Aletsch's feature files. This is the same directory where Aletsch outputs individual GTF files, as designated by the `-d` option in Aletsch's assembly process. |
+| `-i`      | String  |         | Directory containing Aletsch's feature files(x.trstFeature.csv). This is the same directory where Aletsch outputs individual GTF files, as designated by the `-d` option in Aletsch's assembly process. |
 | -m        | String  |         | Path to the pre-trained model file for scoring.              |
 | -c        | Integer |         | Number of samples/cells                                      |
 | -p        | String  | 0.2     | Minimum probability score threshold (range: 0 to 1).         |
-| -o        | String  |         | Output directoty of scored .csv file.                        |
+| -o        | String  |         | Output directory of scored .csv file.                        |
+
+Assuming a collection of $n$ samples, the directory `<individual_gtf_dir>` contains a total of $n+1$ feature files, enumerated from `0.trstFeature.csv` through to `(n+1).trstFeature.csv`. Files `0.trstFeature.csv` to `n.trstFeature.csv` correspond to feature files for individual samples, sequentially from the first to the last sample. The file `(n+1).trstFeature.csv` is derived from the **combined graph**.
