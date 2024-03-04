@@ -236,7 +236,7 @@ int sample_profile::set_batch_boundaries(int min_bundle_gap, int max_read_span)
 		if(ht.rpos > rpos) rpos = ht.rpos;
 	}
 
-	for(int i = 0; i < hdr->n_targets; i++)
+	/*for(int i = 0; i < hdr->n_targets; i++)
 	{
 		int32_t len = hdr->target_len[i];
 		for(int k = 0; k < start1[i].size(); k++)
@@ -244,7 +244,7 @@ int sample_profile::set_batch_boundaries(int min_bundle_gap, int max_read_span)
 			printf("boundaries of tid %d, region %d: %d(%d)-%d | %d-%d, len = %d\n", 
 					i, k, start1[i][k], start2[i][k], end1[i][k], k * region_partition_length, (k+1)* region_partition_length, len);
 		}
-	}
+	}*/
 
     bam_destroy1(b1t);
 	close_align_file();
