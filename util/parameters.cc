@@ -102,7 +102,10 @@ parameters::parameters()
 	min_single_exon_transcript_length = 250;
 	min_single_exon_clustering_overlap = 0.8;
 	min_exon_length = 8;
-	max_num_exons = 10000;
+    //max_num_exons = 10000;
+
+    min_num_exons = 5;
+    max_num_exons = 30;
 
 	// for clustering assembled transcripts
 	max_cluster_boundary_distance = 10000;

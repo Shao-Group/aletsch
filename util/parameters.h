@@ -66,6 +66,7 @@ public:
 	int min_single_exon_transcript_length;
 	int min_exon_length;
 	int max_num_exons;
+    int min_num_exons;
 
 	// for clustering assembled transcripts
 	int32_t max_cluster_boundary_distance;

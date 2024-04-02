@@ -41,9 +41,6 @@ int scallop::assemble()
 	if(cfg.verbose >= 2) printf("\n-----process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
     splice_graph gr_ori = splice_graph(gr);
 
-    //update_log_confidence(0);
-	//resolve_negligible_edges(false, cfg.max_decompose_error_ratio[NEGLIGIBLE_EDGE]);
-
 	while(true)
 	{	
 		if(gr.num_vertices() > cfg.max_num_exons) break;
@@ -3252,6 +3249,18 @@ int scallop::build_transcripts(splice_graph &gr)
 	trsts.clear();
 
     //for(int i = 0; i < paths.size(); i++) paths[i].print(i);
+    //
+    string prefix = "v"+to_string(cfg.min_num_exons)+"-"+to_string(cfg.max_num_exons);
+    gr.output_node_features(prefix+".node.csv");
+    gr.output_edge_features(prefix+".edge.csv");
+
+    string path_file = prefix + ".path.csv";
+    ofstream outputPath(path_file, ios::app);
+    if(!outputPath.is_open()) 
+    {
+        printf("open file %s error.\n", path_file.c_str());
+        return 0;
+    }
 
 	for(int i = 0; i < paths.size(); i++)
 	{
@@ -3261,7 +3270,18 @@ int scallop::build_transcripts(splice_graph &gr)
         update_trst_features(gr, trst, i, paths);
 		build_transcript(gr, trst, p, tid);
 		trsts.push_back(trst);
+
+        string chr_gid = "chr" + gr.chrm + "." + gr.gid;
+        outputPath << chr_gid << "," << tid << "\"";
+        for(int j = 0; j < p.v.size(); j++)
+        {
+            outputPath << p.v[j];
+            if(j < p.v.size()-1) outputPath << ",";
+            outputPath << "\"\n";
+        }
 	}
+
+    outputPath.close();
 	return 0;
 }
 

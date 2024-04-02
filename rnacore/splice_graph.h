@@ -14,6 +14,8 @@ See LICENSE for licensing.
 
 #include <unordered_map>
 #include <cassert>
+#include <fstream>
+#include <iomanip>
 
 #define SMIN 0.00001
 
@@ -140,6 +142,8 @@ public:
 	int print();
 	int stat_strandness();
     int print_junction_supports();
+    int output_node_features(string file);
+    int output_edge_features(string file);
 };
 
 #endif

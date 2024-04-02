@@ -1490,3 +1490,45 @@ int splice_graph::print_vertex(int i)
 	return 0;
 }
 
+int splice_graph::output_node_features(string file) {
+    string chr_gid = "chr" + chrm + "." + gid;
+    fstream fout(file, ios::out | ios::app);
+    if (!fout.is_open()) {
+        cout << "open file " << file << " error.\n";
+        return 0;
+    }
+
+    //fout << "graph_id,node_id,weight,length\n";
+    for (int i = 0; i < num_vertices(); i++) {
+        int length = get_vertex_info(i).length;
+        double weight = get_vertex_weight(i);
+        fout << chr_gid << "," << i << "," << fixed << setprecision(2) << weight << "," << length << "\n";
+    }
+    fout.close();
+    return 0;
+}
+
+int splice_graph::output_edge_features(string file) {
+    string chr_gid = "chr" + chrm + "." + gid;
+    fstream fout(file, ios::out | ios::app);
+    if (!fout.is_open()) {
+        cout << "open file " << file << " error.\n";
+        return 0;
+    }
+
+    //fout << "graph_id,source,target,weight,length\n";
+    edge_iterator it1, it2;
+    PEEI pei;
+    for (pei = edges(), it1 = pei.first, it2 = pei.second; it1 != it2; it1++) {
+        edge_descriptor e = *it1;
+        int s = e->source();
+		int t = e->target();
+
+        int length = get_edge_info(e).length;
+        double weight = get_edge_weight(e);
+        fout << chr_gid << "," << s << "," << t << "," << fixed << setprecision(2) << weight << "," << length << "\n";
+    }
+    fout.close();
+    return 0;
+}
+
