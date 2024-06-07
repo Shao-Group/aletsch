@@ -1492,7 +1492,7 @@ int splice_graph::print_vertex(int i)
 
 int splice_graph::output_node_features(string file) {
     string chr_gid = "chr" + chrm + "." + gid;
-    fstream fout(file, ios::out | ios::app);
+    ofstream fout(file, ios::app);
     if (!fout.is_open()) {
         cout << "open file " << file << " error.\n";
         return 0;
@@ -1500,7 +1500,7 @@ int splice_graph::output_node_features(string file) {
 
     //fout << "graph_id,node_id,weight,length\n";
     for (int i = 0; i < num_vertices(); i++) {
-        int length = get_vertex_info(i).length;
+        int length = get_vertex_info(i).rpos-get_vertex_info(i).lpos;
         double weight = get_vertex_weight(i);
         fout << chr_gid << "," << i << "," << fixed << setprecision(2) << weight << "," << length << "\n";
     }
@@ -1510,7 +1510,7 @@ int splice_graph::output_node_features(string file) {
 
 int splice_graph::output_edge_features(string file) {
     string chr_gid = "chr" + chrm + "." + gid;
-    fstream fout(file, ios::out | ios::app);
+    ofstream fout(file, ios::app);
     if (!fout.is_open()) {
         cout << "open file " << file << " error.\n";
         return 0;
@@ -1524,7 +1524,19 @@ int splice_graph::output_edge_features(string file) {
         int s = e->source();
 		int t = e->target();
 
-        int length = get_edge_info(e).length;
+        //ignore single-vertex paths
+        if(s == 0 && out_degree(t) == 1)
+        {
+            edge_descriptor out_edge_t = *(out_edges(t).first);
+            if(out_edge_t->target() == num_vertices()-1) continue;
+        }
+        if(t == num_vertices()-1 && in_degree(s) == 1)
+        {
+            edge_descriptor in_edge_s = *(in_edges(s).first);
+            if(in_edge_s->source() == 0) continue;
+        }
+
+        int length = get_vertex_info(t).lpos-get_vertex_info(s).rpos+1;
         double weight = get_edge_weight(e);
         fout << chr_gid << "," << s << "," << t << "," << fixed << setprecision(2) << weight << "," << length << "\n";
     }

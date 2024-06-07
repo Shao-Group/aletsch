@@ -39,17 +39,27 @@ int scallop::assemble()
 {
 	int c = classify();
 	if(cfg.verbose >= 2) printf("\n-----process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
+
+    if(gr.num_vertices() > cfg.max_num_exons || gr.num_vertices() < cfg.min_num_exons)
+        return 0;
+    
+    string prefix = "v"+to_string(cfg.min_num_exons)+"-"+to_string(cfg.max_num_exons);
+    gr.output_node_features(prefix+".node.csv");
+    gr.output_edge_features(prefix+".edge.csv");
+    outputPhasingPath(gr, hs);
+    
     splice_graph gr_ori = splice_graph(gr);
 
 	while(true)
 	{	
-		if(gr.num_vertices() > cfg.max_num_exons) break;
+        //if(gr.num_vertices() > cfg.max_num_exons || gr.num_vertices() < cfg.min_num_exons) break;
 
-		/*
+		
 		printf("---------\n");
 		gr.print();
-
 		printf("---------\n");
+
+        /*
 		print_super_edges();
 		//printf("---------\n");
 		//hs.print_edges();
@@ -3251,9 +3261,6 @@ int scallop::build_transcripts(splice_graph &gr)
     //for(int i = 0; i < paths.size(); i++) paths[i].print(i);
     //
     string prefix = "v"+to_string(cfg.min_num_exons)+"-"+to_string(cfg.max_num_exons);
-    gr.output_node_features(prefix+".node.csv");
-    gr.output_edge_features(prefix+".edge.csv");
-
     string path_file = prefix + ".path.csv";
     ofstream outputPath(path_file, ios::app);
     if(!outputPath.is_open()) 
@@ -3271,17 +3278,50 @@ int scallop::build_transcripts(splice_graph &gr)
 		build_transcript(gr, trst, p, tid);
 		trsts.push_back(trst);
 
+        if(p.junc.size() == 0) continue;
         string chr_gid = "chr" + gr.chrm + "." + gr.gid;
-        outputPath << chr_gid << "," << tid << "\"";
+        outputPath << chr_gid << "," << tid << ",\"";
         for(int j = 0; j < p.v.size(); j++)
         {
             outputPath << p.v[j];
             if(j < p.v.size()-1) outputPath << ",";
-            outputPath << "\"\n";
         }
+        outputPath << "\"," << p.weight << "\n";
 	}
 
     outputPath.close();
+	return 0;
+}
+
+int scallop::outputPhasingPath(splice_graph &gr, hyper_set &hs)
+{
+    string prefix = "v"+to_string(cfg.min_num_exons)+"-"+to_string(cfg.max_num_exons);
+    string path_file = prefix + ".phasing.csv";
+    ofstream outputPath(path_file, ios::app);
+    if(!outputPath.is_open()) 
+    {
+        printf("open file %s error.\n", path_file.c_str());
+        return 0;
+    }
+
+    int i = 0;
+	for(MVII::iterator it = hs.nodes.begin(); it != hs.nodes.end(); it++)
+	{
+		const vector<int> &v = it->first;
+		int c = it->second;
+        string pid = "chr" + gr.chrm + "." + gr.gid + "." + tostring(i);
+        string chr_gid = "chr" + gr.chrm + "." + gr.gid;
+
+        outputPath << chr_gid << "," << pid << ",\"";
+        for(int j = 0; j < v.size(); j++)
+        {
+            outputPath << v[j];
+            if(j < v.size()-1) outputPath << ",";
+        }
+        outputPath << "\"," << c << ",1\n";
+        i++;
+	}
+	outputPath.close();
 	return 0;
 }
 
