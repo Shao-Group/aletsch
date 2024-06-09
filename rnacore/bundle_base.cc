@@ -32,11 +32,14 @@ bundle_base::bundle_base()
 
 int bundle_base::add_hit_intervals(const hit &ht, bam1_t *b)
 {
-	add_hit(ht);
+	bool f = add_hit(ht);
+	if(f != 0) return 0;
+
 	add_intervals(b);
 	vector<int32_t> v = ht.extract_splices(b);
 	if(v.size() >= 1) 
 	{
+		//printf("add %lu to hcst\n", hits.size());
 		if(ht.xs == '.') ht.print();
 		hcst.add(v, hits.size() - 1, ht.xs);
 	}
@@ -74,7 +77,7 @@ int bundle_base::add_hit(const hit &ht)
 		hit &p = hits.back();
 		if(p.pos == ht.pos && p.rpos == ht.rpos) 
 		{
-			return 0;
+			return -1;
 		}
 	}*/
 
