@@ -3309,7 +3309,7 @@ int scallop::outputPhasingPath(splice_graph &gr, hyper_set &hs)
 	{
 		const vector<int> &v = it->first;
 		int c = it->second;
-        string pid = "chr" + gr.chrm + "." + gr.gid + "." + tostring(i);
+        string pid = "chr" + gr.chrm + "." + gr.gid + ".phasing." + tostring(i);
         string chr_gid = "chr" + gr.chrm + "." + gr.gid;
 
         outputPath << chr_gid << "," << pid << ",\"";
