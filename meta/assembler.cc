@@ -174,6 +174,38 @@ int assembler::combine_bundles(bundle &bx, vector<bundle*> gv)
 	return 0;
 }
 
+int assembler::assemble0(vector<bundle*> gv)
+{
+	assert(gv.size() >= 2);
+	int subindex = 0;
+
+	bundle bx(cfg, gv[0]->sp);
+	bx.copy_meta_information(*(gv[0]));
+	combine_bundles(bx, gv);
+	bx.set_gid(rid, gid, instance, subindex++);
+
+	splice_graph gx;
+	transform(bx, gx, false);	// TODO
+
+	// combined phase set 
+	phase_set px;
+
+	// assemble individual bundle
+	for(int k = 0; k < gv.size(); k++)
+	{
+        bundle &bd = *(gv[k]);
+
+		// TODO
+        fix_missing_edges(gr, gx);
+
+		phase_set ps;
+		bd.build_phase_set(ps, gx);
+
+		hyper_set hs(gx, ps);
+		// TODO: from nodes of hs
+	}
+}
+
 int assembler::assemble(vector<bundle*> gv)
 {
 	assert(gv.size() >= 2);
