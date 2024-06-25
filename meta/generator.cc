@@ -169,13 +169,22 @@ int generator::resolve()
 		if(sp.library_type == UNSTRANDED && ht.xs == '-') bb2.add_hit_intervals(ht, b1t);
 		//if(sp.library_type == UNSTRANDED && ht.xs == '+' && ht.pos >= start1 && term1 == false) bb1.add_hit_intervals(ht, b1t);
 		//if(sp.library_type == UNSTRANDED && ht.xs == '-' && ht.pos >= start2 && term2 == false) bb2.add_hit_intervals(ht, b1t);
-		if(sp.library_type == UNSTRANDED && ht.xs == '.') 
+		if(sp.library_type == UNSTRANDED && sp.with_xs_tag == 1 && ht.xs == '.') 
 		{
 			bool b = ht.contain_splices(b1t);
 			//if(b == false && ht.pos >= start1 && term1 == false) bb1.add_hit_intervals(ht, b1t);
 			//if(b == false && ht.pos >= start2 && term2 == false) bb2.add_hit_intervals(ht, b1t);
 			if(b == false) bb1.add_hit_intervals(ht, b1t);
 			if(b == false) bb2.add_hit_intervals(ht, b1t);
+		}
+
+		if(sp.library_type == UNSTRANDED && sp.with_xs_tag == 0 && ht.xs == '.') 
+		{
+			//bool b = ht.contain_splices(b1t);
+			//if(b == false && ht.pos >= start1 && term1 == false) bb1.add_hit_intervals(ht, b1t);
+			//if(b == false && ht.pos >= start2 && term2 == false) bb2.add_hit_intervals(ht, b1t);
+			bb1.add_hit_intervals(ht, b1t);
+			//if(b == false) bb2.add_hit_intervals(ht, b1t);
 		}
 	}
 
@@ -202,6 +211,8 @@ int generator::resolve()
 
 int generator::generate(bundle_base &bb, int index)
 {
+	printf("size of bb is %lu, index = %d\n", bb.hits.size(), index);
+
 	if(bb.tid < 0) return 0;
 	char buf[1024];
 	strcpy(buf, hdr->target_name[bb.tid]);
