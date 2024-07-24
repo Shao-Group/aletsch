@@ -8,50 +8,6 @@ for single-cell RNA-seq data).
 The datasets and scripts used to compare the performance of Aletsch with other assemblers are available at
 [aletsch-test](https://github.com/Shao-Group/aletsch-test).
 
-<!--
-It uses splice graph and phasing paths as underlying data strctures to represent
-the alignments of each gene loci in individual RNA-seq samples.
-Efficient algorithms are implemented to combine splice graphs (and phasing paths)
-at overlapped gene loci. Eventually, the core algorithm used in Scallop (i.e., phase-preserving decomposition)
-is employed to decompose the combined splice graphs to transcripts.
--->
-
-
-# Version v1.1.1
-
-We released Aletsch [v1.1.1](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.1),
-a version that substantially improved 
-the memory usage and running time over its previous version [v1.1.0](https://github.com/Shao-Group/aletsch/releases/tag/v1.1.0), 
-while maintaining an identical assembly accuracy.
-The improvement was primarily made by fixing the incorrect use of bam-file queries
-and by removing PCR duplicates.
-Below we detail the memory usage and running time, both CPU-time and Wall-time (10 threads), of the two versions
-across all datasets we tested (see [aletsch-test](https://github.com/Shao-Group/aletsch-test)).
-
-### Memory Usage Comparison (in GB):
-
-| Dataset | v1.1.1 | v1.1.0 |
-| :-----: | ------ | ------ |
-|  BK-H1  | 6.96   | 35.55  |
-|  BK-H2  | 11.79  | 64.44  |
-|  BK-H3  | 5.32   | 34.35  |
-|  BK-M1  | 21.47  | 168.01 |
-| SC-H1&3 | 4.12   | 47.23  |
-|  SC-H2  | 24.43  | 251.81 |
-|  SC-M1  | 9.27   | 82.93  |
-
-### CPU And Wall-Clock Time Comparison (in minutes):
-
-| Dataset | v1.1.1(CPU) | v1.1.1(Wall) | v1.1.0(CPU) | v1.1.0(Wall) |
-| :-----: | :---------: | :----------: | :---------: | :----------: |
-|  BK-H1  |     219     |      27      |     541     |      53      |
-|  BK-H2  |     923     |      96      |    1319     |     135      |
-|  BK-H3  |     155     |      17      |     258     |      28      |
-|  BK-M1  |     691     |      73      |    1464     |     169      |
-| SC-H1&3 |     186     |      21      |     167     |      20      |
-|  SC-H2  |    1077     |     129      |    1530     |     183      |
-|  SC-M1  |     382     |      44      |     441     |      52      |
-
 # Installation
 
 Aletsch can be installed through [conda](https://anaconda.org/bioconda/aletsch)
@@ -67,8 +23,9 @@ The usage of `aletsch` is:
 We highly recommend to generate profiles for individual samples first:
 ```
 ./aletsch --profile -i <input-bam-list> -p <profile>
-./aletsch -i <input-bam-list> -o <output.gtf> -p <profile> [options]
+./aletsch -i <input-bam-list> -o <output.gtf> -p <profile> -d <gtf> [options]
 ```
+Directory <profile> and <gtf> mush exist before execution.
 
 ## Format of Input and Output
 Each line of `input-bam-list` describes a single sample, with 3 fields separated by space.
