@@ -25,7 +25,7 @@ We highly recommend to generate profiles for individual samples first:
 ./aletsch --profile -i <input-bam-list> -p <profile>
 ./aletsch -i <input-bam-list> -o <output.gtf> -p <profile> -d <gtf> [options]
 ```
-Directory <profile> and <gtf> mush exist before execution.
+**Note:** The directory `<profile>` and `<gtf>` should exist before execution.
 
 ## Format of Input and Output
 Each line of `input-bam-list` describes a single sample, with 3 fields separated by space.
