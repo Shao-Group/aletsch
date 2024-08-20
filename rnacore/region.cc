@@ -106,6 +106,38 @@ bool region::empty_subregion(int32_t p1, int32_t p2)
 	return false;
 }
 
+int region::build_indel_coverage()
+{
+	for(int i = 0; i < pexons.size(); i++)
+	{
+		partial_exon &p = pexons[i];
+
+		PSIMI pei = locate_boundary_iterators(*imap, p.lpos, p.rpos);
+		SIMI it1 = pei.first, it2 = pei.second;
+
+		if(it1 == imap->end() || it2 == imap->end()) return continue;
+
+		int32_t sum = compute_sum_overlap(*imap, it1, it2);
+		p.indel_sum_cov = sum;
+		p.indel_ratio = p.indel_sum_cov * 1.0 / (p.ave * (p.rpos - p.lpos));
+
+		int32_t p1 = lower(it1->first);
+		int32_t p2 = upper(it1->first);
+
+		SIMI ix2 = it2;
+		ix2--;
+		if(ix2 != imap.end())
+		{
+			int32_t p3 = upper(ix2->first);
+			if(p3 >= p2) p2 = p3;
+		}
+
+		p.left_indel = p1 - p.lpos;
+		p.right_indel = p.rpos - p2;
+	}
+	return 0;
+}
+
 int region::build_partial_exons()
 {
 	pexons.clear();
