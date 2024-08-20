@@ -1,6 +1,6 @@
 /*
 Part of aletsch
-(c) 2020 by Mingfu Shao, The Pennsylvania State University
+(c) 2024 by Qian Shi, Qimin Zhang, Mingfu Shao, The Pennsylvania State University
 See LICENSE for licensing.
 */
 
