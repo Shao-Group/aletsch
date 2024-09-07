@@ -22,6 +22,12 @@ vertex_info::vertex_info()
 	lstrand = '.';
 	rstrand = '.';
 	regional = false;
+
+    indel_sum_cov = 0;
+    indel_ratio = 0;
+    left_indel = -1;
+    right_indel = -1;
+
     boundary_loss1 = 0;
     boundary_loss2 = 0;
     boundary_loss3 = 0;
@@ -47,6 +53,12 @@ vertex_info::vertex_info(int l)
 	lstrand = '.';
 	rstrand = '.';
 	regional = false;
+
+    indel_sum_cov = 0;
+    indel_ratio = 0;
+    left_indel = -1;
+    right_indel = -1;
+
     boundary_loss1 = 0;
     boundary_loss2 = 0;
     boundary_loss3 = 0;
@@ -74,6 +86,12 @@ vertex_info::vertex_info(const vertex_info &vi)
 	lstrand = vi.lstrand;
 	rstrand = vi.rstrand;
 	regional = vi.regional;
+
+    indel_sum_cov = vi.indel_sum_cov;
+    indel_ratio = vi.indel_ratio;
+    left_indel = vi.left_indel;
+    right_indel = vi.right_indel;
+
     boundary_loss1 = vi.boundary_loss1;
     boundary_loss2 = vi.boundary_loss2;
     boundary_loss3 = vi.boundary_loss3;

@@ -3318,7 +3318,7 @@ int scallop::outputPhasingPath(splice_graph &gr, hyper_set &hs)
             outputPath << v[j];
             if(j < v.size()-1) outputPath << ",";
         }
-        outputPath << "\"," << c << ",1\n";
+        outputPath << "\"," << c << "\n";
         i++;
 	}
 	outputPath.close();

@@ -31,6 +31,11 @@ public:
 	char rstrand;		// right side strand	
 	bool regional;		// if the partial-exon is regional
 
+    double indel_sum_cov;   //sum of indels in the partial exon
+    double indel_ratio;     //ratio of indel coverags over partial exon coverage
+    int left_indel;  //nearest distance of indel to left boundary
+    int right_indel;     //nearest distance of indel to right boundary
+
     double boundary_loss1;
     double boundary_loss2;
     double boundary_loss3;

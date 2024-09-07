@@ -1500,9 +1500,19 @@ int splice_graph::output_node_features(string file) {
 
     //fout << "graph_id,node_id,weight,length\n";
     for (int i = 0; i < num_vertices(); i++) {
-        int length = get_vertex_info(i).rpos-get_vertex_info(i).lpos;
+
+        vertex_info vi = get_vertex_info(i);
+        int length = vi.rpos-vi.lpos;
         double weight = get_vertex_weight(i);
-        fout << chr_gid << "," << i << "," << fixed << setprecision(2) << weight << "," << length << "\n";
+        fout << chr_gid << "," << i << "," << fixed << setprecision(4) << weight << "," << length << ",";
+        fout << vi.maxcov << ",";
+        fout << vi.stddev << ",";
+        //fout << vi.sdist << ",";
+        //fout << vi.tdist << "\,";
+        fout << vi.indel_sum_cov << ",";
+        fout << vi.indel_ratio << ",";
+        fout << vi.left_indel << ",";
+        fout << vi.right_indel << "\n";
     }
     fout.close();
     return 0;
@@ -1538,7 +1548,7 @@ int splice_graph::output_edge_features(string file) {
 
         int length = get_vertex_info(t).lpos-get_vertex_info(s).rpos+1;
         double weight = get_edge_weight(e);
-        fout << chr_gid << "," << s << "," << t << "," << fixed << setprecision(2) << weight << "," << length << "\n";
+        fout << chr_gid << "," << s << "," << t << "," << fixed << setprecision(4) << weight << "," << length << "\n";
     }
     fout.close();
     return 0;

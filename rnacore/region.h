@@ -45,6 +45,7 @@ private:
 	int build_join_interval_map();
 	int smooth_join_interval_map();
 	int build_partial_exons();
+    int build_indel_coverage();
 	int calculate_significance();
 	static long double log_factorial(int n, int k, int z, int i);
 	static long double log_add(long double x, long double y);

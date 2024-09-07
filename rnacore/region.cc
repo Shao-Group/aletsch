@@ -26,6 +26,8 @@ region::region(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype, const split
 	if(ltype == RIGHT_SPLICE && rtype == LEFT_SPLICE) smooth_join_interval_map();
 	build_partial_exons();
 	//calculate_significance();
+    build_indel_coverage();
+
 } 
 
 region::~region()
@@ -115,7 +117,7 @@ int region::build_indel_coverage()
 		PSIMI pei = locate_boundary_iterators(*imap, p.lpos, p.rpos);
 		SIMI it1 = pei.first, it2 = pei.second;
 
-		if(it1 == imap->end() || it2 == imap->end()) return continue;
+		if(it1 == imap->end() || it2 == imap->end()) continue;
 
 		int32_t sum = compute_sum_overlap(*imap, it1, it2);
 		p.indel_sum_cov = sum;
@@ -126,7 +128,7 @@ int region::build_indel_coverage()
 
 		SIMI ix2 = it2;
 		ix2--;
-		if(ix2 != imap.end())
+		if(ix2 != imap->end())
 		{
 			int32_t p3 = upper(ix2->first);
 			if(p3 >= p2) p2 = p3;

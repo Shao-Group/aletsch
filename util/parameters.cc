@@ -104,8 +104,8 @@ parameters::parameters()
 	min_exon_length = 8;
     //max_num_exons = 10000;
 
-    min_num_exons = 5;
-    max_num_exons = 30;
+    min_num_exons = 30;
+    max_num_exons = 1000;
 
 	// for clustering assembled transcripts
 	max_cluster_boundary_distance = 10000;
@@ -307,6 +307,11 @@ int parameters::parse_arguments(int argc, const char ** argv, int data_type)
 		else if(string(argv[i]) == "--max_num_exons")
 		{
 			max_num_exons = atoi(argv[i + 1]);
+			i++;
+		}
+        else if(string(argv[i]) == "--min_num_exons")
+		{
+			min_num_exons = atoi(argv[i + 1]);
 			i++;
 		}
 		else if(string(argv[i]) == "--max_dp_table_size")
