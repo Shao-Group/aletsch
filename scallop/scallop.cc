@@ -38,11 +38,21 @@ scallop::~scallop()
 int scallop::assemble()
 {
 	int c = classify();
-	if(cfg.verbose >= 2) printf("\n-----process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
 
-    if(gr.num_vertices() > cfg.max_num_exons || gr.num_vertices() < cfg.min_num_exons)
+	if(gr.num_vertices()-2 > cfg.max_num_exons)
+	{
+		printf("Large graph: %s.%s\n", gr.chrm.c_str(), gr.gid.c_str());
+	}
+
+    if(gr.num_vertices()-2 > cfg.max_num_exons || gr.num_vertices()-2 < cfg.min_num_exons)
         return 0;
-    
+	
+	if(cfg.verbose >= 0) 
+	{
+		printf("\n-----process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
+		gr.print();
+	}
+
     string prefix = "v"+to_string(cfg.min_num_exons)+"-"+to_string(cfg.max_num_exons);
     gr.output_node_features(prefix+".node.csv");
     gr.output_edge_features(prefix+".edge.csv");
@@ -52,13 +62,6 @@ int scallop::assemble()
 
 	while(true)
 	{	
-        //if(gr.num_vertices() > cfg.max_num_exons || gr.num_vertices() < cfg.min_num_exons) break;
-
-		
-		printf("---------\n");
-		gr.print();
-		printf("---------\n");
-
         /*
 		print_super_edges();
 		//printf("---------\n");

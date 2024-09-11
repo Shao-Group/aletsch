@@ -313,7 +313,7 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 	for(int i = 0; i < pexons.size(); i++)
 	{
 		const partial_exon &r = pexons[i];
-        pexons[i].print(i);
+        //pexons[i].print(i);
 
 		int length = r.rpos - r.lpos;
 		assert(length >= 1);
