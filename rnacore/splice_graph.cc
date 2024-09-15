@@ -1499,12 +1499,14 @@ int splice_graph::output_node_features(string file) {
     }
 
     //fout << "graph_id,node_id,weight,length\n";
-    for (int i = 0; i < num_vertices(); i++) {
-
+    for (int i = 1; i < num_vertices()-1; i++) {
         vertex_info vi = get_vertex_info(i);
         int length = vi.rpos-vi.lpos;
         double weight = get_vertex_weight(i);
-        fout << chr_gid << "," << i << "," << fixed << setprecision(4) << weight << "," << length << ",";
+		fout << chrm << ",";
+        fout << chr_gid << "," << i-1 << ",";
+		fout << vi.lpos+1 << "," << vi.rpos << ","; //In GTF, sequence numbering starting at 1.
+		fout << fixed << setprecision(4) << weight << "," << length << ",";
         fout << vi.maxcov << ",";
         fout << vi.stddev << ",";
         //fout << vi.sdist << ",";
@@ -1534,6 +1536,9 @@ int splice_graph::output_edge_features(string file) {
         int s = e->source();
 		int t = e->target();
 
+		if(s == 0) continue;
+        if(t == num_vertices() - 1) continue;
+
         //ignore single-vertex paths
         if(s == 0 && out_degree(t) == 1)
         {
@@ -1548,7 +1553,9 @@ int splice_graph::output_edge_features(string file) {
 
         int length = get_vertex_info(t).lpos-get_vertex_info(s).rpos+1;
         double weight = get_edge_weight(e);
-        fout << chr_gid << "," << s << "," << t << "," << fixed << setprecision(4) << weight << "," << length << "\n";
+        fout << chrm << "," << chr_gid << "," << s-1 << "," << t-1 << ",";
+		fout << get_vertex_info(s).rpos << "," << get_vertex_info(t).lpos+1 << ",";
+		fout << fixed << setprecision(4) << weight << "," << length << "\n";
     }
     fout.close();
     return 0;

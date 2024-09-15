@@ -310,6 +310,8 @@ int graph_builder::build_splice_graph(splice_graph &gr)
 	vi0.type = 0;
 	gr.set_vertex_weight(0, 0);
 	gr.set_vertex_info(0, vi0);
+
+	//printf("Build splice graph %s.%s with pexons:\n", gr.chrm.c_str(), gr.gid.c_str());
 	for(int i = 0; i < pexons.size(); i++)
 	{
 		const partial_exon &r = pexons[i];

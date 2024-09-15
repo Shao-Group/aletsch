@@ -49,7 +49,7 @@ int scallop::assemble()
 	
 	if(cfg.verbose >= 0) 
 	{
-		printf("\n-----process splice graph %s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
+		printf("\n-----process splice graph %s.%s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.chrm.c_str(), gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
 		gr.print();
 	}
 
@@ -3283,11 +3283,11 @@ int scallop::build_transcripts(splice_graph &gr)
 
         if(p.junc.size() == 0) continue;
         string chr_gid = "chr" + gr.chrm + "." + gr.gid;
-        outputPath << chr_gid << "," << tid << ",\"";
-        for(int j = 0; j < p.v.size(); j++)
+        outputPath << gr.chrm << "," << chr_gid << "," << tid << ",\"";
+        for(int j = 1; j < p.v.size()-1; j++)
         {
-            outputPath << p.v[j];
-            if(j < p.v.size()-1) outputPath << ",";
+            outputPath << p.v[j]-1;
+            if(j < p.v.size()-2) outputPath << ",";
         }
         outputPath << "\"," << p.weight << "\n";
 	}
@@ -3311,14 +3311,16 @@ int scallop::outputPhasingPath(splice_graph &gr, hyper_set &hs)
 	for(MVII::iterator it = hs.nodes.begin(); it != hs.nodes.end(); it++)
 	{
 		const vector<int> &v = it->first;
+		if(v.size() <= 2) continue;
+
 		int c = it->second;
         string pid = "chr" + gr.chrm + "." + gr.gid + ".phasing." + tostring(i);
         string chr_gid = "chr" + gr.chrm + "." + gr.gid;
 
-        outputPath << chr_gid << "," << pid << ",\"";
+        outputPath << gr.chrm << "," << chr_gid << "," << pid << ",\"";
         for(int j = 0; j < v.size(); j++)
         {
-            outputPath << v[j];
+            outputPath << v[j]-1;
             if(j < v.size()-1) outputPath << ",";
         }
         outputPath << "\"," << c << "\n";

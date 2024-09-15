@@ -325,10 +325,10 @@ int assembler::assemble(vector<bundle*> gv)
             boundary_extend(bd1.sp.sample_id, gr, gr1, 3);
         }
 
-        if(cfg.verbose >= 2) 
+        if(cfg.verbose >= 0) 
         {
             printf("print %d/%lu individual graph %s, sample_id=%d\n", k+1, gv.size(), gr.gid.c_str(), bd.sp.sample_id);
-            gr.print_junction_supports();
+            //gr.print_junction_supports();
         }
 		phase_set ps;
 		bd.build_phase_set(ps, gr);
@@ -363,7 +363,7 @@ int assembler::assemble(vector<bundle*> gv)
         if(cfg.verbose >= 2) 
         {
             printf("print combined graph %s\n", gx.gid.c_str());
-            gx.print_junction_supports();
+            //gx.print_junction_supports();
         }
 
         // assemble combined instance

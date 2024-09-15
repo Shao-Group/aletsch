@@ -326,7 +326,6 @@ int hyper_set::build_edges(directed_graph &gr, MEI& e2i)
 	for(MVII::iterator it = nodes.begin(); it != nodes.end(); it++)
 	{
 		int c = it->second;
-		if(c <= 2) continue;
 		//if(c < min_hyper_count) continue;
 
 		const vector<int> &vv = it->first;

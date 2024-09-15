@@ -11,6 +11,15 @@ See LICENSE for licensing.
 partial_exon::partial_exon(int32_t _lpos, int32_t _rpos, int _ltype, int _rtype)
 	: lpos(_lpos), rpos(_rpos), ltype(_ltype), rtype(_rtype)
 {
+	ave = 0;
+	dev = 0;
+	max = 0;
+	pvalue = 0;
+
+	indel_sum_cov = 0;
+	indel_ratio = 0;
+	left_indel =  -1;
+	right_indel = -1;
 }
 
 string partial_exon::label() const
