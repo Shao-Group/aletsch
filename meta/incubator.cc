@@ -373,7 +373,7 @@ int incubator::generate_merge_assemble(string chrm, int gid)
 			}
 
 			time_t mytime = time(NULL);
-			//printf("generate chrm %s, gid = %d, rid = %d, %s", chrm.c_str(), gid, rid, ctime(&mytime));
+			printf("generate chrm %s, gid = %d, rid = %d, %s", chrm.c_str(), gid, rid, ctime(&mytime));
 			boost::asio::post(this->tpool, [this, &curlock, sid, chrm, tid, rid]{ 
 					this->generate(sid, tid, rid, chrm, curlock); 
 			});
@@ -602,7 +602,7 @@ int incubator::generate(int sid, int tid, int rid, string chrm, mutex &curlock)
 		tmutex[bi + 2].unlock();
 	}
 
-	printf("finish generating tid = %d, rid = %d, of sample %s\n", tid, rid, sp.align_file.c_str());
+	//printf("finish generating sid = %d, tid = %d, rid = %d, of sample %s\n", sid, tid, rid, sp.align_file.c_str());
 	return 0;
 }
 
@@ -626,8 +626,8 @@ int incubator::assemble(bundle_group &g, int rid, int gi)
 		assert(g.rid == rid);
 		int bi = get_bundle_group(g.chrm, rid);
 		mutex &mtx = tmutex[bi + gi];
-		boost::asio::post(this->tpool, [this, &g, &mtx, k, gv, rid, sid, instance]{ 
-				assembler asmb(params[DEFAULT], g.tmerge, mtx, rid, sid, instance);
+		boost::asio::post(this->tpool, [this, &g, &mtx, k, gv, rid, gi, instance]{ 
+				assembler asmb(params[DEFAULT], g.tmerge, mtx, rid, gi, instance);
 				asmb.resolve(gv);
 				g.completed[k] = 1;
 		});

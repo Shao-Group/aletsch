@@ -3289,7 +3289,24 @@ int scallop::build_transcripts(splice_graph &gr)
             outputPath << p.v[j]-1;
             if(j < p.v.size()-2) outputPath << ",";
         }
-        outputPath << "\"," << p.weight << "\n";
+        outputPath << "\",\"";
+
+		//output splice junction's source vertex
+		for(int j = 0; j < p.junc.size(); j++)
+        {
+            outputPath << p.junc[j].first-1;
+            if(j < p.junc.size()-1) outputPath << ",";
+        }
+		outputPath << "\",\"";
+
+		//output splice junction's target vertex
+		for(int j = 0; j < p.junc.size(); j++)
+        {
+            outputPath << p.junc[j].second-1;
+            if(j < p.junc.size()-1) outputPath << ",";
+        }
+		outputPath << "\",";
+		outputPath << p.weight << "\n";
 	}
 
     outputPath.close();
