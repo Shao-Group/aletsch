@@ -626,8 +626,8 @@ int incubator::assemble(bundle_group &g, int rid, int gi)
 		assert(g.rid == rid);
 		int bi = get_bundle_group(g.chrm, rid);
 		mutex &mtx = tmutex[bi + gi];
-		boost::asio::post(this->tpool, [this, &g, &mtx, k, gv, rid, sid, instance]{ 
-				assembler asmb(params[DEFAULT], g.tmerge, mtx, rid, sid, instance);
+		boost::asio::post(this->tpool, [this, &g, &mtx, k, gv, rid, gi, instance]{ 
+				assembler asmb(params[DEFAULT], g.tmerge, mtx, rid, gi, instance);
 				asmb.resolve(gv);
 				g.completed[k] = 1;
 		});
