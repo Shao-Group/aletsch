@@ -27,6 +27,7 @@ public:
 	double weight;	// new weight from hyper-edges
 	int strand;		// strandness ./+/- => 0,1,2
     double confidence; //log of reliability of every choice
+	double trstSupport; //whether output trsts support the edge
 	//string feature;	// feature
 
     set<int> samples;

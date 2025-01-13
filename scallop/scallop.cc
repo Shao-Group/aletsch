@@ -52,11 +52,6 @@ int scallop::assemble()
 		printf("\n-----process splice graph %s.%s type = %d, vertices = %lu, edges = %lu, phasing paths = %lu\n", gr.chrm.c_str(), gr.gid.c_str(), c, gr.num_vertices(), gr.num_edges(), hs.edges.size());
 		gr.print();
 	}
-
-    string prefix = "v"+to_string(cfg.min_num_exons)+"-"+to_string(cfg.max_num_exons);
-    gr.output_node_features(prefix+".node.csv");
-    gr.output_edge_features(prefix+".edge.csv");
-    outputPhasingPath(gr, hs);
     
     splice_graph gr_ori = splice_graph(gr);
 
@@ -187,6 +182,11 @@ int scallop::assemble()
 	greedy_decompose();
 
 	build_transcripts(gr_ori);
+
+	string prefix = "v"+to_string(cfg.min_num_exons)+"-"+to_string(cfg.max_num_exons);
+    gr_ori.output_node_features(prefix+".node.csv");
+    gr_ori.output_edge_features(prefix+".edge.csv");
+    outputPhasingPath(gr_ori, hs);
 
 	if(cfg.verbose >= 2) 
 	{
@@ -3288,6 +3288,16 @@ int scallop::build_transcripts(splice_graph &gr)
         {
             outputPath << p.v[j]-1;
             if(j < p.v.size()-2) outputPath << ",";
+
+			// Update how final paths support raw vertices and edges
+			int v1 = p.v[j-1];
+			int v2 = p.v[j];
+			assert(gr.edge(v1, v2).second);
+			edge_descriptor e = gr.edge(v1, v2).first;
+			edge_info &ei = gr.get_editable_edge_info(e);
+			vertex_info &vi2 = gr.get_editable_vertex_info(v2);
+			ei.trstSupport = 1;
+			vi2.trstSupport = 1;
         }
         outputPath << "\",\"";
 
@@ -3324,8 +3334,15 @@ int scallop::outputPhasingPath(splice_graph &gr, hyper_set &hs)
         return 0;
     }
 
-    int i = 0;
-	for(MVII::iterator it = hs.nodes.begin(); it != hs.nodes.end(); it++)
+	// Downsample
+    MVII selectedPaths = hs.nodes;
+    if (gr.num_vertices() > 100 && hs.nodes.size() > gr.num_vertices()) {
+        selectedPaths = downsamplePhasingPaths(hs.nodes, gr.num_vertices());
+		printf("Downsample phasing path %ld/%ld", selectedPaths.size(), hs.nodes.size());
+    }
+
+	int i = 0;
+	for(MVII::iterator it = selectedPaths.begin(); it != selectedPaths.end(); it++)
 	{
 		const vector<int> &v = it->first;
 		if(v.size() <= 2) continue;
@@ -3341,10 +3358,41 @@ int scallop::outputPhasingPath(splice_graph &gr, hyper_set &hs)
             if(j < v.size()-1) outputPath << ",";
         }
         outputPath << "\"," << c << "\n";
-        i++;
+		i++;
 	}
 	outputPath.close();
 	return 0;
+}
+
+MVII scallop::downsamplePhasingPaths(const MVII& paths, size_t targetSize) {
+
+    int maxCount = 0;
+    size_t maxLength = 0;
+    for (const auto& p : paths) {
+        maxCount = max(maxCount, p.second);
+        maxLength = max(maxLength, p.first.size());
+    }
+
+    vector<pair<double, pair<vector<int>, int>>> scoredPaths;
+    scoredPaths.reserve(paths.size());
+
+    // Calculate scores by lengths and counts
+    for (const auto& p : paths) {
+        if (p.first.size() <= 2) continue;
+        double score = static_cast<double>(p.first.size()) / maxLength + static_cast<double>(p.second) / maxCount;
+        scoredPaths.push_back({score, {p.first, p.second}});
+    }
+
+    // Sort by score
+    sort(scoredPaths.begin(), scoredPaths.end(),
+         [](const pair<double, pair<vector<int>, int>>& a, const pair<double, pair<vector<int>, int>>& b) { return a.first > b.first; });
+
+    MVII result;
+    for (size_t i = 0; i < targetSize && i < scoredPaths.size(); i++) {
+        result[scoredPaths[i].second.first] = scoredPaths[i].second.second;
+    }
+
+    return result;
 }
 
 int scallop::update_trst_features(splice_graph &gr, transcript &trst, int pid, vector<path> &paths)

@@ -23,7 +23,8 @@ vertex_info::vertex_info()
 	rstrand = '.';
 	regional = false;
 
-    indel_sum_cov = 0;
+    trstSupport = 0;
+	indel_sum_cov = 0;
     indel_ratio = 0;
     left_indel = -1;
     right_indel = -1;
@@ -54,6 +55,7 @@ vertex_info::vertex_info(int l)
 	rstrand = '.';
 	regional = false;
 
+	trstSupport = 0;
     indel_sum_cov = 0;
     indel_ratio = 0;
     left_indel = -1;
@@ -87,6 +89,7 @@ vertex_info::vertex_info(const vertex_info &vi)
 	rstrand = vi.rstrand;
 	regional = vi.regional;
 
+	trstSupport = vi.trstSupport;
     indel_sum_cov = vi.indel_sum_cov;
     indel_ratio = vi.indel_ratio;
     left_indel = vi.left_indel;

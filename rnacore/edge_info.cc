@@ -16,6 +16,7 @@ edge_info::edge_info()
 	count = 0;
     confidence = 0;
     abd = 0;
+	trstSupport = 0;
     samples.clear();
     spAbd.clear();
 }
@@ -30,6 +31,7 @@ edge_info::edge_info(int l)
 	strand = 0;
     confidence = 0;
     abd = 0;
+	trstSupport = 0;
     samples.clear();
     spAbd.clear();
 }
@@ -47,5 +49,6 @@ edge_info::edge_info(const edge_info &ei)
     abd = ei.abd;
     samples = ei.samples;
     spAbd = ei.spAbd;
+	trstSupport = ei.trstSupport;
 	//feature = ei.feature;
 }

@@ -1506,6 +1506,7 @@ int splice_graph::output_node_features(string file) {
 		fout << chrm << ",";
         fout << chr_gid << "," << i-1 << ",";
 		fout << vi.lpos+1 << "," << vi.rpos << ","; //In GTF, sequence numbering starting at 1.
+		fout << vi.trstSupport << ",";
 		fout << fixed << setprecision(4) << weight << "," << length << ",";
         fout << vi.maxcov << ",";
         fout << vi.stddev << ",";
@@ -1555,6 +1556,7 @@ int splice_graph::output_edge_features(string file) {
         double weight = get_edge_weight(e);
         fout << chrm << "," << chr_gid << "," << s-1 << "," << t-1 << ",";
 		fout << get_vertex_info(s).rpos << "," << get_vertex_info(t).lpos+1 << ",";
+		fout << get_edge_info(e).trstSupport << ",";
 		fout << fixed << setprecision(4) << weight << "," << length << "\n";
     }
     fout.close();
