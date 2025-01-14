@@ -10,6 +10,7 @@ libscallop_a_CPPFLAGS = -O2 -std=c++11 -I$(GTF_INCLUDE) -I$(GRAPH_INCLUDE) -I$(U
 libscallop_a_SOURCES = subsetsum.h subsetsum.cc \
 					   router.h router.cc \
 					   equation.h equation.cc \
+					   feature_builder.h feature_builder.cc \
 					   scallop.h scallop.cc \
 					   cluster.h cluster.cc \
 					   hyper_set.h hyper_set.cc

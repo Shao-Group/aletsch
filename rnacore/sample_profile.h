@@ -12,6 +12,8 @@ See LICENSE for licensing.
 #include <htslib/sam.h>
 #include <mutex>
 #include <fstream>
+#include <map>
+#include "transcript.h"
 
 using namespace std;
 
@@ -24,6 +26,7 @@ public:
 	int sample_id;
 	string align_file;
 	string index_file;
+	string input_gtf_file;				// given individual assembly, for GNN scoring
 	samFile *sfn;
 	bam_hdr_t *hdr;
 	ofstream *individual_gtf;
@@ -50,6 +53,9 @@ public:
 	vector<vector<int32_t>> end2;
 	vector<vector<off_t>> start_off;
 
+	vector<transcript> input_gtf_trsts;
+	map<int64_t, vector<int>> input_gtf_map;
+
 public:
 	int set_batch_boundaries(int gap, int max_read_span);
 	int load_profile(const string &dir);
@@ -57,6 +63,7 @@ public:
 	int open_align_file();
 	int open_individual_gtf(const string &dir);
 	int open_individual_ftr(const string &dir);
+	int read_input_gtf_file();
 	int read_align_headers();
 	int read_index_iterators();
 	int free_align_headers();

@@ -98,9 +98,11 @@ int incubator::read_bam_list()
 		char align_file[10240];
 		char index_file[10240];
 		char type[10240];
-		sstr >> align_file >> index_file >> type;
+		char input_gtf_file[10240];
+		sstr >> align_file >> index_file >> type >> input_gtf_file;
 		sp.align_file = align_file;
 		sp.index_file = index_file;
+		sp.input_gtf_file = input_gtf_file;
 		if(string(type) == "paired_end") sp.data_type = PAIRED_END;
 		if(string(type) == "single_end") sp.data_type = SINGLE_END;
 		if(string(type) == "pacbio_ccs") sp.data_type = PACBIO_CCS;

@@ -13,6 +13,7 @@ See LICENSE for licensing.
 #include "essential.h"
 #include "constants.h"
 #include "filter.h"
+#include "feature_builder.h"
 
 #include <fstream>
 #include <sstream>
@@ -144,7 +145,8 @@ int assembler::assemble(bundle &bd)
 
 	phase_set ps;
 	bd.build_phase_set(ps, gr);
-	assemble(gr, ps, bd.sp.sample_id);
+	//assemble(gr, ps, bd.sp.sample_id);
+	assemble_input_gtf(gr, ps, bd.sp);
 	bd.clear();
 	return 0;
 }
@@ -342,7 +344,8 @@ int assembler::assemble(vector<bundle*> gv)
             boundary_extend(-1, gr, gx, 1);
         }
 
-		assemble(gr, ps, bd.sp.sample_id);
+		//assemble(gr, ps, bd.sp.sample_id);
+		assemble_input_gtf(gr, ps, bd.sp);
 		bd.clear();
 	}
 
@@ -1135,3 +1138,33 @@ int assembler::assemble(splice_graph &gx, phase_set &px, int sid)
 	return 0;
 }
 
+int assembler::assemble_input_gtf(splice_graph &gx, phase_set &px, const sample_profile &sp)
+{
+	gx.extend_strands();
+
+	map<int32_t, int32_t> smap, tmap;
+	group_start_boundaries(gx, smap, cfg.max_group_boundary_distance);
+	group_end_boundaries(gx, tmap, cfg.max_group_boundary_distance);
+	px.project_boundaries(smap, tmap);
+
+	hyper_set hx(gx, px);
+	hx.filter_nodes(gx);
+
+	if(cfg.verbose >= 2) gx.print();
+	if(cfg.verbose >= 2) hx.print_nodes();
+
+	// do not call scallop, but directly write features
+
+	vector<path> paths;
+	vector<transcript> trsts;
+	feature_builder fb(cfg);
+
+	fb.build_transcripts(gx, paths, trsts);
+
+	string prefix = "v"+to_string(cfg.min_num_exons)+"-"+to_string(cfg.max_num_exons);
+    gx.output_node_features(prefix+".node.csv");
+    gx.output_edge_features(prefix+".edge.csv");
+	fb.outputPhasingPath(gx, hx);
+
+	return 0;
+}

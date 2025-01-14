@@ -251,6 +251,12 @@ int sample_profile::set_batch_boundaries(int min_bundle_gap, int max_read_span)
 	return 0;
 }
 
+int sample_profile::read_input_gtf_file()
+{
+	// TODO: construct input_gtf_trsts and input_gtf_map
+	return 0;
+}
+
 int sample_profile::read_index_iterators()
 {
 	open_align_file();

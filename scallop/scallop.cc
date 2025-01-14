@@ -7,6 +7,7 @@ See LICENSE for licensing.
 #include "scallop.h"
 #include "constants.h"
 #include "essential.h"
+#include "feature_builder.h"
 
 #include <cstdio>
 #include <cmath>
@@ -181,12 +182,23 @@ int scallop::assemble()
 
 	greedy_decompose();
 
+	// refactoring with feature_builder
+	feature_builder fb(cfg);
+	fb.build_transcripts(gr_ori, paths, trsts);
+
+	string prefix = "v"+to_string(cfg.min_num_exons)+"-"+to_string(cfg.max_num_exons);
+    gr_ori.output_node_features(prefix+".node.csv");
+    gr_ori.output_edge_features(prefix+".edge.csv");
+    fb.outputPhasingPath(gr_ori, hs);
+
+	/*
 	build_transcripts(gr_ori);
 
 	string prefix = "v"+to_string(cfg.min_num_exons)+"-"+to_string(cfg.max_num_exons);
     gr_ori.output_node_features(prefix+".node.csv");
     gr_ori.output_edge_features(prefix+".edge.csv");
     outputPhasingPath(gr_ori, hs);
+	*/
 
 	if(cfg.verbose >= 2) 
 	{

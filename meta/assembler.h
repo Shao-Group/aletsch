@@ -38,6 +38,7 @@ public:
 	int assemble(vector<bundle*> gv);
 	int assemble(bundle &cb);
 	int assemble(splice_graph &gx, phase_set &px, int sid);
+	int assemble_input_gtf(splice_graph &gx, phase_set &px, const sample_profile &sp);
 	int transform(bundle &cb, splice_graph &gr, bool revising);
 	int fix_missing_edges(splice_graph &gr, splice_graph &gx);
 	int bridge(vector<bundle*> gv);
