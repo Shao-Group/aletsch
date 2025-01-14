@@ -1155,8 +1155,13 @@ int assembler::assemble_input_gtf(splice_graph &gx, phase_set &px, const sample_
 
 	// do not call scallop, but directly write features
 
+	vector<path> paths;
+	vector<transcript> trsts;
+
 	feature_builder fb(cfg);
-	fb.build_input_gtf(gx, sp.input_gtf_trsts, sp.input_gtf_map);
+
+	fb.build_input_gtf(gx, sp.input_gtf_trsts, sp.input_gtf_map, paths);
+	fb.build_transcripts(gx, paths, trsts);
 
 	string prefix = "v"+to_string(cfg.min_num_exons)+"-"+to_string(cfg.max_num_exons);
     gx.output_node_features(prefix+".node.csv");

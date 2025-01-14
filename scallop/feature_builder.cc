@@ -5,8 +5,72 @@ feature_builder::feature_builder(const parameters & p)
 	: cfg(p)
 {}
 
-int feature_builder::build_input_gtf(splice_graph &gr, const vector<transcript> &trsts, const map<int64_t, vector<int>> & tmap)
+int feature_builder::build_input_gtf(splice_graph &gr, const vector<transcript> &trsts, const map<int64_t, vector<int>> & tmap, vector<path> &paths)
 {
+    string prefix = "v"+to_string(cfg.min_num_exons)+"-"+to_string(cfg.max_num_exons);
+    string path_file = prefix + ".path.csv";
+    ofstream outputPath(path_file, ios::app);
+    if(!outputPath.is_open()) 
+    {
+        printf("open file %s error.\n", path_file.c_str());
+        return 0;
+    }
+
+	gr.build_vertex_index();
+
+	set<int64_t> ss;
+	PEEI p = gr.edges();
+	for(edge_iterator it = p.first; it != p.second; it++)
+	{
+		int s = (*it)->source();
+		int t = (*it)->target();
+		int32_t p1 = gr.get_vertex_info(s).rpos;
+		int32_t p2 = gr.get_vertex_info(t).lpos;
+		if(p1 >= p2) continue;
+
+		int64_t p = pack(p1, p2);
+		if(tmap.find(p) == tmap.end()) continue;
+
+		const vector<int> &v = tmap.at(p);
+
+		for(int i = 0; i < v.size(); i++)
+		{
+			if(ss.find(v[i]) != ss.end()) continue;
+			ss.insert(v[i]);
+
+			const transcript &trst = trsts[v[i]];
+			if(trst.seqname != gr.chrm) continue;
+
+			vector<int32_t> cc;
+			for(int k = 0; k < trst.exons.size(); k++)
+			{
+				cc.push_back(trst.exons[k].first);
+				cc.push_back(trst.exons[k].second);
+			}
+
+			vector<int> vv;
+			bool b = build_path_from_mixed_coordinates(gr, cc, vv);
+			if(b == false) continue;
+
+			path p;
+			p.v.push_back(0);
+			p.v.insert(p.v.end(), vv.begin(), vv.end());
+			p.v.push_back(gr.num_vertices() - 1);
+			p.weight = trst.coverage;
+			p.abd = trst.coverage;
+			p.strand = trst.strand;
+			p.junc.clear();
+			for(int i = 1; i < vv.size(); i++)
+			{
+				if(gr.get_vertex_info(vv[i]).lpos != gr.get_vertex_info(vv[i-1]).rpos)
+				{
+					p.junc.push_back(make_pair(vv[i-1], vv[i]));
+				}
+			}
+
+			paths.push_back(p);
+		}
+	}
 	return 0;
 }
 
