@@ -9,6 +9,7 @@ See LICENSE for licensing.
 #include "htslib/bgzf.h"
 #include "constants.h"
 #include "parameters.h"
+#include "genome.h"
 #include <cassert>
 #include <cmath>
 
@@ -253,7 +254,30 @@ int sample_profile::set_batch_boundaries(int min_bundle_gap, int max_read_span)
 
 int sample_profile::read_input_gtf_file()
 {
-	// TODO: construct input_gtf_trsts and input_gtf_map
+	genome gm(input_gtf_file);
+	input_gtf_trsts = gm.collect_transcripts();
+
+	for(int i = 0; i < input_gtf_trsts.size(); i++)
+	{
+		transcript &t = input_gtf_trsts[i];
+		if(t.exons.size() <= 1) continue;
+
+		vector<PI32> v = t.get_intron_chain();
+		for(int k = 0; k < v.size(); k++)
+		{
+			int64_t p = pack(v[k].first, v[k].second);
+			if(input_gtf_map.find(p) == input_gtf_map.end())
+			{
+				vector<int> x;
+				x.push_back(i);
+				input_gtf_map.insert(make_pair(p, x));
+			}
+			else
+			{
+				input_gtf_map[p].push_back(i);
+			}
+		}
+	}
 	return 0;
 }
 

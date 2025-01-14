@@ -24,6 +24,7 @@ public:
 	const parameters &cfg;			// parameters
 
 public:
+	int build_input_gtf(splice_graph &gr, const vector<transcript> &trsts, const map<int64_t, vector<int>> & tmap);
 	int build_transcripts(splice_graph &gr, vector<path> &paths, vector<transcript> &trsts);
     int outputPhasingPath(splice_graph &gr, hyper_set &hs);
 	MVII downsamplePhasingPaths(const MVII& paths, size_t targetSize);

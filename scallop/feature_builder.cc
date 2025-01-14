@@ -5,6 +5,11 @@ feature_builder::feature_builder(const parameters & p)
 	: cfg(p)
 {}
 
+int feature_builder::build_input_gtf(splice_graph &gr, const vector<transcript> &trsts, const map<int64_t, vector<int>> & tmap)
+{
+	return 0;
+}
+
 int feature_builder::build_transcripts(splice_graph &gr, vector<path> &paths, vector<transcript> &trsts)
 {
 	trsts.clear();
