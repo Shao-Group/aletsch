@@ -7,15 +7,6 @@ feature_builder::feature_builder(const parameters & p)
 
 int feature_builder::build_input_gtf(splice_graph &gr, const vector<transcript> &trsts, const map<int64_t, vector<int>> & tmap, vector<path> &paths)
 {
-    string prefix = "v"+to_string(cfg.min_num_exons)+"-"+to_string(cfg.max_num_exons);
-    string path_file = prefix + ".path.csv";
-    ofstream outputPath(path_file, ios::app);
-    if(!outputPath.is_open()) 
-    {
-        printf("open file %s error.\n", path_file.c_str());
-        return 0;
-    }
-
 	gr.build_vertex_index();
 
 	set<int64_t> ss;
@@ -71,6 +62,8 @@ int feature_builder::build_input_gtf(splice_graph &gr, const vector<transcript> 
 			paths.push_back(p);
 		}
 	}
+
+	printf("graph %s: %lu paths collected\n", gr.gid.c_str(), paths.size());
 	return 0;
 }
 
@@ -136,6 +129,7 @@ int feature_builder::build_transcripts(splice_graph &gr, vector<path> &paths, ve
 	}
 
     outputPath.close();
+
 	return 0;
 }
 

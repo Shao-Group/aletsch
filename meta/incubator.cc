@@ -43,6 +43,7 @@ int incubator::resolve()
 {
 	read_bam_list();
 	build_sample_index();
+	read_input_gtf_files();
 
 	init_samples();
 	//printf("finish init-samples\n");
@@ -203,6 +204,17 @@ int incubator::free_samples()
 	{
 		samples[i].free_index_iterators();
 		//samples[i].free_align_headers();
+	}
+	return 0;
+}
+
+int incubator::read_input_gtf_files()
+{
+	for(int i = 0; i < samples.size(); i++)
+	{
+		sample_profile &sp = samples[i];
+		if(sp.input_gtf_file == "") continue;
+		sp.read_input_gtf_file();
 	}
 	return 0;
 }

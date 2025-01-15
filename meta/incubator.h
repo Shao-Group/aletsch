@@ -58,6 +58,7 @@ private:
 	int init_samples();
 	int free_samples();
 	int build_sample_index();
+	int read_input_gtf_files();
 	int init_bundle_groups();
 	int init_transcript_sets();
 	int get_max_region(string chrm);

@@ -278,6 +278,8 @@ int sample_profile::read_input_gtf_file()
 			}
 		}
 	}
+
+	printf("%lu transcripts loaded from input gtf\n", input_gtf_trsts.size());
 	return 0;
 }
 
