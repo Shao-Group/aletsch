@@ -126,13 +126,14 @@ int feature_builder::build_transcripts(splice_graph &gr, vector<path> &paths, ve
             if(j < p.junc.size()-1) outputPath << ",";
         }
 		outputPath << "\",";
-		outputPath << p.weight << "\n";
+		outputPath << p.weight;
 
 		if(p.id != "")
 		{
 			outputPath << "\",";
-			outputPath << p.id.c_str() << "\n";
+			outputPath << p.id.c_str();
 		}
+		outputPath << "\n";
 	}
 
     outputPath.close();
