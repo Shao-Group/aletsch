@@ -44,6 +44,7 @@ int feature_builder::build_input_gtf(splice_graph &gr, const vector<transcript> 
 			if(b == false) continue;
 
 			path p;
+			p.id = trst.transcript_id;
 			p.v.push_back(0);
 			p.v.insert(p.v.end(), vv.begin(), vv.end());
 			p.v.push_back(gr.num_vertices() - 1);
@@ -126,6 +127,12 @@ int feature_builder::build_transcripts(splice_graph &gr, vector<path> &paths, ve
         }
 		outputPath << "\",";
 		outputPath << p.weight << "\n";
+
+		if(p.id != "")
+		{
+			outputPath << "\",";
+			outputPath << p.id.c_str() << "\n";
+		}
 	}
 
     outputPath.close();

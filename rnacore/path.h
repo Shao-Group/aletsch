@@ -8,6 +8,7 @@ See LICENSE for licensing.
 #define __PATH_H__
 
 #include <vector>
+#include <string>
 
 using namespace std;
 
@@ -27,6 +28,7 @@ public:
 	double reads;
 	char strand;
     int count;
+	string id;
 
 public:
 	int clear();

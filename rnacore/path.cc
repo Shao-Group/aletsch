@@ -20,6 +20,7 @@ path::path()
 	length = 0;
 	strand = '.';
     count = 0;
+	id = "";
 }
 
 path::~path()
@@ -36,6 +37,7 @@ int path::clear()
 	length = 0;
 	strand = '.';
     count = 0;
+	id = "";
 	return 0;
 }
 
