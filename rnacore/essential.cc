@@ -418,6 +418,7 @@ bool build_path_from_mixed_coordinates(splice_graph &gr, const vector<int32_t> &
 	if(v.size() == 2)
 	{
 		for(int k = u1; k <= u2; k++) vv.push_back(k);
+		//printf("Check u1 = %d, u2 = %d\n", u1, u2);
 		return true;
 	}
 

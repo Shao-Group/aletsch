@@ -43,6 +43,36 @@ int feature_builder::build_input_gtf(splice_graph &gr, const vector<transcript> 
 			bool b = build_path_from_mixed_coordinates(gr, cc, vv);
 			if(b == false) continue;
 
+            //check for edge existence
+            if(!gr.edge(0, vv.front()).second) 
+            {
+                printf("Starting edge undetected: (%d, %d).\n", 0, vv.front());
+                continue;
+            }
+            if(!gr.edge(vv.back(), gr.num_vertices() - 1).second) 
+            {
+                printf("Ending edge undetected: (%d, %ld).\n", vv.back(), gr.num_vertices() - 1);
+                continue;
+            }
+            bool edge_undetected = false;
+            printf("Checking edge existence:");
+            for(int k = 0; k < vv.size()-1; k++)
+            {
+                printf("%d -> %d, ", vv[k], vv[k+1]);
+                if(!gr.edge(vv[k], vv[k+1]).second)
+                {
+                    printf("(Warning! edge undetected: (%d, %d). Trst %s filtered.) ", vv[k], vv[k+1], trst.transcript_id.c_str());
+                    edge_undetected = true;
+                }
+            }
+            if(edge_undetected) 
+            {
+                printf("\n");
+                continue;
+            }
+
+            printf("Trst %s aligned.\n", trst.transcript_id.c_str());
+
 			path p;
 			p.id = trst.transcript_id;
 			p.v.push_back(0);
@@ -64,7 +94,7 @@ int feature_builder::build_input_gtf(splice_graph &gr, const vector<transcript> 
 		}
 	}
 
-	printf("graph %s: %lu paths collected\n", gr.gid.c_str(), paths.size());
+	printf("graph %s: %lu paths collected\n\n", gr.gid.c_str(), paths.size());
 	return 0;
 }
 
@@ -130,7 +160,7 @@ int feature_builder::build_transcripts(splice_graph &gr, vector<path> &paths, ve
 
 		if(p.id != "")
 		{
-			outputPath << "\",";
+			outputPath << ",";
 			outputPath << p.id.c_str();
 		}
 		outputPath << "\n";
@@ -355,6 +385,7 @@ int feature_builder::update_trst_features(splice_graph &gr, transcript &trst, in
     {
         int v1 = p.v[i-1];
         int v2 = p.v[i];
+        if(!gr.edge(v1, v2).second) printf("Edge(%d, %d) not found.\n", v1, v2);
         assert(gr.edge(v1, v2).second);
         edge_descriptor e = gr.edge(v1, v2).first;
         edge_info ei = gr.get_edge_info(e);
