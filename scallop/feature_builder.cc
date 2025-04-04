@@ -40,7 +40,7 @@ int feature_builder::build_input_gtf(splice_graph &gr, const vector<transcript> 
 			}
 
 			vector<int> vv;
-			bool b = build_path_from_mixed_coordinates(gr, cc, vv);
+			bool b = build_path_from_gtf_coordinates(gr, cc, vv);
 			if(b == false) continue;
 
             //check for edge existence

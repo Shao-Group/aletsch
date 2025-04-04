@@ -402,6 +402,60 @@ bool build_path_from_intron_coordinates(splice_graph &gr, const vector<int32_t> 
 	return true;
 }
 
+bool build_path_from_gtf_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv)
+{
+	// assume v[1..n-1] encodes intron-chain coordinates
+	vv.clear();
+	assert(v.size() % 2 == 0);
+	if(v.size() <= 0) return false;
+
+	if(v.size() == 2)
+	{
+		// TODO: ignore single-exon transcripts
+		return false; 
+	}
+
+	vector<int> uu;
+	vector<int32_t> u(v.begin() + 1, v.end() - 1);
+	bool b = build_path_from_intron_coordinates(gr, u, uu);
+	if(b == false) return false;
+
+	int k1 = uu.front();
+	int q1 = k1;
+	for(int i = k1 - 1; i > 0; i--)
+	{
+		if(gr.get_vertex_info(i).rpos != gr.get_vertex_info(i + 1).lpos)
+		{
+			break;
+		}
+
+		int32_t p1 = gr.get_vertex_info(i + 1).lpos;
+		if(p1 <= v.front()) break; // TODO
+
+		q1 = i;
+	}
+
+	int k2 = uu.back();
+	int q2 = k2;
+	for(int i = k2 + 1; i < gr.num_vertices() - 1; i++)
+	{
+		if(gr.get_vertex_info(i).lpos != gr.get_vertex_info(i - 1).rpos)
+		{
+			break;
+		}
+
+		int32_t p2 = gr.get_vertex_info(i - 1).rpos;
+		if(p2 >= v.back()) break; // TODO
+		q2 = i;
+	}
+
+	for(int i = q1; i < uu.front(); i++) vv.push_back(i);
+	vv.insert(vv.end(), uu.begin(), uu.end());
+	for(int i = uu.back() + 1; i <= q2; i++) vv.push_back(i);
+
+	return true;
+}
+
 bool build_path_from_mixed_coordinates(splice_graph &gr, const vector<int32_t> &v, vector<int> &vv)
 {
 	// assume v[1..n-1] encodes intron-chain coordinates
@@ -427,6 +481,7 @@ bool build_path_from_mixed_coordinates(splice_graph &gr, const vector<int32_t> &
 	bool b = build_path_from_intron_coordinates(gr, u, uu);
 	if(b == false) return false;
 
+	// TO BE FIXED
 	for(int i = u1; i < uu.front(); i++) vv.push_back(i);
 	vv.insert(vv.end(), uu.begin(), uu.end());
 	for(int i = uu.back() + 1; i <= u2; i++) vv.push_back(i);
